@@ -92,7 +92,7 @@ function LiquidatedTroveCardContent({
           </HighlightableValue>{" "}
           was held by{" "}
           <Link
-            href={`/troves?ownerAddress=${trove.lastOwner}`}
+            href={`/address/${trove.lastOwner}`}
             className="hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
           >
             <HighlightableValue type="ownerAddress" state="after">

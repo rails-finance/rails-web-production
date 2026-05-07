@@ -44,7 +44,7 @@ export function CardFooter({ trove, dateText, showDetailedInfo = true, isLiquida
                 <span className="text-rb-500 flex items-center gap-1">
                   <Icon name="user" size={12} />
                   <Link
-                    href={`/troves?ownerAddress=${displayOwner}`}
+                    href={`/address/${displayOwner}`}
                     className="hover:text-foreground transition-colors"
                   >
                     <HighlightableValue

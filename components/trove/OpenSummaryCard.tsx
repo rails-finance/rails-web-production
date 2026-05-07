@@ -316,7 +316,7 @@ function OpenTroveCardContent({
           >{`${trove.id.substring(0, 8)}...`}</HighlightableValue>{" "}
           is held by wallet{" "}
           <Link
-            href={`/troves?ownerAddress=${trove.owner}`}
+            href={`/address/${trove.owner}`}
             className="hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
           >
             <HighlightableValue type="ownerAddress" state="after">
