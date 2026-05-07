@@ -32,12 +32,18 @@ export default function Home() {
       return;
     }
 
-    // Address / ENS go to the dedicated address page; trove IDs filter the troves list.
-    if (isAddress || isEns) {
-      router.push(`/address/${encodeURIComponent(trimmedValue)}`);
-    } else if (isTroveId) {
-      router.push(`/troves?troveId=${trimmedValue}`);
+    // Build URL params
+    const params = new URLSearchParams();
+
+    if (isTroveId) {
+      params.set("troveId", trimmedValue);
+    } else if (isAddress) {
+      params.set("ownerAddress", trimmedValue);
+    } else if (isEns) {
+      params.set("ownerEns", trimmedValue);
     }
+
+    router.push(`/troves?${params.toString()}`);
   };
 
   useEffect(() => {
