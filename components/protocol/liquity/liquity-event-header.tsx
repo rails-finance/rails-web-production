@@ -81,12 +81,11 @@ function formatNumber(n: number): string {
   return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
-const ACTOR_ROLE_STYLES: Record<string, { label: string; color: string }> = {
-  owner: { label: "Owner", color: "bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/30" },
-  redeemer: { label: "Redeemer", color: "bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-500/30" },
-  liquidator: { label: "Liquidator", color: "bg-red-500/20 text-red-700 dark:text-red-400 border-red-500/30" },
-  batch_manager: { label: "Delegate", color: "bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-500/30" },
-};
+// Actor role (owner / redeemer / liquidator / batch_manager) is still threaded
+// through ctx.actorRole — the bars provider and other downstream logic depend
+// on it — but the trove view no longer renders a pill for it; the row's
+// operation badge already conveys whether the wallet is acting on its own
+// position or a third-party one.
 
 export interface LiquityEventHeaderProps {
   ctx: LiquityContext;
@@ -133,12 +132,6 @@ export function LiquityEventHeader({ ctx, timestamp, protocolId }: LiquityEventH
     <>
       <div className="px-5 pt-4 pb-3">
         <div className="flex items-center gap-1.5 flex-wrap">
-          {/* Actor role badge (trove-centric view) */}
-          {ctx.actorRole && ACTOR_ROLE_STYLES[ctx.actorRole] && (
-            <span className={`px-1.5 py-0.5 rounded text-xs font-medium border ${ACTOR_ROLE_STYLES[ctx.actorRole].color}`}>
-              {ACTOR_ROLE_STYLES[ctx.actorRole].label}
-            </span>
-          )}
           {ctx.operation === "setBatchManagerAnnualInterestRate" && stateAfter ? (
             <>
               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-700 dark:text-purple-400 text-xs font-bold">

@@ -38,15 +38,15 @@ function isLiquityTroveEvent(e: BaseActivityEvent): e is LiquityTroveEvent {
 }
 
 /**
- * An event represents the wallet acting on its own position unless the loader
- * has explicitly tagged it otherwise:
- *   - troveOwner is set when the loader knows the wallet is a third-party
- *     redeemer/liquidator on someone else's trove
- *   - actorRole is set by the per-trove loader; non-'owner' values mean third-party
+ * Whether an event represents the trove owner acting on their own position.
+ * The rails-server-mig transformer always sets `actorRole` on Liquity events
+ * (one of "owner" / "redeemer" / "liquidator" / "batch_manager"), so it's the
+ * authoritative signal. Falls back to comparing wallet to troveOwner for
+ * legacy events that pre-date the actorRole field.
  */
-function isOwnerEvent(ctx: LiquityContext): boolean {
-  if (ctx.troveOwner) return false;
-  if (ctx.actorRole && ctx.actorRole !== "owner") return false;
+function isOwnerEvent(ctx: LiquityContext, wallet: string): boolean {
+  if (ctx.actorRole) return ctx.actorRole === "owner";
+  if (ctx.troveOwner && ctx.troveOwner.toLowerCase() !== wallet.toLowerCase()) return false;
   return true;
 }
 
@@ -84,7 +84,7 @@ function buildBarMap(events: BaseActivityEvent[]): Map<string, PositionBarData> 
     let runningDebt = 0;
     for (const e of troveEvents) {
       const ctx = e.context.data;
-      const owner = isOwnerEvent(ctx);
+      const owner = isOwnerEvent(ctx, e.wallet);
       const isClose = ctx.operation === "closeTrove" || ctx.operation === "liquidate";
 
       let coll = ctx.stateAfter?.coll ?? 0;

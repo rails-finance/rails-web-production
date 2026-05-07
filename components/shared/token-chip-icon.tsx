@@ -65,7 +65,13 @@ export function TokenChipIcon({ symbol, size = 16, onClick, filterable = true }:
       style={{ width: size, height: size }}
       {...clickProps}
     >
-      <SpriteTokenIcon assetSymbol={symbol} className="block" width={size} height={size} />
+      <SpriteTokenIcon
+        assetSymbol={symbol}
+        className="block"
+        width={size}
+        height={size}
+        sized
+      />
     </span>
   );
 }
