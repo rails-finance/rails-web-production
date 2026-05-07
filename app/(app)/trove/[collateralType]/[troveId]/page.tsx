@@ -14,6 +14,7 @@ import { TroveStateData, TroveStateResponse } from "@/types/api/troveState";
 import { OraclePricesData, OraclePricesResponse } from "@/types/api/oracle";
 import { useTroveUiState } from "@/hooks/useTroveUiState";
 import { useDebtInFront } from "@/hooks/useDebtInFront";
+import { useWalletContext } from "@/components/nav/wallet-context";
 
 import { fetchTroveTimeline } from "@/lib/api/fetch-timeline";
 import type { BaseActivityEvent } from "@/lib/shared/types/event-shape";
@@ -110,6 +111,17 @@ export default function TrovePage() {
   // Live blockchain data and prices
   const [liveState, setLiveState] = useState<TroveStateData | undefined>(undefined);
   const [prices, setPrices] = useState<OraclePricesData | undefined>(undefined);
+
+  // Surface the trove owner in the header wallet pill — the WalletContext
+  // hydrator only reads /address/* paths, so trove pages need to push the
+  // owner explicitly. Mirrors rails-explorer's "Liquity V2 + <owner>" header.
+  const { setWallets } = useWalletContext();
+  useEffect(() => {
+    const ownerAddr = troveData?.owner ?? troveData?.lastOwner;
+    if (!ownerAddr) return;
+    const lower = ownerAddr.toLowerCase();
+    setWallets([lower], { [lower]: troveData?.ownerEns ?? null });
+  }, [troveData?.owner, troveData?.lastOwner, troveData?.ownerEns, setWallets]);
 
   // Debt in front calculation
   const debtInFrontRate = liveState?.rates.annualInterestRate ?? troveData?.metrics.interestRate;
