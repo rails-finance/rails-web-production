@@ -1,0 +1,1157 @@
+"use client";
+
+import type { LiquityContext } from "@/lib/shared/types/protocols/liquity";
+import type { BaseActivityEvent } from "@/lib/shared/types/activity";
+import { calculateInterestBetweenTransactions } from "@/lib/liquity/utils/interest-calculator";
+import { LearnMore } from "@/components/shared/learn-more-modal";
+import { LinkedAddress } from "@/components/shared/linked-address";
+import {
+  liquityRedemptionContent,
+  liquityLiquidationContent,
+  liquityOpenTroveContent,
+} from "@/lib/shared/learn-more-content";
+
+// ── Formatters ──────────────────────────────────────────────────────
+
+function fmt(n: number): string {
+  if (Math.abs(n) < 0.01) return "0";
+  if (Math.abs(n) >= 1000) return n.toLocaleString(undefined, { maximumFractionDigits: 0 });
+  return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+}
+
+function fmtColl(n: number): string {
+  if (n === 0) return "0";
+  return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+}
+
+function fmtUsd(value: number): string {
+  if (value < 0.01) return "< $0.01";
+  if (value < 1) return `$${value.toFixed(2)}`;
+  return "$" + value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtCurrency(n: number, asset: string): string {
+  return `${fmt(n)} ${asset}`;
+}
+
+function shortenAddress(addr: string): string {
+  return `${addr.slice(0, 6)}\u2026${addr.slice(-4)}`;
+}
+
+function getLiquidationThreshold(collType: string): number {
+  return collType === "WETH" || collType === "ETH" ? 110 : 120;
+}
+
+// ── Types ───────────────────────────────────────────────────────────
+
+interface ExplainerItem {
+  content: React.ReactNode;
+  type?: "default" | "warning" | "success" | "error" | "info";
+}
+
+// ── Bold helper to replace HighlightableValue ───────────────────────
+
+function V({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <span className={`font-semibold ${className ?? ""}`}>{children}</span>;
+}
+
+// ── Per-operation generators (ported wholesale from rails-web) ──────
+
+function generateOpenTroveItems(ctx: LiquityContext): ExplainerItem[] {
+  const items: ExplainerItem[] = [];
+  const { stateAfter, troveOperation, collateralType, collateralPrice } = ctx;
+  const coll = collateralType;
+  const upfrontFee = troveOperation?.debtIncreaseFromUpfrontFee ?? 0;
+  const principalBorrowed = stateAfter.debt - upfrontFee;
+  const collUsdValue = stateAfter.coll * collateralPrice;
+
+  items.push({
+    content: (
+      <span>Deposited <V>{fmtColl(stateAfter.coll)} {coll}</V> as collateral to secure the loan</span>
+    ),
+  });
+
+  items.push({
+    content: <span>Borrowed <V>{fmt(principalBorrowed)} BOLD</V></span>,
+  });
+
+  if (upfrontFee > 0) {
+    items.push({
+      content: (
+        <span>
+          Paid a one-time borrowing fee of{" "}
+          <V>{upfrontFee.toFixed(2)} BOLD</V>{" "}
+          (equivalent to 7 days of average interest)
+        </span>
+      ),
+    });
+  }
+
+  items.push({
+    content: (
+      <span>Total initial debt is <V>{fmt(stateAfter.debt)} BOLD</V>{upfrontFee > 0 ? " including the borrowing fee" : ""}</span>
+    ),
+  });
+
+  items.push({
+    content: <span>0.0375 ETH liquidation reserve set aside (refundable on close)</span>,
+  });
+
+  if (collUsdValue > 0) {
+    items.push({
+      content: (
+        <span>
+          Collateral USD value at opening: <V>{fmtUsd(collUsdValue)}</V>
+          {collateralPrice > 0 && ` (${coll} price: ${fmtUsd(collateralPrice)})`}
+        </span>
+      ),
+    });
+  }
+
+  items.push({
+    content: (
+      <span>
+        Position opened with a <V className={stateAfter.collateralRatio < 150 ? "text-red-400" : "text-green-400"}>
+          {stateAfter.collateralRatio.toFixed(1)}%
+        </V> collateralization ratio
+      </span>
+    ),
+    type: stateAfter.collateralRatio < 150 ? "warning" : "success",
+  });
+
+  items.push({
+    content: (
+      <span>
+        Annual interest rate set at <V>{(stateAfter.annualInterestRate * 100).toFixed(1)}%</V>, compounding continuously
+      </span>
+    ),
+  });
+
+  if (ctx.operation === "openTroveAndJoinBatch" && ctx.batchUpdate) {
+    items.push({
+      content: <span>Joined a batch manager on open</span>,
+    });
+    if (ctx.batchUpdate.interestBatchManager) {
+      items.push({
+        content: (
+          <span>
+            Batch rate managed by delegate <V>{shortenAddress(ctx.batchUpdate.interestBatchManager)}</V> at{" "}
+            <V>{(ctx.batchUpdate.annualInterestRate * 100).toFixed(1)}%</V> APR
+            {ctx.batchUpdate.annualManagementFee > 0 && (
+              <>, management fee: <V>{(ctx.batchUpdate.annualManagementFee * 100).toFixed(2)}%</V></>
+            )}
+          </span>
+        ),
+      });
+    }
+  }
+
+  return items;
+}
+
+function generateCloseTroveItems(ctx: LiquityContext, accruedInterest: number): ExplainerItem[] {
+  const items: ExplainerItem[] = [];
+  const { troveOperation, stateBefore, collateralType, collateralPrice } = ctx;
+  const debtRepaid = troveOperation ? Math.abs(troveOperation.debtChangeFromOperation) : stateBefore.debt;
+  const collRetrieved = troveOperation ? Math.abs(troveOperation.collChangeFromOperation) : stateBefore.coll;
+
+  if (debtRepaid > 0) {
+    items.push({
+      content: (
+        <span>
+          Fully repaid the outstanding debt of <V>{fmtCurrency(debtRepaid, ctx.assetType ?? "BOLD")}</V>
+        </span>
+      ),
+    });
+  } else {
+    items.push({
+      content: <span>Debt was zero, so no repayment necessary</span>,
+    });
+  }
+
+  items.push({
+    content: (
+      <span>
+        <em>Borrower</em> retrieved all{" "}
+        <V>{fmtColl(collRetrieved)} {collateralType}</V> collateral
+      </span>
+    ),
+  });
+
+  items.push({
+    content: <span>The 0.0375 ETH liquidation reserve was returned</span>,
+  });
+
+  if (debtRepaid > 0) {
+    if (stateBefore.annualInterestRate > 0) {
+      items.push({
+        content: (
+          <span className="">
+            Position was paying {(stateBefore.annualInterestRate * 100).toFixed(1)}% annual interest before closure
+          </span>
+        ),
+      });
+    }
+
+    if (stateBefore.collateralRatio > 0) {
+      items.push({
+        content: (
+          <span className="">
+            Closed with a {stateBefore.collateralRatio.toFixed(1)}% collateral ratio
+          </span>
+        ),
+      });
+    }
+  }
+
+  items.push({
+    content: <span>Trove NFT was sent to the burn address, ending token ownership</span>,
+  });
+
+  items.push({
+    content: <span>Trove successfully closed — all obligations settled</span>,
+    type: "success",
+  });
+
+  return items;
+}
+
+function generateAdjustTroveItems(ctx: LiquityContext, accruedInterest: number, accruedManagementFees: number): ExplainerItem[] {
+  const items: ExplainerItem[] = [];
+  const { troveOperation, stateBefore, stateAfter, collateralType, collateralPrice } = ctx;
+  const totalAccruedFees = accruedInterest + accruedManagementFees;
+
+  if (troveOperation) {
+    const collChange = troveOperation.collChangeFromOperation;
+    const debtChange = troveOperation.debtChangeFromOperation;
+    const adjustFee = troveOperation.debtIncreaseFromUpfrontFee;
+
+    if (collChange !== 0) {
+      items.push({
+        content: (
+          <span>
+            {collChange > 0 ? "Added " : "Withdrew "}
+            <V>{fmtColl(Math.abs(collChange))} {collateralType}</V>
+            {collChange > 0 ? " to strengthen the position" : " from collateral, reducing exposure"}
+          </span>
+        ),
+      });
+    }
+
+    if (debtChange !== 0) {
+      items.push({
+        content: (
+          <span>
+            {debtChange > 0 ? "Borrowed an additional " : "Paid down "}
+            <V>{fmtCurrency(Math.abs(debtChange), ctx.assetType ?? "BOLD")}</V>
+          </span>
+        ),
+      });
+    }
+
+    if (totalAccruedFees > 0.01) {
+      items.push({
+        content: (
+          <span>
+            Accrued interest since last operation: <V>{totalAccruedFees.toFixed(2)} BOLD</V>
+            {accruedManagementFees > 0 && (
+              <span className=" text-xs ml-1">(including {accruedManagementFees.toFixed(2)} BOLD management fee)</span>
+            )}
+          </span>
+        ),
+        type: "warning",
+      });
+    }
+
+    if (adjustFee > 0) {
+      items.push({
+        content: (
+          <span>
+            Adjustment incurred a{" "}
+            <V>{adjustFee.toFixed(2)} BOLD</V>{" "}
+            borrowing fee (7 days of average interest on the respective borrow market)
+          </span>
+        ),
+      });
+    }
+
+    // Debt breakdown if combined fees
+    if (debtChange > 0 && (adjustFee > 0 || totalAccruedFees > 0.01)) {
+      const totalIncrease = stateAfter.debt - stateBefore.debt;
+      items.push({
+        content: (
+          <span>
+            Total debt increase: <V>{fmtCurrency(totalIncrease, ctx.assetType ?? "BOLD")}</V>{" "}
+            <span className=" text-xs">
+              (borrowed: {fmtCurrency(debtChange, ctx.assetType ?? "BOLD")}
+              {totalAccruedFees > 0.01 && ` + accrued: ${totalAccruedFees.toFixed(2)}`}
+              {adjustFee > 0 && ` + fee: ${adjustFee.toFixed(2)}`})
+            </span>
+          </span>
+        ),
+      });
+    }
+  }
+
+  // Current position summary
+  items.push({
+    content: (
+      <span>
+        Position now holds <V>{fmtColl(stateAfter.coll)} {collateralType}</V> collateral against <V>{fmtCurrency(stateAfter.debt, ctx.assetType ?? "BOLD")}</V> debt
+      </span>
+    ),
+  });
+
+  // Collateral USD value
+  const afterCollUsd = stateAfter.coll * collateralPrice;
+  if (afterCollUsd > 0 && collateralPrice > 0) {
+    items.push({
+      content: (
+        <span>
+          Current collateral valued at <V>{fmtUsd(afterCollUsd)}</V> with historic price of <V>{fmtUsd(collateralPrice)}</V> / {collateralType}
+        </span>
+      ),
+    });
+  }
+
+  // CR change
+  const beforeCR = stateBefore.collateralRatio;
+  const afterCR = stateAfter.collateralRatio;
+  if (beforeCR > 0 && afterCR > 0 && afterCR > beforeCR) {
+    items.push({
+      content: (
+        <span>
+          Improved collateral ratio to{" "}
+          <V>{afterCR.toFixed(1)}%</V>, reducing liquidation risk
+        </span>
+      ),
+    });
+  } else if (beforeCR > 0 && afterCR > 0 && beforeCR !== afterCR) {
+    items.push({
+      content: (
+        <span>
+          Collateral ratio changed to{" "}
+          <V>{afterCR.toFixed(1)}%</V>
+          {afterCR < beforeCR ? ", increasing liquidation risk" : ""}
+        </span>
+      ),
+    });
+  }
+
+  // Interest rate
+  if (stateBefore.annualInterestRate !== stateAfter.annualInterestRate) {
+    items.push({
+      content: (
+        <span>
+          Annual interest rate adjusted from {(stateBefore.annualInterestRate * 100).toFixed(1)}% to{" "}
+          <V>{(stateAfter.annualInterestRate * 100).toFixed(1)}%</V>
+        </span>
+      ),
+    });
+  } else {
+    items.push({
+      content: (
+        <span>Annual interest rate remains at <V>{(stateAfter.annualInterestRate * 100).toFixed(1)}%</V></span>
+      ),
+    });
+  }
+
+  return items;
+}
+
+function generateAdjustRateItems(ctx: LiquityContext, accruedInterest: number, accruedManagementFees: number): ExplainerItem[] {
+  const items: ExplainerItem[] = [];
+  const { stateBefore, stateAfter, collateralType, collateralPrice } = ctx;
+  const totalAccruedFees = accruedInterest + accruedManagementFees;
+  const increased = stateAfter.annualInterestRate > stateBefore.annualInterestRate;
+
+  items.push({
+    content: (
+      <span>
+        {increased ? "Increased" : "Decreased"} interest rate from{" "}
+        <V>{(stateBefore.annualInterestRate * 100).toFixed(1)}%</V> to{" "}
+        <V>{(stateAfter.annualInterestRate * 100).toFixed(1)}%</V> APR
+      </span>
+    ),
+  });
+
+  if (totalAccruedFees > 0.01) {
+    items.push({
+      content: (
+        <span>
+          Accrued interest since last operation: <V>{totalAccruedFees.toFixed(2)} BOLD</V>
+          {accruedManagementFees > 0 && (
+            <span className=" text-xs ml-1">(including {accruedManagementFees.toFixed(2)} BOLD management fee)</span>
+          )}
+        </span>
+      ),
+      type: "warning",
+    });
+  }
+
+  if (stateAfter.debt > 0) {
+    items.push({
+      content: (
+        <span>
+          Debt updated to <V>{fmtCurrency(stateAfter.debt, ctx.assetType ?? "BOLD")}</V>
+        </span>
+      ),
+    });
+  }
+
+  // Collateral + USD
+  const afterCollUsd = stateAfter.coll * collateralPrice;
+  if (stateAfter.coll > 0 && afterCollUsd > 0) {
+    items.push({
+      content: (
+        <span>
+          Collateral: <V>{fmtColl(stateAfter.coll)} {collateralType}</V> (<V>{fmtUsd(afterCollUsd)}</V>)
+        </span>
+      ),
+    });
+  }
+
+  // CR
+  if (stateAfter.collateralRatio > 0) {
+    items.push({
+      content: (
+        <span>
+          Collateral ratio: <V className={stateAfter.collateralRatio < 150 ? "text-red-400" : "text-green-400"}>
+            {stateAfter.collateralRatio.toFixed(1)}%
+          </V>
+        </span>
+      ),
+    });
+  }
+
+  return items;
+}
+
+function generateLiquidateItems(ctx: LiquityContext): ExplainerItem[] {
+  const items: ExplainerItem[] = [];
+  const { liquidation, troveOperation, stateBefore, stateAfter, collateralType, collateralPrice } = ctx;
+
+  if (!liquidation) {
+    items.push({ content: <span>The {collateralType} trove was liquidated.</span>, type: "error" });
+    return items;
+  }
+
+  // Check if beneficial (redistribution gain) or destructive
+  const isBeneficial = stateAfter.debt > 0 && troveOperation && troveOperation.collIncreaseFromRedist > 0;
+
+  if (isBeneficial) {
+    const collGained = troveOperation!.collIncreaseFromRedist;
+    const debtInherited = troveOperation!.debtIncreaseFromRedist;
+    const collGainedUsd = collGained * collateralPrice;
+    const netBenefit = collGainedUsd - debtInherited;
+
+    items.push({
+      content: <span>✅ The trove benefited from another trove&apos;s liquidation through redistribution</span>,
+      type: "success",
+    });
+    items.push({
+      content: (
+        <span>
+          The trove received{" "}
+          <V>{fmtColl(collGained)} {collateralType}</V>
+          {collGainedUsd > 0 && <> (≈ <V>{fmtUsd(collGainedUsd)}</V>)</>} from the liquidated trove
+        </span>
+      ),
+    });
+    items.push({
+      content: <span>The trove inherited <V>{fmtCurrency(debtInherited, ctx.assetType ?? "BOLD")}</V> proportional to its collateral amount</span>,
+    });
+    items.push({
+      content: (
+        <span className={netBenefit >= 0 ? "text-green-400" : "text-yellow-400"}>
+          Net impact: {netBenefit >= 0 ? "+" : ""}{fmtUsd(Math.abs(netBenefit))}
+          {netBenefit >= 0 ? " (beneficial due to liquidation penalty)" : " (small cost)"}
+        </span>
+      ),
+      type: netBenefit >= 0 ? "success" : "warning",
+    });
+    items.push({
+      content: <span>This redistribution happened because the Stability Pool couldn&apos;t fully cover the liquidation</span>,
+    });
+    if (stateBefore.collateralRatio > 0 && stateAfter.collateralRatio > 0) {
+      items.push({
+        content: (
+          <span>
+            Collateral ratio improved from {stateBefore.collateralRatio.toFixed(1)}% to{" "}
+            <V>{stateAfter.collateralRatio.toFixed(1)}%</V>
+          </span>
+        ),
+      });
+    }
+    items.push({ content: <span>The trove remains active and healthy</span>, type: "success" });
+    return items;
+  }
+
+  // Destructive liquidation
+  const threshold = getLiquidationThreshold(collateralType);
+  const debtCleared = liquidation.debtOffsetBySP + liquidation.debtRedistributed;
+  const collLiquidated = liquidation.collSentToSP + liquidation.collRedistributed + liquidation.collSurplus + liquidation.collGasCompensation;
+  const totalCollValueUsd = collLiquidated * liquidation.price;
+  const crAtLiquidation = totalCollValueUsd > 0 && debtCleared > 0 ? (totalCollValueUsd / debtCleared) * 100 : stateBefore.collateralRatio;
+
+  // Claimable surplus (only when not fully redistributed)
+  const hasClaimableSurplus = liquidation.collSurplus > 0 && liquidation.debtRedistributed === 0;
+  const collSurplusValueUsd = liquidation.collSurplus * liquidation.price;
+
+  // Estimated borrower loss: difference between equity and claimable surplus
+  const borrowerEquity = totalCollValueUsd - debtCleared;
+  const estimatedBorrowerLoss = borrowerEquity > 0 ? borrowerEquity - collSurplusValueUsd : 0;
+
+  // Liquidator penalty (5% of debt)
+  const penaltyInColl = debtCleared > 0 && liquidation.price > 0 ? debtCleared * 0.05 / liquidation.price : 0;
+  const penaltyValueUsd = debtCleared * 0.05;
+
+  // Determine mechanism
+  const wasFullyAbsorbedBySP = liquidation.debtRedistributed === 0;
+  const wasFullyRedistributed = liquidation.debtOffsetBySP === 0 && liquidation.debtRedistributed > 0;
+  const wasPartiallyRedistributed = liquidation.debtOffsetBySP > 0 && liquidation.debtRedistributed > 0;
+
+  items.push({
+    content: (
+      <span>
+        USD values reflect historic price at time:{" "}
+        <V>{fmtUsd(liquidation.price)}</V> / {collateralType}
+      </span>
+    ),
+    type: "info",
+  });
+
+  // Collateral ratio at liquidation
+  items.push({
+    content: (
+      <span>
+        Collateral ratio dropped to{" "}
+        <V>{crAtLiquidation.toFixed(2)}%</V>
+        {" "}(below the {threshold}% threshold for {collateralType}) triggering a liquidation
+      </span>
+    ),
+  });
+
+  // Debt cleared
+  items.push({
+    content: (
+      <span>
+        <V>{fmtCurrency(debtCleared, ctx.assetType ?? "BOLD")}</V> debt cleared
+      </span>
+    ),
+  });
+
+  // Collateral liquidated
+  items.push({
+    content: (
+      <span>
+        Collateral liquidated{" "}
+        <V>{fmtColl(collLiquidated)} {collateralType}</V>
+        <span className=" ml-1">
+          (<V>{fmtUsd(totalCollValueUsd)}</V>)
+        </span>
+      </span>
+    ),
+  });
+
+  // Claimable surplus
+  if (hasClaimableSurplus) {
+    items.push({
+      content: (
+        <span>
+          <em>Borrower</em> can claim surplus of{" "}
+          <V>{fmtColl(liquidation.collSurplus)} {collateralType}</V>
+          <span className=" ml-1">
+            ({fmtUsd(collSurplusValueUsd)})
+          </span>
+        </span>
+      ),
+    });
+  }
+
+  // Estimated borrower loss
+  if (estimatedBorrowerLoss > 0) {
+    items.push({
+      content: (
+        <span>
+          The difference between borrower equity and claimable surplus represented a USD estimated loss of ≈{fmtUsd(estimatedBorrowerLoss)} at liquidation
+        </span>
+      ),
+    });
+  }
+
+  // Stability Pool received
+  if (liquidation.collSentToSP > 0) {
+    items.push({
+      content: (
+        <span>
+          <em>Stability Pool</em> received {fmtColl(liquidation.collSentToSP)} {collateralType} ({fmtUsd(liquidation.collSentToSP * liquidation.price)})
+        </span>
+      ),
+    });
+  }
+
+  // Gas compensation — separate lines matching rails-web
+  if (liquidation.collGasCompensation > 0) {
+    items.push({
+      content: (
+        <span>
+          <em>Liquidator</em> received {fmtColl(liquidation.collGasCompensation)} {collateralType} gas compensation
+        </span>
+      ),
+    });
+  }
+
+  // Fixed 0.0375 WETH gas compensation (always present for liquidations)
+  items.push({
+    content: (
+      <span>
+        <em>Liquidator</em> received 0.0375 WETH gas compensation
+      </span>
+    ),
+  });
+
+  // Redistribution warning
+  if (wasPartiallyRedistributed) {
+    items.push({
+      content: (
+        <span className="text-yellow-400">
+          ⚠️ Partial redistribution occurred (Stability Pool was insufficient)
+        </span>
+      ),
+      type: "warning",
+    });
+  }
+
+  // Liquidator incentive (5% of debt)
+  if (penaltyInColl > 0) {
+    items.push({
+      content: (
+        <span>
+          <em>Liquidator</em> received {fmtColl(penaltyInColl)} {collateralType} ({fmtUsd(penaltyValueUsd)}) as an incentive for performing the liquidation (5% of debt)
+        </span>
+      ),
+    });
+  }
+
+  // NFT burn
+  items.push({
+    content: (
+      <span>Trove NFT was sent to the burn address during liquidation</span>
+    ),
+  });
+
+  return items;
+}
+
+function generateRedeemItems(ctx: LiquityContext): ExplainerItem[] {
+  const items: ExplainerItem[] = [];
+  const { redemption, stateAfter, troveOperation, collateralType, collateralPrice } = ctx;
+
+  if (!redemption) {
+    items.push({ content: <span>The {collateralType} trove was redeemed.</span> });
+    return items;
+  }
+
+  const collRedeemed = troveOperation ? Math.abs(troveOperation.collChangeFromOperation) : redemption.ETHSent;
+  const debtRedeemed = troveOperation ? Math.abs(troveOperation.debtChangeFromOperation) : redemption.actualBoldAmount;
+  const redemptionFee = Number(redemption.ETHFee) || 0;
+  const feeRate = redemptionFee > 0 ? (redemptionFee / (collRedeemed + redemptionFee)) * 100 : 0;
+  const collValueMarketPrice = collRedeemed * collateralPrice;
+  const feeValueMarket = redemptionFee * collateralPrice;
+  const afterCollUsd = stateAfter.coll * collateralPrice;
+  const isZombie = ctx.isZombieTrove;
+
+  items.push({
+    content: (
+      <span>
+        This redemption clears <V>{fmtCurrency(debtRedeemed, ctx.assetType ?? "BOLD")}</V> debt and reduces collateral by{" "}
+        <V>{fmtColl(collRedeemed)}</V> ({fmtUsd(collValueMarketPrice)}) to{" "}
+        <V>{fmtColl(stateAfter.coll)} {collateralType}</V> ({fmtUsd(afterCollUsd)})
+      </span>
+    ),
+  });
+
+  if (redemptionFee > 0) {
+    items.push({
+      content: (
+        <span>
+          A {feeRate.toFixed(3)}% redemption fee of {fmtColl(redemptionFee)} {collateralType} ({fmtUsd(feeValueMarket)}), paid by the redeemer, remains in the Trove as additional collateral
+        </span>
+      ),
+    });
+  }
+
+  // After state
+  if (stateAfter.debt === 0) {
+    items.push({
+      content: (
+        <span>
+          The Trove now has <V>0 BOLD</V> debt
+          {isZombie && ", remaining open with collateral only (a 'zero-debt Zombie Trove')"}
+        </span>
+      ),
+      type: isZombie ? "warning" : "default",
+    });
+  } else {
+    items.push({
+      content: (
+        <span>
+          The Trove now has <V>{fmtCurrency(stateAfter.debt, ctx.assetType ?? "BOLD")}</V>
+          {isZombie ? (
+            <> debt, creating a &apos;low-debt Zombie Trove&apos; (below the 2,000 BOLD minimum threshold), adjusting the collateral ratio proportionally to <V>{stateAfter.collateralRatio.toFixed(1)}%</V></>
+          ) : (
+            <>, adjusting the collateral ratio proportionally to <V>{stateAfter.collateralRatio.toFixed(1)}%</V></>
+          )}
+        </span>
+      ),
+      type: isZombie ? "warning" : "default",
+    });
+  }
+
+  // Zombie-specific guidance
+  if (isZombie && stateAfter.debt === 0) {
+    items.push({
+      content: <span>With zero debt, no interest accrues and the {(stateAfter.annualInterestRate * 100).toFixed(1)}% interest rate is no longer relevant</span>,
+    });
+    items.push({
+      content: <span>It can be closed by withdrawing the remaining collateral, or re-activated by borrowing 2,000 BOLD or more</span>,
+    });
+  } else if (isZombie && stateAfter.debt > 0) {
+    items.push({
+      content: <span>The Trove is removed from the normal redemption order. It may be prioritised in subsequent redemption(s) to clear the remaining below-minimum debt</span>,
+      type: "warning",
+    });
+    items.push({
+      content: (
+        <span>
+          Interest continues to accrue at <V>{(stateAfter.annualInterestRate * 100).toFixed(1)}%</V>. If the debt later rises back above 2,000 BOLD (for example from accrued interest), the Trove can return to normal behaviour
+        </span>
+      ),
+    });
+    items.push({
+      content: <span>It can be resolved by repaying the remaining debt and withdrawing collateral to close it, or borrowing more to bring the debt above 2,000 BOLD and reactivate it</span>,
+    });
+  } else {
+    items.push({
+      content: (
+        <span>
+          Interest rates are not affected by redemptions and this remains at <V>{(stateAfter.annualInterestRate * 100).toFixed(1)}%</V>
+        </span>
+      ),
+    });
+  }
+
+  // Net outcome
+  if (collateralPrice > 0) {
+    const netProfit = debtRedeemed - collValueMarketPrice;
+    items.push({
+      content: (
+        <span>
+          Net outcome: <V>{fmtUsd(debtRedeemed)}</V> debt cleared &minus; {fmtColl(collRedeemed)} &times; {fmtUsd(collateralPrice)} ={" "}
+          <V className={netProfit >= 0 ? "text-green-400" : "text-red-400"}>
+            {netProfit >= 0 ? "+" : "\u2212"}{fmtUsd(Math.abs(netProfit))}
+          </V>
+        </span>
+      ),
+      type: netProfit >= 0 ? "success" : "error",
+    });
+  }
+
+  return items;
+}
+
+function generateApplyPendingDebtItems(ctx: LiquityContext): ExplainerItem[] {
+  const items: ExplainerItem[] = [];
+  const { troveOperation, stateAfter, stateBefore, collateralType, collateralPrice } = ctx;
+  const redistDebt = troveOperation?.debtIncreaseFromRedist ?? 0;
+
+  if (ctx.batchUpdate) {
+    items.push({
+      content: <span>Batch manager applied accrued interest to the trove</span>,
+    });
+  }
+
+  items.push({
+    content: <span>Applied <V>{fmt(redistDebt)} BOLD</V> of pending redistribution debt</span>,
+  });
+
+  if (troveOperation?.collIncreaseFromRedist && troveOperation.collIncreaseFromRedist > 0) {
+    items.push({
+      content: <span>Gained <V>{fmtColl(troveOperation.collIncreaseFromRedist)} {collateralType}</V> from redistribution</span>,
+    });
+  }
+
+  items.push({
+    content: <span>Debt updated to <V>{fmtCurrency(stateAfter.debt, ctx.assetType ?? "BOLD")}</V></span>,
+  });
+
+  const afterCollUsd = stateAfter.coll * collateralPrice;
+  if (stateAfter.coll > 0) {
+    items.push({
+      content: <span>Collateral unchanged: <V>{fmtColl(stateAfter.coll)} {collateralType}</V> ({fmtUsd(afterCollUsd)})</span>,
+    });
+  }
+
+  items.push({
+    content: <span>Interest rate: <V>{(stateAfter.annualInterestRate * 100).toFixed(1)}%</V></span>,
+  });
+
+  if (stateAfter.collateralRatio > 0) {
+    items.push({
+      content: (
+        <span>
+          Collateral ratio: <V className={stateAfter.collateralRatio < 150 ? "text-red-400" : "text-green-400"}>
+            {stateAfter.collateralRatio.toFixed(1)}%
+          </V>
+        </span>
+      ),
+    });
+  }
+
+  return items;
+}
+
+function generateSetBatchManagerItems(ctx: LiquityContext, accruedInterest: number): ExplainerItem[] {
+  const items: ExplainerItem[] = [];
+  const { stateAfter, stateBefore, collateralType, collateralPrice } = ctx;
+  const afterCollUsd = stateAfter.coll * collateralPrice;
+
+  items.push({
+    content: <span>Moved from individual interest rate management to delegated management</span>,
+  });
+
+  if (ctx.batchUpdate?.interestBatchManager) {
+    items.push({
+      content: <span>Batch manager: <LinkedAddress address={ctx.batchUpdate.interestBatchManager} /></span>,
+    });
+  }
+
+  if (stateAfter.debt > 0) {
+    items.push({
+      content: <span>Debt updated to <V>{fmtCurrency(stateAfter.debt, ctx.assetType ?? "BOLD")}</V></span>,
+    });
+  }
+
+  if (stateAfter.coll > 0 && afterCollUsd > 0) {
+    items.push({
+      content: <span>Collateral: <V>{fmtColl(stateAfter.coll)} {collateralType}</V> ({fmtUsd(afterCollUsd)})</span>,
+    });
+  }
+
+  items.push({
+    content: <span>Rate: <V>{(stateAfter.annualInterestRate * 100).toFixed(1)}%</V> APR</span>,
+  });
+
+  if (ctx.batchUpdate?.annualManagementFee && ctx.batchUpdate.annualManagementFee > 0) {
+    const fee = ctx.batchUpdate.annualManagementFee;
+    items.push({
+      content: (
+        <span>
+          Management fee: <V>{(fee * 100).toFixed(2)}%</V> ({fmtCurrency(stateAfter.debt * fee, ctx.assetType ?? "BOLD")}/yr)
+        </span>
+      ),
+      type: "warning",
+    });
+  }
+
+  if (stateAfter.collateralRatio > 0) {
+    items.push({
+      content: (
+        <span>
+          Collateral ratio: <V className={stateAfter.collateralRatio < 150 ? "text-red-400" : "text-green-400"}>
+            {stateAfter.collateralRatio.toFixed(1)}%
+          </V>
+        </span>
+      ),
+    });
+  }
+
+  if (accruedInterest > 0.01) {
+    items.push({
+      content: <span>Accrued interest since last operation: <V>~{accruedInterest.toFixed(2)} BOLD</V></span>,
+      type: "warning",
+    });
+  }
+
+  return items;
+}
+
+function generateRemoveFromBatchItems(ctx: LiquityContext, accruedInterest: number, accruedManagementFees: number): ExplainerItem[] {
+  const items: ExplainerItem[] = [];
+  const { stateAfter, stateBefore, collateralType, collateralPrice } = ctx;
+  const afterCollUsd = stateAfter.coll * collateralPrice;
+
+  items.push({
+    content: <span>Left the batch manager, returning to individual interest rate management</span>,
+  });
+
+  if (ctx.batchUpdate?.interestBatchManager) {
+    items.push({
+      content: <span>Former delegate: <LinkedAddress address={ctx.batchUpdate.interestBatchManager} /></span>,
+    });
+  }
+
+  if (stateAfter.debt > 0) {
+    items.push({
+      content: <span>Debt updated to <V>{fmtCurrency(stateAfter.debt, ctx.assetType ?? "BOLD")}</V></span>,
+    });
+  }
+
+  if (stateAfter.coll > 0 && afterCollUsd > 0) {
+    items.push({
+      content: <span>Collateral: <V>{fmtColl(stateAfter.coll)} {collateralType}</V> ({fmtUsd(afterCollUsd)})</span>,
+    });
+  }
+
+  if (stateAfter.annualInterestRate !== stateBefore.annualInterestRate) {
+    items.push({
+      content: (
+        <span>
+          Rate changed from {(stateBefore.annualInterestRate * 100).toFixed(1)}% to individual rate of <V>{(stateAfter.annualInterestRate * 100).toFixed(1)}%</V>
+        </span>
+      ),
+    });
+  }
+
+  if (stateAfter.collateralRatio > 0) {
+    items.push({
+      content: (
+        <span>
+          Collateral ratio: <V className={stateAfter.collateralRatio < 150 ? "text-red-400" : "text-green-400"}>
+            {stateAfter.collateralRatio.toFixed(1)}%
+          </V>
+        </span>
+      ),
+    });
+  }
+
+  if (accruedManagementFees > 0.01) {
+    items.push({
+      content: <span>Accrued delegate fees: <V>~{accruedManagementFees.toFixed(2)} BOLD</V></span>,
+      type: "warning",
+    });
+  }
+
+  return items;
+}
+
+function generateBatchRateUpdateItems(ctx: LiquityContext): ExplainerItem[] {
+  const items: ExplainerItem[] = [];
+  const { stateBefore, stateAfter, collateralType, collateralPrice } = ctx;
+  const increased = stateAfter.annualInterestRate > stateBefore.annualInterestRate;
+  const afterCollUsd = stateAfter.coll * collateralPrice;
+
+  items.push({
+    content: (
+      <span>
+        The batch manager {increased ? "increased" : "decreased"} the interest rate from{" "}
+        <V>{(stateBefore.annualInterestRate * 100).toFixed(1)}%</V> to{" "}
+        <V>{(stateAfter.annualInterestRate * 100).toFixed(1)}%</V> APR
+      </span>
+    ),
+  });
+
+  if (ctx.batchUpdate?.interestBatchManager) {
+    items.push({
+      content: <span>Delegate: <LinkedAddress address={ctx.batchUpdate.interestBatchManager} /></span>,
+    });
+  }
+
+  if (stateAfter.debt > 0) {
+    items.push({
+      content: <span>Debt updated to <V>{fmtCurrency(stateAfter.debt, ctx.assetType ?? "BOLD")}</V></span>,
+    });
+  }
+
+  if (stateAfter.coll > 0 && afterCollUsd > 0) {
+    items.push({
+      content: <span>Collateral: <V>{fmtColl(stateAfter.coll)} {collateralType}</V> ({fmtUsd(afterCollUsd)})</span>,
+    });
+  }
+
+  if (stateAfter.collateralRatio > 0) {
+    items.push({
+      content: (
+        <span>
+          Collateral ratio: <V className={stateAfter.collateralRatio < 150 ? "text-red-400" : "text-green-400"}>
+            {stateAfter.collateralRatio.toFixed(1)}%
+          </V>
+        </span>
+      ),
+    });
+  }
+
+  return items;
+}
+
+function generateTransferItems(ctx: LiquityContext): ExplainerItem[] {
+  const items: ExplainerItem[] = [];
+  const { transfer, stateAfter, collateralType, collateralPrice } = ctx;
+
+  if (!transfer) {
+    items.push({ content: <span>The {collateralType} trove ownership was transferred</span> });
+    return items;
+  }
+
+  const { transferType, fromAddress, toAddress } = transfer;
+  const typeLabel = transferType === "mint" ? "Minted" : transferType === "burn" ? "Burned" : "Transferred";
+
+  if (transferType === "mint") {
+    items.push({
+      content: <span>Trove NFT minted to wallet <LinkedAddress address={toAddress} /></span>,
+    });
+  } else if (transferType === "burn") {
+    items.push({
+      content: <span>Trove NFT burned from wallet <LinkedAddress address={fromAddress} /></span>,
+    });
+  } else {
+    items.push({
+      content: (
+        <span>
+          Trove ownership transferred from <LinkedAddress address={fromAddress} /> to <LinkedAddress address={toAddress} />
+        </span>
+      ),
+    });
+  }
+
+  items.push({
+    content: <span>Liquity V2 troves are represented as ERC-721 NFT tokens, enabling transferable ownership</span>,
+  });
+
+  if (transferType === "transfer") {
+    items.push({
+      content: <span>The new owner gains full control of the trove&apos;s debt, collateral, and interest rate settings</span>,
+    });
+
+    // Show transferred position details
+    if (stateAfter.debt > 0 || stateAfter.coll > 0) {
+      const afterCollUsd = stateAfter.coll * collateralPrice;
+      items.push({
+        content: (
+          <span>
+            The transferred trove contains <V>{fmtCurrency(stateAfter.debt, ctx.assetType ?? "BOLD")}</V> debt and{" "}
+            <V>{fmtColl(stateAfter.coll)} {collateralType}</V> collateral with a{" "}
+            <V>{stateAfter.collateralRatio.toFixed(1)}%</V> collateral ratio at a{" "}
+            <V>{(stateAfter.annualInterestRate * 100).toFixed(1)}%</V> interest rate
+            {collateralPrice > 0 && <> ({collateralType} price: {fmtUsd(collateralPrice)})</>}
+          </span>
+        ),
+      });
+    }
+  }
+
+  items.push({
+    content: <span>Trove&apos;s debt and collateral balances remain unchanged during ownership transfer</span>,
+  });
+
+  return items;
+}
+
+// ── Main generator ──────────────────────────────────────────────────
+
+function generateItems(ctx: LiquityContext, previousEvent?: BaseActivityEvent, currentEvent?: BaseActivityEvent): ExplainerItem[] {
+  let accruedInterest = 0;
+  let accruedManagementFees = 0;
+  if (previousEvent && currentEvent) {
+    const calc = calculateInterestBetweenTransactions(currentEvent, previousEvent);
+    accruedInterest = calc.accruedInterest;
+    accruedManagementFees = calc.accruedManagementFees;
+  }
+
+  switch (ctx.operation) {
+    case "openTrove":
+    case "openTroveAndJoinBatch":
+      return generateOpenTroveItems(ctx);
+    case "closeTrove":
+      return generateCloseTroveItems(ctx, accruedInterest);
+    case "adjustTrove":
+      return generateAdjustTroveItems(ctx, accruedInterest, accruedManagementFees);
+    case "adjustTroveInterestRate":
+      return generateAdjustRateItems(ctx, accruedInterest, accruedManagementFees);
+    case "liquidate":
+      return generateLiquidateItems(ctx);
+    case "redeemCollateral":
+    case "adjustZombieTrove":
+    case "adjustUnredeemableZombieTrove":
+      return generateRedeemItems(ctx);
+    case "applyPendingDebt":
+      return generateApplyPendingDebtItems(ctx);
+    case "setInterestBatchManager":
+      return generateSetBatchManagerItems(ctx, accruedInterest);
+    case "removeFromBatch":
+      return generateRemoveFromBatchItems(ctx, accruedInterest, accruedManagementFees);
+    case "setBatchManagerAnnualInterestRate":
+      return generateBatchRateUpdateItems(ctx);
+    case "transferTrove":
+      return generateTransferItems(ctx);
+    default:
+      return [{ content: <span>{ctx.operation} on the {ctx.collateralType} trove</span> }];
+  }
+}
+
+// ── Styles ──────────────────────────────────────────────────────────
+
+const TYPE_STYLES: Record<string, string> = {
+  warning: "text-amber-300",
+  success: "text-green-300",
+  error: "text-red-300",
+  info: "text-blue-300",
+};
+
+// ── Component ───────────────────────────────────────────────────────
+
+export interface LiquityEventExplainerProps {
+  ctx: LiquityContext;
+  previousEvent?: BaseActivityEvent;
+  currentEvent?: BaseActivityEvent;
+}
+
+function getLearnMoreContent(ctx: LiquityContext) {
+  switch (ctx.operation) {
+    case "openTrove":
+    case "openTroveAndJoinBatch":
+      return liquityOpenTroveContent();
+    case "liquidate":
+      return liquityLiquidationContent(ctx.collateralType);
+    case "redeemCollateral":
+    case "adjustZombieTrove":
+    case "adjustUnredeemableZombieTrove":
+      return liquityRedemptionContent(
+        ctx.collateralType,
+        ctx.stateAfter.annualInterestRate > 0
+          ? ctx.stateAfter.annualInterestRate * 100
+          : undefined
+      );
+    default:
+      return null;
+  }
+}
+
+/** Extract the first explainer bullet as a teaser for progressive disclosure */
+export function getLiquityExplainerTeaser(ctx: LiquityContext, previousEvent?: BaseActivityEvent, currentEvent?: BaseActivityEvent): React.ReactNode | null {
+  const items = generateItems(ctx, previousEvent, currentEvent);
+  return items[0]?.content ?? null;
+}
+
+export function LiquityEventExplainer({ ctx, previousEvent, currentEvent, skipFirst }: LiquityEventExplainerProps & { skipFirst?: boolean }) {
+  const allItems = generateItems(ctx, previousEvent, currentEvent);
+  const items = skipFirst ? allItems.slice(1) : allItems;
+  const learnMore = getLearnMoreContent(ctx);
+
+  if (items.length === 0 && !learnMore) return null;
+
+  return (
+    <div className="mt-2 text-sm leading-relaxed space-y-2">
+      {items.map((item, i) => (
+        <div key={i} className="flex items-baseline gap-2">
+          <span className="">•</span>
+          <div className={TYPE_STYLES[item.type ?? ""] ?? ""}>
+            {item.content}
+          </div>
+        </div>
+      ))}
+      {learnMore && <LearnMore content={learnMore} />}
+    </div>
+  );
+}
