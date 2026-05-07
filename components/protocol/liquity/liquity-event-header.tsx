@@ -100,7 +100,7 @@ export interface LiquityEventHeaderProps {
 export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEventHeaderProps) {
   const style = getOperationStyle(ctx.operation, ctx);
   const { stateBefore, stateAfter, troveOperation } = ctx;
-  const { showTimestamps } = useTimelineDisplay();
+  const { showTimestamps, showEventNumbers } = useTimelineDisplay();
   const { prefs } = usePreferences();
   const ratioMode = prefs.ratioMode;
 
@@ -113,7 +113,7 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
     </span>
   ) : null;
 
-  const counter = eventNumber != null ? (
+  const counter = eventNumber != null && showEventNumbers ? (
     <span
       className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] bg-rb-200 dark:bg-rb-800 text-rb-500"
       aria-label={`Event ${eventNumber}`}

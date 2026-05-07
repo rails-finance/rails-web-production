@@ -46,6 +46,7 @@ function TimelineDisplayToggle() {
     showTimelineValues,
     showChangeBars,
     showBalanceBars,
+    showEventNumbers,
     toggle,
   } = useTimelineDisplay();
   const options: FilterOption[] = [
@@ -53,12 +54,14 @@ function TimelineDisplayToggle() {
     { key: "timeline-values", label: "Timeline values" },
     { key: "change-bars", label: "Change bars" },
     { key: "balance-bars", label: "Balance bars" },
+    { key: "event-numbers", label: "Event numbers" },
   ];
   const visible = new Set<string>();
   if (showTimestamps) visible.add("timestamps");
   if (showTimelineValues) visible.add("timeline-values");
   if (showChangeBars) visible.add("change-bars");
   if (showBalanceBars) visible.add("balance-bars");
+  if (showEventNumbers) visible.add("event-numbers");
   return (
     <FilterDropdown
       label="Display"
@@ -75,6 +78,7 @@ function TimelineDisplayToggle() {
         else if (key === "timeline-values") toggle("showTimelineValues");
         else if (key === "change-bars") toggle("showChangeBars");
         else if (key === "balance-bars") toggle("showBalanceBars");
+        else if (key === "event-numbers") toggle("showEventNumbers");
       }}
     />
   );

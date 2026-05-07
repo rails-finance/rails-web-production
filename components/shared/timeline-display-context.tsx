@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 
-export type TimelineDisplayKey = "showTimestamps" | "showChangeBars" | "showBalanceBars" | "showTimelineValues" | "showTickerLabels" | "showUsdValues";
+export type TimelineDisplayKey = "showTimestamps" | "showChangeBars" | "showBalanceBars" | "showTimelineValues" | "showTickerLabels" | "showUsdValues" | "showEventNumbers";
 
 export interface TimelineDisplayState {
   showTimestamps: boolean;
@@ -20,10 +20,13 @@ export interface TimelineDisplayState {
   /** When true, position-snapshot / simulator rows show the USD-equivalent
    * value next to the asset amount. */
   showUsdValues: boolean;
+  /** When true, each timeline row displays its 1-based chronological number
+   * (stable across asc/desc display). */
+  showEventNumbers: boolean;
   toggle: (key: TimelineDisplayKey) => void;
 }
 
-const DEFAULTS = { showTimestamps: false, showChangeBars: false, showBalanceBars: false, showTimelineValues: true, showTickerLabels: false, showUsdValues: false };
+const DEFAULTS = { showTimestamps: false, showChangeBars: false, showBalanceBars: false, showTimelineValues: true, showTickerLabels: false, showUsdValues: false, showEventNumbers: false };
 const STORAGE_KEY = "timeline-display-v2";
 
 const Ctx = createContext<TimelineDisplayState>({
