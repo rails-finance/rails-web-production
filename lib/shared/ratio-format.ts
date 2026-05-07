@@ -34,9 +34,9 @@ export function ratioColorClass(cr: number, opts: RatioColorOptions = {}): strin
   const {
     danger = 150,
     warn = 200,
-    safeClass = 'text-green-400',
-    warnClass = 'text-yellow-400',
-    dangerClass = 'text-red-400',
+    safeClass = 'text-green-700 dark:text-green-400',
+    warnClass = 'text-yellow-600 dark:text-yellow-400',
+    dangerClass = 'text-red-700 dark:text-red-400',
     zeroClass = '',
   } = opts;
   if (!isFinite(cr) || cr <= 0) return zeroClass;

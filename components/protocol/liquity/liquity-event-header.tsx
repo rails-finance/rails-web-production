@@ -17,11 +17,11 @@ function getOperationStyle(operation: string, ctx?: LiquityContext): OperationSt
   switch (operation) {
     case "openTrove":
     case "openTroveAndJoinBatch":
-      return { label: "Open", color: "text-green-400", bg: "bg-green-500/20", badge: true };
+      return { label: "Open", color: "text-green-700 dark:text-green-400", bg: "bg-green-500/20", badge: true };
     case "closeTrove":
       return { label: "Close", color: "", bg: "bg-rb-500/20 dark:bg-rb-500/20", badge: true };
     case "liquidate":
-      return { label: "Liquidated", color: "text-red-400", bg: "bg-red-500/20", badge: true };
+      return { label: "Liquidated", color: "text-red-700 dark:text-red-400", bg: "bg-red-500/20", badge: true };
     case "adjustTrove": {
       if (ctx?.troveOperation) {
         const debtOp = ctx.troveOperation.debtChangeFromOperation;
@@ -56,12 +56,12 @@ function getOperationStyle(operation: string, ctx?: LiquityContext): OperationSt
       return { label: "Rate change", color: "", bg: "", badge: false };
     }
     case "applyPendingDebt":
-      return { label: "Apply debt", color: "text-pink-400", bg: "bg-pink-500/20", badge: true };
+      return { label: "Apply debt", color: "text-pink-700 dark:text-pink-400", bg: "bg-pink-500/20", badge: true };
     case "redeemCollateral":
-      return { label: "Redemption", color: "text-amber-400", bg: "bg-amber-500/20", badge: true };
+      return { label: "Redemption", color: "text-amber-700 dark:text-amber-400", bg: "bg-amber-500/20", badge: true };
     case "adjustZombieTrove":
     case "adjustUnredeemableZombieTrove":
-      return { label: "Redeemed", color: "text-amber-400", bg: "bg-amber-500/20", badge: true };
+      return { label: "Redeemed", color: "text-amber-700 dark:text-amber-400", bg: "bg-amber-500/20", badge: true };
     case "setInterestBatchManager":
       return { label: "Delegate", color: "", bg: "", badge: false };
     case "removeFromBatch":
@@ -82,10 +82,10 @@ function formatNumber(n: number): string {
 }
 
 const ACTOR_ROLE_STYLES: Record<string, { label: string; color: string }> = {
-  owner: { label: "Owner", color: "bg-green-500/20 text-green-400 border-green-500/30" },
-  redeemer: { label: "Redeemer", color: "bg-amber-500/20 text-amber-400 border-amber-500/30" },
-  liquidator: { label: "Liquidator", color: "bg-red-500/20 text-red-400 border-red-500/30" },
-  batch_manager: { label: "Delegate", color: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
+  owner: { label: "Owner", color: "bg-green-500/20 text-green-700 dark:text-green-400 border-green-500/30" },
+  redeemer: { label: "Redeemer", color: "bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-500/30" },
+  liquidator: { label: "Liquidator", color: "bg-red-500/20 text-red-700 dark:text-red-400 border-red-500/30" },
+  batch_manager: { label: "Delegate", color: "bg-blue-500/20 text-blue-700 dark:text-blue-400 border-blue-500/30" },
 };
 
 export interface LiquityEventHeaderProps {
@@ -141,7 +141,7 @@ export function LiquityEventHeader({ ctx, timestamp, protocolId }: LiquityEventH
           )}
           {ctx.operation === "setBatchManagerAnnualInterestRate" && stateAfter ? (
             <>
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 text-xs font-bold">
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-700 dark:text-purple-400 text-xs font-bold">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
                 {(stateAfter.annualInterestRate * 100).toFixed(1)}%
               </span>
@@ -158,7 +158,7 @@ export function LiquityEventHeader({ ctx, timestamp, protocolId }: LiquityEventH
             <>
               <span className="text-sm text-rb-500">{style.label}</span>
               {stateAfter.annualInterestRate > 0 && (
-                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 text-xs font-bold">
+                <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-700 dark:text-purple-400 text-xs font-bold">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
                   {(stateAfter.annualInterestRate * 100).toFixed(2)}%
                 </span>
