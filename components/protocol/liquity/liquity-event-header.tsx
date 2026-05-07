@@ -114,8 +114,11 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
   ) : null;
 
   const counter = eventNumber != null ? (
-    <span className="text-xs font-mono text-rb-500/70" aria-label={`Event ${eventNumber}`}>
-      #{eventNumber}
+    <span
+      className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] bg-rb-200 dark:bg-rb-800 text-rb-500"
+      aria-label={`Event ${eventNumber}`}
+    >
+      {eventNumber}
     </span>
   ) : null;
 
