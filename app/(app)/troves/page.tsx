@@ -253,7 +253,7 @@ function TrovesPageContent() {
       <FeedbackButton />
       <div className="max-w-7xl mx-auto py-8">
         {/* Page Header */}
-        <h1 className="text-2xl font-bold text-slate-700 dark:text-white mb-6">Liquity V2 Troves</h1>
+        <h1 className="text-2xl font-bold text-foreground mb-6">Liquity V2 Troves</h1>
 
         {/* Filters */}
         <TroveListFilters
@@ -290,7 +290,7 @@ function TrovesPageContent() {
               exit={{ opacity: 0 }}
               className="text-center py-12"
             >
-              <div className="text-slate-400 text-lg">
+              <div className="text-rb-500 text-lg">
                 <p className="mb-2">No troves found</p>
                 <p className="text-sm">Try adjusting your filters</p>
               </div>

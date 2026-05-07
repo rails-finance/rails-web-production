@@ -25,15 +25,15 @@ export function CardFooter({ trove, dateText, showDetailedInfo = true, isLiquida
 
   // Different background colors for liquidated vs active troves
   const badgeBgClass = isLiquidated
-    ? "bg-red-100 dark:bg-black/25"
-    : "bg-slate-100 dark:bg-slate-800";
+    ? "bg-red-100 dark:bg-red-900/30"
+    : "bg-rb-200 dark:bg-rb-900";
 
   return (
     <div className="text-xs">
       <div className="flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-0 sm:items-center">
         <div className="flex flex-col-reverse sm:flex-row sm:items-center gap-2 sm:space-x-3">
           {dateText && (
-            <span className="text-slate-400 flex items-center gap-1">
+            <span className="text-rb-500 flex items-center gap-1">
               <Icon name="clock-zap" size={14} />
               {dateText}
             </span>
@@ -41,16 +41,16 @@ export function CardFooter({ trove, dateText, showDetailedInfo = true, isLiquida
           <div className="flex flex-wrap sm:flex-row gap-3">
             {showDetailedInfo && displayOwner && (
               <span className={`${badgeBgClass} rounded-sm px-1.5 py-1 inline-flex items-center`}>
-                <span className="text-slate-600 dark:text-slate-400 flex items-center gap-1">
+                <span className="text-rb-500 flex items-center gap-1">
                   <Icon name="user" size={12} />
                   <Link
                     href={`/troves?ownerAddress=${displayOwner}`}
-                    className="hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
+                    className="hover:text-foreground transition-colors"
                   >
                     <HighlightableValue
                       type="ownerAddress"
                       state="after"
-                      className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                      className="text-rb-500 hover:text-foreground"
                       variant="card"
                     >
                       {trove.ownerEns || `${displayOwner.substring(0, 6)}...${displayOwner.substring(38)}`}
@@ -58,7 +58,7 @@ export function CardFooter({ trove, dateText, showDetailedInfo = true, isLiquida
                   </Link>
                   <div className="relative inline-block group">
                     <button
-                      className="mx-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded cursor-pointer flex items-center"
+                      className="mx-1.5 text-rb-500 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 rounded cursor-pointer flex items-center"
                       aria-label={copiedOwnerAddress ? "Copied to clipboard" : "Copy to clipboard"}
                       onClick={(e) => {
                         e.preventDefault();
@@ -74,7 +74,7 @@ export function CardFooter({ trove, dateText, showDetailedInfo = true, isLiquida
                     </button>
                     <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 pointer-events-none">
                       <div
-                        className={`bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-200 px-2 py-1 rounded text-xs whitespace-nowrap transition-opacity duration-200 ${
+                        className={`bg-rb-200 dark:bg-rb-700 text-foreground px-2 py-1 rounded text-xs whitespace-nowrap transition-opacity duration-200 ${
                           copiedOwnerAddress ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                         }`}
                       >
@@ -87,12 +87,12 @@ export function CardFooter({ trove, dateText, showDetailedInfo = true, isLiquida
             )}
             {showDetailedInfo && (
               <span className={`${badgeBgClass} rounded-sm px-1.5 py-1 inline-flex items-center`}>
-                <span className="text-slate-600 dark:text-slate-400 flex items-center gap-1">
+                <span className="text-rb-500 flex items-center gap-1">
                   <Icon name="trove-id" size={12} />
                   <HighlightableValue
                     type="troveId"
                     state="after"
-                    className="text-slate-600 dark:text-slate-400"
+                    className="text-rb-500"
                     value={trove.id ? parseInt(trove.id) : undefined}
                     variant="card"
                   >
@@ -100,7 +100,7 @@ export function CardFooter({ trove, dateText, showDetailedInfo = true, isLiquida
                   </HighlightableValue>
                   <div className="relative inline-block group">
                     <button
-                      className="mx-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded cursor-pointer flex items-center"
+                      className="mx-1.5 text-rb-500 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 rounded cursor-pointer flex items-center"
                       aria-label={copiedTrove ? "Copied to clipboard" : "Copy to clipboard"}
                       onClick={(e) => {
                         e.preventDefault();
@@ -116,7 +116,7 @@ export function CardFooter({ trove, dateText, showDetailedInfo = true, isLiquida
                     </button>
                     <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 pointer-events-none">
                       <div
-                        className={`bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-200 px-2 py-1 rounded text-xs whitespace-nowrap transition-opacity duration-200 ${
+                        className={`bg-rb-200 dark:bg-rb-700 text-foreground px-2 py-1 rounded text-xs whitespace-nowrap transition-opacity duration-200 ${
                           copiedTrove ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                         }`}
                       >
@@ -133,20 +133,20 @@ export function CardFooter({ trove, dateText, showDetailedInfo = true, isLiquida
                   href={getTroveNftUrl(trove.collateralType, trove.id)!}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 justify-center ml-0.5 transition-colors duration-150"
+                  className="inline-flex items-center text-rb-500 hover:text-foreground justify-center ml-0.5 transition-colors duration-150"
                   aria-label="View NFT on OpenSea"
                 >
                   <HighlightableValue
                     type="nftToken"
                     state="after"
-                    className="text-slate-600 dark:text-slate-400"
+                    className="text-rb-500"
                     variant="card"
                   >
                     <Image size={14} className="" />
                   </HighlightableValue>
                   <Link2
                     size={14}
-                    className="-rotate-45 inline-flex items-center justify-center ml-0.5 bg-slate-200 dark:bg-slate-800 w-4 h-4 rounded-full transition-colors duration-150"
+                    className="-rotate-45 inline-flex items-center justify-center ml-0.5 bg-rb-200 dark:bg-rb-800 w-4 h-4 rounded-full transition-colors duration-150"
                   />
                 </a>
               </span>

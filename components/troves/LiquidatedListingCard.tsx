@@ -17,7 +17,7 @@ export function LiquidatedListingCard({ trove }: { trove: TroveSummary }) {
     <Link
       href={`/trove/${trove.collateralType}/${trove.id}`}
       onClick={handleClick}
-      className="block relative rounded-lg text-slate-600 dark:text-slate-500 bg-red-50 dark:bg-red-950 hover:shadow-lg transition-all cursor-pointer group"
+      className="block relative rounded-xl text-foreground bg-red-50 dark:bg-red-950/50 hover:bg-red-100 dark:hover:bg-red-950 transition-colors cursor-pointer group"
       aria-label={`View liquidated trove ${trove.id.substring(0, 8)}... with ${trove.collateralType} collateral, last owned by ${trove.lastOwner?.substring(0, 6)}...${trove.lastOwner?.substring(38)}`}
     >
       {/* Header section */}
@@ -32,7 +32,7 @@ export function LiquidatedListingCard({ trove }: { trove: TroveSummary }) {
               <span className="ml-1">{trove.activity.redemptionCount}</span>
             </span>
           )}
-          <span className="inline-flex items-center text-slate-600 dark:text-slate-400">
+          <span className="inline-flex items-center text-rb-500">
             <Icon name="arrow-left-right" size={12} />
             <span className="ml-1">{trove.activity.transactionCount - trove.activity.redemptionCount}</span>
           </span>
@@ -49,12 +49,12 @@ export function LiquidatedListingCard({ trove }: { trove: TroveSummary }) {
           </span>
           <div className="flex items-center gap-2">
             {trove.lastOwner && (
-              <span className="bg-red-100 dark:bg-black/25 rounded-sm px-1.5 py-1 text-slate-600 dark:text-slate-400">
+              <span className="bg-red-100 dark:bg-red-900/30 rounded-sm px-1.5 py-1 text-rb-500">
                 <Icon name="user" size={12} className="inline mr-1" />
                 {`${trove.lastOwner.substring(0, 6)}...${trove.lastOwner.substring(38)}`}
               </span>
             )}
-            <span className="bg-red-100 dark:bg-black/25 rounded-sm px-1.5 py-1 text-slate-600 dark:text-slate-400">
+            <span className="bg-red-100 dark:bg-red-900/30 rounded-sm px-1.5 py-1 text-rb-500">
               <Icon name="trove-id" size={12} className="inline mr-1" />
               {trove.id ? `${trove.id.substring(0, 8)}...` : "n/a"}
             </span>
@@ -63,12 +63,12 @@ export function LiquidatedListingCard({ trove }: { trove: TroveSummary }) {
 
         {/* Duration and View button row */}
         <div className="flex items-center justify-between text-xs">
-          <span className="text-slate-400">
+          <span className="text-rb-500">
             <Icon name="clock-zap" size={14} className="inline mr-1" />
             {formatDuration(trove.activity.lastActivityAt, new Date())} ago
           </span>
-          <div className="flex items-center bg-slate-300 dark:bg-slate-800 group-hover:bg-blue-500 transition-colors rounded-full pl-3 pr-2 py-1">
-            <span className="text-sm text-slate-50 dark:text-slate-500 group-hover:text-white font-bold flex items-center gap-1">
+          <div className="flex items-center bg-rb-300 dark:bg-rb-800 group-hover:bg-blue-500 transition-colors rounded-full pl-3 pr-2 py-1">
+            <span className="text-sm text-rb-500 group-hover:text-white font-semibold flex items-center gap-1">
               <Icon name="timeline" size={20} aria-hidden="true" />
               View
               <ChevronRight className="w-4 h-4" aria-hidden="true" />

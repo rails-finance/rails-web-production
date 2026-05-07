@@ -22,7 +22,7 @@ export function PaginationControls({
   const showingFrom = (currentPage - 1) * itemsPerPage + 1;
   const showingTo = Math.min(currentPage * itemsPerPage, totalCount);
   const focusStyles =
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-slate-400 dark:focus-visible:ring-offset-slate-900";
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rb-500 focus-visible:ring-offset-2 focus-visible:ring-offset-rb-50 dark:focus-visible:ring-rb-400 dark:focus-visible:ring-offset-rb-900";
 
   const pageNumbers = [];
   const maxVisible = 5;
@@ -39,7 +39,7 @@ export function PaginationControls({
 
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8">
-      <div className="text-sm text-slate-400 whitespace-nowrap">
+      <div className="text-sm text-rb-500 whitespace-nowrap">
         Showing {showingFrom}-{showingTo} of {totalCount} troves
       </div>
 
@@ -48,7 +48,7 @@ export function PaginationControls({
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
           aria-label="Go to previous page"
-          className={`cursor-pointer p-1.5 text-slate-700 dark:text-slate-50 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700/75 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 ${focusStyles}`}
+          className={`cursor-pointer p-1.5 text-foreground rounded-lg hover:bg-rb-200 dark:hover:bg-rb-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 ${focusStyles}`}
         >
           <ChevronLeft className="w-5 h-5" aria-hidden="true" />
         </button>
@@ -58,11 +58,11 @@ export function PaginationControls({
             <button
               onClick={() => onPageChange(1)}
               aria-label="Go to first page"
-              className={`cursor-pointer text-slate-700 dark:text-slate-50 px-2 sm:px-3 py-0.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700/75 transition-colors duration-150 ${focusStyles}`}
+              className={`cursor-pointer text-foreground px-2 sm:px-3 py-0.5 rounded-lg hover:bg-rb-200 dark:hover:bg-rb-800 transition-colors duration-150 ${focusStyles}`}
             >
               1
             </button>
-            {start > 2 && <span className="font-bold text-slate-700 dark:text-slate-50">...</span>}
+            {start > 2 && <span className="font-bold text-foreground">...</span>}
           </>
         )}
 
@@ -72,10 +72,10 @@ export function PaginationControls({
             onClick={() => onPageChange(num)}
             aria-label={`Page ${num}${num === currentPage ? ", current page" : ""}`}
             aria-current={num === currentPage ? "page" : undefined}
-            className={`cursor-pointer text-slate-700 dark:text-slate-50 px-2 sm:px-3 py-0.5 font-bold rounded-lg transition-colors ${focusStyles} ${
+            className={`cursor-pointer text-foreground px-2 sm:px-3 py-0.5 font-bold rounded-lg transition-colors ${focusStyles} ${
               num === currentPage
-                ? "bg-slate-200 dark:bg-slate-600 text-slate-700"
-                : "hover:bg-slate-100 dark:hover:bg-slate-700"
+                ? "bg-rb-200 dark:bg-rb-700 text-foreground"
+                : "hover:bg-rb-200 dark:hover:bg-rb-800"
             }`}
           >
             {num}
@@ -84,11 +84,11 @@ export function PaginationControls({
 
         {end < totalPages && (
           <>
-            {end < totalPages - 1 && <span className="font-bold text-slate-700 dark:text-slate-50">...</span>}
+            {end < totalPages - 1 && <span className="font-bold text-foreground">...</span>}
             <button
               onClick={() => onPageChange(totalPages)}
               aria-label="Go to last page"
-              className={`cursor-pointer px-2 sm:px-3 py-0.5 font-bold text-slate-700 dark:text-slate-50 rounded-lg dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700/75 transition-colors duration-150 ${focusStyles}`}
+              className={`cursor-pointer px-2 sm:px-3 py-0.5 font-bold text-foreground rounded-lg dark:bg-rb-800 hover:bg-rb-200 dark:hover:bg-rb-800 transition-colors duration-150 ${focusStyles}`}
             >
               {totalPages}
             </button>
@@ -99,7 +99,7 @@ export function PaginationControls({
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
           aria-label="Go to next page"
-          className={`cursor-pointer text-slate-700 dark:text-slate-50 p-1.5 font-bold rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700/75 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 ${focusStyles}`}
+          className={`cursor-pointer text-foreground p-1.5 font-bold rounded-lg hover:bg-rb-200 dark:hover:bg-rb-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150 ${focusStyles}`}
         >
           <ChevronRight className="w-5 h-5" aria-hidden="true" />
         </button>
