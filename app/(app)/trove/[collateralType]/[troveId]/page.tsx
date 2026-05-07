@@ -1,15 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ChevronLeft, Users } from "lucide-react";
 import { TroveSummary, TrovesResponse } from "@/types/api/trove";
-import type { TransactionTimeline as TimelineData } from "@/types/api/troveHistory";
-import { isRedemptionTransaction, isBatchManagerOperation } from "@/types/api/troveHistory";
 import { TroveSummaryCard } from "@/components/trove/TroveSummaryCard";
 import { TroveEconomicsSummary } from "@/components/trove/TroveEconomicsSummary";
 import { Button } from "@/components/ui/button";
-import { TransactionTimeline } from "@/components/transaction-timeline";
 import { formatDuration } from "@/lib/date";
 import { Icon } from "@/components/icons/icon";
 import { TokenIcon } from "@/components/icons/tokenIcon";
@@ -19,6 +16,21 @@ import { OraclePricesData, OraclePricesResponse } from "@/types/api/oracle";
 import { useTroveUiState } from "@/hooks/useTroveUiState";
 import { useDebtInFront } from "@/hooks/useDebtInFront";
 
+import { fetchTroveTimeline } from "@/lib/api/fetch-timeline";
+import type { BaseActivityEvent } from "@/lib/shared/types/event-shape";
+import { isLiquityEvent } from "@/lib/shared/types/event-shape";
+import { LiquityEventCard } from "@/components/protocol/liquity/liquity-event-card";
+import { TimelineDisplayProvider } from "@/components/shared/timeline-display-context";
+import { LiquityTroveBarsProvider } from "@/lib/liquity/use-trove-bars";
+
+function isRedemptionEvent(e: BaseActivityEvent): boolean {
+  return isLiquityEvent(e) && e.context.data.eventType === "redemption";
+}
+
+function isBatchManagerEvent(e: BaseActivityEvent): boolean {
+  return isLiquityEvent(e) && e.context.data.eventType === "batch_manager";
+}
+
 export default function TrovePage() {
   const params = useParams();
   const router = useRouter();
@@ -27,21 +39,17 @@ export default function TrovePage() {
   const troveKey = `${collateralType}:${troveId}`;
 
   const [troveData, setTroveData] = useState<TroveSummary | null>(null);
-  const [timelineData, setTimelineData] = useState<TimelineData | null>(null);
+  const [events, setEvents] = useState<BaseActivityEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const {
     hideDelegateRates,
     hideRedemptions,
-    transactions: transactionUiState,
     summaryExplanationOpen,
     economicsOpen,
     setHideDelegateRates,
     setHideRedemptions,
-    getTransactionState,
-    setTransactionExpanded,
-    setExplanationOpen,
     setSummaryExplanationOpen,
     setEconomicsOpen,
   } = useTroveUiState(troveKey);
@@ -71,41 +79,29 @@ export default function TrovePage() {
       setLoading(true);
       setError(null);
 
-      // Fetch both trove data and timeline data in parallel
-      const [troveResponse, timelineResponse] = await Promise.all([
+      const [troveResponse, timelineResult] = await Promise.all([
         fetch(`/api/troves?troveId=${troveId}&collateralType=${collateralType}`),
-        fetch(`/api/trove/${collateralType}/${troveId}`),
+        fetchTroveTimeline({ collateralType, troveId, limit: 500 }).catch(err => {
+          console.error("Failed to fetch trove timeline:", err);
+          return null;
+        }),
       ]);
 
       if (!troveResponse.ok) {
         throw new Error(`Failed to fetch trove: ${troveResponse.statusText}`);
       }
 
-      const troveData: TrovesResponse = await troveResponse.json();
+      const troveDataResp: TrovesResponse = await troveResponse.json();
 
-      if (!troveData.data || troveData.data.length === 0) {
+      if (!troveDataResp.data || troveDataResp.data.length === 0) {
         setError("Trove not found");
-        setLoading(false); // Always set loading to false
+        setLoading(false);
         return;
       }
 
-      setTroveData(troveData.data[0]);
+      setTroveData(troveDataResp.data[0]);
+      setEvents(timelineResult?.events ?? []);
 
-      // Handle timeline response even if it fails
-      if (timelineResponse.ok) {
-        const timeline: TimelineData = await timelineResponse.json();
-        setTimelineData(timeline);
-      } else {
-        console.error("Failed to fetch timeline:", timelineResponse.statusText);
-        // Set empty timeline on error
-        setTimelineData({
-          troveId,
-          transactions: [],
-          totalTransactions: 0,
-        });
-      }
-
-      // After successfully loading base data, fetch enhancements
       setLoading(false);
       loadEnhancements();
     } catch (err) {
@@ -118,13 +114,11 @@ export default function TrovePage() {
   const loadEnhancements = async () => {
     setEnhancementLoading({ blockchain: true, prices: true });
 
-    // Fetch blockchain state and prices in parallel
     const results = await Promise.allSettled([
       fetch(`/api/trove/state/${collateralType}/${troveId}`),
       fetch(`/api/oracle/liquity-v2`),
     ]);
 
-    // Handle blockchain state response
     if (results[0].status === "fulfilled" && results[0].value.ok) {
       try {
         const stateResponse: TroveStateResponse = await results[0].value.json();
@@ -139,7 +133,6 @@ export default function TrovePage() {
     }
     setEnhancementLoading((prev) => ({ ...prev, blockchain: false }));
 
-    // Handle prices response
     if (results[1].status === "fulfilled" && results[1].value.ok) {
       try {
         const pricesResponse: OraclePricesResponse = await results[1].value.json();
@@ -157,14 +150,32 @@ export default function TrovePage() {
 
   const getEnhancementStatus = (): string | null => {
     const { blockchain, prices } = enhancementLoading;
-
     if (!blockchain && !prices) return null;
-
     if (blockchain) return "Loading current state...";
     if (prices) return "Fetching current asset price...";
-
     return null;
   };
+
+  // Events sorted oldest → newest, with Liquity events at the front so the
+  // bars provider's lifetime-peak walk is deterministic.
+  const sortedEvents = useMemo(
+    () => [...events].sort((a, b) => a.blockNumber - b.blockNumber || a.timestamp - b.timestamp),
+    [events],
+  );
+
+  const visibleEvents = useMemo(
+    () =>
+      sortedEvents.filter((e) => {
+        if (hideRedemptions && isRedemptionEvent(e)) return false;
+        if (hideDelegateRates && isBatchManagerEvent(e)) return false;
+        return true;
+      }),
+    [sortedEvents, hideRedemptions, hideDelegateRates],
+  );
+
+  const redemptionCount = sortedEvents.filter(isRedemptionEvent).length;
+  const batchManagerCount = sortedEvents.filter(isBatchManagerEvent).length;
+  const lastEventTs = sortedEvents.length > 0 ? sortedEvents[sortedEvents.length - 1].timestamp : null;
 
   if (loading) {
     return (
@@ -238,13 +249,13 @@ export default function TrovePage() {
           onToggleSummaryExplanation={setSummaryExplanationOpen}
           loadingStatus={{
             message: getEnhancementStatus(),
-            snapshotDate: timelineData?.transactions?.[0]?.timestamp,
+            snapshotDate: lastEventTs ?? undefined,
           }}
         />
 
         <TroveEconomicsSummary
           trove={troveData}
-          transactions={timelineData?.transactions}
+          transactions={undefined}
           currentPrice={prices?.[troveData.collateralType.toLowerCase() as keyof OraclePricesData]}
           entireDebt={liveState?.debt.entire}
           persistedOpen={economicsOpen}
@@ -262,13 +273,13 @@ export default function TrovePage() {
             )}
           </div>
           <div className="flex items-center gap-2">
-            {timelineData && timelineData.transactions.some((tx) => isBatchManagerOperation(tx)) && (
+            {batchManagerCount > 0 && (
               <button
                 onClick={() => setHideDelegateRates(!hideDelegateRates)}
                 aria-label={hideDelegateRates ? "Show delegate rate updates" : "Hide delegate rate updates"}
-                className={`cursor-pointer pl-0.5 pr-1.5 text-sm rounded-full transition-colors flex items-center bg-pink-100 dark:bg-pink-900/50 text-pink-600 dark:text-pink-400 hover:bg-pink-200 dark:hover:bg-pink-900/70`}
+                className="cursor-pointer pl-0.5 pr-1.5 text-sm rounded-full transition-colors flex items-center bg-pink-100 dark:bg-pink-900/50 text-pink-600 dark:text-pink-400 hover:bg-pink-200 dark:hover:bg-pink-900/70"
               >
-                <span className="w-5 h-5 flex items-center justify-center ">
+                <span className="w-5 h-5 flex items-center justify-center">
                   {hideDelegateRates ? (
                     <Icon name="x" size={12} className="text-pink-600 dark:text-pink-400" />
                   ) : (
@@ -277,17 +288,17 @@ export default function TrovePage() {
                 </span>
                 <span className="flex items-center text-xs font-medium gap-1">
                   <Users size={12} className="text-pink-500" />
-                  {timelineData.transactions.filter((tx) => isBatchManagerOperation(tx)).length}
+                  {batchManagerCount}
                 </span>
               </button>
             )}
-            {timelineData && timelineData.transactions.some((tx) => isRedemptionTransaction(tx)) && (
+            {redemptionCount > 0 && (
               <button
                 onClick={() => setHideRedemptions(!hideRedemptions)}
                 aria-label={hideRedemptions ? "Show redemption transactions" : "Hide redemption transactions"}
-                className={`cursor-pointer pl-0.5 pr-1.5 text-sm rounded-full transition-colors flex items-center bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/70`}
+                className="cursor-pointer pl-0.5 pr-1.5 text-sm rounded-full transition-colors flex items-center bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-400 hover:bg-orange-200 dark:hover:bg-orange-900/70"
               >
-                <span className="w-5 h-5 flex items-center justify-center ">
+                <span className="w-5 h-5 flex items-center justify-center">
                   {hideRedemptions ? (
                     <Icon name="x" size={12} className="text-orange-600 dark:text-orange-400" />
                   ) : (
@@ -296,28 +307,34 @@ export default function TrovePage() {
                 </span>
                 <span className="flex items-center text-xs font-medium gap-1">
                   <Icon name="triangle" size={12} className="text-orange-500" />
-                  {timelineData.transactions.filter((tx) => isRedemptionTransaction(tx)).length}
+                  {redemptionCount}
                 </span>
               </button>
             )}
           </div>
         </div>
-        {timelineData && timelineData.transactions.length > 0 ? (
-          <TransactionTimeline
-            timeline={{
-              ...timelineData,
-              transactions: timelineData.transactions.filter((tx) => {
-                if (hideRedemptions && isRedemptionTransaction(tx)) return false;
-                if (hideDelegateRates && isBatchManagerOperation(tx)) return false;
-                return true;
-              }),
-            }}
-            currentPrice={prices?.[troveData.collateralType.toLowerCase() as keyof OraclePricesData]}
-            transactionState={transactionUiState}
-            getTransactionState={getTransactionState}
-            setTransactionExpanded={setTransactionExpanded}
-            setExplanationOpen={setExplanationOpen}
-          />
+
+        {visibleEvents.length > 0 ? (
+          <TimelineDisplayProvider>
+            <LiquityTroveBarsProvider events={sortedEvents}>
+              <div className="space-y-2">
+                {visibleEvents.map((event, idx) => {
+                  if (!isLiquityEvent(event)) return null;
+                  const previousEvent = idx > 0 ? visibleEvents[idx - 1] : undefined;
+                  return (
+                    <LiquityEventCard
+                      key={event.id}
+                      event={event}
+                      addressDisplay="hidden"
+                      isFirst={idx === 0}
+                      isLast={idx === visibleEvents.length - 1}
+                      previousEvent={previousEvent}
+                    />
+                  );
+                })}
+              </div>
+            </LiquityTroveBarsProvider>
+          </TimelineDisplayProvider>
         ) : (
           <div className="text-center py-8 text-slate-400">No transaction history available</div>
         )}
