@@ -72,9 +72,10 @@ function TrovesPageContent() {
       filters.status = undefined;
     } else if (status) {
       filters.status = status;
-    } else {
-      filters.status = "open";
     }
+    // No default — show all statuses (open + closed + liquidated). The
+    // /liquity-v2 landing's recent-activity strip still passes status=open
+    // explicitly, so its open-only filter is unaffected.
 
     const collateralType = searchParams.get("collateralType");
     if (collateralType) filters.collateralType = collateralType;
