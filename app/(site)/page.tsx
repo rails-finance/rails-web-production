@@ -1,34 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { GraduationCap, Wallet, Code2, ShieldAlert } from "lucide-react";
-import { ProtocolStats } from "@/types/api/stats";
 import { LiquityLogo } from "@/components/LiquityLogo";
-import { CollateralBreakdown } from "@/components/stats/CollateralBreakdown";
 import { HomeHero } from "@/components/home/home-hero";
 import { IndexSection } from "@/components/home/index-section";
 import { DemoSlider } from "@/components/home/demo-slider";
 import { MonoRailSection } from "@/components/home/mono-rail-section";
 
 export default function Home() {
-  const [liquityStats, setLiquityStats] = useState<ProtocolStats | null>(null);
-  const [statsLoading, setStatsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await fetch("/api/stats");
-        const result = await response.json();
-        if (result.success && result.data) setLiquityStats(result.data);
-      } catch (error) {
-        console.error("Failed to fetch stats:", error);
-      } finally {
-        setStatsLoading(false);
-      }
-    };
-    fetchStats();
-  }, []);
-
   return (
     <div className="bg-rb-50 dark:bg-rb-950 text-foreground min-h-screen">
       {/* ═══ HERO ═══ */}
@@ -47,34 +26,8 @@ export default function Home() {
       {/* ═══ MONO-RAIL EXPLORERS ═══ */}
       <MonoRailSection />
 
-      {/* ═══ LIQUITY V2 — the protocol this mono-rail surfaces ═══ */}
-      <div className="bg-rb-50 dark:bg-rb-950">
-        <div className="max-w-7xl mx-auto px-4 py-16">
-          <div className="bg-rb-100 dark:bg-rb-850 rounded-xl overflow-hidden">
-            <div className="p-6 space-y-6">
-              <div className="flex flex-col md:flex-row md:gap-8 md:items-center">
-                <div className="text-foreground font-medium text-md leading-relaxed md:flex-1 flex flex-col">
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="text-2xl text-foreground font-extrabold">Explore</span>
-                    <svg className="w-12 h-12" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                      <use href="#icon-liquity" />
-                    </svg>
-                    <span className="text-2xl text-foreground font-extrabold">Liquity V2</span>
-                  </div>
-                  <p className="text-rb-700 dark:text-rb-300">
-                    Liquity V2 enables users to deposit ETH, wstETH, or rETH as collateral to mint BOLD stablecoins and set their own interest rates.
-                  </p>
-                </div>
-              </div>
-              <CollateralBreakdown
-                data={liquityStats?.byCollateral || {}}
-                mode="overview"
-                loading={statsLoading}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Liquity V2 stats + search now live on /liquity-v2 — the home is
+          purely brand/marketing, with the hero CTA pointing to that page. */}
 
       {/* ═══ WHO IS RAILS FOR ═══ */}
       <div className="bg-rb-50 dark:bg-rb-900">

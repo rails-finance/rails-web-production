@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import Link from "next/link";
 
 /**
  * Home hero — ported from rails-explorer's umbrella HomeHero, adapted for the
@@ -10,6 +10,10 @@ import { useRouter } from "next/navigation";
  * app/layout.tsx (matching CSS in globals.css disables the keyframes once
  * flipped). Doing the gate purely in CSS keeps SSR markup identical to
  * post-hydration markup so there's no flicker.
+ *
+ * The search input previously rendered here moved to /liquity-v2 along with
+ * the protocol stats panel — home is now pure brand/marketing, with a CTA
+ * pointing to the dedicated protocol surface.
  */
 export function HomeHero() {
   useEffect(() => {
@@ -36,45 +40,34 @@ export function HomeHero() {
         Explore DeFi on Ethereum.
       </p>
 
-      {/* Search bar */}
+      {/* CTA → dedicated protocol page */}
       <div
-        className="relative z-40 w-full max-w-lg mx-auto px-5 sm:px-0 animate-hero-fade-up"
+        className="relative z-40 animate-hero-fade-up"
         style={{ animationDelay: "0.4s" }}
       >
-        <HeroSearchBar />
-        <p className="text-[11px] text-rb-500 mt-2.5 text-center font-light">
+        <Link
+          href="/liquity-v2"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-blue-500 hover:bg-blue-400 text-white font-semibold text-sm transition-colors shadow-lg shadow-blue-500/20"
+        >
+          <svg className="w-5 h-5" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+            <use href="#icon-liquity" />
+          </svg>
+          Explore Liquity V2
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="12"
-            height="12"
+            width="16"
+            height="16"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="inline-block align-[-1px] mr-1"
           >
-            <circle cx="12" cy="12" r="10" />
-            <path d="m4.9 4.9 14.2 14.2" />
+            <path d="M5 12h14" />
+            <path d="m12 5 7 7-7 7" />
           </svg>
-          Rails is read-only.
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="inline-block align-[-1px] mx-0.5"
-          >
-            <path d="M20 6 9 17l-5-5" />
-          </svg>
-          No wallet connection or login required.
-        </p>
+        </Link>
       </div>
 
       {/* Track lines graphic — inline retro stripes (verbatim from rails-explorer) */}
@@ -220,60 +213,5 @@ export function HomeHero() {
         </svg>
       </div>
     </section>
-  );
-}
-
-/** Single-input search wired to the existing /troves filter behavior:
- *  Trove ID → ?troveId=, address → ?ownerAddress=, ENS → ?ownerEns=. */
-function HeroSearchBar() {
-  const [value, setValue] = useState("");
-  const router = useRouter();
-
-  const onSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = value.trim();
-    if (!trimmed) return;
-
-    const isTroveId = /^\d+$/.test(trimmed);
-    const isEns = trimmed.toLowerCase().endsWith(".eth");
-    const isAddress = /^0x[a-fA-F0-9]{40}$/.test(trimmed);
-    if (!isTroveId && !isAddress && !isEns) return;
-
-    const params = new URLSearchParams();
-    if (isTroveId) params.set("troveId", trimmed);
-    else if (isAddress) params.set("ownerAddress", trimmed);
-    else if (isEns) params.set("ownerEns", trimmed);
-
-    router.push(`/troves?${params.toString()}`);
-  };
-
-  return (
-    <form onSubmit={onSubmit}>
-      <div className="relative">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="absolute left-4 top-1/2 -translate-y-1/2 text-rb-500"
-        >
-          <circle cx="11" cy="11" r="8" />
-          <path d="m21 21-4.3-4.3" />
-        </svg>
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          placeholder="Search address, ENS, or Trove ID…"
-          className="w-full pl-11 pr-4 py-3 text-sm bg-rb-100 dark:bg-rb-900 text-foreground border border-rb-300 dark:border-rb-700 hover:border-rb-400 dark:hover:border-rb-600 focus:border-blue-500 dark:focus:border-blue-500 focus:outline-none transition-colors placeholder-rb-500 rounded-full"
-          aria-label="Search address, ENS, or Trove ID"
-        />
-      </div>
-    </form>
   );
 }
