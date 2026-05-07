@@ -9,7 +9,7 @@ import { MonoRailSection } from "@/components/home/mono-rail-section";
 
 export default function Home() {
   return (
-    <div className="bg-rb-50 dark:bg-rb-950 text-foreground min-h-screen">
+    <div className="min-h-screen">
       {/* ═══ HERO ═══ */}
       <HomeHero />
 

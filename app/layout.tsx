@@ -116,7 +116,7 @@ export default function RootLayout({
         <StructuredData />
       </head>
       <body
-        className={`${inter.className} ${inter.variable} antialiased bg-rb-50 dark:bg-rb-950 text-foreground min-h-screen overflow-x-hidden min-w-[320px]`}
+        className={`${inter.className} ${inter.variable} antialiased bg-background text-foreground min-h-screen overflow-x-hidden min-w-[320px]`}
       >
         <IconSymbols />
         <Providers>
