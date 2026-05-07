@@ -27,13 +27,13 @@ export function HomeHero() {
         className="relative font-semibold leading-none tracking-tighter mb-2 text-5xl sm:text-7xl lg:text-8xl animate-hero-fade-up"
         style={{ animationDelay: "0.2s" }}
       >
-        Explore <span className="text-blue-500">Liquity V2</span>
+        Destination <span className="text-blue-500">DeFi</span>
       </h1>
       <p
         className="relative font-sans font-light text-rb-500 tracking-tight mb-8 text-xl sm:text-2xl lg:text-3xl animate-hero-fade-up"
         style={{ animationDelay: "0.3s" }}
       >
-        Trove activity on simple timelines.
+        Explore DeFi on Ethereum.
       </p>
 
       {/* Search bar */}
