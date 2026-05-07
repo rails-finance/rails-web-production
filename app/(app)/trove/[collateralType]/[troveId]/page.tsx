@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ChevronLeft, Users, ArrowUpDown } from "lucide-react";
+import { ChevronLeft, ArrowUpDown } from "lucide-react";
 import { TroveSummary, TrovesResponse } from "@/types/api/trove";
 import { TroveSummaryCard } from "@/components/trove/TroveSummaryCard";
 import { TroveEconomicsSummary } from "@/components/trove/TroveEconomicsSummary";
@@ -19,16 +19,10 @@ import { fetchTroveTimeline } from "@/lib/api/fetch-timeline";
 import type { BaseActivityEvent } from "@/lib/shared/types/event-shape";
 import { isLiquityEvent } from "@/lib/shared/types/event-shape";
 import { LiquityEventCard } from "@/components/protocol/liquity/liquity-event-card";
-import { TimelineDisplayProvider } from "@/components/shared/timeline-display-context";
+import { TimelineDisplayProvider, useTimelineDisplay } from "@/components/shared/timeline-display-context";
 import { LiquityTroveBarsProvider } from "@/lib/liquity/use-trove-bars";
-
-function isRedemptionEvent(e: BaseActivityEvent): boolean {
-  return isLiquityEvent(e) && e.context.data.eventType === "redemption";
-}
-
-function isBatchManagerEvent(e: BaseActivityEvent): boolean {
-  return isLiquityEvent(e) && e.context.data.eventType === "batch_manager";
-}
+import { FilterDropdown, DisplaySettingsIcon, type FilterOption } from "@/components/shared/filter-dropdown";
+import { getEventActionKey, actionLabel, DEMOTED_ACTIONS } from "@/lib/shared/event-filter-helpers";
 
 function BackButton({ onClick }: { onClick: () => void }) {
   return (
@@ -39,6 +33,50 @@ function BackButton({ onClick }: { onClick: () => void }) {
       <ChevronLeft className="w-4 h-4" />
       Back
     </button>
+  );
+}
+
+/** DISPLAY toggle dropdown — Liquity-only subset of rails-explorer's
+ * TimelineDisplayToggle. USD Values + Ticker Labels are omitted because they
+ * have no Liquity render path yet (USD-at-time would need upstream price
+ * enrichment in the /timeline transformer). */
+function TimelineDisplayToggle() {
+  const {
+    showTimestamps,
+    showTimelineValues,
+    showChangeBars,
+    showBalanceBars,
+    toggle,
+  } = useTimelineDisplay();
+  const options: FilterOption[] = [
+    { key: "timestamps", label: "Timestamps" },
+    { key: "timeline-values", label: "Timeline values" },
+    { key: "change-bars", label: "Change bars" },
+    { key: "balance-bars", label: "Balance bars" },
+  ];
+  const visible = new Set<string>();
+  if (showTimestamps) visible.add("timestamps");
+  if (showTimelineValues) visible.add("timeline-values");
+  if (showChangeBars) visible.add("change-bars");
+  if (showBalanceBars) visible.add("balance-bars");
+  return (
+    <FilterDropdown
+      label="Display"
+      options={options}
+      selected={visible}
+      onSelect={() => {}}
+      multi
+      minimal
+      align="right"
+      variant="button"
+      triggerIcon={<DisplaySettingsIcon size={16} />}
+      onToggle={(key) => {
+        if (key === "timestamps") toggle("showTimestamps");
+        else if (key === "timeline-values") toggle("showTimelineValues");
+        else if (key === "change-bars") toggle("showChangeBars");
+        else if (key === "balance-bars") toggle("showBalanceBars");
+      }}
+    />
   );
 }
 
@@ -55,17 +93,17 @@ export default function TrovePage() {
   const [error, setError] = useState<string | null>(null);
 
   const {
-    hideDelegateRates,
-    hideRedemptions,
+    hiddenActions,
     summaryExplanationOpen,
     economicsOpen,
     sortDirection,
-    setHideDelegateRates,
-    setHideRedemptions,
+    setHiddenActions,
+    toggleHiddenAction,
     setSummaryExplanationOpen,
     setEconomicsOpen,
     setSortDirection,
   } = useTroveUiState(troveKey);
+  const hiddenSet = useMemo(() => new Set(hiddenActions), [hiddenActions]);
 
   // Live blockchain data and prices
   const [liveState, setLiveState] = useState<TroveStateData | undefined>(undefined);
@@ -179,13 +217,8 @@ export default function TrovePage() {
   );
 
   const visibleEvents = useMemo(
-    () =>
-      sortedEvents.filter((e) => {
-        if (hideRedemptions && isRedemptionEvent(e)) return false;
-        if (hideDelegateRates && isBatchManagerEvent(e)) return false;
-        return true;
-      }),
-    [sortedEvents, hideRedemptions, hideDelegateRates],
+    () => sortedEvents.filter((e) => !hiddenSet.has(getEventActionKey(e))),
+    [sortedEvents, hiddenSet],
   );
 
   const displayedEvents = useMemo(
@@ -193,8 +226,36 @@ export default function TrovePage() {
     [visibleEvents, sortDirection],
   );
 
-  const redemptionCount = sortedEvents.filter(isRedemptionEvent).length;
-  const batchManagerCount = sortedEvents.filter(isBatchManagerEvent).length;
+  // Action-type buckets for the FilterDropdown. Demoted (noisy) actions are
+  // sorted to the bottom so the more meaningful ones are always at the top of
+  // the menu.
+  const eventOptions = useMemo<FilterOption[]>(() => {
+    const counts = new Map<string, number>();
+    for (const e of sortedEvents) {
+      const key = getEventActionKey(e);
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    const demoted = new Set(DEMOTED_ACTIONS["liquity-v2-troves"] ?? []);
+    return [...counts.entries()]
+      .sort((a, b) => {
+        const aD = demoted.has(a[0]) ? 1 : 0;
+        const bD = demoted.has(b[0]) ? 1 : 0;
+        if (aD !== bD) return aD - bD;
+        return b[1] - a[1];
+      })
+      .map(([key, count]) => ({
+        key,
+        label: actionLabel(key),
+        count,
+        demoted: demoted.has(key),
+      }));
+  }, [sortedEvents]);
+
+  const visibleActionKeys = useMemo(
+    () => new Set(eventOptions.map((o) => o.key).filter((k) => !hiddenSet.has(k))),
+    [eventOptions, hiddenSet],
+  );
+
   const lastEventTs = sortedEvents.length > 0 ? sortedEvents[sortedEvents.length - 1].timestamp : null;
 
   if (loading) {
@@ -273,61 +334,47 @@ export default function TrovePage() {
           onToggle={setEconomicsOpen}
         />
 
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <h3 className="text-xl font-semibold text-foreground">Timeline</h3>
-            {troveData.activity?.lastActivityAt && (
-              <span className="text-xs text-rb-500 flex items-center gap-1 rounded-full pl-1 pr-2 py-0.5 bg-rb-100 dark:bg-rb-900">
-                <Icon name="clock-zap" size={14} />
-                {formatDuration(troveData.activity.lastActivityAt, new Date())} ago
+        <TimelineDisplayProvider>
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <div className="flex items-center gap-3">
+              <h3 className="text-xl font-semibold text-foreground">Timeline</h3>
+              {troveData.activity?.lastActivityAt && (
+                <span className="text-xs text-rb-500 flex items-center gap-1 rounded-full pl-1 pr-2 py-0.5 bg-rb-100 dark:bg-rb-900">
+                  <Icon name="clock-zap" size={14} />
+                  {formatDuration(troveData.activity.lastActivityAt, new Date())} ago
+                </span>
+              )}
+              <span className="text-xs text-rb-500">
+                {hiddenSet.size > 0 ? `${visibleEvents.length} of ${sortedEvents.length}` : `${sortedEvents.length}`} event{sortedEvents.length === 1 ? "" : "s"}
               </span>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setSortDirection(sortDirection === "asc" ? "desc" : "asc")}
-              aria-label={sortDirection === "asc" ? "Currently oldest first — click to flip to newest first" : "Currently newest first — click to flip to oldest first"}
-              title={sortDirection === "asc" ? "Oldest first" : "Newest first"}
-              className="cursor-pointer inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full text-rb-500 hover:text-foreground bg-rb-100 dark:bg-rb-900 hover:bg-rb-200 dark:hover:bg-rb-800 transition-colors"
-            >
-              <ArrowUpDown size={12} />
-              {sortDirection === "asc" ? "Oldest first" : "Newest first"}
-            </button>
-            {batchManagerCount > 0 && (
+            </div>
+            <div className="flex items-center gap-2">
               <button
-                onClick={() => setHideDelegateRates(!hideDelegateRates)}
-                aria-label={hideDelegateRates ? "Show delegate rate updates" : "Hide delegate rate updates"}
-                className="cursor-pointer pl-0.5 pr-1.5 text-sm rounded-full transition-colors flex items-center bg-pink-500/15 text-pink-600 dark:text-pink-400 hover:bg-pink-500/25"
+                onClick={() => setSortDirection(sortDirection === "asc" ? "desc" : "asc")}
+                aria-label={sortDirection === "asc" ? "Currently oldest first — click to flip to newest first" : "Currently newest first — click to flip to oldest first"}
+                title={sortDirection === "asc" ? "Oldest first" : "Newest first"}
+                className="cursor-pointer inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full text-rb-500 hover:text-foreground bg-rb-100 dark:bg-rb-900 hover:bg-rb-200 dark:hover:bg-rb-800 transition-colors"
               >
-                <span className="w-5 h-5 flex items-center justify-center">
-                  <Icon name={hideDelegateRates ? "x" : "check"} size={12} className="text-pink-600 dark:text-pink-400" />
-                </span>
-                <span className="flex items-center text-xs font-medium gap-1">
-                  <Users size={12} className="text-pink-500" />
-                  {batchManagerCount}
-                </span>
+                <ArrowUpDown size={12} />
+                {sortDirection === "asc" ? "Oldest first" : "Newest first"}
               </button>
-            )}
-            {redemptionCount > 0 && (
-              <button
-                onClick={() => setHideRedemptions(!hideRedemptions)}
-                aria-label={hideRedemptions ? "Show redemption transactions" : "Hide redemption transactions"}
-                className="cursor-pointer pl-0.5 pr-1.5 text-sm rounded-full transition-colors flex items-center bg-orange-500/15 text-orange-600 dark:text-orange-400 hover:bg-orange-500/25"
-              >
-                <span className="w-5 h-5 flex items-center justify-center">
-                  <Icon name={hideRedemptions ? "x" : "check"} size={12} className="text-orange-600 dark:text-orange-400" />
-                </span>
-                <span className="flex items-center text-xs font-medium gap-1">
-                  <Icon name="triangle" size={12} className="text-orange-500" />
-                  {redemptionCount}
-                </span>
-              </button>
-            )}
+              {eventOptions.length > 1 && (
+                <FilterDropdown
+                  label="Types of event"
+                  options={eventOptions}
+                  selected={visibleActionKeys}
+                  onSelect={() => setHiddenActions([])}
+                  multi
+                  variant="button"
+                  align="right"
+                  onToggle={(act) => toggleHiddenAction(act)}
+                />
+              )}
+              <TimelineDisplayToggle />
+            </div>
           </div>
-        </div>
 
-        {displayedEvents.length > 0 ? (
-          <TimelineDisplayProvider>
+          {displayedEvents.length > 0 ? (
             <LiquityTroveBarsProvider events={sortedEvents}>
               <div className="space-y-2">
                 {displayedEvents.map((event, idx) => {
@@ -350,10 +397,14 @@ export default function TrovePage() {
                 })}
               </div>
             </LiquityTroveBarsProvider>
-          </TimelineDisplayProvider>
-        ) : (
-          <div className="text-center py-8 text-rb-500">No transaction history available</div>
-        )}
+          ) : (
+            <div className="text-center py-8 text-rb-500">
+              {hiddenSet.size > 0 && sortedEvents.length > 0
+                ? "All events filtered out — adjust the type filter to show some."
+                : "No transaction history available"}
+            </div>
+          )}
+        </TimelineDisplayProvider>
       </div>
     </>
   );
