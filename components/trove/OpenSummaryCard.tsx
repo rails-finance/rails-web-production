@@ -672,27 +672,13 @@ function OpenTroveCardContent({
           <div className="flex justify-between items-end">
             <CardFooter trove={trove} />
 
-            {/* Loading status or current price indicator */}
-            {loadingStatus?.message ? (
+            {/* Loading status only — current price moved to trove economics
+                price runway, no longer duplicated on the summary card. */}
+            {loadingStatus?.message && (
               <div className="text-xs text-slate-500 dark:text-slate-400 text-right">
                 {loadingStatus.snapshotDate && <div>Snapshot from {formatDate(loadingStatus.snapshotDate)}.</div>}
                 <div className="italic">{loadingStatus.message}</div>
               </div>
-            ) : (
-              hasLiveData &&
-              currentPrice && (
-                <div className="flex items-center gap-1 bg-slate-200 dark:bg-slate-700 shadow-b shadow-slate-900/50 rounded-l p-2 -mr-4.5">
-                  <TokenIcon assetSymbol={trove.collateralType} />
-                  <HighlightableValue
-                    type="currentPrice"
-                    state="after"
-                    className="text-xs text-green-500"
-                    value={currentPrice}
-                  >
-                    {formatUsdValue(currentPrice)}
-                  </HighlightableValue>
-                </div>
-              )
             )}
           </div>
         </div>

@@ -22,6 +22,8 @@ import {
 import { usePreferences } from "@/lib/shared/preferences-context";
 import { TrovePriceAxis } from "@/components/protocol/liquity/trove-price-axis";
 import { formatRatio, ratioLabel, ratioColorClass } from "@/lib/shared/ratio-format";
+import { getTroveNftUrl } from "@/lib/utils/nft-utils";
+import { Image as ImageIcon, Link2 } from "lucide-react";
 
 // Phase-1 port from rails-explorer. The interactive simulator (sliders for
 // coll/debt/rate/price with live liquidation-price drag) is intentionally
@@ -43,6 +45,13 @@ interface TroveEconomicsProps {
   events: MinimalEvent[];
   currentPrice?: number;
   hideHeader?: boolean;
+  /** Trove owner address. When provided, the chart-panel header shows
+   *  "<short-addr> · <short-id> · NFT" so the panel doubles as a position
+   *  identity card. */
+  troveOwner?: string | null;
+  /** Collateral symbol ("WETH"|"wstETH"|"rETH") used to resolve the
+   *  V2 trove NFT contract for the OpenSea link. */
+  troveCollateralType?: string;
 }
 
 // ---- Economics calculation from events ----
@@ -382,6 +391,8 @@ export function TroveEconomicsSummary({
   events,
   currentPrice,
   hideHeader,
+  troveOwner,
+  troveCollateralType,
 }: TroveEconomicsProps) {
   const { prefs } = usePreferences();
   const ratioMode = prefs.ratioMode;
@@ -757,15 +768,29 @@ export function TroveEconomicsSummary({
     </div>
     )}
 
-    {/* Trove Economics — separate panel */}
-    <div className="mt-3 pt-2">
-            <div className="rounded-lg p-3 border border-transparent transition-colors">
+    {/* Trove Economics — separate panel. When `hideHeader`, the chart panel
+        IS the position summary, so it gets the same panel-card chrome
+        (rounded-lg, bg, padding) as the header block above. */}
+    <div className={hideHeader ? "" : "mt-3 pt-2"}>
+            <div className={`rounded-lg transition-colors ${
+              hideHeader
+                ? `p-5 ${meta.status === "closed" ? "bg-rb-100/50 dark:bg-rb-850 opacity-60" : "bg-rb-100 dark:bg-rb-900"}`
+                : "p-3 border border-transparent"
+            }`}>
             <div className="flex items-center justify-between gap-2 mb-2 min-h-[28px]">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {troveOwner && (
+                  <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-rb-200 dark:bg-rb-900 text-xs">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                    <span className="font-mono">{`${troveOwner.slice(0, 6)}…${troveOwner.slice(-4)}`}</span>
+                  </span>
+                )}
                 {shortTroveId && (
                   <span className="relative">
                     <button
-                      className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-rb-200 dark:bg-rb-900 text-xs hover: transition-colors cursor-pointer"
+                      className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-rb-200 dark:bg-rb-900 text-xs hover:bg-rb-300 dark:hover:bg-rb-800 transition-colors cursor-pointer"
                       title="Copy trove ID"
                       onClick={() => {
                         navigator.clipboard.writeText(troveId);
@@ -785,6 +810,19 @@ export function TroveEconomicsSummary({
                       </span>
                     )}
                   </span>
+                )}
+                {troveCollateralType && troveId && getTroveNftUrl(troveCollateralType, troveId) && (
+                  <a
+                    href={getTroveNftUrl(troveCollateralType, troveId)!}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="View NFT on OpenSea"
+                    title="View NFT on OpenSea"
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-rb-200 dark:bg-rb-900 text-xs text-rb-500 hover:text-foreground hover:bg-rb-300 dark:hover:bg-rb-800 transition-colors"
+                  >
+                    <ImageIcon size={12} />
+                    <Link2 size={12} className="-rotate-45" />
+                  </a>
                 )}
               </div>
               <div className="flex items-center gap-3 ml-auto">

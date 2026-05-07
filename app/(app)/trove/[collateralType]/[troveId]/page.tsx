@@ -8,7 +8,6 @@ import { TroveSummaryCard } from "@/components/trove/TroveSummaryCard";
 import { TroveEconomicsSummary } from "@/components/protocol/liquity/trove-economics";
 import { formatDuration } from "@/lib/date";
 import { Icon } from "@/components/icons/icon";
-import { TokenIcon } from "@/components/icons/tokenIcon";
 import { FeedbackButton } from "@/components/FeedbackButton";
 import { TroveStateData, TroveStateResponse } from "@/types/api/troveState";
 import { OraclePricesData, OraclePricesResponse } from "@/types/api/oracle";
@@ -281,11 +280,6 @@ export default function TrovePage() {
       <>
         <FeedbackButton />
         <div className="space-y-6 py-8">
-          <h1 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
-            <TokenIcon assetSymbol={collateralType} className="w-7 h-7 z-1" />
-            <TokenIcon assetSymbol="BOLD" className="w-7 h-7 -ml-3" />
-            Liquity V2 Trove
-          </h1>
           <BackButton onClick={() => router.back()} />
           <div className="bg-rb-100 dark:bg-rb-800 rounded-lg h-48 animate-pulse" />
           <div className="space-y-4">
@@ -321,11 +315,6 @@ export default function TrovePage() {
     <>
       <FeedbackButton />
       <div className="space-y-6 py-8">
-        <h1 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
-          <TokenIcon assetSymbol={collateralType} className="w-7 h-7 z-1" />
-          <TokenIcon assetSymbol="BOLD" className="w-7 h-7 -ml-3" />
-          Liquity V2 Trove
-        </h1>
         <BackButton onClick={() => router.back()} />
 
         <TroveSummaryCard
@@ -346,6 +335,8 @@ export default function TrovePage() {
         <TroveEconomicsSummary
           events={sortedEvents}
           currentPrice={prices?.[troveData.collateralType.toLowerCase() as keyof OraclePricesData]}
+          troveOwner={troveData.owner ?? troveData.lastOwner}
+          troveCollateralType={troveData.collateralType}
           hideHeader
         />
 
@@ -359,20 +350,19 @@ export default function TrovePage() {
                   {formatDuration(troveData.activity.lastActivityAt, new Date())} ago
                 </span>
               )}
-              <span className="text-xs text-rb-500">
-                {hiddenSet.size > 0 ? `${visibleEvents.length} of ${sortedEvents.length}` : `${sortedEvents.length}`} event{sortedEvents.length === 1 ? "" : "s"}
-              </span>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setSortDirection(sortDirection === "asc" ? "desc" : "asc")}
                 aria-label={sortDirection === "asc" ? "Currently oldest first — click to flip to newest first" : "Currently newest first — click to flip to oldest first"}
                 title={sortDirection === "asc" ? "Oldest first" : "Newest first"}
-                className="cursor-pointer inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full text-rb-500 hover:text-foreground bg-rb-100 dark:bg-rb-900 hover:bg-rb-200 dark:hover:bg-rb-800 transition-colors"
+                className="cursor-pointer inline-flex items-center justify-center w-7 h-7 rounded-full text-rb-500 hover:text-foreground bg-rb-100 dark:bg-rb-900 hover:bg-rb-200 dark:hover:bg-rb-800 transition-colors"
               >
                 <ArrowUpDown size={12} />
-                {sortDirection === "asc" ? "Oldest first" : "Newest first"}
               </button>
+              <span className="text-xs text-rb-500 tabular-nums">
+                {hiddenSet.size > 0 ? `${visibleEvents.length} of ${sortedEvents.length}` : `${sortedEvents.length}`} event{sortedEvents.length === 1 ? "" : "s"}
+              </span>
               {eventOptions.length > 1 && (
                 <FilterDropdown
                   label="Types of event"

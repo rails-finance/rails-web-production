@@ -250,6 +250,7 @@ export function HeaderBar() {
 
       <ProtocolMenu
         anchor={openMenu === "protocol" ? protocolBtn.current : null}
+        positionAnchor={prefsBtn.current}
         onClose={close}
       />
       <WalletMenu

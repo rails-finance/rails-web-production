@@ -28,17 +28,20 @@ const PROTOCOLS: ProtocolEntry[] = [
 
 export interface ProtocolMenuProps {
   anchor: HTMLElement | null;
+  /** Optional element used purely for positioning, so the protocol menu can
+   *  align with the cog/wallet menu (rails-explorer pattern). */
+  positionAnchor?: HTMLElement | null;
   onClose: () => void;
 }
 
-export function ProtocolMenu({ anchor, onClose }: ProtocolMenuProps) {
+export function ProtocolMenu({ anchor, positionAnchor, onClose }: ProtocolMenuProps) {
   const pathname = usePathname();
 
   return (
     <FloatingPanel
       anchor={anchor}
+      positionAnchor={positionAnchor}
       onClose={onClose}
-      align="start"
       width={300}
       minSpaceBelow={140}
       ariaLabel="Switch protocol"

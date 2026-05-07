@@ -138,7 +138,7 @@ export function FloatingPanel({
       onMouseEnter={onPanelMouseEnter}
       onMouseLeave={onPanelMouseLeave}
       style={{ ...style, color: "var(--rb-text-500)" }}
-      className={`rounded-xl border border-rb-200 dark:border-rb-800 shadow-2xl bg-rb-50 dark:bg-rb-850 ${className}`}
+      className={`rounded-xl border border-rb-200 dark:border-rb-800 shadow-2xl bg-rb-50 dark:bg-rb-850 ${placeBelow ? "animate-dropdown-down" : "animate-dropdown-up"} ${className}`}
     >
       {children}
     </div>,

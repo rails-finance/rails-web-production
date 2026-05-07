@@ -19,7 +19,7 @@ const DEFAULT_TROVE_STATE: TroveUiState = {
   hiddenActions: [...DEFAULT_HIDDEN_FOR_TROVE],
   summaryExplanationOpen: false,
   economicsOpen: false,
-  sortDirection: "asc",
+  sortDirection: "desc",
 };
 
 const storageKey = (troveKey: string) => `rails-ui-${troveKey}`;
