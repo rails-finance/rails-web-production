@@ -207,12 +207,28 @@ export default function TrovePage() {
     return null;
   };
 
-  // Events sorted oldest → newest, with Liquity events at the front so the
-  // bars provider's lifetime-peak walk is deterministic. The display order
-  // (asc/desc) is applied as a render-time reverse below — the bars provider
-  // always sees asc.
+  // Events sorted oldest → newest. Tertiary sort on log_index (parsed from
+  // the event id, which is always `${txHash}_${logIndex}`) is essential when
+  // a single tx emits multiple TroveUpdated logs at the same block/timestamp:
+  // without it the within-tx order is whatever the API returned (DESC), and
+  // the bars provider's running-state walk would process the later log first
+  // and compute the earlier event's delta as the wrong sign. Display order
+  // (asc/desc) is a render-time reverse below — the bars provider always
+  // sees asc.
   const sortedEvents = useMemo(
-    () => [...events].sort((a, b) => a.blockNumber - b.blockNumber || a.timestamp - b.timestamp),
+    () => {
+      const logIndex = (e: BaseActivityEvent) => {
+        const tail = e.id.split("_").pop();
+        const n = Number(tail);
+        return Number.isFinite(n) ? n : 0;
+      };
+      return [...events].sort(
+        (a, b) =>
+          a.blockNumber - b.blockNumber ||
+          a.timestamp - b.timestamp ||
+          logIndex(a) - logIndex(b),
+      );
+    },
     [events],
   );
 
