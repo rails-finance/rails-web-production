@@ -7,13 +7,19 @@ export function SiteFooter() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Rails Info */}
           <div className="md:col-span-2">
-            <div className="flex items-center gap-4 mb-3">
-              <div className="bg-green-600 rounded p-2 sm:p- flex items-center justify-center">
-                <svg className="w-5 h-5 sm:w-5 sm:h-5" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                  <use href="#icon-rails"></use>
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-black dark:text-white">Rails</h3>
+            <div className="flex items-center gap-1.5 mb-3 text-foreground">
+              <svg
+                width={28}
+                height={28}
+                viewBox="0 0 200 200"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path fill="currentColor" style={{ opacity: 0.85 }} d="M 79.763 159.671 L 111.637 159.671 L 52.168 41.625 L 20.295 41.625 L 79.763 159.671 Z" />
+                <path fill="currentColor" style={{ opacity: 0.85 }} d="M 98.578 97.056 L 130.451 97.056 L 105.044 47.853 L 73.171 47.853 L 98.578 97.056 Z" />
+                <path fill="currentColor" d="M 148.892 142.388 L 180.766 142.388 L 155.359 93.185 L 123.486 93.185 L 148.892 142.388 Z" />
+              </svg>
+              <h3 className="text-xl font-semibold tracking-wide">Rails</h3>
             </div>
             <p className="text-foreground text-sm leading-relaxed mb-4">
               Making DeFi more understandable and accessible for everyone. Rails displays your DeFi activity on simple
