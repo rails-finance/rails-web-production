@@ -3,18 +3,19 @@
 /**
  * Per-trove bar data for the inline collateral/debt bars in event card headers.
  *
- * Walks the event list, groups by trove, and for each owner-event emits the
- * current and previous state of the position in **native units** (collateral
- * in ETH/wstETH/rETH, debt in BOLD), plus a per-bar scale = trove lifetime
- * max. Native units are used because the live Sieve loader sets
- * collateralPrice/collateralInUsd to 0 — those fields are only populated by
- * an offline enrichment script. Switching to USD with a shared scale would
- * require threading live collateral prices into the provider.
+ * Walks the event list, groups by trove, and for every event that mutates the
+ * position emits the current and previous state in **native units** (collateral
+ * in ETH/wstETH/rETH, debt in BOLD), plus a per-bar scale = the trove's
+ * lifetime peak across all events. Native units are used because we don't have
+ * historical-price-at-block enrichment yet — switching to USD with a shared
+ * scale would need that threaded in upstream.
  *
- * Third-party events (wallet acting as redeemer/liquidator on someone else's
- * trove) are skipped: those troves have no `openTrove` event from this wallet,
- * so the whole trove is excluded from the map. The hook returns null for any
- * event without bar data, and the visual component renders nothing in that case.
+ * Bars are emitted for redemption and liquidation events too: from the
+ * trove's own POV, a redemption shifts the position just as much as the
+ * owner's own action. Rate-only operations (setBatchManagerAnnualInterestRate,
+ * adjustTroveInterestRate that doesn't move money) carry zero deltas and so
+ * render with a single underlying balance bar — the change bar collapses to
+ * empty, which itself communicates "nothing moved here".
  */
 
 import { createContext, useContext, useMemo, type ReactNode } from "react";
@@ -35,19 +36,6 @@ function isLiquityTroveEvent(e: BaseActivityEvent): e is LiquityTroveEvent {
   const p = e.context?.protocol;
   if (p !== "liquity-v2-troves" && !FORK_ALL_IDS.has(p as string)) return false;
   return !!e.context?.data && typeof (e.context.data as LiquityContext).troveId === "string";
-}
-
-/**
- * Whether an event represents the trove owner acting on their own position.
- * The rails-server-mig transformer always sets `actorRole` on Liquity events
- * (one of "owner" / "redeemer" / "liquidator" / "batch_manager"), so it's the
- * authoritative signal. Falls back to comparing wallet to troveOwner for
- * legacy events that pre-date the actorRole field.
- */
-function isOwnerEvent(ctx: LiquityContext, wallet: string): boolean {
-  if (ctx.actorRole) return ctx.actorRole === "owner";
-  if (ctx.troveOwner && ctx.troveOwner.toLowerCase() !== wallet.toLowerCase()) return false;
-  return true;
 }
 
 function buildBarMap(events: BaseActivityEvent[]): Map<string, PositionBarData> {
@@ -76,7 +64,7 @@ function buildBarMap(events: BaseActivityEvent[]): Map<string, PositionBarData> 
     // by applying troveOperation deltas to a running tally — this matches
     // what the loader does internally and gives correct bars even when the
     // snapshot data is missing.
-    type StateRow = { id: string; coll: number; debt: number; isOwner: boolean; debtFromOp: number | null };
+    type StateRow = { id: string; coll: number; debt: number; debtFromOp: number | null };
     const states: StateRow[] = [];
     let collScale = 0;
     let debtScale = 0;
@@ -84,7 +72,6 @@ function buildBarMap(events: BaseActivityEvent[]): Map<string, PositionBarData> 
     let runningDebt = 0;
     for (const e of troveEvents) {
       const ctx = e.context.data;
-      const owner = isOwnerEvent(ctx, e.wallet);
       const isClose = ctx.operation === "closeTrove" || ctx.operation === "liquidate";
 
       let coll = ctx.stateAfter?.coll ?? 0;
@@ -107,41 +94,40 @@ function buildBarMap(events: BaseActivityEvent[]): Map<string, PositionBarData> 
         debt = 0;
       }
 
-      // Capture the owner-initiated debt change (excludes passive interest accrual)
+      // Operation-level debt delta (excludes passive interest accrual). For
+      // redemption/liquidation events the transformer populates this with
+      // the redeemed/seized amount, so the change bar tracks how much of
+      // the position the third-party action actually shifted.
       const debtFromOp = ctx.troveOperation?.debtChangeFromOperation ?? null;
 
-      states.push({ id: e.id, coll, debt, isOwner: owner, debtFromOp });
+      states.push({ id: e.id, coll, debt, debtFromOp });
       runningColl = coll;
       runningDebt = debt;
 
-      if (owner) {
-        if (coll > collScale) collScale = coll;
-        if (debt > debtScale) debtScale = debt;
-      }
+      if (coll > collScale) collScale = coll;
+      if (debt > debtScale) debtScale = debt;
     }
 
     if (collScale <= 0 && debtScale <= 0) continue;
 
-    // Walk forward, computing per-event signed deltas from the previous
-    // running state. prev advances on every event (including third-party)
-    // so an external redemption that shrank the trove is visible as a
-    // delta on the next owner event.
+    // Walk forward, emitting bars for every event. The collDelta is the
+    // signed shift from the prior event's coll; the debtDelta uses the
+    // operation-level value when available (falls back to the running diff
+    // for events without troveOperation).
     let prevColl = 0;
+    let prevDebt = 0;
     for (const s of states) {
-      if (s.isOwner) {
-        // Use the operation-level debt delta (excludes passive interest
-        // accrual between events). Falls back to 0 when missing.
-        const debtDelta = s.debtFromOp ?? 0;
-        map.set(s.id, {
-          coll: s.coll,
-          debt: s.debt,
-          collDelta: s.coll - prevColl,
-          debtDelta,
-          collScale,
-          debtScale,
-        });
-      }
+      const debtDelta = s.debtFromOp ?? (s.debt - prevDebt);
+      map.set(s.id, {
+        coll: s.coll,
+        debt: s.debt,
+        collDelta: s.coll - prevColl,
+        debtDelta,
+        collScale,
+        debtScale,
+      });
       prevColl = s.coll;
+      prevDebt = s.debt;
     }
   }
 
