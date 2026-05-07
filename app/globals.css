@@ -1,0 +1,182 @@
+@import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Set default transition duration to 0 to prevent halo effect on theme switch */
+  --default-transition-duration: 0s;
+  --color-black: #000;
+  --color-white: #fff;
+  --color-slate-200: #e5e7eb;
+  --color-slate-300: #d2d5db;
+  --color-slate-400: #9da3ae;
+  --color-slate-500: #6c7280;
+  --color-slate-600: #4c5563;
+  --color-slate-700: #232a37;
+  --color-slate-800: #171b24;
+  --color-slate-900: #12151e;
+  --color-slate-950: #0d0f15;
+
+  --color-green-600: #008900;
+  --color-green-400: #4ade80;
+}
+
+:root {
+  /* Light mode colors (default) */
+  --foreground: #0d0f15;
+
+  /* Light mode specific colors */
+  --card-background: #f9fafb;
+  --card-border: #e5e7eb;
+  --muted: #f3f4f6;
+  --muted-foreground: #6c7280;
+  --accent: #f3f4f6;
+  --accent-foreground: #171b24;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #171b24;
+
+  /* Protocol-specific gradient colors for light mode */
+  --liquity-grad-1: #4b5edb;
+  --liquity-grad-2: #3b4eab;
+
+  /* SVG inner background for timeline icons */
+  --svg-inner-bg: #ffffff;
+}
+
+.dark {
+  /* Dark mode colors (current theme as dark) */
+  --foreground: #ffffff;
+
+  /* Dark mode specific colors */
+  --card-background: #12151e;
+  --card-border: #232a37;
+  --muted: #232a37;
+  --muted-foreground: #9da3ae;
+  --accent: #232a37;
+  --accent-foreground: #ffffff;
+  --secondary: #1e2530;
+  --secondary-foreground: #ffffff;
+
+  /* Protocol-specific gradient colors for dark mode */
+  --liquity-grad-1: #323e91;
+  --liquity-grad-2: #29336d;
+
+  /* SVG inner background for timeline icons */
+  --svg-inner-bg: #171b24;
+}
+
+body {
+}
+
+@layer components {
+  /* Timeline column layout */
+  .transaction-timeline-column {
+    width: 80px;
+    flex-shrink: 0;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 0;
+    overflow: hidden;
+  }
+
+  /* Timeline connector positioning */
+  .timeline-connector {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 0;
+  }
+
+  /* Transaction layouts - styles are inline in components, keeping minimal CSS here */
+  .transaction-multi-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+
+  .transaction-step {
+    position: relative;
+    width: 80px;
+    height: 40px;
+    z-index: 1;
+  }
+
+  /* Protocol-specific classes */
+  .liquityv2 {
+    --protocol-grad-1: var(--liquity-grad-1);
+    --protocol-grad-2: var(--liquity-grad-2);
+  }
+
+  /* Protocol trove header gradient */
+  .protocol-trove-header {
+    background: linear-gradient(to bottom, var(--protocol-grad-1), var(--protocol-grad-2));
+  }
+
+  /* Blog article content styling */
+  .article-content > p {
+    @apply text-slate-700 dark:text-slate-300 leading-relaxed mb-6 text-lg;
+  }
+
+  .article-content > h2 {
+    @apply text-3xl font-bold mt-12 mb-6 text-slate-900 dark:text-slate-100;
+  }
+
+  .article-content > h3 {
+    @apply text-2xl font-semibold mt-10 mb-4 text-slate-900 dark:text-slate-100;
+  }
+
+  .article-content a {
+    @apply text-blue-600 dark:text-blue-400 no-underline hover:underline;
+  }
+
+  .article-content strong {
+    @apply text-slate-900 dark:text-slate-100 font-semibold;
+  }
+
+  .article-content em {
+    @apply text-slate-700 dark:text-slate-300 italic;
+  }
+
+  .article-content > ul {
+    @apply my-8 pl-6 list-disc;
+  }
+
+  .article-content > ol {
+    @apply my-8 pl-6 list-decimal;
+  }
+
+  .article-content li {
+    @apply text-slate-700 dark:text-slate-300 mb-2 text-lg leading-relaxed ml-4;
+  }
+
+  .article-content > blockquote {
+    @apply border-l-4 border-slate-300 dark:border-slate-600 pl-6 italic my-8;
+  }
+
+  .article-content code {
+    @apply text-sm bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded;
+  }
+
+  .article-content > pre {
+    @apply bg-slate-900 dark:bg-slate-950 my-8;
+  }
+
+  .article-content > img {
+    @apply rounded-lg shadow-md my-8;
+  }
+
+  .article-content > figure {
+    @apply my-8;
+  }
+
+  .article-content figure > img {
+    @apply rounded-lg shadow-md;
+  }
+
+  .article-content figcaption {
+    @apply text-sm text-center text-slate-600 dark:text-slate-400 mt-3 italic;
+  }
+}
