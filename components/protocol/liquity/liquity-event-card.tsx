@@ -27,6 +27,8 @@ export interface LiquityEventCardProps {
   avatarOverride?: React.ReactNode;
   /** Previous event in the timeline for interest calculations */
   previousEvent?: BaseActivityEvent;
+  /** 1-based chronological position; threaded through to the header chip. */
+  eventNumber?: number;
 }
 
 export function LiquityEventCard({
@@ -39,6 +41,7 @@ export function LiquityEventCard({
   isLast,
   avatarOverride,
   previousEvent,
+  eventNumber,
 }: LiquityEventCardProps) {
   const ctx = event.context.data;
   const wallet = event.wallet;
@@ -120,7 +123,7 @@ export function LiquityEventCard({
     <EventCard
       avatar={avatarOverride ?? avatarSlot}
       iconColumn={iconSlot}
-      header={<LiquityEventHeader ctx={ctx} timestamp={event.timestamp} />}
+      header={<LiquityEventHeader ctx={ctx} timestamp={event.timestamp} eventNumber={eventNumber} />}
       headerBars={<TroveBarsSlot eventId={event.id} />}
       detail={<LiquityEventDetail ctx={ctx} txHash={event.txHash} previousEvent={previousEvent} currentEvent={event} />}
       explainer={<LiquityEventExplainer ctx={ctx} previousEvent={previousEvent} currentEvent={event} skipFirst />}

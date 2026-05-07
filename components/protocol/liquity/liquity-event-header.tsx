@@ -91,26 +91,49 @@ export interface LiquityEventHeaderProps {
   ctx: LiquityContext;
   timestamp: number;
   protocolId?: string;
+  /** 1-based chronological position of this event in the trove timeline.
+   * Stable regardless of asc/desc display order — event #1 is always the
+   * trove's openTrove. */
+  eventNumber?: number;
 }
 
-export function LiquityEventHeader({ ctx, timestamp, protocolId }: LiquityEventHeaderProps) {
+export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEventHeaderProps) {
   const style = getOperationStyle(ctx.operation, ctx);
   const { stateBefore, stateAfter, troveOperation } = ctx;
   const { showTimestamps } = useTimelineDisplay();
   const { prefs } = usePreferences();
   const ratioMode = prefs.ratioMode;
 
+  const groupChip = ctx.blockGrouping?.isGrouped ? (
+    <span
+      className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wide bg-rb-200 dark:bg-rb-800 text-rb-500"
+      title={`Operation ${ctx.blockGrouping.sameBlockIndex} of ${ctx.blockGrouping.sameBlockCount} in this transaction`}
+    >
+      {ctx.blockGrouping.sameBlockIndex} of {ctx.blockGrouping.sameBlockCount}
+    </span>
+  ) : null;
+
+  const counter = eventNumber != null ? (
+    <span className="text-xs font-mono text-rb-500/70" aria-label={`Event ${eventNumber}`}>
+      #{eventNumber}
+    </span>
+  ) : null;
+
   if (!stateAfter || !stateBefore) {
     return (
       <div className="flex items-center gap-2">
+        {groupChip}
         {style.badge ? (
           <span className={`text-xs font-bold uppercase px-2 py-0.5 rounded-full ${style.bg} ${style.color}`}>{style.label}</span>
         ) : (
           <span className={`text-sm font-medium ${style.color || 'text-rb-500'}`}>{style.label}</span>
         )}
-        {showTimestamps && (
-          <span className="text-xs ">{new Date(timestamp * 1000).toLocaleDateString()}</span>
-        )}
+        <span className="ml-auto inline-flex items-center gap-2">
+          {showTimestamps && (
+            <span className="text-xs ">{new Date(timestamp * 1000).toLocaleDateString()}</span>
+          )}
+          {counter}
+        </span>
       </div>
     );
   }
@@ -132,6 +155,7 @@ export function LiquityEventHeader({ ctx, timestamp, protocolId }: LiquityEventH
     <>
       <div className="px-5 pt-4 pb-3">
         <div className="flex items-center gap-1.5 flex-wrap">
+          {groupChip}
           {ctx.operation === "setBatchManagerAnnualInterestRate" && stateAfter ? (
             <>
               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-700 dark:text-purple-400 text-xs font-bold">
@@ -256,11 +280,14 @@ export function LiquityEventHeader({ ctx, timestamp, protocolId }: LiquityEventH
               </span>
             )}
           </span>
-          {timestamp > 0 && (
-            <span className="ml-auto text-xs ">
-              <EventTime ts={timestamp} />
-            </span>
-          )}
+          <span className="ml-auto inline-flex items-center gap-2">
+            {timestamp > 0 && (
+              <span className="text-xs ">
+                <EventTime ts={timestamp} />
+              </span>
+            )}
+            {counter}
+          </span>
         </div>
       </div>
     </>

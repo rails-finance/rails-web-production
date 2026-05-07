@@ -398,6 +398,8 @@ export default function TrovePage() {
                   // previousEvent is always the temporally-older event,
                   // regardless of display order, so explainer deltas
                   // (interest accrued, time-since-last) stay correct.
+                  // tempIdx + 1 is the chronological event number (#1 =
+                  // openTrove), stable across asc/desc display flips.
                   const tempIdx = sortedEvents.indexOf(event);
                   const previousEvent = tempIdx > 0 ? sortedEvents[tempIdx - 1] : undefined;
                   return (
@@ -408,6 +410,7 @@ export default function TrovePage() {
                       isFirst={idx === 0}
                       isLast={idx === displayedEvents.length - 1}
                       previousEvent={previousEvent}
+                      eventNumber={tempIdx + 1}
                     />
                   );
                 })}
