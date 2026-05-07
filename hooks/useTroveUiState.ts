@@ -1,23 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-
-export type TransactionUiState = {
-  expanded: boolean;
-  explanationOpen: boolean;
-};
+import { useCallback, useEffect, useState } from "react";
 
 type TroveUiState = {
   hideDelegateRates: boolean;
   hideRedemptions: boolean;
   summaryExplanationOpen: boolean;
   economicsOpen: boolean;
-  transactions: Record<string, TransactionUiState>;
-};
-
-const DEFAULT_TRANSACTION_STATE: TransactionUiState = {
-  expanded: false,
-  explanationOpen: false,
 };
 
 const DEFAULT_TROVE_STATE: TroveUiState = {
@@ -25,7 +14,6 @@ const DEFAULT_TROVE_STATE: TroveUiState = {
   hideRedemptions: false,
   summaryExplanationOpen: false,
   economicsOpen: false,
-  transactions: {},
 };
 
 const storageKey = (troveKey: string) => `rails-ui-${troveKey}`;
@@ -49,7 +37,6 @@ export function useTroveUiState(troveKey?: string) {
           hideRedemptions: parsed.hideRedemptions ?? false,
           summaryExplanationOpen: parsed.summaryExplanationOpen ?? false,
           economicsOpen: parsed.economicsOpen ?? false,
-          transactions: parsed.transactions ?? {},
         });
       } else {
         setState(DEFAULT_TROVE_STATE);
@@ -72,13 +59,6 @@ export function useTroveUiState(troveKey?: string) {
     }
   }, [state, troveKey, hasHydrated]);
 
-  const getTransactionState = useCallback(
-    (transactionId: string): TransactionUiState => {
-      return state.transactions[transactionId] ?? DEFAULT_TRANSACTION_STATE;
-    },
-    [state.transactions],
-  );
-
   const setSummaryExplanationOpen = useCallback((isOpen: boolean) => {
     setState((prev) => ({ ...prev, summaryExplanationOpen: isOpen }));
   }, []);
@@ -95,47 +75,13 @@ export function useTroveUiState(troveKey?: string) {
     setState((prev) => ({ ...prev, hideRedemptions: hide }));
   }, []);
 
-  const setTransactionExpanded = useCallback((transactionId: string, expanded: boolean) => {
-    setState((prev) => ({
-      ...prev,
-      transactions: {
-        ...prev.transactions,
-        [transactionId]: {
-          ...DEFAULT_TRANSACTION_STATE,
-          ...prev.transactions[transactionId],
-          expanded,
-        },
-      },
-    }));
-  }, []);
-
-  const setExplanationOpen = useCallback((transactionId: string, explanationOpen: boolean) => {
-    setState((prev) => ({
-      ...prev,
-      transactions: {
-        ...prev.transactions,
-        [transactionId]: {
-          ...DEFAULT_TRANSACTION_STATE,
-          ...prev.transactions[transactionId],
-          explanationOpen,
-        },
-      },
-    }));
-  }, []);
-
-  const transactions = useMemo(() => state.transactions, [state.transactions]);
-
   return {
     hideDelegateRates: state.hideDelegateRates,
     hideRedemptions: state.hideRedemptions,
     summaryExplanationOpen: state.summaryExplanationOpen,
     economicsOpen: state.economicsOpen,
-    transactions,
-    getTransactionState,
     setHideDelegateRates,
     setHideRedemptions,
-    setTransactionExpanded,
-    setExplanationOpen,
     setSummaryExplanationOpen,
     setEconomicsOpen,
   };
