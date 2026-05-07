@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import Link from "next/link";
 
 /**
  * Home hero — ported from rails-explorer's umbrella HomeHero, adapted for the
@@ -11,9 +10,9 @@ import Link from "next/link";
  * flipped). Doing the gate purely in CSS keeps SSR markup identical to
  * post-hydration markup so there's no flicker.
  *
- * The search input previously rendered here moved to /liquity-v2 along with
- * the protocol stats panel — home is now pure brand/marketing, with a CTA
- * pointing to the dedicated protocol surface.
+ * The search + CTA previously rendered here moved out: the search now lives
+ * on /liquity-v2 alongside the stats panel, and entry to the protocol
+ * surface goes through the mono-rail card and the header app-switcher.
  */
 export function HomeHero() {
   useEffect(() => {
@@ -34,41 +33,11 @@ export function HomeHero() {
         Destination <span className="text-blue-500">DeFi</span>
       </h1>
       <p
-        className="relative font-sans font-light text-rb-500 tracking-tight mb-8 text-xl sm:text-2xl lg:text-3xl animate-hero-fade-up"
+        className="relative font-sans font-light text-rb-500 tracking-tight mb-2 text-xl sm:text-2xl lg:text-3xl animate-hero-fade-up"
         style={{ animationDelay: "0.3s" }}
       >
         Explore DeFi on Ethereum.
       </p>
-
-      {/* CTA → dedicated protocol page */}
-      <div
-        className="relative z-40 animate-hero-fade-up"
-        style={{ animationDelay: "0.4s" }}
-      >
-        <Link
-          href="/liquity-v2"
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-blue-500 hover:bg-blue-400 text-white font-semibold text-sm transition-colors shadow-lg shadow-blue-500/20"
-        >
-          <svg className="w-5 h-5" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-            <use href="#icon-liquity" />
-          </svg>
-          Explore Liquity V2
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M5 12h14" />
-            <path d="m12 5 7 7-7 7" />
-          </svg>
-        </Link>
-      </div>
 
       {/* Track lines graphic — inline retro stripes (verbatim from rails-explorer) */}
       <div className="w-full mt-8 -mb-4 h-[330px] overflow-hidden flex justify-center">
