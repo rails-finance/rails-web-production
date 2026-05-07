@@ -6,7 +6,8 @@ import { ChevronLeft, ArrowUpDown } from "lucide-react";
 import { TroveSummary, TrovesResponse } from "@/types/api/trove";
 import { TroveSummaryCard } from "@/components/trove/TroveSummaryCard";
 import { TroveEconomicsSummary } from "@/components/protocol/liquity/trove-economics";
-import { formatDuration } from "@/lib/date";
+import { TroveIdentityRow } from "@/components/trove/trove-identity-row";
+import { formatDate, formatDuration } from "@/lib/date";
 import { Icon } from "@/components/icons/icon";
 import { FeedbackButton } from "@/components/FeedbackButton";
 import { TroveStateData, TroveStateResponse } from "@/types/api/troveState";
@@ -332,18 +333,44 @@ export default function TrovePage() {
           }}
         />
 
-        <TroveEconomicsSummary
-          events={sortedEvents}
-          currentPrice={prices?.[troveData.collateralType.toLowerCase() as keyof OraclePricesData]}
-          troveOwner={troveData.owner ?? troveData.lastOwner}
-          troveCollateralType={troveData.collateralType}
-          hideHeader
+        <TroveIdentityRow
+          owner={troveData.owner ?? troveData.lastOwner}
+          ens={troveData.ownerEns}
+          troveId={troveData.id}
+          collateralType={troveData.collateralType}
         />
+
+        {/* Full-bleed economics band — escapes the max-w-7xl gutter so the
+            background extends edge-to-edge (matches rails-explorer). The
+            inner content stays centered in the same content container. */}
+        <div className="relative left-1/2 -translate-x-1/2 w-screen bg-rb-100 dark:bg-rb-900 py-6">
+          <div className="max-w-7xl mx-auto px-4 md:px-6">
+            <TroveEconomicsSummary
+              events={sortedEvents}
+              currentPrice={prices?.[troveData.collateralType.toLowerCase() as keyof OraclePricesData]}
+              hideHeader
+            />
+          </div>
+        </div>
 
         <TimelineDisplayProvider>
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-            <div className="flex items-center gap-3">
-              <h3 className="text-xl font-semibold text-foreground">Timeline</h3>
+            <div className="flex items-center gap-2 text-sm">
+              {troveData.activity?.createdAt && (
+                <>
+                  <span className="text-foreground">
+                    Opened {formatDate(troveData.activity.createdAt)}
+                  </span>
+                  <span className="text-rb-500 rounded-md bg-rb-100 dark:bg-rb-900 px-1.5 py-0.5">
+                    {formatDuration(
+                      troveData.activity.createdAt,
+                      troveData.status === "open"
+                        ? new Date()
+                        : troveData.activity.lastActivityAt ?? new Date(),
+                    )}
+                  </span>
+                </>
+              )}
               {troveData.activity?.lastActivityAt && (
                 <span className="text-xs text-rb-500 flex items-center gap-1 rounded-full pl-1 pr-2 py-0.5 bg-rb-100 dark:bg-rb-900">
                   <Icon name="clock-zap" size={14} />

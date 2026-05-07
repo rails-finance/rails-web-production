@@ -4,10 +4,9 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { TokenIcon } from "@/components/icons/tokenIcon";
 import { Icon } from "@/components/icons/icon";
-import { CardFooter } from "./components/CardFooter";
 import { TroveSummary } from "@/types/api/trove";
 import { getBatchManagerByAddress, getBatchManagerDeprecation } from "@/lib/services/batch-manager-service";
-import { formatDate, formatDuration } from "@/lib/date";
+import { formatDate } from "@/lib/date";
 import { formatPrice, formatUsdValue, formatApproximate } from "@/lib/utils/format";
 import { getLiquidationThreshold } from "@/lib/utils/liquidation-utils";
 import { ExplanationPanel } from "@/components/transaction-timeline/explanation/ExplanationPanel";
@@ -385,24 +384,21 @@ function OpenTroveCardContent({
               <Loader2 className="w-4 h-4 text-slate-400 animate-spin" />
             )}
           </div>
-          {/* Metrics moved to the right */}
+          {/* Right-aligned metrics. Opened-date + duration are hoisted out
+              to the trove page and now anchor the timeline section header,
+              so this block only carries the redemption / transaction counts
+              when they're meaningful. */}
           <div className="flex items-center gap-2 text-xs flex-wrap justify-end pt-0.5">
-            <span className="text-slate-600 dark:text-slate-400">Opened {formatDate(trove.activity.createdAt)}</span>
-            <div className="flex items-center gap-1">
-              <span className="text-slate-600 dark:text-slate-400 rounded-lg bg-slate-200 dark:bg-slate-700 px-2">
-                {formatDuration(trove.activity.createdAt, new Date())}
+            {trove.activity.redemptionCount > 0 && (
+              <span className="inline-flex items-center text-orange-400">
+                <Icon name="triangle" size={12} />
+                <span className="ml-1">{trove.activity.redemptionCount}</span>
               </span>
-              {trove.activity.redemptionCount > 0 && (
-                <span className="inline-flex items-center text-orange-400">
-                  <Icon name="triangle" size={12} />
-                  <span className="ml-1">{trove.activity.redemptionCount}</span>
-                </span>
-              )}
-              <span className="inline-flex items-center text-slate-600 dark:text-slate-400">
-                <Icon name="arrow-left-right" size={12} />
-                <span className="ml-1">{trove.activity.transactionCount - trove.activity.redemptionCount}</span>
-              </span>
-            </div>
+            )}
+            <span className="inline-flex items-center text-slate-600 dark:text-slate-400">
+              <Icon name="arrow-left-right" size={12} />
+              <span className="ml-1">{trove.activity.transactionCount - trove.activity.redemptionCount}</span>
+            </span>
           </div>
         </div>
 
@@ -669,18 +665,14 @@ function OpenTroveCardContent({
             </div>
           </div>
 
-          <div className="flex justify-between items-end">
-            <CardFooter trove={trove} />
-
-            {/* Loading status only — current price moved to trove economics
-                price runway, no longer duplicated on the summary card. */}
-            {loadingStatus?.message && (
+          {loadingStatus?.message && (
+            <div className="flex justify-end">
               <div className="text-xs text-slate-500 dark:text-slate-400 text-right">
                 {loadingStatus.snapshotDate && <div>Snapshot from {formatDate(loadingStatus.snapshotDate)}.</div>}
                 <div className="italic">{loadingStatus.message}</div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
 

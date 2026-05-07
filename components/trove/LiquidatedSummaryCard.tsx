@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import Link from "next/link";
-import { CardFooter } from "./components/CardFooter";
 import { formatDateRange, formatDuration } from "@/lib/date";
 import { Icon } from "@/components/icons/icon";
 import { ExplanationPanel } from "@/components/transaction-timeline/explanation/ExplanationPanel";
@@ -150,10 +149,6 @@ function LiquidatedTroveCardContent({
           </div>
         </div>
 
-        {/* Content section */}
-        <div className="p-4 pt-2">
-          <CardFooter trove={trove} isLiquidated={true} />
-        </div>
       </div>
 
       {/* Explanation Panel */}

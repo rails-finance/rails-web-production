@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { TokenIcon } from "@/components/icons/tokenIcon";
-import { CardFooter } from "./components/CardFooter";
 import { formatDateRange, formatDuration } from "@/lib/date";
 import { Icon } from "@/components/icons/icon";
 import { formatPrice } from "@/lib/utils/format";
@@ -183,8 +182,6 @@ function ClosedTroveCardContent({ trove, summaryExplanationOpen, onToggleSummary
               </div>
             </div>
           </div>
-
-          <CardFooter trove={trove} />
         </div>
       </div>
 

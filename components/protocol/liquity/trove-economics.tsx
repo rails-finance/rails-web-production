@@ -22,8 +22,6 @@ import {
 import { usePreferences } from "@/lib/shared/preferences-context";
 import { TrovePriceAxis } from "@/components/protocol/liquity/trove-price-axis";
 import { formatRatio, ratioLabel, ratioColorClass } from "@/lib/shared/ratio-format";
-import { getTroveNftUrl } from "@/lib/utils/nft-utils";
-import { Image as ImageIcon, Link2 } from "lucide-react";
 
 // Phase-1 port from rails-explorer. The interactive simulator (sliders for
 // coll/debt/rate/price with live liquidation-price drag) is intentionally
@@ -45,13 +43,6 @@ interface TroveEconomicsProps {
   events: MinimalEvent[];
   currentPrice?: number;
   hideHeader?: boolean;
-  /** Trove owner address. When provided, the chart-panel header shows
-   *  "<short-addr> · <short-id> · NFT" so the panel doubles as a position
-   *  identity card. */
-  troveOwner?: string | null;
-  /** Collateral symbol ("WETH"|"wstETH"|"rETH") used to resolve the
-   *  V2 trove NFT contract for the OpenSea link. */
-  troveCollateralType?: string;
 }
 
 // ---- Economics calculation from events ----
@@ -391,15 +382,12 @@ export function TroveEconomicsSummary({
   events,
   currentPrice,
   hideHeader,
-  troveOwner,
-  troveCollateralType,
 }: TroveEconomicsProps) {
   const { prefs } = usePreferences();
   const ratioMode = prefs.ratioMode;
 
   const baseResult = useMemo(() => calculateEconomicsFromEvents(events), [events]);
   const redeemerStats = useMemo(() => calculateRedeemerStats(events), [events]);
-  const [copied, setCopied] = useState(false);
   const [chartMode, setChartMode] = useState<ChartMode>("historical");
 
   // Pure redeemer — no own trove operations
@@ -410,9 +398,6 @@ export function TroveEconomicsSummary({
   if (!baseResult) return null;
 
   const liquityEvents = events.filter(isLiquityMinimal);
-  const troveId = liquityEvents.length > 0
-    ? (liquityEvents[0].context.data as LiquityContext).troveId
-    : "";
 
   const meta = baseResult._meta;
   const economics: TroveEconomicsType = {
@@ -630,9 +615,6 @@ export function TroveEconomicsSummary({
       ? "bg-rb-400/20 dark:bg-rb-600/20  border-rb-400/30 dark:border-rb-600/30"
       : "bg-red-500/20 text-red-400 border-red-500/30";
 
-  // Short troveId for display
-  const shortTroveId = troveId ? `${troveId.slice(0, 6)}...${troveId.slice(-4)}` : "";
-
   // Batch manager name
   const batchManagerAddr = meta.isInBatch
     ? (liquityEvents.find(e => (e.context.data as LiquityContext).batchUpdate?.interestBatchManager)?.context.data as LiquityContext | undefined)?.batchUpdate?.interestBatchManager
@@ -768,73 +750,24 @@ export function TroveEconomicsSummary({
     </div>
     )}
 
-    {/* Trove Economics — separate panel. When `hideHeader`, the chart panel
-        IS the position summary, so it gets the same panel-card chrome
-        (rounded-lg, bg, padding) as the header block above. */}
+    {/* Trove Economics — separate panel. The chart panel itself stays
+        chromeless; the parent (a full-bleed band on the trove page, or the
+        umbrella wallet card) supplies any surrounding background. */}
     <div className={hideHeader ? "" : "mt-3 pt-2"}>
             <div className={`rounded-lg transition-colors ${
               hideHeader
-                ? `p-5 ${meta.status === "closed" ? "bg-rb-100/50 dark:bg-rb-850 opacity-60" : "bg-rb-100 dark:bg-rb-900"}`
+                ? `${meta.status === "closed" ? "opacity-60" : ""}`
                 : "p-3 border border-transparent"
             }`}>
-            <div className="flex items-center justify-between gap-2 mb-2 min-h-[28px]">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {troveOwner && (
-                  <span className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-rb-200 dark:bg-rb-900 text-xs">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                    </svg>
-                    <span className="font-mono">{`${troveOwner.slice(0, 6)}…${troveOwner.slice(-4)}`}</span>
-                  </span>
-                )}
-                {shortTroveId && (
-                  <span className="relative">
-                    <button
-                      className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-rb-200 dark:bg-rb-900 text-xs hover:bg-rb-300 dark:hover:bg-rb-800 transition-colors cursor-pointer"
-                      title="Copy trove ID"
-                      onClick={() => {
-                        navigator.clipboard.writeText(troveId);
-                        setCopied(true);
-                        setTimeout(() => setCopied(false), 1500);
-                      }}
-                    >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
-                      {shortTroveId}
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
-                      </svg>
-                    </button>
-                    {copied && (
-                      <span className="absolute -top-6 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded bg-rb-300 dark:bg-rb-800 text-[9px] text-green-400 whitespace-nowrap pointer-events-none">
-                        Copied!
-                      </span>
-                    )}
-                  </span>
-                )}
-                {troveCollateralType && troveId && getTroveNftUrl(troveCollateralType, troveId) && (
-                  <a
-                    href={getTroveNftUrl(troveCollateralType, troveId)!}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label="View NFT on OpenSea"
-                    title="View NFT on OpenSea"
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-rb-200 dark:bg-rb-900 text-xs text-rb-500 hover:text-foreground hover:bg-rb-300 dark:hover:bg-rb-800 transition-colors"
-                  >
-                    <ImageIcon size={12} />
-                    <Link2 size={12} className="-rotate-45" />
-                  </a>
-                )}
+            {(hasLive || hasHistory) && (
+              <div className="flex items-center justify-end gap-2 mb-2 min-h-[28px]">
+                <ChartModeToggle
+                  mode={effectiveMode}
+                  hasHistory={hasHistory}
+                  onChange={(next) => setChartMode(next)}
+                />
               </div>
-              <div className="flex items-center gap-3 ml-auto">
-                {(hasLive || hasHistory) && (
-                  <ChartModeToggle
-                    mode={effectiveMode}
-                    hasHistory={hasHistory}
-                    onChange={(next) => setChartMode(next)}
-                  />
-                )}
-              </div>
-            </div>
+            )}
             {debtPeak > 0 && (
               <>
                 {/* Towers + breakdowns */}
@@ -875,47 +808,41 @@ export function TroveEconomicsSummary({
               </>
             )}
             </div>
-            {/* Footer: redemption/gas text left, collateral price right */}
-            <div className="flex items-end justify-between gap-4 mt-3">
-              <div className="space-y-1">
-                {redemption && (
-                  <div className="flex flex-wrap items-center gap-1.5 text-xs mb-1 font-semibold">
-                    <span className="">Borrower&apos;s net outcome from redemptions was</span>
-                    <span className={`${
-                      redemption.realizedPL >= 0
-                        ? "text-green-400"
-                        : "text-red-400"
-                    }`}>
-                      {redemption.realizedPL >= 0 ? "+" : "−"}{formatUsdValue(Math.abs(redemption.realizedPL))}
-                    </span>
-                    {opportunityPL !== null && (
-                      <>
-                        <span className=""> or </span>
-                        <span className={` ${
-                          opportunityPL >= 0
-                            ? "text-green-400"
-                            : "text-red-400"
-                        }`}>
-                          {opportunityPL >= 0 ? "+" : "−"}{formatUsdValue(Math.abs(opportunityPL))}
-                        </span>
-                        <span className="text-xs ">at today&apos;s value</span>
-                      </>
-                    )}
-                  </div>
-                )}
-                {economics.gas.totalGasCostEth > 0 && (
-                  <p className="text-xs  flex items-center gap-0.5">
-                    A total of {economics.gas.totalGasCostEth.toFixed(4)}{" "}
-                    <TokenChipIcon symbol="ETH" size={16} />{" "}
-                    ({formatUsdValue(economics.gas.totalGasCostUsd)}) has been spent on gas fees
-                  </p>
-                )}
-              </div>
-              {effectivePrice && (
-                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-rb-200 dark:bg-rb-900 text-xs shrink-0">
-                  <TokenChipIcon symbol={collateralSymbol} size={16} />
-                  <span className="text-green-400 font-semibold">{formatUsdValue(effectivePrice)}</span>
+            {/* Footer: redemption / gas summary. The standalone collateral
+                price chip lives on the TrovePriceAxis pill above — no need
+                to duplicate it here. */}
+            <div className="mt-3 space-y-1">
+              {redemption && (
+                <div className="flex flex-wrap items-center gap-1.5 text-xs mb-1 font-semibold">
+                  <span className="">Borrower&apos;s net outcome from redemptions was</span>
+                  <span className={`${
+                    redemption.realizedPL >= 0
+                      ? "text-green-400"
+                      : "text-red-400"
+                  }`}>
+                    {redemption.realizedPL >= 0 ? "+" : "−"}{formatUsdValue(Math.abs(redemption.realizedPL))}
+                  </span>
+                  {opportunityPL !== null && (
+                    <>
+                      <span className=""> or </span>
+                      <span className={` ${
+                        opportunityPL >= 0
+                          ? "text-green-400"
+                          : "text-red-400"
+                      }`}>
+                        {opportunityPL >= 0 ? "+" : "−"}{formatUsdValue(Math.abs(opportunityPL))}
+                      </span>
+                      <span className="text-xs ">at today&apos;s value</span>
+                    </>
+                  )}
                 </div>
+              )}
+              {economics.gas.totalGasCostEth > 0 && (
+                <p className="text-xs  flex items-center gap-0.5">
+                  A total of {economics.gas.totalGasCostEth.toFixed(4)}{" "}
+                  <TokenChipIcon symbol="ETH" size={16} />{" "}
+                  ({formatUsdValue(economics.gas.totalGasCostUsd)}) has been spent on gas fees
+                </p>
               )}
             </div>
     </div>
