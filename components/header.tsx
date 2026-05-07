@@ -73,7 +73,7 @@ export function Header() {
               <svg className="w-6 h-6" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                 <use href="#icon-liquity" />
               </svg>
-              <h1 className="text-xs font-semibold text-slate-700 dark:text-white">Liquity V2 Trove Explorer</h1>
+              <h1 className="text-xs font-semibold text-foreground">Liquity V2 Trove Explorer</h1>
             </div>
           </div>
 
@@ -89,19 +89,19 @@ export function Header() {
                 {/* Custom Hamburger Icon */}
                 <div className="w-6 h-5 relative flex flex-col justify-center">
                   <span
-                    className={`absolute w-full h-0.5 bg-slate-700 dark:bg-slate-300 transition-all duration-300 ease-in-out ${
+                    className={`absolute w-full h-0.5 bg-rb-700 dark:bg-rb-300 transition-all duration-300 ease-in-out ${
                       (isHovered && !isMobile) || (isMenuOpen && isMobile)
                         ? "rotate-45 translate-y-0"
                         : "-translate-y-2"
                     }`}
                   />
                   <span
-                    className={`absolute w-full h-0.5 bg-slate-700 dark:bg-slate-300 transition-all duration-300 ease-in-out ${
+                    className={`absolute w-full h-0.5 bg-rb-700 dark:bg-rb-300 transition-all duration-300 ease-in-out ${
                       (isHovered && !isMobile) || (isMenuOpen && isMobile) ? "opacity-0" : "opacity-100"
                     }`}
                   />
                   <span
-                    className={`absolute w-full h-0.5 bg-slate-700 dark:bg-slate-300 transition-all duration-300 ease-in-out ${
+                    className={`absolute w-full h-0.5 bg-rb-700 dark:bg-rb-300 transition-all duration-300 ease-in-out ${
                       (isHovered && !isMobile) || (isMenuOpen && isMobile)
                         ? "-rotate-45 translate-y-0"
                         : "translate-y-2"
@@ -113,7 +113,7 @@ export function Header() {
               {/* Desktop Tooltip Modal */}
               {!isMobile && isHoverMenuOpen && (
                 <div
-                  className="absolute top-full right-0 mt-2 w-60 bg-white dark:bg-slate-800 shadow-2xl rounded-lg border border-slate-200 dark:border-slate-700 p-6 z-50"
+                  className="absolute top-full right-0 mt-2 w-60 bg-rb-50 dark:bg-rb-850 shadow-2xl rounded-xl border border-rb-200 dark:border-rb-800 p-6 z-50"
                   onMouseEnter={handleMouseEnter}
                   onMouseLeave={handleMouseLeave}
                 >
@@ -122,12 +122,12 @@ export function Header() {
                     className="absolute -top-2 right-4 w-0 h-0
                     border-l-[8px] border-l-transparent
                     border-r-[8px] border-r-transparent
-                    border-b-[8px] border-b-white dark:border-b-slate-800
+                    border-b-[8px] border-b-rb-50 dark:border-b-rb-850
                     before:content-[''] before:absolute before:-top-[1px] before:-left-[9px]
                     before:w-0 before:h-0
                     before:border-l-[9px] before:border-l-transparent
                     before:border-r-[9px] before:border-r-transparent
-                    before:border-b-[9px] before:border-b-slate-200 dark:before:border-b-slate-700"
+                    before:border-b-[9px] before:border-b-rb-200 dark:before:border-b-rb-800"
                   />
                   <NavigationContent />
                 </div>
@@ -153,29 +153,29 @@ export function Header() {
           aria-label="Close menu"
         >
           <div
-            className="fixed top-0 right-0 h-full w-80 bg-white dark:bg-slate-800 shadow-2xl"
+            className="fixed top-0 right-0 h-full w-80 bg-rb-50 dark:bg-rb-850 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="flex justify-between items-center p-6 border-b border-slate-200 dark:border-slate-700">
+            <div className="flex justify-between items-center p-6 border-b border-rb-200 dark:border-rb-800">
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-green-600 rounded flex items-center justify-center">
                   <svg className="w-4 h-4" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                     <use href="#icon-rails" />
                   </svg>
                 </div>
-                <div className="text-lg font-bold text-slate-600 dark:text-slate-300">Rails</div>
+                <div className="text-lg font-bold text-foreground">Rails</div>
               </div>
               <button
                 onClick={toggleMenu}
-                className="p-3 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors duration-150 cursor-pointer touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="p-3 hover:bg-rb-200 dark:hover:bg-rb-800 rounded-lg transition-colors duration-150 cursor-pointer touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500"
                 aria-label="Close menu"
               >
                 {/* X Icon */}
                 <div className="w-6 h-5 relative flex flex-col justify-center">
-                  <span className="absolute w-full h-0.5 bg-slate-700 dark:bg-slate-300 rotate-45 translate-y-0" />
-                  <span className="absolute w-full h-0.5 bg-slate-700 dark:bg-slate-300 opacity-0" />
-                  <span className="absolute w-full h-0.5 bg-slate-700 dark:bg-slate-300 -rotate-45 translate-y-0" />
+                  <span className="absolute w-full h-0.5 bg-rb-700 dark:bg-rb-300 rotate-45 translate-y-0" />
+                  <span className="absolute w-full h-0.5 bg-rb-700 dark:bg-rb-300 opacity-0" />
+                  <span className="absolute w-full h-0.5 bg-rb-700 dark:bg-rb-300 -rotate-45 translate-y-0" />
                 </div>
               </button>
             </div>
@@ -205,7 +205,7 @@ export function Header() {
           onClick={() => setIsBetaModalOpen(false)}
         >
           <div
-            className="bg-white dark:bg-slate-800 rounded-lg shadow-2xl border border-slate-200 dark:border-slate-700 max-w-md w-full p-6"
+            className="bg-rb-50 dark:bg-rb-850 rounded-xl shadow-2xl border border-rb-200 dark:border-rb-800 max-w-md w-full p-6"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
@@ -214,17 +214,17 @@ export function Header() {
                 <div className="bg-orange-500 dark:bg-orange-600 text-white text-xs font-bold px-2 py-1 rounded">
                   Beta
                 </div>
-                <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+                <h2 className="text-lg font-bold text-foreground">
                   Our near-term plans...
                 </h2>
               </div>
               <button
                 onClick={() => setIsBetaModalOpen(false)}
-                className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="p-1 hover:bg-rb-200 dark:hover:bg-rb-800 rounded transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 aria-label="Close modal"
               >
                 <svg
-                  className="w-5 h-5 text-slate-600 dark:text-slate-300"
+                  className="w-5 h-5 text-foreground"
                   fill="none"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -239,7 +239,7 @@ export function Header() {
             </div>
 
             {/* Modal Content */}
-            <div className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed space-y-4">
+            <div className="text-foreground text-sm leading-relaxed space-y-4">
               <p className="flex flex-row gap-2 items-center">
                 Liquity V2 Explorer to-do list:
               </p>
@@ -264,7 +264,7 @@ export function Header() {
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <button
                 onClick={() => setIsBetaModalOpen(false)}
-                className="px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg font-medium transition-colors duration-150 w-full sm:w-auto focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-4 py-2 bg-rb-200 dark:bg-rb-800 hover:bg-rb-300 dark:hover:bg-rb-700 text-foreground rounded-lg font-medium transition-colors duration-150 w-full sm:w-auto focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 Keep exploring
               </button>

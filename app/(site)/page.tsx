@@ -64,7 +64,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 min-h-screen">
+    <div className="bg-rb-50 dark:bg-rb-950 text-foreground min-h-screen">
       {/* Hero Section - Responsive */}
       <div className="relative pt-24">
         {/* Desktop Layout Container */}
@@ -74,7 +74,7 @@ export default function Home() {
             <div className="md:flex md:flex-col md:h-full">
               {/* Text Content - Same for both mobile and desktop */}
               <div className="md:flex-1 md:px-6 md:py-8 md:flex md:flex-col md:justify-center md:relative md:z-10">
-                <p className="text-slate-700 dark:text-slate-200 text-xl md:text-3xl lg:text-4xl/12  font-bold mb-4">
+                <p className="text-foreground text-xl md:text-3xl lg:text-4xl/12  font-bold mb-4">
                   DeFi activity on&nbsp;simple timelines with in&#8209;depth analysis
                 </p>
               </div>
@@ -127,28 +127,28 @@ export default function Home() {
             <div>
               {/* Liquity V2 Protocol Card */}
               <div className="">
-                <div className="bg-slate-100/50 dark:bg-slate-800 rounded-lg overflow-hidden">
+                <div className="bg-rb-100 dark:bg-rb-850 rounded-xl overflow-hidden">
                   <div className="p-4 space-y-6">
 
                     {/* Mobile: Stacked, Desktop: Two columns */}
-                    
+
                     <div className="flex flex-col md:flex-row md:gap-8 md:items-center">
-                      <div className="text-slate-600  dark:text-slate-400 font-medium text-md leading-relaxed md:flex-1 flex flex-col mb-6 md:mb-0">
+                      <div className="text-foreground font-medium text-md leading-relaxed md:flex-1 flex flex-col mb-6 md:mb-0">
                         <div className="flex items-center gap-2 mb-4">
-                          <span className="text-2xl text-slate-600 dark:text-slate-300 font-extrabold">Explore</span>
+                          <span className="text-2xl text-foreground font-extrabold">Explore</span>
                           <svg className="w-12 h-12" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
                             <use href="#icon-liquity" />
                           </svg>
-                          <span className="text-2xl text-slate-600 dark:text-slate-300 font-extrabold">Liquity V2</span>
+                          <span className="text-2xl text-foreground font-extrabold">Liquity V2</span>
                         </div>
-                        <p>
+                        <p className="text-rb-700 dark:text-rb-300">
                           Liquity V2 enables users to deposit ETH, wstETH, or rETH as collateral to mint BOLD stablecoins and set their own interest rates.
                         </p>
                       </div>
 
                       {/* Search Box - Mobile and Desktop */}
-                      <div className="md:flex-1 bg-white dark:bg-slate-900 rounded-lg p-4 transition-shadow hover:shadow-sm">
-                        <p className="text-slate-600 dark:text-slate-400 font-medium mb-3">
+                      <div className="md:flex-1 bg-rb-50 dark:bg-rb-900 rounded-xl p-4 transition-shadow hover:shadow-sm">
+                        <p className="text-foreground font-medium mb-3">
                           View a Liquity V2 Trove on Rails:
                         </p>
                         <form onSubmit={handleSearch}>
@@ -163,19 +163,19 @@ export default function Home() {
                               strokeWidth="2"
                               strokeLinecap="round"
                               strokeLinejoin="round"
-                              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 dark:text-slate-400"
+                              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-rb-500"
                             >
                               <circle cx="11" cy="11" r="8" />
                               <path d="m21 21-4.3-4.3" />
                             </svg>
                             <input
                               type="text"
-                              className="w-full pl-10 pr-4 py-2 text-sm bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-2 border-blue-500 dark:border-blue-500 hover:border-slate-400 dark:hover:border-slate-500 focus:border-blue-500 dark:focus:border-white focus:outline-none transition-colors placeholder-slate-500 dark:placeholder-slate-400 rounded-full"
+                              className="w-full pl-10 pr-4 py-2 text-sm bg-rb-100 dark:bg-rb-800 text-foreground border-2 border-blue-500 dark:border-blue-500 hover:border-rb-400 dark:hover:border-rb-500 focus:border-blue-500 dark:focus:border-white focus:outline-none transition-colors placeholder-rb-500 rounded-full"
                               value={searchValue}
                               onChange={(e) => setSearchValue(e.target.value)}
                             />
                           </div>
-                          <p className="text-slate-500 text-xs mt-2">Enter borrower address, ENS, or Trove ID</p>
+                          <p className="text-rb-500 text-xs mt-2">Enter borrower address, ENS, or Trove ID</p>
                         </form>
                       </div>
                     </div>
@@ -197,100 +197,100 @@ export default function Home() {
 
       <section className="w-full pb-24">
         <div className="max-w-7xl mx-auto px-4">
-          <h2 className="text-2xl font-extrabold text-slate-700 dark:text-slate-200 text-center mb-4">
-            Who is Rails for?
-          </h2>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <div className="h-full bg-white dark:bg-slate-800/60 rounded-xl p-6 shadow-sm flex flex-col">
-              <p className="text-sm font-semibold flex items-center gap-2 tracking-wide text-blue-600 dark:text-blue-500 mb-2">
-                <GraduationCap className="h-5 w-5" aria-hidden="true" />
-                The DeFi Curious
-              </p>
-              <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-3">Learn by example</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                New users can browse real transactions to see how DeFi protocols operate in practice, explore trove
-                timelines, and build intuition before they risk capital.
-              </p>
-            </div>
-            <div className="h-full bg-white dark:bg-slate-800/60 rounded-xl p-6 shadow-sm flex flex-col">
-              <p className="text-sm font-semibold flex items-center gap-2 tracking-wide text-emerald-600 dark:text-emerald-500 mb-2">
-                <Wallet className="h-5 w-5" aria-hidden="true" />
-                The Active DeFi User
-              </p>
-              <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-3">Stay on top of positions</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                Monitor positions, understand nuanced onchain events, and view interpreted logs so nothing stays
-                buried in transaction traces.
+          <div className="text-center mb-10">
+            <h2 className="font-sans font-semibold tracking-tight leading-tight text-center text-[clamp(24px,3.5vw,38px)]">
+              <span className="text-pink-500">DeFi</span> for everyone
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-rb-300 dark:bg-rb-800 rounded-xl overflow-hidden">
+            <div className="bg-rb-100/90 dark:bg-rb-950/90 p-8 flex flex-col hover:bg-rb-100 dark:hover:bg-rb-950 transition-colors">
+              <div className="flex items-center gap-2 mb-5">
+                <GraduationCap className="h-[18px] w-[18px] text-pink-500 shrink-0" aria-hidden="true" />
+                <p className="text-xs font-medium tracking-[0.12em] uppercase text-pink-500">The DeFi Curious</p>
+              </div>
+              <h3 className="text-[17px] font-semibold tracking-tight leading-snug mb-3.5 text-foreground">Learn by example</h3>
+              <p className="text-[13px] leading-relaxed font-light flex-1 mb-6">
+                Browse real protocol activity to see how DeFi works in practice. No capital required — just explore the ecosystem, follow live events, and build your intuition before you commit.
               </p>
             </div>
-            <div className="h-full bg-white dark:bg-slate-800/60 rounded-xl p-6 shadow-sm flex flex-col">
-              <p className="text-sm font-semibold flex items-center gap-2 tracking-wide text-purple-600 dark:text-purple-500 mb-2">
-                <Code2 className="h-5 w-5" aria-hidden="true" />
-                DeFi Teams
-              </p>
-              <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-3">Support your community</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed flex-1">
-                Provide verifiable support with a Rails explorer tailored to your protocol. Give users clear timelines,
-                and human-readable insights.
+            <div className="bg-rb-100/90 dark:bg-rb-950/90 p-8 flex flex-col hover:bg-rb-100 dark:hover:bg-rb-950 transition-colors">
+              <div className="flex items-center gap-2 mb-5">
+                <Wallet className="h-[18px] w-[18px] text-emerald-500 shrink-0" aria-hidden="true" />
+                <p className="text-xs font-medium tracking-[0.12em] uppercase text-emerald-500">The Active DeFi User</p>
+              </div>
+              <h3 className="text-[17px] font-semibold tracking-tight leading-snug mb-3.5 text-foreground">Stay on top of positions</h3>
+              <p className="text-[13px] leading-relaxed font-light flex-1 mb-6">
+                Monitor collateral ratios, redemption exposure, yield earned, and liquidation risk — all translated into plain language. Know exactly where you stand, without reading a transaction trace.
               </p>
             </div>
-            <div className="h-full bg-white dark:bg-slate-800/60 rounded-xl p-6 shadow-sm flex flex-col">
-              <p className="text-sm font-semibold flex items-center gap-2 tracking-wide text-amber-600 dark:text-amber-500 mb-2">
-                <ShieldAlert className="h-5 w-5" aria-hidden="true" />
-                Crisis Support
+            <div className="bg-rb-100/90 dark:bg-rb-950/90 p-8 flex flex-col hover:bg-rb-100 dark:hover:bg-rb-950 transition-colors">
+              <div className="flex items-center gap-2 mb-5">
+                <Code2 className="h-[18px] w-[18px] text-blue-500 shrink-0" aria-hidden="true" />
+                <p className="text-xs font-medium tracking-[0.12em] uppercase text-blue-500">DeFi Teams</p>
+              </div>
+              <h3 className="text-[17px] font-semibold tracking-tight leading-snug mb-3.5 text-foreground">Support your community</h3>
+              <p className="text-[13px] leading-relaxed font-light flex-1 mb-6">
+                Give your users a dedicated, verifiable window into their positions. A Rails integration means your protocol gets full coverage — and your community gets answers, not confusion.
               </p>
-              <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-3">When frontends fail</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed flex-1">
-                Check your positions safely during DNS hijacks or frontend failures. No wallet connection required—just read-only access when you need it most.
+            </div>
+            <div className="bg-rb-100/90 dark:bg-rb-950/90 p-8 flex flex-col hover:bg-rb-100 dark:hover:bg-rb-950 transition-colors">
+              <div className="flex items-center gap-2 mb-5">
+                <ShieldAlert className="h-[18px] w-[18px] text-red-500 shrink-0" aria-hidden="true" />
+                <p className="text-xs font-medium tracking-[0.12em] uppercase text-red-500">Crisis Support</p>
+              </div>
+              <h3 className="text-[17px] font-semibold tracking-tight leading-snug mb-3.5 text-foreground">When frontends fail</h3>
+              <p className="text-[13px] leading-relaxed font-light flex-1 mb-6">
+                DNS hijacks. Frontend outages. Contract exploits. When your usual interface goes dark, Rails gives you read-only access to your positions — no wallet connection, no permissions, no exposure.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Our Supporters Section */}
-      <div className="w-full pb-24">
-        <div className="sm:max-w-5xl mx-auto px-4">
-          <p className="sm:text-center text-xl md:text-2xl leading-8 text-slate-700 dark:text-slate-300 mb-6">
-            Rails is building essential DeFi support infrastructure, starting with Liquity V2. Our roadmap includes
-            integration with Liquity V2 forks and expansion across the broader DeFi ecosystem.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <a
-              href="/about"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-150"
-            >
-              <Lightbulb className="h-5 w-5" />
-              Learn about Rails
-            </a>
-            <a
-              href="/pulse"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-colors duration-150"
-            >
-              <Activity className="h-5 w-5" />
-              Check our Pulse
-            </a>
-          </div>
-        </div>
-      </div>
-      {/* Our Supporters Section */}
-      <div className="w-full pb-24">
-        <div className="max-w-7xl mx-auto px-4">
-          <h2 className="text-2xl font-extrabold text-slate-500 dark:text-slate-400 text-center mb-8">
-            Our Supporters
+      {/* Get in touch — founding supporter */}
+      <div className="bg-rb-200 dark:bg-rb-800">
+        <div className="max-w-7xl mx-auto px-4 py-16">
+          <h2 className="font-semibold tracking-tight leading-tight pb-4 text-[clamp(28px,4vw,42px)] text-foreground">
+            Get in touch
           </h2>
-          <div className="flex justify-center">
-            <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-8" style={{ width: "400px", height: "120px" }}>
-              <div className="flex items-center justify-center h-full">
-                <a href="https://liquity.org" target="_blank" rel="noopener noreferrer" className="h-full">
-                  <LiquityLogo />
-                </a>
-              </div>
+
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-10">
+            {/* Left: founding-supporter voice + Liquity logo */}
+            <div className="md:text-left flex flex-col md:items-start flex-1">
+              <p className="leading-relaxed max-w-xl mb-8 text-foreground">
+                Working with a protocol team or building DeFi infrastructure?
+                We partner with sponsors on <span className="font-bold">integrations</span> for the
+                umbrella explorer and dedicated <span className="font-bold">custom explorers</span> —
+                mono-rail subdomains scoped to a single protocol, with the same depth as the umbrella.
+                {" "}<span className="text-blue-500 font-semibold">Liquity</span> is our founding supporter.
+              </p>
+              <a href="https://liquity.org" target="_blank" rel="noopener noreferrer" className="block mb-2">
+                <LiquityLogo />
+              </a>
+            </div>
+
+            {/* Right: CTAs to existing site pages */}
+            <div className="flex flex-col gap-3 shrink-0">
+              <a
+                href="/about"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-150"
+              >
+                <Lightbulb className="h-5 w-5" />
+                Learn about Rails
+              </a>
+              <a
+                href="/pulse"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-colors duration-150"
+              >
+                <Activity className="h-5 w-5" />
+                Check our Pulse
+              </a>
             </div>
           </div>
         </div>
       </div>
-      
+
     </div>
   );
 }

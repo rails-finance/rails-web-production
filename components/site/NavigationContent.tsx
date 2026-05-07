@@ -73,7 +73,7 @@ export function NavigationContent({ onLinkClick }: NavigationContentProps) {
               className={`flex items-center gap-3 text-lg font-medium py-2 transition-colors ${
                 isActive
                   ? `${item.activeColor} pointer-events-none`
-                  : `text-slate-600 dark:text-slate-300 ${item.hoverColor}`
+                  : `text-foreground ${item.hoverColor}`
               }`}
               onClick={isActive ? undefined : onLinkClick}
             >
@@ -86,24 +86,24 @@ export function NavigationContent({ onLinkClick }: NavigationContentProps) {
         })}
       </div>
 
-      <div className="my-4 border-t border-slate-200 dark:border-slate-700"></div>
+      <div className="my-4 border-t border-rb-200 dark:border-rb-800"></div>
 
       {/* Theme Toggle */}
       <div className="flex items-center justify-between mb-4">
-        <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Theme</span>
+        <span className="text-sm font-medium text-foreground">Theme</span>
         <ThemeToggle />
       </div>
 
-      <div className="border-t border-slate-200 dark:border-slate-700 pt-4"></div>
+      <div className="border-t border-rb-200 dark:border-rb-800 pt-4"></div>
 
       <div className="space-y-3">
-        <div className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wide mb-3">Connect With Us</div>
+        <div className="text-xs text-rb-500 uppercase tracking-wide mb-3">Connect With Us</div>
         <div className="flex items-center gap-4">
           <a
             href="https://x.com/rails_finance"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-slate-400 dark:text-slate-500 hover:text-green-600 dark:hover:text-green-600 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 rounded"
+            className="text-rb-500 hover:text-green-600 dark:hover:text-green-600 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 rounded"
             aria-label="Follow Rails on X"
           >
             <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -114,7 +114,7 @@ export function NavigationContent({ onLinkClick }: NavigationContentProps) {
             href="https://medium.com/@railsfinance"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-slate-400 dark:text-slate-500 hover:text-green-600 dark:hover:text-green-600 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 rounded"
+            className="text-rb-500 hover:text-green-600 dark:hover:text-green-600 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 rounded"
             aria-label="Rails Finance on Medium"
           >
             <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -125,7 +125,7 @@ export function NavigationContent({ onLinkClick }: NavigationContentProps) {
             href="https://www.youtube.com/@rails_finance"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-slate-400 dark:text-slate-500 hover:text-green-600 dark:hover:text-green-600 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 rounded"
+            className="text-rb-500 hover:text-green-600 dark:hover:text-green-600 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 rounded"
             aria-label="Rails Finance on YouTube"
           >
             <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -136,7 +136,7 @@ export function NavigationContent({ onLinkClick }: NavigationContentProps) {
             href="https://github.com/rails-finance"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-slate-400 dark:text-slate-500 hover:text-green-600 dark:hover:text-green-600 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 rounded"
+            className="text-rb-500 hover:text-green-600 dark:hover:text-green-600 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 rounded"
             aria-label="Rails Finance on GitHub"
           >
             <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
