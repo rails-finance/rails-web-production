@@ -104,6 +104,15 @@ export default function RootLayout({
         <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <ThemeScript />
+        {/* Hero "already-seen" flag — flipped before first paint so CSS in
+            globals.css can disable the home-hero animation on subsequent
+            visits in the same session without a hydration flicker. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){try{if(sessionStorage.getItem('rails-hero-seen'))document.documentElement.dataset.heroSeen='1'}catch(e){}})()",
+          }}
+        />
         <StructuredData />
       </head>
       <body

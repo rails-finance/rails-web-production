@@ -1,14 +1,12 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, GraduationCap, Wallet, Code2, ShieldAlert, Lightbulb, Activity } from "lucide-react";
-import Link from "next/link";
+import { GraduationCap, Wallet, Code2, ShieldAlert, Lightbulb, Activity } from "lucide-react";
 import { ProtocolStats } from "@/types/api/stats";
 import { LiquityLogo } from "@/components/LiquityLogo";
-import { NetworkGraphic } from "@/components/NetworkGraphic";
 import { CollateralBreakdown } from "@/components/stats/CollateralBreakdown";
-import { ExplanationPanel } from "@/components/transaction-timeline/explanation/ExplanationPanel";
+import { HomeHero } from "@/components/home/home-hero";
 
 export default function Home() {
   const [searchValue, setSearchValue] = useState("");
@@ -65,62 +63,9 @@ export default function Home() {
 
   return (
     <div className="bg-rb-50 dark:bg-rb-950 text-foreground min-h-screen">
-      {/* Hero Section - Responsive */}
-      <div className="relative pt-24">
-        {/* Desktop Layout Container */}
-        <div className="md:relative md:h-[500px] md:flex">
-          {/* Content - Responsive positioning */}
-          <div className="px-4 pt-8 md:px-0 md:pt-0 md:w-1/2 md:max-w-[640px] md:mx-0 md:ml-auto md:relative">
-            <div className="md:flex md:flex-col md:h-full">
-              {/* Text Content - Same for both mobile and desktop */}
-              <div className="md:flex-1 md:px-6 md:py-8 md:flex md:flex-col md:justify-center md:relative md:z-10">
-                <p className="text-foreground text-xl md:text-3xl lg:text-4xl/12  font-bold mb-4">
-                  DeFi activity on&nbsp;simple timelines with in&#8209;depth analysis
-                </p>
-              </div>
+      <HomeHero />
 
-              {/* Bottom spacer for desktop layout */}
-              <div className="hidden md:block md:flex-1"></div>
-            </div>
-          </div>
-
-          {/* Desktop Bottom Left Background SVG */}
-          <div
-            className="hidden md:block absolute bottom-0 left-0 h-1/2 pointer-events-none"
-            style={{
-              width: "50%",
-              backgroundImage: "url(/hero-bl.svg)",
-              backgroundRepeat: "no-repeat",
-              backgroundPosition: "right top",
-              backgroundSize: "auto 100%",
-            }}
-          />
-
-          {/* Desktop Right Side Background SVG */}
-          <div
-            className="hidden md:block md:w-1/2 md:h-1/2 md:-mt-24"
-            style={{
-              backgroundImage: "url(/hero-r.svg)",
-              backgroundRepeat: "no-repeat",
-              backgroundPosition: "left center",
-              backgroundSize: "auto 100%",
-              height: "calc(100% + 6rem)",
-            }}
-          />
-        </div>
-
-        {/* Mobile SVG Section */}
-        <div className="md:hidden w-full relative overflow-visible">
-          <img
-            src="/hero-mobile.svg"
-            alt="Hero mobile decoration"
-            className="w-full"
-            style={{ display: "block" }}
-          />
-        </div>
-      </div>
-
-      <div className="relative overflow-x-hidden pb-12">
+      <div className="relative overflow-x-hidden pb-12 pt-8">
         <div className="relative z-10 w-full mx-auto px-4 max-w-7xl">
           <div className="md:flex gap-8">
             {/* Content Column continued */}
