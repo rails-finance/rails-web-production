@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ChevronLeft, ArrowUpDown } from "lucide-react";
 import { TroveSummary, TrovesResponse } from "@/types/api/trove";
 import { TroveSummaryCard } from "@/components/trove/TroveSummaryCard";
-import { TroveEconomicsSummary } from "@/components/trove/TroveEconomicsSummary";
+import { TroveEconomicsSummary } from "@/components/protocol/liquity/trove-economics";
 import { formatDuration } from "@/lib/date";
 import { Icon } from "@/components/icons/icon";
 import { TokenIcon } from "@/components/icons/tokenIcon";
@@ -99,12 +99,10 @@ export default function TrovePage() {
   const {
     hiddenActions,
     summaryExplanationOpen,
-    economicsOpen,
     sortDirection,
     setHiddenActions,
     toggleHiddenAction,
     setSummaryExplanationOpen,
-    setEconomicsOpen,
     setSortDirection,
   } = useTroveUiState(troveKey);
   const hiddenSet = useMemo(() => new Set(hiddenActions), [hiddenActions]);
@@ -346,12 +344,9 @@ export default function TrovePage() {
         />
 
         <TroveEconomicsSummary
-          trove={troveData}
-          transactions={undefined}
+          events={sortedEvents}
           currentPrice={prices?.[troveData.collateralType.toLowerCase() as keyof OraclePricesData]}
-          entireDebt={liveState?.debt.entire}
-          persistedOpen={economicsOpen}
-          onToggle={setEconomicsOpen}
+          hideHeader
         />
 
         <TimelineDisplayProvider>
