@@ -122,7 +122,7 @@ function generateOpenTroveItems(ctx: LiquityContext): ExplainerItem[] {
   items.push({
     content: (
       <span>
-        Annual interest rate set at <V>{(stateAfter.annualInterestRate * 100).toFixed(1)}%</V>, compounding continuously
+        Annual interest rate set at <V>{(stateAfter.annualInterestRate).toFixed(1)}%</V>, compounding continuously
       </span>
     ),
   });
@@ -136,9 +136,9 @@ function generateOpenTroveItems(ctx: LiquityContext): ExplainerItem[] {
         content: (
           <span>
             Batch rate managed by delegate <V>{shortenAddress(ctx.batchUpdate.interestBatchManager)}</V> at{" "}
-            <V>{(ctx.batchUpdate.annualInterestRate * 100).toFixed(1)}%</V> APR
+            <V>{(ctx.batchUpdate.annualInterestRate).toFixed(1)}%</V> APR
             {ctx.batchUpdate.annualManagementFee > 0 && (
-              <>, management fee: <V>{(ctx.batchUpdate.annualManagementFee * 100).toFixed(2)}%</V></>
+              <>, management fee: <V>{(ctx.batchUpdate.annualManagementFee).toFixed(2)}%</V></>
             )}
           </span>
         ),
@@ -187,7 +187,7 @@ function generateCloseTroveItems(ctx: LiquityContext, accruedInterest: number): 
       items.push({
         content: (
           <span className="">
-            Position was paying {(stateBefore.annualInterestRate * 100).toFixed(1)}% annual interest before closure
+            Position was paying {(stateBefore.annualInterestRate).toFixed(1)}% annual interest before closure
           </span>
         ),
       });
@@ -343,15 +343,15 @@ function generateAdjustTroveItems(ctx: LiquityContext, accruedInterest: number, 
     items.push({
       content: (
         <span>
-          Annual interest rate adjusted from {(stateBefore.annualInterestRate * 100).toFixed(1)}% to{" "}
-          <V>{(stateAfter.annualInterestRate * 100).toFixed(1)}%</V>
+          Annual interest rate adjusted from {(stateBefore.annualInterestRate).toFixed(1)}% to{" "}
+          <V>{(stateAfter.annualInterestRate).toFixed(1)}%</V>
         </span>
       ),
     });
   } else {
     items.push({
       content: (
-        <span>Annual interest rate remains at <V>{(stateAfter.annualInterestRate * 100).toFixed(1)}%</V></span>
+        <span>Annual interest rate remains at <V>{(stateAfter.annualInterestRate).toFixed(1)}%</V></span>
       ),
     });
   }
@@ -369,8 +369,8 @@ function generateAdjustRateItems(ctx: LiquityContext, accruedInterest: number, a
     content: (
       <span>
         {increased ? "Increased" : "Decreased"} interest rate from{" "}
-        <V>{(stateBefore.annualInterestRate * 100).toFixed(1)}%</V> to{" "}
-        <V>{(stateAfter.annualInterestRate * 100).toFixed(1)}%</V> APR
+        <V>{(stateBefore.annualInterestRate).toFixed(1)}%</V> to{" "}
+        <V>{(stateAfter.annualInterestRate).toFixed(1)}%</V> APR
       </span>
     ),
   });
@@ -712,7 +712,7 @@ function generateRedeemItems(ctx: LiquityContext): ExplainerItem[] {
   // Zombie-specific guidance
   if (isZombie && stateAfter.debt === 0) {
     items.push({
-      content: <span>With zero debt, no interest accrues and the {(stateAfter.annualInterestRate * 100).toFixed(1)}% interest rate is no longer relevant</span>,
+      content: <span>With zero debt, no interest accrues and the {(stateAfter.annualInterestRate).toFixed(1)}% interest rate is no longer relevant</span>,
     });
     items.push({
       content: <span>It can be closed by withdrawing the remaining collateral, or re-activated by borrowing 2,000 BOLD or more</span>,
@@ -725,7 +725,7 @@ function generateRedeemItems(ctx: LiquityContext): ExplainerItem[] {
     items.push({
       content: (
         <span>
-          Interest continues to accrue at <V>{(stateAfter.annualInterestRate * 100).toFixed(1)}%</V>. If the debt later rises back above 2,000 BOLD (for example from accrued interest), the Trove can return to normal behaviour
+          Interest continues to accrue at <V>{(stateAfter.annualInterestRate).toFixed(1)}%</V>. If the debt later rises back above 2,000 BOLD (for example from accrued interest), the Trove can return to normal behaviour
         </span>
       ),
     });
@@ -736,7 +736,7 @@ function generateRedeemItems(ctx: LiquityContext): ExplainerItem[] {
     items.push({
       content: (
         <span>
-          Interest rates are not affected by redemptions and this remains at <V>{(stateAfter.annualInterestRate * 100).toFixed(1)}%</V>
+          Interest rates are not affected by redemptions and this remains at <V>{(stateAfter.annualInterestRate).toFixed(1)}%</V>
         </span>
       ),
     });
@@ -794,7 +794,7 @@ function generateApplyPendingDebtItems(ctx: LiquityContext): ExplainerItem[] {
   }
 
   items.push({
-    content: <span>Interest rate: <V>{(stateAfter.annualInterestRate * 100).toFixed(1)}%</V></span>,
+    content: <span>Interest rate: <V>{(stateAfter.annualInterestRate).toFixed(1)}%</V></span>,
   });
 
   if (stateAfter.collateralRatio > 0) {
@@ -840,7 +840,7 @@ function generateSetBatchManagerItems(ctx: LiquityContext, accruedInterest: numb
   }
 
   items.push({
-    content: <span>Rate: <V>{(stateAfter.annualInterestRate * 100).toFixed(1)}%</V> APR</span>,
+    content: <span>Rate: <V>{(stateAfter.annualInterestRate).toFixed(1)}%</V> APR</span>,
   });
 
   if (ctx.batchUpdate?.annualManagementFee && ctx.batchUpdate.annualManagementFee > 0) {
@@ -908,7 +908,7 @@ function generateRemoveFromBatchItems(ctx: LiquityContext, accruedInterest: numb
     items.push({
       content: (
         <span>
-          Rate changed from {(stateBefore.annualInterestRate * 100).toFixed(1)}% to individual rate of <V>{(stateAfter.annualInterestRate * 100).toFixed(1)}%</V>
+          Rate changed from {(stateBefore.annualInterestRate).toFixed(1)}% to individual rate of <V>{(stateAfter.annualInterestRate).toFixed(1)}%</V>
         </span>
       ),
     });
@@ -946,8 +946,8 @@ function generateBatchRateUpdateItems(ctx: LiquityContext): ExplainerItem[] {
     content: (
       <span>
         The batch manager {increased ? "increased" : "decreased"} the interest rate from{" "}
-        <V>{(stateBefore.annualInterestRate * 100).toFixed(1)}%</V> to{" "}
-        <V>{(stateAfter.annualInterestRate * 100).toFixed(1)}%</V> APR
+        <V>{(stateBefore.annualInterestRate).toFixed(1)}%</V> to{" "}
+        <V>{(stateAfter.annualInterestRate).toFixed(1)}%</V> APR
       </span>
     ),
   });
@@ -1033,7 +1033,7 @@ function generateTransferItems(ctx: LiquityContext): ExplainerItem[] {
             The transferred trove contains <V>{fmtCurrency(stateAfter.debt, ctx.assetType ?? "BOLD")}</V> debt and{" "}
             <V>{fmtColl(stateAfter.coll)} {collateralType}</V> collateral with a{" "}
             <V>{stateAfter.collateralRatio.toFixed(1)}%</V> collateral ratio at a{" "}
-            <V>{(stateAfter.annualInterestRate * 100).toFixed(1)}%</V> interest rate
+            <V>{(stateAfter.annualInterestRate).toFixed(1)}%</V> interest rate
             {collateralPrice > 0 && <> ({collateralType} price: {fmtUsd(collateralPrice)})</>}
           </span>
         ),
@@ -1120,7 +1120,7 @@ function getLearnMoreContent(ctx: LiquityContext) {
       return liquityRedemptionContent(
         ctx.collateralType,
         ctx.stateAfter.annualInterestRate > 0
-          ? ctx.stateAfter.annualInterestRate * 100
+          ? ctx.stateAfter.annualInterestRate
           : undefined
       );
     default:

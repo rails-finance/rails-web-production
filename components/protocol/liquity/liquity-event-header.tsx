@@ -163,11 +163,11 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
             <>
               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-700 dark:text-purple-400 text-xs font-bold">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-                {(stateAfter.annualInterestRate * 100).toFixed(1)}%
+                {(stateAfter.annualInterestRate).toFixed(1)}%
               </span>
               {ctx.batchUpdate?.annualManagementFee != null && ctx.batchUpdate.annualManagementFee > 0 && (
                 <span className="inline-block px-2 py-0.5 rounded-full border border-rb-400 dark:border-rb-600  text-xs font-medium">
-                  + {(ctx.batchUpdate.annualManagementFee * 100).toFixed(1)} %
+                  + {(ctx.batchUpdate.annualManagementFee).toFixed(1)} %
                 </span>
               )}
               {ctx.batchManager && (
@@ -180,12 +180,12 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
               {stateAfter.annualInterestRate > 0 && (
                 <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-700 dark:text-purple-400 text-xs font-bold">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-                  {(stateAfter.annualInterestRate * 100).toFixed(2)}%
+                  {(stateAfter.annualInterestRate).toFixed(2)}%
                 </span>
               )}
               {ctx.batchUpdate?.annualManagementFee != null && ctx.batchUpdate.annualManagementFee > 0 && (
                 <span className="inline-block px-2 py-0.5 rounded-full border border-rb-400 dark:border-rb-600  text-xs font-medium">
-                  + {(ctx.batchUpdate.annualManagementFee * 100).toFixed(1)} %
+                  + {(ctx.batchUpdate.annualManagementFee).toFixed(1)} %
                 </span>
               )}
               {ctx.batchManager && (
@@ -266,7 +266,7 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
           {/* Rate change value for interest rate operations */}
           {rateChanged && !hasDebtChange && !hasCollChange && ctx.operation !== "setBatchManagerAnnualInterestRate" && (
             <span className="text-sm font-bold text-foreground">
-              {(stateAfter.annualInterestRate * 100).toFixed(1)}%
+              {(stateAfter.annualInterestRate).toFixed(1)}%
             </span>
           )}
 
@@ -279,7 +279,7 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
             )}
             {rateChanged && (ctx.operation === "adjustTroveInterestRate" || ctx.operation === "setBatchManagerAnnualInterestRate" || ctx.operation === "setInterestBatchManager" || ctx.operation === "removeFromBatch") && (
               <span className="text-sm ">
-                {(stateAfter.annualInterestRate * 100).toFixed(1)}% APR
+                {(stateAfter.annualInterestRate).toFixed(1)}% APR
               </span>
             )}
           </span>

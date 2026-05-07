@@ -3,6 +3,12 @@ import { isLiquityEvent } from '@/lib/shared/types/activity';
 
 const ONE_YEAR = 31_557_600;
 
+/**
+ * `annualInterestRate` is supplied in **percent units** (0.8 = 0.8% APR) —
+ * matching the convention rails-server-mig's API uses (it decodes the on-chain
+ * 1e18 fixed-point as decimals=16, leaving the value already in percent). The
+ * formula divides by 100 to convert to a fraction before multiplying by debt.
+ */
 export function calculateAccruedInterest(
   recordedDebt: number,
   annualInterestRate: number,
@@ -12,7 +18,7 @@ export function calculateAccruedInterest(
   if (recordedDebt <= 0 || annualInterestRate <= 0) return 0;
   const elapsed = currentTime - lastUpdateTime;
   if (elapsed <= 0) return 0;
-  return recordedDebt * annualInterestRate * elapsed / ONE_YEAR;
+  return recordedDebt * (annualInterestRate / 100) * elapsed / ONE_YEAR;
 }
 
 export function calculateInterestBetweenTransactions(
