@@ -8,7 +8,13 @@ import { Header } from "@/components/header";
 import { ThemeScript } from "@/components/ThemeScript";
 import { StructuredData } from "@/components/StructuredData";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  // `optional` skips the FOUT swap — first paint either has Inter (if it
+  // arrived inside the 100ms block window) or the metric-adjusted fallback.
+  display: "optional",
+});
 
 export const viewport: Viewport = {
   themeColor: [
@@ -100,7 +106,7 @@ export default function RootLayout({
         <StructuredData />
       </head>
       <body
-        className={`${inter.className} antialiased bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-100 min-h-screen overflow-x-hidden min-w-[320px]`}
+        className={`${inter.className} ${inter.variable} antialiased bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-100 min-h-screen overflow-x-hidden min-w-[320px]`}
       >
         <IconSymbols />
         <Providers>

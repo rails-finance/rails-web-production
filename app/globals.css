@@ -21,6 +21,10 @@
   --color-green-400: #4ade80;
 }
 
+/* ── Rails-explorer brand palette (additive, ported during phase-1 reskin) ──
+   Existing slate-* tokens stay for as long as legacy components reference
+   them; new ports use rb-* and the semantic tokens below.
+*/
 :root {
   /* Light mode colors (default) */
   --foreground: #0d0f15;
@@ -41,6 +45,43 @@
 
   /* SVG inner background for timeline icons */
   --svg-inner-bg: #ffffff;
+
+  /* ── rails-explorer brand: light mode ──────────────────────────────────── */
+  --background: rgb(235 240 247); /* rb-50 */
+
+  --surface-hover:   rgba(255, 255, 255, 0.5);
+  --surface-active:  rgba(255, 255, 255, 0.7);
+  --surface-inset:   rgba(255, 255, 255, 0.4);
+  --surface-overlay: #F5F7FA;
+
+  --text-muted:       var(--color-rb-500);
+  --text-muted-hover: var(--rb-text-500);
+  --text-link:        var(--color-blue-400);
+  --text-link-hover:  var(--color-blue-300);
+
+  --pill-active-bg:   var(--surface-active);
+  --pill-active-text: var(--foreground);
+  --pill-idle-text:   var(--color-rb-500);
+  --pill-idle-hover:  var(--color-rb-300);
+
+  --focus-ring: rgba(59, 130, 246, 0.4);
+
+  --sidebar-bg: #E3E9F0;
+  --card-bg: #DDE1E8;
+  --card-hover: #D5DAE0;
+  --card-border-rb: transparent;
+  --card-border-hover: #D5DAE0;
+  --card-border-drag: #C4CDD9;
+  --sidebar-header-hover: #DDE1E8;
+  --backdrop-bg: rgba(255,255,255,0.45);
+  --panel-shadow: -8px 0 30px rgba(0,0,0,0.15);
+  --facehash-ring: #E3E9F0;
+
+  --rb-text-500: #1E212E;
+
+  --rb-chart-grid: #D5DAE0;
+  --rb-tooltip-bg: #E3E9F0;
+  --rb-tooltip-border: #DDE1E8;
 }
 
 .dark {
@@ -63,9 +104,72 @@
 
   /* SVG inner background for timeline icons */
   --svg-inner-bg: #171b24;
+
+  /* ── rails-explorer brand: dark mode ───────────────────────────────────── */
+  --background: rgb(20 22 30); /* rb-800 */
+
+  --surface-hover:   rgba(0, 0, 0, 0.15);
+  --surface-active:  rgba(0, 0, 0, 0.25);
+  --surface-inset:   rgba(0, 0, 0, 0.3);
+  --surface-overlay: #14161E;
+
+  --sidebar-bg: #12131A;
+  --card-bg: #0F1017;
+  --card-hover: #050507;
+  --card-border-rb: transparent;
+  --card-border-hover: #050507;
+  --card-border-drag: #050507;
+  --sidebar-header-hover: #0F1017;
+  --backdrop-bg: rgba(0,0,0,0.5);
+  --panel-shadow: -8px 0 30px rgba(0,0,0,0.5);
+  --facehash-ring: #12131A;
+
+  --rb-text-500: #DDE1E8;
+
+  --rb-chart-grid: #14161E;
+  --rb-tooltip-bg: #050507;
+  --rb-tooltip-border: #14161E;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  /* Rails brand palette — mode-agnostic (50 lightest, 950 darkest). */
+  --color-rb-50:  rgb(235 240 247);
+  --color-rb-100: rgb(228 233 240);
+  --color-rb-200: rgb(220 225 232);
+  --color-rb-300: rgb(213 218 224);
+  --color-rb-400: rgb(196 205 217);
+  --color-rb-500: rgb(88 104 130);
+  --color-rb-600: rgb(30 33 46);
+  --color-rb-700: rgb(25 28 38);
+  --color-rb-800: rgb(20 22 30);
+  --color-rb-850: rgb(18 19 26);
+  --color-rb-900: rgb(15 16 23);
+  --color-rb-950: rgb(5 5 7);
+
+  --color-rb-text-500: var(--rb-text-500);
+
+  --color-blue-300:  #93c5fd;
+  --color-blue-400:  #60a5fa;
+  --color-blue-500:  #3b82f6;
+  --color-amber-400: #fbbf24;
+  --color-amber-500: #f59e0b;
+}
+
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
 }
 
 body {
+  font-family: var(--font-inter), Inter, sans-serif;
 }
 
 @layer components {
@@ -180,3 +284,260 @@ body {
     @apply text-sm text-center text-slate-600 dark:text-slate-400 mt-3 italic;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   rails-explorer ported system — phase-1 reskin foundation
+   Surfaces, buttons, pills, links, focus, dropdowns, animations, scrollbars.
+   These are used by ported components (event-card, spine-column, etc.) and
+   coexist with the legacy slate-based system above until that's retired.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Surfaces */
+.surface-hover    { background: var(--surface-hover); }
+.surface-active   { background: var(--surface-active); }
+.surface-inset    { background: var(--surface-inset); }
+.surface-on-hover { transition: background 0.15s; &:hover { background: var(--surface-hover); } }
+
+/* Buttons */
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-colors;
+  background: var(--color-fuchsia-600, #c026d3);
+  color: #ffffff;
+  &:hover { background: var(--color-fuchsia-500, #d946ef); }
+}
+.btn-secondary {
+  @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors;
+  border: 1px solid var(--color-rb-700);
+  color: var(--text-muted);
+  &:hover { color: var(--text-muted-hover); background: var(--surface-hover); }
+}
+.btn-ghost {
+  @apply inline-flex items-center gap-1 transition-colors;
+  color: var(--text-muted);
+  &:hover { color: var(--text-muted-hover); }
+}
+
+/* Pills */
+.pill-active {
+  @apply px-3 py-1 rounded-full text-xs font-medium transition-colors;
+  background: var(--pill-active-bg);
+  color: var(--pill-active-text);
+}
+.pill-idle {
+  @apply px-3 py-1 rounded-full text-xs font-medium transition-colors;
+  color: var(--pill-idle-text);
+  &:hover { color: var(--pill-idle-hover); background: var(--surface-hover); }
+}
+
+/* Links */
+.link { color: var(--text-link); transition: color 0.15s; &:hover { color: var(--text-link-hover); } }
+.link-muted { color: var(--text-muted); transition: color 0.15s; &:hover { color: var(--text-muted-hover); } }
+
+/* Expand chevron */
+:is(.group\/evt, .group\/card, .group\/proto):hover .expand-chev svg { stroke: white !important; }
+
+/* Focus ring */
+.focus-ring { &:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; } }
+
+/* Input focus */
+.input-focus {
+  &:focus { border-color: var(--focus-ring); box-shadow: 0 0 0 1px var(--focus-ring); outline: none; }
+}
+
+/* Icon buttons */
+.btn-icon {
+  @apply inline-flex items-center justify-center shrink-0 rounded-lg transition-colors;
+  color: var(--text-muted);
+  &:hover { color: var(--text-muted-hover); background: var(--surface-hover); }
+}
+
+/* Dropdown / popover containers */
+.overlay-panel {
+  background: var(--surface-overlay);
+  border: 1px solid var(--color-rb-200);
+  @apply rounded-xl shadow-xl;
+}
+:is(.dark) .overlay-panel { border-color: var(--color-rb-700); }
+
+.overlay-item {
+  @apply flex items-center gap-2 w-full px-3 py-2 text-left text-xs transition-colors cursor-pointer;
+  color: var(--text-muted);
+  &:hover { background: var(--surface-hover); color: var(--text-muted-hover); }
+}
+.overlay-item-active {
+  background: var(--surface-active);
+  color: var(--pill-active-text);
+}
+
+/* Form / interaction defaults */
+input, button, textarea, select { font-family: inherit; }
+a, button, [role="button"], input[type="submit"], input[type="button"], input[type="reset"], select, summary {
+  cursor: pointer;
+}
+
+/* Animations */
+@keyframes sidebar-slide-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes dropdown-bounce-down {
+  0%   { opacity: 0; transform: translateY(-8px) scale(0.96); }
+  60%  { opacity: 1; transform: translateY(2px)  scale(1.005); }
+  100% { opacity: 1; transform: translateY(0)    scale(1); }
+}
+@keyframes dropdown-bounce-up {
+  0%   { opacity: 0; transform: translateY(8px)  scale(0.96); }
+  60%  { opacity: 1; transform: translateY(-2px) scale(1.005); }
+  100% { opacity: 1; transform: translateY(0)    scale(1); }
+}
+.animate-dropdown-down { animation: dropdown-bounce-down 240ms cubic-bezier(0.22, 1.4, 0.5, 1) both; transform-origin: top right; }
+.animate-dropdown-up   { animation: dropdown-bounce-up   240ms cubic-bezier(0.22, 1.4, 0.5, 1) both; transform-origin: bottom right; }
+
+@keyframes highlight-flash {
+  0% { border-color: rgba(139, 92, 246, 0.7); }
+  100% { border-color: rgba(139, 92, 246, 0.4); }
+}
+.animate-highlight-flash {
+  animation: highlight-flash 1s ease-out forwards;
+  border-left: 3px solid rgba(139, 92, 246, 0.4);
+  border-radius: 0.75rem;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes hero-fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-hero-fade-up {
+  opacity: 0;
+  animation: hero-fade-up 0.6s ease-out forwards;
+}
+
+@keyframes track-drift {
+  from { transform: translateY(0px); }
+  to   { transform: translateY(-10px); }
+}
+.animate-track-drift { animation: track-drift 8s ease-in-out infinite alternate; }
+
+@keyframes line-draw {
+  from { stroke-dashoffset: 1; }
+  to   { stroke-dashoffset: 0; }
+}
+.hero-track-line {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: line-draw 5s ease-out forwards;
+  animation-delay: var(--hero-line-delay, 0s);
+}
+[data-hero-seen="1"] .animate-hero-fade-up { opacity: 1; animation: none; }
+[data-hero-seen="1"] .hero-track-line { stroke-dasharray: none; stroke-dashoffset: 0; animation: none; }
+
+@keyframes demo-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+@keyframes demo-progress {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
+
+@keyframes badge-ticker {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* Simulator shimmer border */
+@keyframes shimmer-rotate {
+  from { --shimmer-angle: 0deg; }
+  to   { --shimmer-angle: 360deg; }
+}
+@property --shimmer-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+.simulator-shimmer { position: relative; border-radius: 0.5rem; }
+.simulator-shimmer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid transparent;
+  background:
+    conic-gradient(
+      from var(--shimmer-angle),
+      transparent 0%,
+      #3b82f6 15%,
+      #60a5fa 30%,
+      transparent 50%,
+      #3b82f6 65%,
+      #60a5fa 80%,
+      transparent 100%
+    ) border-box;
+  -webkit-mask:
+    linear-gradient(#000 0 0) padding-box,
+    linear-gradient(#000 0 0) border-box;
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) padding-box,
+    linear-gradient(#000 0 0) border-box;
+  mask-composite: exclude;
+  animation: shimmer-rotate 3s linear infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Simulator slider */
+.sim-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  margin: 0;
+  z-index: 2;
+}
+.sim-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--color-rb-700);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  cursor: pointer;
+  transition: border-color 150ms, box-shadow 150ms;
+}
+.sim-slider::-webkit-slider-thumb:hover {
+  border-color: var(--color-rb-500);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15), 0 1px 4px rgba(0,0,0,0.3);
+}
+.sim-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--color-rb-700);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  cursor: pointer;
+}
+.sim-slider::-moz-range-track { background: transparent; border: none; }
+.sim-slider:focus { outline: none; }
+
+/* Terminal-style scrollbar (used by Rails Index activity tables) */
+.terminal-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.terminal-scroll::-webkit-scrollbar-track { background: transparent; }
+.terminal-scroll::-webkit-scrollbar-thumb { background: var(--color-rb-700); border-radius: 3px; }
+.terminal-scroll::-webkit-scrollbar-thumb:hover { background: var(--color-rb-600); }
+
+/* Terminal table styles */
+.terminal-table thead { position: sticky; top: 0; z-index: 10; }
+.terminal-row:hover { background: rgba(128, 128, 128, 0.06) !important; }
+.proto-row { transition: background 0.15s ease; }
+.proto-row:hover { background: rgba(128, 128, 128, 0.06) !important; }
+.terminal-subrow { background-color: rgba(128, 128, 128, 0.04); }
+.terminal-subrow:hover { background: rgba(128, 128, 128, 0.06) !important; }
+.terminal-subrow td:first-child { border-left: 2px solid var(--color-rb-600); }
