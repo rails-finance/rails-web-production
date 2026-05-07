@@ -4,7 +4,8 @@ import "./globals.css";
 
 import { Providers } from "./providers";
 import { IconSymbols } from "@/components/icons/iconSymbols";
-import { Header } from "@/components/header";
+import { HeaderBar } from "@/components/nav/header-bar";
+import { WalletContextProvider } from "@/components/nav/wallet-context";
 import { ThemeScript } from "@/components/ThemeScript";
 import { StructuredData } from "@/components/StructuredData";
 
@@ -110,8 +111,10 @@ export default function RootLayout({
       >
         <IconSymbols />
         <Providers>
-          <Header />
-          {children}
+          <WalletContextProvider>
+            <HeaderBar />
+            {children}
+          </WalletContextProvider>
         </Providers>
       </body>
     </html>
