@@ -2,11 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+type SortDirection = "asc" | "desc";
+
 type TroveUiState = {
   hideDelegateRates: boolean;
   hideRedemptions: boolean;
   summaryExplanationOpen: boolean;
   economicsOpen: boolean;
+  sortDirection: SortDirection;
 };
 
 const DEFAULT_TROVE_STATE: TroveUiState = {
@@ -14,6 +17,7 @@ const DEFAULT_TROVE_STATE: TroveUiState = {
   hideRedemptions: false,
   summaryExplanationOpen: false,
   economicsOpen: false,
+  sortDirection: "asc",
 };
 
 const storageKey = (troveKey: string) => `rails-ui-${troveKey}`;
@@ -37,6 +41,7 @@ export function useTroveUiState(troveKey?: string) {
           hideRedemptions: parsed.hideRedemptions ?? false,
           summaryExplanationOpen: parsed.summaryExplanationOpen ?? false,
           economicsOpen: parsed.economicsOpen ?? false,
+          sortDirection: parsed.sortDirection === "desc" ? "desc" : "asc",
         });
       } else {
         setState(DEFAULT_TROVE_STATE);
@@ -75,14 +80,20 @@ export function useTroveUiState(troveKey?: string) {
     setState((prev) => ({ ...prev, hideRedemptions: hide }));
   }, []);
 
+  const setSortDirection = useCallback((dir: SortDirection) => {
+    setState((prev) => ({ ...prev, sortDirection: dir }));
+  }, []);
+
   return {
     hideDelegateRates: state.hideDelegateRates,
     hideRedemptions: state.hideRedemptions,
     summaryExplanationOpen: state.summaryExplanationOpen,
     economicsOpen: state.economicsOpen,
+    sortDirection: state.sortDirection,
     setHideDelegateRates,
     setHideRedemptions,
     setSummaryExplanationOpen,
     setEconomicsOpen,
+    setSortDirection,
   };
 }

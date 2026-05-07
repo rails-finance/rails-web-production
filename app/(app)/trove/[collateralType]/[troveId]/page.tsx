@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ChevronLeft, Users } from "lucide-react";
+import { ChevronLeft, Users, ArrowUpDown } from "lucide-react";
 import { TroveSummary, TrovesResponse } from "@/types/api/trove";
 import { TroveSummaryCard } from "@/components/trove/TroveSummaryCard";
 import { TroveEconomicsSummary } from "@/components/trove/TroveEconomicsSummary";
@@ -59,10 +59,12 @@ export default function TrovePage() {
     hideRedemptions,
     summaryExplanationOpen,
     economicsOpen,
+    sortDirection,
     setHideDelegateRates,
     setHideRedemptions,
     setSummaryExplanationOpen,
     setEconomicsOpen,
+    setSortDirection,
   } = useTroveUiState(troveKey);
 
   // Live blockchain data and prices
@@ -168,7 +170,9 @@ export default function TrovePage() {
   };
 
   // Events sorted oldest → newest, with Liquity events at the front so the
-  // bars provider's lifetime-peak walk is deterministic.
+  // bars provider's lifetime-peak walk is deterministic. The display order
+  // (asc/desc) is applied as a render-time reverse below — the bars provider
+  // always sees asc.
   const sortedEvents = useMemo(
     () => [...events].sort((a, b) => a.blockNumber - b.blockNumber || a.timestamp - b.timestamp),
     [events],
@@ -182,6 +186,11 @@ export default function TrovePage() {
         return true;
       }),
     [sortedEvents, hideRedemptions, hideDelegateRates],
+  );
+
+  const displayedEvents = useMemo(
+    () => (sortDirection === "desc" ? [...visibleEvents].reverse() : visibleEvents),
+    [visibleEvents, sortDirection],
   );
 
   const redemptionCount = sortedEvents.filter(isRedemptionEvent).length;
@@ -275,6 +284,15 @@ export default function TrovePage() {
             )}
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSortDirection(sortDirection === "asc" ? "desc" : "asc")}
+              aria-label={sortDirection === "asc" ? "Currently oldest first — click to flip to newest first" : "Currently newest first — click to flip to oldest first"}
+              title={sortDirection === "asc" ? "Oldest first" : "Newest first"}
+              className="cursor-pointer inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full text-rb-500 hover:text-foreground bg-rb-100 dark:bg-rb-900 hover:bg-rb-200 dark:hover:bg-rb-800 transition-colors"
+            >
+              <ArrowUpDown size={12} />
+              {sortDirection === "asc" ? "Oldest first" : "Newest first"}
+            </button>
             {batchManagerCount > 0 && (
               <button
                 onClick={() => setHideDelegateRates(!hideDelegateRates)}
@@ -308,20 +326,24 @@ export default function TrovePage() {
           </div>
         </div>
 
-        {visibleEvents.length > 0 ? (
+        {displayedEvents.length > 0 ? (
           <TimelineDisplayProvider>
             <LiquityTroveBarsProvider events={sortedEvents}>
               <div className="space-y-2">
-                {visibleEvents.map((event, idx) => {
+                {displayedEvents.map((event, idx) => {
                   if (!isLiquityEvent(event)) return null;
-                  const previousEvent = idx > 0 ? visibleEvents[idx - 1] : undefined;
+                  // previousEvent is always the temporally-older event,
+                  // regardless of display order, so explainer deltas
+                  // (interest accrued, time-since-last) stay correct.
+                  const tempIdx = sortedEvents.indexOf(event);
+                  const previousEvent = tempIdx > 0 ? sortedEvents[tempIdx - 1] : undefined;
                   return (
                     <LiquityEventCard
                       key={event.id}
                       event={event}
                       addressDisplay="hidden"
                       isFirst={idx === 0}
-                      isLast={idx === visibleEvents.length - 1}
+                      isLast={idx === displayedEvents.length - 1}
                       previousEvent={previousEvent}
                     />
                   );
