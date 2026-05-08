@@ -120,66 +120,6 @@ export const REPAID_PATTERN = reverseDiagonalPattern("rgba(52, 211, 153, 0.5)");
 export const WITHDRAWN_PATTERN = reverseDiagonalPattern("rgba(96, 165, 250, 0.5)");
 export const COSTS_PATTERN = reverseDiagonalPattern("rgba(217, 70, 239, 0.5)");
 
-// ── Chart mode toggle (Past / Present / Future) ───────────────────────────
-// Shared segmented pill used by every lending-protocol economics view.
-//   · "Live"      = current open position (striped lifetime layers hidden)
-//   · "Historical"= lifetime view (Withdrawn / Repaid / Liquidated / Seized /
-//                   Closed positions all reinstated)
-//   · "Simulator" = projected position from user edits (only rendered when
-//                   the protocol passes hasSimulator — currently V4, llamalend,
-//                   liquity, with V3 + others to follow)
-
-export type ChartMode = "live" | "historical" | "simulator";
-
-export function ChartModeToggle({ mode, onChange, hasHistory = true, hasSimulator = false }: {
-  mode: ChartMode;
-  onChange: (next: ChartMode) => void;
-  /** When false, the historical option is disabled (nothing to show) */
-  hasHistory?: boolean;
-  /** When true, render the third Simulator pill */
-  hasSimulator?: boolean;
-}) {
-  const baseBtn = "px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider transition-colors rounded";
-  const activeBtn = "bg-rb-200 dark:bg-rb-900 text-rb-800 dark:text-rb-100";
-  const idleBtn = "text-rb-500 hover:text-rb-700 dark:hover:text-rb-300";
-  const disabledBtn = "text-rb-400 dark:text-rb-700 cursor-not-allowed";
-  // Simulator pill picks up an amber accent so the editorial mode reads
-  // distinctly from the two passive views.
-  const activeSimBtn = "bg-amber-500/15 text-amber-400";
-  const idleSimBtn = "text-rb-500 hover:text-amber-400";
-  return (
-    <div className="inline-flex items-center gap-0.5 p-0.5 rounded-md border border-rb-200/60 dark:border-rb-800/60">
-      <button
-        type="button"
-        onClick={() => onChange("live")}
-        className={`${baseBtn} ${mode === "live" ? activeBtn : idleBtn}`}
-      >
-        Live
-      </button>
-      <button
-        type="button"
-        onClick={() => hasHistory && onChange("historical")}
-        disabled={!hasHistory}
-        title={hasHistory ? "Show lifetime activity (withdrawn, repaid, closed positions)" : "No historical activity to show"}
-        className={`${baseBtn} ${mode === "historical" ? activeBtn : (hasHistory ? idleBtn : disabledBtn)}`}
-      >
-        Historical
-      </button>
-      {hasSimulator && (
-        <button
-          type="button"
-          onClick={() => onChange("simulator")}
-          title="Project a hypothetical position from current state"
-          className={`${baseBtn} ${mode === "simulator" ? activeSimBtn : idleSimBtn}`}
-        >
-          Simulator
-        </button>
-      )}
-    </div>
-  );
-}
-
-
 // ── Compact number formatter ──────────────────────────────────────────────
 
 function compactSuffix(n: number, divisor: number, suffix: string): string {

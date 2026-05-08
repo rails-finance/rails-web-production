@@ -10,15 +10,14 @@ import { getBatchManagerName } from "@/lib/liquity/batch-managers";
 import {
   type TowerSegment,
   type BreakdownRow,
-  type ChartMode,
   CHART_HEIGHT,
   DualTowerChart,
-  ChartModeToggle,
   checkerPattern,
   formatPrice,
   formatCompactUsd,
   formatUsdValue,
 } from "@/components/shared/economics-chart-primitives";
+import { FilterDropdown, DisplaySettingsIcon, type FilterOption } from "@/components/shared/filter-dropdown";
 import { usePreferences } from "@/lib/shared/preferences-context";
 import { TrovePriceAxis } from "@/components/protocol/liquity/trove-price-axis";
 import { formatRatio, ratioLabel, ratioColorClass } from "@/lib/shared/ratio-format";
@@ -388,7 +387,10 @@ export function TroveEconomicsSummary({
 
   const baseResult = useMemo(() => calculateEconomicsFromEvents(events), [events]);
   const redeemerStats = useMemo(() => calculateRedeemerStats(events), [events]);
-  const [chartMode, setChartMode] = useState<ChartMode>("historical");
+  // Display-menu visibility flag, mirroring Aave V4's chart toolbar:
+  // false (default) → historical view (lifetime activity layered in);
+  // true → live view (current open position only).
+  const [hideHistorical, setHideHistorical] = useState(false);
 
   // Pure redeemer — no own trove operations
   if (!baseResult && redeemerStats) {
@@ -464,11 +466,13 @@ export function TroveEconomicsSummary({
     || (liquidation?.totalDebtCleared ?? 0) > 0
     || (redemption?.totalDebtCleared ?? 0) > 0
     || economics.position.totalCollateralWithdrawn > 0;
-  const effectiveMode: ChartMode =
-    (chartMode === "historical" && !hasHistory && hasLive) ? "live"
-    : (chartMode === "live" && !hasLive && hasHistory) ? "historical"
-    : chartMode;
-  const isLiveView = effectiveMode === "live";
+  // When only one side has data the view is forced; otherwise the user's
+  // hide-historical preference picks between them.
+  const isLiveView = !hasHistory
+    ? true
+    : !hasLive
+      ? false
+      : hideHistorical;
 
   const debtSegments: TowerSegment[] = [
     { key: "current-debt", label: "Current Debt", value: entireDebt, colorClass: "bg-emerald-500" },
@@ -759,12 +763,19 @@ export function TroveEconomicsSummary({
                 ? `${meta.status === "closed" ? "opacity-60" : ""}`
                 : "p-3 border border-transparent"
             }`}>
-            {(hasLive || hasHistory) && (
+            {hasLive && hasHistory && (
               <div className="flex items-center justify-end gap-2 mb-2 min-h-[28px]">
-                <ChartModeToggle
-                  mode={effectiveMode}
-                  hasHistory={hasHistory}
-                  onChange={(next) => setChartMode(next)}
+                <FilterDropdown
+                  label="Display"
+                  options={[{ key: "hide-historical", label: "Hide inactive / repaid" } satisfies FilterOption]}
+                  selected={hideHistorical ? new Set(["hide-historical"]) : new Set<string>()}
+                  onSelect={() => {}}
+                  multi
+                  minimal
+                  align="right"
+                  variant="ghost"
+                  triggerIcon={<DisplaySettingsIcon size={14} />}
+                  onToggle={() => setHideHistorical((v) => !v)}
                 />
               </div>
             )}
