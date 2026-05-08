@@ -6,30 +6,21 @@ import { Icon } from "@/components/icons/icon";
 import { getTroveNftUrl } from "@/lib/utils/nft-utils";
 
 /**
- * Pill row that surfaces a trove's identity (owner address, NFT id, OpenSea
- * link) — hoisted out of the trove-summary card and trove-economics chart
- * panel so it sits between them as a standalone band. Each pill carries a
- * copy/external-link affordance; the address pill prefers an ENS name when
- * one is supplied.
+ * Trove identifier pills — Trove ID + NFT/OpenSea link. The owner address
+ * lives in the global header pill now, so it's not duplicated here.
  */
 export function TroveIdentityRow({
-  owner,
-  ens,
   troveId,
   collateralType,
 }: {
-  owner?: string | null;
-  ens?: string | null;
   troveId?: string;
   collateralType?: string;
 }) {
-  const [copiedOwner, setCopiedOwner] = useState(false);
   const [copiedTrove, setCopiedTrove] = useState(false);
-  const ownerLabel = ens || (owner ? `${owner.slice(0, 6)}…${owner.slice(-4)}` : null);
   const troveLabel = troveId ? `${troveId.slice(0, 6)}…${troveId.slice(-4)}` : null;
   const nftUrl = collateralType && troveId ? getTroveNftUrl(collateralType, troveId) : null;
 
-  if (!ownerLabel && !troveLabel && !nftUrl) return null;
+  if (!troveLabel && !nftUrl) return null;
 
   const copy = (value: string, setter: (v: boolean) => void) => {
     navigator.clipboard.writeText(value);
@@ -42,25 +33,6 @@ export function TroveIdentityRow({
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      {ownerLabel && owner && (
-        <span className={pillBase}>
-          <Icon name="user" size={12} />
-          <span className="font-mono text-foreground">{ownerLabel}</span>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              copy(owner, setCopiedOwner);
-            }}
-            aria-label={copiedOwner ? "Copied owner address" : "Copy owner address"}
-            title={copiedOwner ? "Copied!" : "Copy"}
-            className="text-rb-500 hover:text-foreground cursor-pointer"
-          >
-            <Icon name={copiedOwner ? "check" : "copy"} size={12} />
-          </button>
-        </span>
-      )}
       {troveLabel && troveId && (
         <span className={pillBase}>
           <Icon name="trove-id" size={12} />
