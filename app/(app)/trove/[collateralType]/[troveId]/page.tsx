@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ChevronLeft, ArrowUpDown } from "lucide-react";
 import { TroveSummary, TrovesResponse } from "@/types/api/trove";
-import { TroveSummaryCard } from "@/components/trove/TroveSummaryCard";
+import { TroveSummaryCardSelector } from "@/components/trove/TroveSummaryCardSelector";
 import { TroveDetailsBand } from "@/components/trove/TroveDetailsBand";
 import { TroveContextRow } from "@/components/trove/TroveContextRow";
 import { useTroveExplanationItems } from "@/components/trove/use-trove-explanation-items";
@@ -95,6 +95,7 @@ function TimelineDisplayToggle() {
  * which subscribes when rendered. */
 function TroveSummaryStack({
   trove,
+  ownerTroves,
   liveState,
   prices,
   debtInFront,
@@ -105,6 +106,7 @@ function TroveSummaryStack({
   loadingStatus,
 }: {
   trove: TroveSummary;
+  ownerTroves?: TroveSummary[];
   liveState?: TroveStateData;
   prices?: OraclePricesData;
   debtInFront: number | null;
@@ -117,8 +119,9 @@ function TroveSummaryStack({
   const items = useTroveExplanationItems({ trove, liveState, prices, debtInFront, trovesAhead });
   return (
     <div className="space-y-6">
-      <TroveSummaryCard
+      <TroveSummaryCardSelector
         trove={trove}
+        ownerTroves={ownerTroves}
         liveState={liveState}
         prices={prices}
         loadingStatus={loadingStatus}
@@ -148,6 +151,7 @@ export default function TrovePage() {
   const troveKey = `${collateralType}:${troveId}`;
 
   const [troveData, setTroveData] = useState<TroveSummary | null>(null);
+  const [ownerTroves, setOwnerTroves] = useState<TroveSummary[] | undefined>(undefined);
   const [events, setEvents] = useState<BaseActivityEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -177,6 +181,24 @@ export default function TrovePage() {
     const lower = ownerAddr.toLowerCase();
     setWallets([lower], { [lower]: troveData?.ownerEns ?? null });
   }, [troveData?.owner, troveData?.lastOwner, troveData?.ownerEns, setWallets]);
+
+  // Fetch sibling troves the same wallet holds across all collateral branches,
+  // so the summary card can act as a position selector. Lazy after the primary
+  // load — keeps the page TTI snappy and the chooser populates while the user
+  // reads the active trove. `ownerAddress` filter is honored by /api/troves.
+  useEffect(() => {
+    const ownerAddr = troveData?.owner;
+    if (!ownerAddr) return;
+    let cancelled = false;
+    fetch(`/api/troves?ownerAddress=${ownerAddr}`)
+      .then(r => r.ok ? r.json() as Promise<TrovesResponse> : null)
+      .then(resp => {
+        if (cancelled || !resp?.data) return;
+        setOwnerTroves(resp.data);
+      })
+      .catch(() => { /* silent — selector just stays in single-card mode */ });
+    return () => { cancelled = true; };
+  }, [troveData?.owner]);
 
   // Debt in front calculation
   const debtInFrontRate = liveState?.rates.annualInterestRate ?? troveData?.metrics.interestRate;
@@ -391,6 +413,7 @@ export default function TrovePage() {
         <HoverProvider>
           <TroveSummaryStack
             trove={troveData}
+            ownerTroves={ownerTroves}
             liveState={liveState}
             prices={prices}
             debtInFront={debtInFront}
