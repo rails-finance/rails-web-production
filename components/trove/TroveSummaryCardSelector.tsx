@@ -27,7 +27,13 @@ interface TroveSummaryCardSelectorProps {
   };
 }
 
-type TroveItem = TroveSummary & CardSelectorItem;
+// Wrapper item — keeps the original TroveSummary unmutated so TroveListingCard's
+// inner <Link> builds the right `/trove/<branch>/<id>` href. Trove ids are
+// uint256 hashes (cross-branch collision is effectively impossible), so we can
+// use the bare id as the shell's selector key.
+interface TroveItem extends CardSelectorItem {
+  trove: TroveSummary;
+}
 
 export function TroveSummaryCardSelector({
   trove,
@@ -36,17 +42,8 @@ export function TroveSummaryCardSelector({
   prices,
   loadingStatus,
 }: TroveSummaryCardSelectorProps) {
-  const items: TroveItem[] = (() => {
-    if (!ownerTroves || ownerTroves.length <= 1) {
-      return [{ ...trove, id: `${trove.collateralType}:${trove.id}` }];
-    }
-    // Stable id includes collateral so two troves with the same numeric id on
-    // different branches don't collide.
-    return ownerTroves.map(t => ({ ...t, id: `${t.collateralType}:${t.id}` }));
-  })();
-
   // No selector when there's only one trove — render the rich summary alone.
-  if (items.length <= 1) {
+  if (!ownerTroves || ownerTroves.length <= 1) {
     return (
       <TroveSummaryCard
         trove={trove}
@@ -57,28 +54,34 @@ export function TroveSummaryCardSelector({
     );
   }
 
-  const selectedId = `${trove.collateralType}:${trove.id}`;
+  const items: TroveItem[] = ownerTroves.map(t => ({ id: t.id, trove: t }));
 
   return (
     <CardSelectorShell
       items={items}
-      selected={selectedId}
+      selected={trove.id}
       onSelect={() => { /* navigation handled by TroveListingCard's inner Link */ }}
       orderItems={(list) => [...list].sort((a, b) => {
-        const aTs = a.activity?.lastActivityAt ?? a.activity?.createdAt ?? 0;
-        const bTs = b.activity?.lastActivityAt ?? b.activity?.createdAt ?? 0;
+        const aTs = a.trove.activity?.lastActivityAt ?? a.trove.activity?.createdAt ?? 0;
+        const bTs = b.trove.activity?.lastActivityAt ?? b.trove.activity?.createdAt ?? 0;
         return bTs - aTs;
       })}
       renderCard={(item, props) => (
         props.isActive ? (
-          <TroveSummaryCard
-            trove={item}
-            liveState={liveState}
-            prices={prices}
-            loadingStatus={loadingStatus}
-          />
+          // Whole-card click toggles the chooser, mirroring rails-explorer.
+          // Inner buttons (copy badge, deprecation link) still bubble — that's
+          // acceptable noise; users get an expand/collapse flicker on those
+          // clicks but the primary action (copy / navigate) still fires.
+          <div onClick={props.onClick} className="cursor-pointer">
+            <TroveSummaryCard
+              trove={item.trove}
+              liveState={liveState}
+              prices={prices}
+              loadingStatus={loadingStatus}
+            />
+          </div>
         ) : (
-          <TroveListingCard trove={item} prices={prices} />
+          <TroveListingCard trove={item.trove} prices={prices} />
         )
       )}
     />

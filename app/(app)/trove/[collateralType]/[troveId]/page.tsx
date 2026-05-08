@@ -171,26 +171,34 @@ export default function TrovePage() {
   const [liveState, setLiveState] = useState<TroveStateData | undefined>(undefined);
   const [prices, setPrices] = useState<OraclePricesData | undefined>(undefined);
 
+  // Closed / liquidated troves have ownership transferred to the zero address,
+  // so `owner` reads as the burn address. Real wallet lives in `lastOwner`.
+  // Plain `owner ?? lastOwner` doesn't help because `0x0000...` is truthy —
+  // we need to actively reject the burn address before falling through.
+  const effectiveOwner = (() => {
+    const o = troveData?.owner?.toLowerCase();
+    if (o && o !== "0x0000000000000000000000000000000000000000") return troveData?.owner;
+    return troveData?.lastOwner;
+  })();
+
   // Surface the trove owner in the header wallet pill — the WalletContext
   // hydrator only reads /address/* paths, so trove pages need to push the
   // owner explicitly. Mirrors rails-explorer's "Liquity V2 + <owner>" header.
   const { setWallets } = useWalletContext();
   useEffect(() => {
-    const ownerAddr = troveData?.owner ?? troveData?.lastOwner;
-    if (!ownerAddr) return;
-    const lower = ownerAddr.toLowerCase();
+    if (!effectiveOwner) return;
+    const lower = effectiveOwner.toLowerCase();
     setWallets([lower], { [lower]: troveData?.ownerEns ?? null });
-  }, [troveData?.owner, troveData?.lastOwner, troveData?.ownerEns, setWallets]);
+  }, [effectiveOwner, troveData?.ownerEns, setWallets]);
 
   // Fetch sibling troves the same wallet holds across all collateral branches,
   // so the summary card can act as a position selector. Lazy after the primary
   // load — keeps the page TTI snappy and the chooser populates while the user
   // reads the active trove. `ownerAddress` filter is honored by /api/troves.
   useEffect(() => {
-    const ownerAddr = troveData?.owner;
-    if (!ownerAddr) return;
+    if (!effectiveOwner) return;
     let cancelled = false;
-    fetch(`/api/troves?ownerAddress=${ownerAddr}`)
+    fetch(`/api/troves?ownerAddress=${effectiveOwner}`)
       .then(r => r.ok ? r.json() as Promise<TrovesResponse> : null)
       .then(resp => {
         if (cancelled || !resp?.data) return;
@@ -198,7 +206,7 @@ export default function TrovePage() {
       })
       .catch(() => { /* silent — selector just stays in single-card mode */ });
     return () => { cancelled = true; };
-  }, [troveData?.owner]);
+  }, [effectiveOwner]);
 
   // Debt in front calculation
   const debtInFrontRate = liveState?.rates.annualInterestRate ?? troveData?.metrics.interestRate;
