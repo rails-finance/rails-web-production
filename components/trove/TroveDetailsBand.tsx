@@ -67,7 +67,7 @@ export function TroveDetailsBand({
         {showPeakCollateral ? (
           <>
             <div className="text-rb-500/70 font-semibold uppercase tracking-wide text-[10px]">
-              Peak Collateral
+              Highest recorded Collateral
             </div>
             <div className="flex items-center gap-1.5">
               <span className="text-foreground font-semibold tabular-nums">

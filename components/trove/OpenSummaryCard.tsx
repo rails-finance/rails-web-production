@@ -86,14 +86,18 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus }: Ope
             <span className="font-bold tracking-wider px-2 py-0.5 text-white bg-green-500 dark:bg-green-950 dark:text-green-500/70 rounded-xs text-xs">
               ACTIVE
             </span>
-            {/* Trove ID + NFT pills sit where the collateral-type label used
-                to — the column grid below already carries the asset symbol
-                in the Collateral / Liq Price headers. */}
+            <span className="text-xs font-bold uppercase tracking-wide text-foreground/80">
+              {trove.collateralType}
+            </span>
             <TroveIdentityRow troveId={trove.id} collateralType={trove.collateralType} />
-            {trove.batch.isMember && batchManagerInfo?.name && (
-              <span className="inline-flex items-center gap-1 text-xs text-pink-500/90">
-                <Users className="w-3 h-3" aria-hidden="true" />
-                {batchManagerInfo.name}
+            {/* Delegate marker — name lives in the row below the card, the
+                fuchsia icon here is just a status flag. */}
+            {trove.batch.isMember && (
+              <span
+                className="inline-flex items-center text-pink-500/90"
+                title={batchManagerInfo?.name ? `Delegate: ${batchManagerInfo.name}` : "Delegate-managed"}
+              >
+                <Users className="w-3.5 h-3.5" aria-hidden="true" />
               </span>
             )}
             {(!hasLiveData || !currentPrice) && (

@@ -21,6 +21,9 @@ export function ClosedSummaryCard({ trove }: ClosedSummaryCardProps) {
             <span className="font-bold tracking-wider px-2 py-0.5 bg-rb-500 dark:bg-rb-700 text-white rounded-xs text-xs">
               CLOSED
             </span>
+            <span className="text-xs font-bold uppercase tracking-wide text-foreground/80">
+              {trove.collateralType}
+            </span>
             <TroveIdentityRow troveId={trove.id} collateralType={trove.collateralType} />
           </div>
           <div className="flex items-center gap-2 text-xs flex-wrap justify-end pt-0.5">
@@ -63,7 +66,7 @@ export function ClosedSummaryCard({ trove }: ClosedSummaryCardProps) {
         {/* Peak collateral first (mirrors OpenSummaryCard ordering), then peak debt. */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 mt-3">
           <div>
-            <div className="text-xs text-rb-500 font-semibold mb-1">Peak Collateral</div>
+            <div className="text-xs text-rb-500 font-semibold mb-1">Highest recorded Collateral</div>
             <div className="flex items-center gap-1.5">
               <span className="text-3xl font-bold">
                 <HighlightableValue type="peakCollateral" state="after" value={trove.collateral.peakAmount} variant="card">
@@ -74,7 +77,7 @@ export function ClosedSummaryCard({ trove }: ClosedSummaryCardProps) {
             </div>
           </div>
           <div>
-            <div className="text-xs text-rb-500 font-semibold mb-1">Peak Debt</div>
+            <div className="text-xs text-rb-500 font-semibold mb-1">Highest recorded Debt</div>
             <div className="flex items-center gap-1.5">
               <span className="text-3xl font-bold">
                 <HighlightableValue type="peakDebt" state="after" value={trove.debt.peak} variant="card">

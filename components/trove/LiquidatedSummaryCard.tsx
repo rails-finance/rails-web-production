@@ -19,6 +19,9 @@ export function LiquidatedSummaryCard({ trove }: LiquidatedSummaryCardProps) {
             <span className="font-bold tracking-wider px-2 py-0.5 bg-red-700 text-white rounded-xs text-xs">
               LIQUIDATED
             </span>
+            <span className="text-xs font-bold uppercase tracking-wide text-foreground/80">
+              {trove.collateralType}
+            </span>
             <TroveIdentityRow troveId={trove.id} collateralType={trove.collateralType} />
           </div>
           <div className="flex items-center gap-2 text-xs flex-wrap justify-end pt-0.5">
