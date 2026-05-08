@@ -6,8 +6,9 @@ import { Icon } from "@/components/icons/icon";
 import { getTroveNftUrl } from "@/lib/utils/nft-utils";
 
 /**
- * Trove identifier pills — Trove ID + NFT/OpenSea link. The owner address
- * lives in the global header pill now, so it's not duplicated here.
+ * Trove identifier — Trove ID label + NFT/OpenSea link, rendered as inline
+ * text (no pill chrome) so it sits cleanly next to the status pill in the
+ * summary-card header. The owner address lives in the global header pill.
  */
 export function TroveIdentityRow({
   troveId,
@@ -28,15 +29,12 @@ export function TroveIdentityRow({
     setTimeout(() => setter(false), 1500);
   };
 
-  const pillBase =
-    "inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-rb-200 dark:bg-rb-900 text-xs text-rb-500 transition-colors";
-
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
+    <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-rb-500">
       {troveLabel && troveId && (
-        <span className={pillBase}>
+        <span className="inline-flex items-center gap-1">
           <Icon name="trove-id" size={12} />
-          <span className="font-mono text-foreground">{troveLabel}</span>
+          <span className="font-mono">{troveLabel}</span>
           <button
             type="button"
             onClick={(e) => {
@@ -59,12 +57,12 @@ export function TroveIdentityRow({
           rel="noopener noreferrer"
           aria-label="View NFT on OpenSea"
           title="View NFT on OpenSea"
-          className={`${pillBase} hover:bg-rb-300 dark:hover:bg-rb-800 hover:text-foreground`}
+          className="inline-flex items-center gap-1 text-rb-500 hover:text-foreground transition-colors"
         >
           <ImageIcon size={12} />
           <Link2 size={12} className="-rotate-45" />
         </a>
       )}
-    </div>
+    </span>
   );
 }
