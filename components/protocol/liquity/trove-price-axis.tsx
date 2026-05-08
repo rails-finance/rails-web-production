@@ -108,7 +108,7 @@ function PricePill({
       onClick={startEdit}
       disabled={!editable}
       className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-rb-200 dark:bg-rb-900 text-xs tabular-nums transition-colors ${
-        editable ? "hover:bg-rb-300 dark:hover:bg-rb-800 cursor-text!" : "cursor-default"
+        editable ? "hover:bg-rb-300 dark:hover:bg-rb-800" : "cursor-default"
       }`}
     >
       <TokenChipIcon symbol={symbol} address={address} size={14} />

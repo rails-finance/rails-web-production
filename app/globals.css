@@ -372,15 +372,13 @@ body {
 /* Form / interaction defaults */
 input, button, textarea, select { font-family: inherit; }
 
-/* Tailwind v4 preflight no longer normalises button cursor to `pointer`,
-   so the browser default (`cursor: default` on <button>) leaks through.
-   Restore the classic web idiom for every interactive element. Kept
-   unlayered so it actually wins over Tailwind's preflight (re-opening
-   `@layer base` from a project file ties on source order and loses).
-   `:not(:disabled)` makes the selectors stop matching on disabled
-   controls — they fall through to `cursor: default` naturally, no
-   utility override needed. Use `cursor-default` / `cursor-help` etc.
-   on per-element opt-outs. */
+/* Tailwind v4 preflight no longer normalises button cursor to `pointer`
+   and Safari was treating layered `.cursor-pointer` utilities as losing
+   to UA defaults in our cascade — use unlayered + !important so this
+   rule wins everywhere it matches. `:not(:disabled)` keeps disabled
+   controls on the UA default cursor. Per-element opt-outs are now
+   essentially impossible without inline `style.setProperty(..., 'important')`
+   — accept that and don't over-customise cursors. */
 a,
 button:not(:disabled),
 [role="button"]:not([aria-disabled="true"]),
@@ -390,7 +388,7 @@ input[type="reset"]:not(:disabled),
 select:not(:disabled),
 summary,
 label[for] {
-  cursor: pointer;
+  cursor: pointer !important;
 }
 
 /* Animations */
