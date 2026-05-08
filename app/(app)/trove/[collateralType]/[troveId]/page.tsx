@@ -132,8 +132,6 @@ function TroveSummaryStack({
         debtInFrontLoading={debtInFrontLoading}
       />
       <TroveContextRow
-        troveId={trove.id}
-        collateralType={trove.collateralType}
         items={items}
         isOpen={summaryExplanationOpen}
         onToggle={onToggleSummaryExplanation}

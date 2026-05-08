@@ -3,6 +3,7 @@ import { formatDateRange, formatDuration } from "@/lib/date";
 import { Icon } from "@/components/icons/icon";
 import { formatPrice } from "@/lib/utils/format";
 import { HighlightableValue } from "@/components/transaction-timeline/explanation/HighlightableValue";
+import { TroveIdentityRow } from "./trove-identity-row";
 import { TroveSummary } from "@/types/api/trove";
 
 interface ClosedSummaryCardProps {
@@ -16,10 +17,11 @@ export function ClosedSummaryCard({ trove }: ClosedSummaryCardProps) {
         {/* Header — flat, no card background. The CLOSED pill carries
             status; the rest sits on the page background. */}
         <div className="grid grid-cols-[auto_1fr] gap-2 items-start">
-          <div className="flex items-center">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="font-bold tracking-wider px-2 py-0.5 bg-rb-500 dark:bg-rb-700 text-white rounded-xs text-xs">
               CLOSED
             </span>
+            <TroveIdentityRow troveId={trove.id} collateralType={trove.collateralType} />
           </div>
           <div className="flex items-center gap-2 text-xs flex-wrap justify-end pt-0.5">
             <span className="text-rb-500">

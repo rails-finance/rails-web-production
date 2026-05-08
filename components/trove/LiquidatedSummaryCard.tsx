@@ -1,6 +1,7 @@
 import { formatDateRange, formatDuration } from "@/lib/date";
 import { Icon } from "@/components/icons/icon";
 import { HighlightableValue } from "@/components/transaction-timeline/explanation/HighlightableValue";
+import { TroveIdentityRow } from "./trove-identity-row";
 import { TroveSummary } from "@/types/api/trove";
 
 interface LiquidatedSummaryCardProps {
@@ -14,10 +15,11 @@ export function LiquidatedSummaryCard({ trove }: LiquidatedSummaryCardProps) {
         {/* Header — flat, no card background. LIQUIDATED pill carries the
             only chrome. */}
         <div className="grid grid-cols-[auto_1fr] gap-2 items-start">
-          <div className="flex items-center">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="font-bold tracking-wider px-2 py-0.5 bg-red-700 text-white rounded-xs text-xs">
               LIQUIDATED
             </span>
+            <TroveIdentityRow troveId={trove.id} collateralType={trove.collateralType} />
           </div>
           <div className="flex items-center gap-2 text-xs flex-wrap justify-end pt-0.5">
             <HighlightableValue type="dateRange" state="after">

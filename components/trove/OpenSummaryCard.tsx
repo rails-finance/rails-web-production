@@ -2,6 +2,7 @@
 
 import { TokenIcon } from "@/components/icons/tokenIcon";
 import { Icon } from "@/components/icons/icon";
+import { TroveIdentityRow } from "./trove-identity-row";
 import { TroveSummary } from "@/types/api/trove";
 import { getBatchManagerByAddress, getBatchManagerDeprecation } from "@/lib/services/batch-manager-service";
 import { formatDate } from "@/lib/date";
@@ -81,13 +82,14 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus }: Ope
 
       <div className="text-foreground">
         <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
-          <span className="flex items-center gap-2">
+          <span className="flex items-center gap-2 flex-wrap">
             <span className="font-bold tracking-wider px-2 py-0.5 text-white bg-green-500 dark:bg-green-950 dark:text-green-500/70 rounded-xs text-xs">
               ACTIVE
             </span>
-            <span className="text-xs font-bold uppercase tracking-wide text-foreground/80">
-              {trove.collateralType}
-            </span>
+            {/* Trove ID + NFT pills sit where the collateral-type label used
+                to — the column grid below already carries the asset symbol
+                in the Collateral / Liq Price headers. */}
+            <TroveIdentityRow troveId={trove.id} collateralType={trove.collateralType} />
             {trove.batch.isMember && batchManagerInfo?.name && (
               <span className="inline-flex items-center gap-1 text-xs text-pink-500/90">
                 <Users className="w-3 h-3" aria-hidden="true" />
