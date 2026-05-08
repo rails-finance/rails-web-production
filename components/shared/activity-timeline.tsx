@@ -173,7 +173,7 @@ function SpineValEditable({
         e.stopPropagation();
         startEditing();
       }}
-      className="text-base font-semibold whitespace-nowrap cursor-text px-1 rounded hover:bg-rb-200 dark:hover:bg-rb-900 transition-colors text-blue-400"
+      className="text-base font-semibold whitespace-nowrap cursor-text! px-1 rounded hover:bg-rb-200 dark:hover:bg-rb-900 transition-colors text-blue-400"
       title="Edit simulated amount"
     >
       {display}

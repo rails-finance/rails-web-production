@@ -374,21 +374,23 @@ input, button, textarea, select { font-family: inherit; }
 
 /* Tailwind v4 preflight no longer normalises button cursor to `pointer`,
    so the browser default (`cursor: default` on <button>) leaks through.
-   Restore the classic web idiom for every interactive element, scoped to
-   `@layer base` so utility classes (`cursor-default`, `cursor-not-allowed`,
-   etc.) in `@layer utilities` can still override on a per-element basis. */
-@layer base {
-  a,
-  button:not(:disabled),
-  [role="button"]:not([aria-disabled="true"]),
-  input[type="submit"]:not(:disabled),
-  input[type="button"]:not(:disabled),
-  input[type="reset"]:not(:disabled),
-  select:not(:disabled),
-  summary,
-  label[for] {
-    cursor: pointer;
-  }
+   Restore the classic web idiom for every interactive element. Kept
+   unlayered so it actually wins over Tailwind's preflight (re-opening
+   `@layer base` from a project file ties on source order and loses).
+   `:not(:disabled)` makes the selectors stop matching on disabled
+   controls — they fall through to `cursor: default` naturally, no
+   utility override needed. Use `cursor-default` / `cursor-help` etc.
+   on per-element opt-outs. */
+a,
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+input[type="submit"]:not(:disabled),
+input[type="button"]:not(:disabled),
+input[type="reset"]:not(:disabled),
+select:not(:disabled),
+summary,
+label[for] {
+  cursor: pointer;
 }
 
 /* Animations */
