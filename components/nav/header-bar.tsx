@@ -13,6 +13,7 @@ import {
 import { useWalletContext } from "@/components/nav/wallet-context";
 import { WalletMenu } from "@/components/nav/wallet-menu";
 import { ProtocolMenu } from "@/components/nav/protocol-menu";
+import { AppPreferencesModal } from "@/components/nav/app-preferences-modal";
 import { LiquityPreferencesModal } from "@/components/nav/liquity-preferences-modal";
 
 /** Routes that count as "inside the protocol" — the protocol app-switcher
@@ -178,6 +179,10 @@ export function HeaderBar() {
   const toggle = (m: "protocol" | "wallet") =>
     setOpenMenu((prev) => (prev === m ? null : m));
 
+  // App-wide preferences modal — opened from the cog button in the header.
+  // Distinct from per-protocol prefs (which live behind the cog inside each
+  // protocol-menu entry); this surface holds settings that apply everywhere.
+  const [appPrefsOpen, setAppPrefsOpen] = useState(false);
   // Per-protocol preferences modal — opened from inside the protocol-menu
   // dropdown. State lives here so the modal sits at the header level and
   // overlays everything regardless of where it was triggered.
@@ -229,6 +234,29 @@ export function HeaderBar() {
           )}
         </div>
 
+        <button
+          type="button"
+          onClick={() => setAppPrefsOpen(true)}
+          aria-label="Preferences"
+          title="Preferences"
+          className="shrink-0 p-2 rounded-lg hover:bg-rb-200 dark:hover:bg-rb-800 transition-colors cursor-pointer text-rb-500 hover:text-foreground"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.75"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </button>
       </div>
 
       <ProtocolMenu
@@ -240,6 +268,9 @@ export function HeaderBar() {
         anchor={openMenu === "wallet" ? walletBtn.current : null}
         onClose={close}
       />
+      {appPrefsOpen && (
+        <AppPreferencesModal onClose={() => setAppPrefsOpen(false)} />
+      )}
       {prefsForProtocol === "liquity-v2" && (
         <LiquityPreferencesModal onClose={() => setPrefsForProtocol(null)} />
       )}
