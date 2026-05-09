@@ -7,16 +7,21 @@ import { InfoIconButton } from "@/components/shared/info-icon-button";
 /**
  * Segmented price-runway bar for a Liquity V2 trove.
  *
- * Four zones across the bar — Conservative / Moderate / Aggressive /
+ * Four equal-width zones — Conservative / Moderate / Aggressive /
  * Liquidation — with the liquidation price sitting at the boundary between
- * Aggressive and Liquidation (75% of the bar by default). Left edge anchors
- * to the live reference price; the static dot marker shows where the
- * (possibly-simulated) oracle price currently sits along the runway.
+ * Aggressive and Liquidation (75% of the bar by default). Band widths stay
+ * fixed across positions; only the dot marker moves.
  *
- * Threshold defaults are equal-quartile (25 / 50 / 75); accepted as a prop so
- * a future settings surface can override them protocol-wide. Same component
- * is intended to power Aave V4 and other lending protocols later — only the
- * liquidation-price math is protocol-specific.
+ * Marker placement uses one of two modes:
+ *   • **Threshold-based** (preferred) — caller passes `thresholdPrices`
+ *     (the prices at which Conservative→Moderate and Moderate→Aggressive
+ *     boundaries sit). The marker pins to 0% while the price is at or above
+ *     the Conservative threshold, then interpolates linearly between
+ *     thresholds as the price falls. Each band keeps its visual width.
+ *   • **Linear fallback** — when `thresholdPrices` is omitted but
+ *     `referenceOraclePrice` is provided, the marker maps linearly between
+ *     refPrice (0%) and liquidationPrice (75%). Used by callers without a
+ *     threshold concept.
  *
  * Editing happens through the price pill on the right (click to enter a
  * value); when `onOraclePriceChange` is omitted the pill is read-only.
@@ -30,10 +35,14 @@ export interface TrovePriceAxisProps {
    *  price in simulator mode. */
   oraclePrice: number;
   liquidationPrice: number;
-  /** Anchor for the bar's left edge — keeps the runway scale stable while the
-   *  user edits the price pill. Defaults to `oraclePrice` so non-simulator
-   *  callers see the marker at 0%. */
+  /** Anchor for the bar's left edge in the linear-fallback mode. Ignored
+   *  when `thresholdPrices` is supplied. */
   referenceOraclePrice?: number;
+  /** Threshold prices in descending order — `[conservativeBoundaryPrice,
+   *  moderateBoundaryPrice]`. Activates the piecewise marker mapping.
+   *  Each band keeps a fixed visual width regardless of how far the price
+   *  is from the thresholds. */
+  thresholdPrices?: [number, number];
   onOraclePriceChange?: (price: number) => void;
   simulated?: boolean;
   priceMin?: number;
@@ -143,6 +152,7 @@ export function TrovePriceAxis({
   oraclePrice,
   liquidationPrice,
   referenceOraclePrice,
+  thresholdPrices,
   onOraclePriceChange,
   simulated = false,
   priceMin,
@@ -154,15 +164,31 @@ export function TrovePriceAxis({
 
   if (!(oraclePrice > 0) || !(liquidationPrice > 0)) return null;
 
-  // Bar anchor — left edge is the live (reference) price; right edge sits past
-  // liquidation by a buffer so the Liquidation zone has visible width.
-  const refPrice = referenceOraclePrice && referenceOraclePrice > 0 ? referenceOraclePrice : oraclePrice;
   const liqBoundary = zoneBoundaries[2]; // bar % at which liq sits
-  // Skip drawing when the live and liq prices coincide (degenerate runway).
-  if (!(refPrice > liquidationPrice)) return null;
+  const usePiecewise = !!thresholdPrices
+    && thresholdPrices[0] > thresholdPrices[1]
+    && thresholdPrices[1] > liquidationPrice;
+  const refPrice = referenceOraclePrice && referenceOraclePrice > 0 ? referenceOraclePrice : oraclePrice;
+  // Skip drawing when the linear fallback can't form a valid runway.
+  if (!usePiecewise && !(refPrice > liquidationPrice)) return null;
 
   const priceToPct = (p: number): number => {
-    // Linear: refPrice → 0%, liquidationPrice → liqBoundary%.
+    if (usePiecewise && thresholdPrices) {
+      // Each pre-liq band gets a fixed share of the bar — Conservative
+      // [0, b0], Moderate [b0, b1], Aggressive [b1, b2], Liquidation
+      // [b2, 100]. Marker pins to 0 while price ≥ Conservative threshold,
+      // then interpolates within each band as the price drops.
+      const [pCons, pMod] = thresholdPrices;
+      const pLiq = liquidationPrice;
+      const [b0, b1, b2] = zoneBoundaries;
+      if (p >= pCons) return 0;
+      if (p >= pMod) return b0 + ((pCons - p) / (pCons - pMod)) * (b1 - b0);
+      if (p >= pLiq) return b1 + ((pMod - p) / (pMod - pLiq)) * (b2 - b1);
+      // Underwater — push toward 100% as price → 0.
+      const t = Math.min(1, (pLiq - p) / pLiq);
+      return Math.min(100, b2 + t * (100 - b2));
+    }
+    // Linear fallback: refPrice → 0%, liquidationPrice → liqBoundary%.
     const consumedFrac = (refPrice - p) / (refPrice - liquidationPrice);
     return Math.max(0, Math.min(100, consumedFrac * liqBoundary));
   };
