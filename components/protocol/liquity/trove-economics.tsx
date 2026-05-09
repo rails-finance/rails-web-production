@@ -749,7 +749,7 @@ export function TroveEconomicsSummary({
           <div>
             <div className=" text-xs">{ratioLabel(ratioMode)}</div>
             {collRatio !== null && (
-              <div className={`text-2xl font-bold tabular-nums mt-1 ${crColor(collRatio, meta.collateralType, { safeClass: "text-foreground" })}`}>
+              <div className={`text-2xl font-bold tabular-nums mt-1 ${crColor(collRatio, meta.collateralType)}`}>
                 {formatRatio(collRatio, ratioMode)}
               </div>
             )}
