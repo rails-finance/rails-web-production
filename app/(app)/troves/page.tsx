@@ -269,9 +269,6 @@ function TrovesPageContent() {
     <main className="min-h-screen">
       <FeedbackButton />
       <div className="max-w-7xl mx-auto py-8">
-        {/* Page Header */}
-        <h1 className="text-2xl font-bold text-foreground mb-6">Liquity V2 Troves</h1>
-
         {/* Filters */}
         <TroveListFilters
           filters={filters}
