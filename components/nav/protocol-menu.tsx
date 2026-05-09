@@ -8,8 +8,9 @@ type ProtocolEntry = {
   id: string;
   label: string;
   href: string;
-  /** SVG <use> sprite id, e.g. "icon-liquity" */
-  iconId: string;
+  /** Square PNG asset under /public/icons/protocols/. Renders as a rounded
+   *  square (app-icon convention; tokens use circular SVGs instead). */
+  iconSrc: string;
   /** One-line description shown under the title in the dropdown entry. */
   subtitle: string;
   /** Whether this protocol exposes a preferences surface. When true, a cog
@@ -25,7 +26,7 @@ const PROTOCOLS: ProtocolEntry[] = [
     id: "liquity-v2",
     label: "Liquity V2",
     href: "/liquity-v2",
-    iconId: "icon-liquity",
+    iconSrc: "/icons/protocols/liquity.png",
     subtitle: "Borrow BOLD against ETH, wstETH, or rETH",
     hasPreferences: true,
   },
@@ -74,16 +75,11 @@ export function ProtocolMenu({ anchor, positionAnchor, onClose, onOpenPreference
                     onClick={onClose}
                     className="flex items-center gap-3 p-2.5 flex-1 min-w-0 text-foreground"
                   >
-                    <span className="w-10 h-10 shrink-0 rounded-xl bg-rb-100 dark:bg-rb-800 flex items-center justify-center overflow-hidden">
-                      <svg
-                        className="w-7 h-7"
-                        viewBox="0 0 40 40"
-                        xmlns="http://www.w3.org/2000/svg"
-                        aria-hidden="true"
-                      >
-                        <use href={`#${p.iconId}`} />
-                      </svg>
-                    </span>
+                    <img
+                      src={p.iconSrc}
+                      alt=""
+                      className="w-10 h-10 shrink-0 rounded-xl"
+                    />
                     <span className="flex flex-col min-w-0">
                       <span className="text-sm font-semibold leading-tight truncate">
                         {p.label}
