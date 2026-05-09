@@ -875,21 +875,16 @@ export function TroveEconomicsSummary({
                   const axisPriceMin = Math.max(0.01, effectivePrice * 0.1);
                   const axisPriceMax = Math.max(effectivePrice * 2.5, 10000);
 
-                  // Translate the user's CR-based thresholds into the prices
-                  // at which the runway's zone boundaries sit:
-                  //   priceAtConservativeMin = liqPrice × consMin / mcr
-                  //   priceAtModerateMin     = liqPrice × modMin  / mcr
-                  // The bar uses fixed equal-width bands; TrovePriceAxis
-                  // handles the price→position mapping internally — the
-                  // marker pins to 0% while the trove's CR is at or above
-                  // the Conservative threshold, then slides rightward
-                  // through Moderate / Aggressive / Liquidation as the
-                  // (sim-aware) price drops past each threshold.
+                  // Translate the user's Conservative CR threshold into the
+                  // single price at which the Conservative→Caution boundary
+                  // sits: priceAtConservativeMin = liqPrice × consMin / mcr.
+                  // TrovePriceAxis owns the price→position mapping — the
+                  // marker pins to 0% while CR ≥ Conservative threshold,
+                  // then slides through the bounded Caution interior toward
+                  // the Liquidation cap as the (sim-aware) price drops.
                   const branchKey = resolveLiquityBranch(meta.collateralType);
                   const branchThresholds = prefs.liquityV2.byBranch[branchKey];
-                  const priceAtConservativeMin = liqPrice * (branchThresholds.crConservativeMin / mcr);
-                  const priceAtModerateMin = liqPrice * (branchThresholds.crModerateMin / mcr);
-                  const thresholdPrices: [number, number] = [priceAtConservativeMin, priceAtModerateMin];
+                  const thresholdPrice = liqPrice * (branchThresholds.crConservativeMin / mcr);
 
                   return (
                     <div className="mt-4">
@@ -898,7 +893,7 @@ export function TroveEconomicsSummary({
                         debtSymbol={stableSymbol}
                         oraclePrice={axisOraclePrice}
                         liquidationPrice={liqPrice}
-                        thresholdPrices={thresholdPrices}
+                        thresholdPrice={thresholdPrice}
                         simulated={isSimulated}
                         onOraclePriceChange={axisEditable ? (p) => simulatorCtx!.requestPrice(p) : undefined}
                         priceMin={axisEditable ? axisPriceMin : undefined}

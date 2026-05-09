@@ -7,21 +7,27 @@ import { InfoIconButton } from "@/components/shared/info-icon-button";
 /**
  * Segmented price-runway bar for a Liquity V2 trove.
  *
- * Four equal-width zones — Conservative / Moderate / Aggressive /
- * Liquidation — with the liquidation price sitting at the boundary between
- * Aggressive and Liquidation (75% of the bar by default). Band widths stay
- * fixed across positions; only the dot marker moves.
+ * Three zones across the bar — Conservative / Caution / Liquidation:
+ *   • Conservative is open-ended on the safe side (price can rise without bound)
+ *   • Caution is the *bounded* interior between the user's Conservative
+ *     threshold price and the trove's liquidation price
+ *   • Liquidation is open-ended on the loss side (price toward zero)
+ * Conservative and Liquidation get stylised fixed widths since their scale is
+ * conceptually infinite; the Caution interior is where the marker actually
+ * moves between two hard boundaries. Band widths stay fixed across positions
+ * — only the dot marker moves.
  *
  * Marker placement uses one of two modes:
- *   • **Threshold-based** (preferred) — caller passes `thresholdPrices`
- *     (the prices at which Conservative→Moderate and Moderate→Aggressive
- *     boundaries sit). The marker pins to 0% while the price is at or above
- *     the Conservative threshold, then interpolates linearly between
- *     thresholds as the price falls. Each band keeps its visual width.
- *   • **Linear fallback** — when `thresholdPrices` is omitted but
+ *   • **Threshold-based** (preferred) — caller passes `thresholdPrice` (the
+ *     Conservative→Caution boundary price). The marker pins to 0% while the
+ *     price is at or above the Conservative threshold, slides through the
+ *     Caution interior between thresholdPrice (0%-side) and liquidationPrice
+ *     (right edge of Caution), then pushes into the Liquidation cap if
+ *     underwater.
+ *   • **Linear fallback** — when `thresholdPrice` is omitted but
  *     `referenceOraclePrice` is provided, the marker maps linearly between
- *     refPrice (0%) and liquidationPrice (75%). Used by callers without a
- *     threshold concept.
+ *     refPrice (0%) and liquidationPrice (Caution/Liquidation boundary). Used
+ *     by callers without a threshold concept.
  *
  * Editing happens through the price pill on the right (click to enter a
  * value); when `onOraclePriceChange` is omitted the pill is read-only.
@@ -36,20 +42,19 @@ export interface TrovePriceAxisProps {
   oraclePrice: number;
   liquidationPrice: number;
   /** Anchor for the bar's left edge in the linear-fallback mode. Ignored
-   *  when `thresholdPrices` is supplied. */
+   *  when `thresholdPrice` is supplied. */
   referenceOraclePrice?: number;
-  /** Threshold prices in descending order — `[conservativeBoundaryPrice,
-   *  moderateBoundaryPrice]`. Activates the piecewise marker mapping.
-   *  Each band keeps a fixed visual width regardless of how far the price
-   *  is from the thresholds. */
-  thresholdPrices?: [number, number];
+  /** Conservative→Caution boundary price. Activates the piecewise marker
+   *  mapping; below this price the marker enters the Caution interior. */
+  thresholdPrice?: number;
   onOraclePriceChange?: (price: number) => void;
   simulated?: boolean;
   priceMin?: number;
   priceMax?: number;
   /** Bar-position (% from left) at which each zone ends. Last value is also
-   *  where the liquidation marker sits. Default = [25, 50, 75]. */
-  zoneBoundaries?: [number, number, number];
+   *  where the liquidation marker sits. Default = [25, 75] — Conservative
+   *  and Liquidation caps each take 25%, Caution interior takes 50%. */
+  zoneBoundaries?: [number, number];
 }
 
 function fmtPrice(v: number): string {
@@ -63,8 +68,7 @@ function fmtPrice(v: number): string {
 
 const ZONE_META = [
   { key: "conservative", label: "Conservative", active: "bg-emerald-500/55", muted: "bg-emerald-500/20", text: "text-emerald-400" },
-  { key: "moderate",     label: "Moderate",     active: "bg-amber-500/55",   muted: "bg-amber-500/20",   text: "text-amber-400" },
-  { key: "aggressive",   label: "Aggressive",   active: "bg-orange-500/55",  muted: "bg-orange-500/20",  text: "text-orange-400" },
+  { key: "caution",      label: "Caution",      active: "bg-amber-500/55",   muted: "bg-amber-500/20",   text: "text-amber-400" },
   { key: "liquidation",  label: "Liquidation",  active: "bg-red-500/55",     muted: "bg-red-500/20",     text: "text-red-400" },
 ] as const;
 
@@ -152,41 +156,38 @@ export function TrovePriceAxis({
   oraclePrice,
   liquidationPrice,
   referenceOraclePrice,
-  thresholdPrices,
+  thresholdPrice,
   onOraclePriceChange,
   simulated = false,
   priceMin,
   priceMax,
-  zoneBoundaries = [25, 50, 75],
+  zoneBoundaries = [25, 75],
 }: TrovePriceAxisProps) {
   const [infoOpen, setInfoOpen] = useState(false);
   const editable = !!onOraclePriceChange;
 
   if (!(oraclePrice > 0) || !(liquidationPrice > 0)) return null;
 
-  const liqBoundary = zoneBoundaries[2]; // bar % at which liq sits
-  const usePiecewise = !!thresholdPrices
-    && thresholdPrices[0] > thresholdPrices[1]
-    && thresholdPrices[1] > liquidationPrice;
+  const liqBoundary = zoneBoundaries[1]; // bar % at which liq sits (Caution→Liquidation boundary)
+  const usePiecewise = !!thresholdPrice && thresholdPrice > liquidationPrice;
   const refPrice = referenceOraclePrice && referenceOraclePrice > 0 ? referenceOraclePrice : oraclePrice;
   // Skip drawing when the linear fallback can't form a valid runway.
   if (!usePiecewise && !(refPrice > liquidationPrice)) return null;
 
   const priceToPct = (p: number): number => {
-    if (usePiecewise && thresholdPrices) {
-      // Each pre-liq band gets a fixed share of the bar — Conservative
-      // [0, b0], Moderate [b0, b1], Aggressive [b1, b2], Liquidation
-      // [b2, 100]. Marker pins to 0 while price ≥ Conservative threshold,
-      // then interpolates within each band as the price drops.
-      const [pCons, pMod] = thresholdPrices;
+    if (usePiecewise && thresholdPrice) {
+      // Three zones — Conservative [0, b0], Caution [b0, b1], Liquidation
+      // [b1, 100]. Marker pins to 0 while price ≥ Conservative threshold,
+      // slides through the bounded Caution interior price-proportionally,
+      // then pushes into the Liquidation cap once underwater.
+      const pCons = thresholdPrice;
       const pLiq = liquidationPrice;
-      const [b0, b1, b2] = zoneBoundaries;
+      const [b0, b1] = zoneBoundaries;
       if (p >= pCons) return 0;
-      if (p >= pMod) return b0 + ((pCons - p) / (pCons - pMod)) * (b1 - b0);
-      if (p >= pLiq) return b1 + ((pMod - p) / (pMod - pLiq)) * (b2 - b1);
+      if (p >= pLiq) return b0 + ((pCons - p) / (pCons - pLiq)) * (b1 - b0);
       // Underwater — push toward 100% as price → 0.
       const t = Math.min(1, (pLiq - p) / pLiq);
-      return Math.min(100, b2 + t * (100 - b2));
+      return Math.min(100, b1 + t * (100 - b1));
     }
     // Linear fallback: refPrice → 0%, liquidationPrice → liqBoundary%.
     const consumedFrac = (refPrice - p) / (refPrice - liquidationPrice);
@@ -199,12 +200,11 @@ export function TrovePriceAxis({
   // Active zone for highlight + label colour.
   const activeZoneIdx = oraclePct < zoneBoundaries[0] ? 0
     : oraclePct < zoneBoundaries[1] ? 1
-    : oraclePct < zoneBoundaries[2] ? 2
-    : 3;
+    : 2;
 
   // Zone widths — shrink each zone proportionally so the inter-zone gaps
-  // (1.5% × 3) fit inside the bar without overflowing. For default 25/50/75
-  // boundaries this yields four equal 23.875% segments — matching Aave V4.
+  // (1.5% × 2) fit inside the bar without overflowing. For default [25, 75]
+  // this yields ~24.25/48.5/24.25.
   const GAP = 1.5;
   const numZones = ZONE_META.length;
   const totalGap = (numZones - 1) * GAP;
@@ -212,8 +212,7 @@ export function TrovePriceAxis({
   const intendedWidths = [
     zoneBoundaries[0],
     zoneBoundaries[1] - zoneBoundaries[0],
-    zoneBoundaries[2] - zoneBoundaries[1],
-    100 - zoneBoundaries[2],
+    100 - zoneBoundaries[1],
   ];
   const zoneWidths = intendedWidths.map((w) => Math.max(0, w * shrink));
 

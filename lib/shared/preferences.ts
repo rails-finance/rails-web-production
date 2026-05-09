@@ -9,16 +9,15 @@ export type RatioMode = 'cr' | 'ltv';
 export const LIQUITY_V2_BRANCHES = ['WETH', 'wstETH', 'rETH'] as const;
 export type LiquityV2Branch = typeof LIQUITY_V2_BRANCHES[number];
 
-/** Per-branch risk thresholds (Conservative / Moderate / Aggressive zones).
- *  Expressed as collateral ratio % so they sit in the same units the user
- *  reads on every position card. The runway widget translates these into bar
- *  positions using each trove's debt/coll/MCR. The MCR itself is fixed by the
- *  protocol — there is no "Liquidation" tier preference because at that point
- *  the position has no CR. */
+/** Per-branch risk threshold. The runway uses a 3-zone model:
+ *    Conservative — CR ≥ crConservativeMin (open-ended on the safe side)
+ *    Caution      — MCR < CR < crConservativeMin (bounded interior)
+ *    Liquidation  — CR ≤ MCR (open-ended on the loss side; trove is liquidatable)
+ *  Only the Conservative→Caution boundary is user-editable; the lower bound
+ *  is fixed by the branch's MCR. */
 export interface LiquityV2BranchThresholds {
   crConservativeMin: number;   // CR ≥ this → Conservative/emerald
-  crModerateMin: number;       // CR ≥ this and < conservativeMin → Moderate/amber
-                               // CR < this → Aggressive/orange
+                               // CR < this → Caution/amber
 }
 
 export interface LiquityV2Preferences {
@@ -37,14 +36,14 @@ export interface UserPreferences {
 const STORAGE_KEY = 'defi-explorer-preferences';
 const MAX_EXPANDED = 200;
 
-/** Defaults sit ~1.82× and ~1.36× the branch MCR — same shape as the original
- *  WETH defaults (200/150 against MCR=110). Branches with MCR=120 round to
- *  220/165 so the buffer in MCR-multiples stays comparable across branches. */
+/** Defaults sit ~1.82× the branch MCR — original WETH default (200 against
+ *  MCR=110). Branches with MCR=120 round to 220 so the buffer in
+ *  MCR-multiples stays comparable across branches. */
 export const DEFAULT_LIQUITY_V2_PREFERENCES: LiquityV2Preferences = {
   byBranch: {
-    WETH:   { crConservativeMin: 200, crModerateMin: 150 },
-    wstETH: { crConservativeMin: 220, crModerateMin: 165 },
-    rETH:   { crConservativeMin: 220, crModerateMin: 165 },
+    WETH:   { crConservativeMin: 200 },
+    wstETH: { crConservativeMin: 220 },
+    rETH:   { crConservativeMin: 220 },
   },
 };
 
@@ -57,10 +56,12 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
   liquityV2: DEFAULT_LIQUITY_V2_PREFERENCES,
 };
 
-/** Migrate the legacy flat `{ crConservativeMin, crModerateMin }` shape (a
- *  single global pair) to the per-branch shape, applying the saved values to
- *  every branch as a starting point. Per-branch defaults (which differ for
- *  120%-MCR branches) take over once the user resets. */
+/** Migrate older preference shapes:
+ *    1. Legacy flat `{ crConservativeMin, crModerateMin }` — keep
+ *       `crConservativeMin`, drop `crModerateMin`, apply to every branch.
+ *    2. Earlier per-branch shape with `crModerateMin` alongside
+ *       `crConservativeMin` — keep `crConservativeMin`, drop the rest.
+ *    3. Current per-branch shape with just `crConservativeMin` — pass through. */
 function normaliseLiquityV2(stored: unknown): LiquityV2Preferences {
   const out: LiquityV2Preferences = {
     byBranch: { ...DEFAULT_LIQUITY_V2_PREFERENCES.byBranch },
@@ -68,22 +69,20 @@ function normaliseLiquityV2(stored: unknown): LiquityV2Preferences {
   if (!stored || typeof stored !== 'object') return out;
   const s = stored as Record<string, unknown>;
 
-  // Legacy flat shape — distribute saved values to every branch.
-  if (typeof s.crConservativeMin === 'number' && typeof s.crModerateMin === 'number') {
-    const flat: LiquityV2BranchThresholds = {
-      crConservativeMin: s.crConservativeMin as number,
-      crModerateMin: s.crModerateMin as number,
-    };
+  // Legacy flat shape — distribute saved Conservative threshold to every branch.
+  if (typeof s.crConservativeMin === 'number') {
+    const flat: LiquityV2BranchThresholds = { crConservativeMin: s.crConservativeMin as number };
     for (const b of LIQUITY_V2_BRANCHES) out.byBranch[b] = { ...flat };
   }
 
-  // Current shape — merge per-branch overrides on top of defaults.
-  const byBranch = (s.byBranch ?? null) as Partial<Record<LiquityV2Branch, LiquityV2BranchThresholds>> | null;
+  // Per-branch shape — keep only the Conservative threshold; older
+  // `crModerateMin` keys are silently dropped.
+  const byBranch = (s.byBranch ?? null) as Partial<Record<LiquityV2Branch, { crConservativeMin?: number }>> | null;
   if (byBranch && typeof byBranch === 'object') {
     for (const b of LIQUITY_V2_BRANCHES) {
       const branch = byBranch[b];
-      if (branch && typeof branch.crConservativeMin === 'number' && typeof branch.crModerateMin === 'number') {
-        out.byBranch[b] = { ...out.byBranch[b], ...branch };
+      if (branch && typeof branch.crConservativeMin === 'number') {
+        out.byBranch[b] = { crConservativeMin: branch.crConservativeMin };
       }
     }
   }

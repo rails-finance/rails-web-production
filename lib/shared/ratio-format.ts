@@ -26,13 +26,12 @@ export function formatRatio(cr: number, mode: RatioMode, decimals = 1): string {
 
 // Color class for a CR% value. Thresholds default to the Liquity V2 style
 // (danger <150, warn <200, safe otherwise). Palette mirrors the price-runway
-// zones — emerald = Conservative, amber = Moderate, orange = Aggressive — so
-// a position's CR colour and its runway-zone colour stay in sync. There's no
-// "Liquidation" tier here because at that point the position has no CR.
-// Protocols with different MCRs or visual preferences override via opts (e.g.
-// Aave's stricter thresholds, the position card's neutral safe). Evaluation
-// stays in CR terms regardless of display mode, so the colour remains accurate
-// when the user has LTV enabled.
+// zones — emerald = Conservative, amber = Caution. The Liquity hook below
+// collapses the older three-tier (Cons/Mod/Agg) into two by leaving the
+// danger threshold unset, so any CR below the Conservative cutoff renders
+// amber; the orange/danger tier is still available to other protocols that
+// want a finer split. Evaluation stays in CR terms regardless of display
+// mode, so the colour remains accurate when the user has LTV enabled.
 export interface RatioColorOptions {
   danger?: number;
   warn?: number;
@@ -70,12 +69,14 @@ export function resolveLiquityBranch(collateralType: string | undefined): Liquit
 
 /**
  * React hook that returns a Liquity V2-aware ratio colourer. Reads the user's
- * per-branch threshold preferences (Conservative / Moderate CR mins) and
- * produces a function `(cr, branch, extraOpts?) => className`. Callers pass
- * the trove's collateral type so each branch's thresholds apply correctly —
- * a wstETH trove (MCR 120) uses different cut-offs from a WETH trove (MCR 110).
- * `extraOpts` lets specific call sites override class names — e.g. the
- * position card uses neutral foreground for the Conservative band.
+ * per-branch Conservative threshold and produces a function
+ * `(cr, branch, extraOpts?) => className`. Callers pass the trove's
+ * collateral type so each branch's threshold applies correctly — a wstETH
+ * trove (MCR 120) uses a different cut-off from a WETH trove (MCR 110).
+ *
+ * The 3-zone runway model collapses Moderate+Aggressive into a single Caution
+ * band, so this hook is binary: emerald above the Conservative threshold,
+ * amber below. `extraOpts` lets specific call sites override class names.
  */
 export function useLiquityRatioColorClass(): (
   cr: number,
@@ -88,7 +89,10 @@ export function useLiquityRatioColorClass(): (
     return (cr: number, branchInput: LiquityV2Branch | string | undefined, extraOpts: RatioColorOptions = {}) => {
       const branch = resolveLiquityBranch(branchInput);
       const t: LiquityV2BranchThresholds = byBranch[branch] ?? DEFAULT_LIQUITY_V2_PREFERENCES.byBranch[branch];
-      return ratioColorClass(cr, { danger: t.crModerateMin, warn: t.crConservativeMin, ...extraOpts });
+      // danger: 0 disables the orange tier — anything below the Conservative
+      // threshold falls through to warnClass (amber), matching the runway's
+      // single Caution band.
+      return ratioColorClass(cr, { danger: 0, warn: t.crConservativeMin, ...extraOpts });
     };
   }, [byBranch]);
 }

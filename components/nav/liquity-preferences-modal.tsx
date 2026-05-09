@@ -16,12 +16,14 @@ import { TokenChipIcon } from "@/components/shared/token-chip-icon";
  * Fullscreen modal for Liquity V2 preferences.
  *
  * Each collateral branch (WETH / wstETH / rETH) has its own MCR and its own
- * Conservative / Moderate CR thresholds. The modal renders a section per
- * branch so the user can tune them independently. Liquidation is fixed by
- * the branch's MCR (110% on WETH, 120% on wstETH/rETH) and not user-editable.
- * The shell is intentionally roomy so future Liquity-V2-specific preferences
- * (default redemption-risk view, batch-manager filters, etc.) can land here
- * without rebuilding the surface.
+ * Conservative threshold — the cut-off above which a position is treated as
+ * safe. Below it the position sits in Caution, until CR drops below MCR and
+ * the position becomes liquidatable. Only the Conservative threshold is
+ * user-editable; the Caution band runs from MCR up to that threshold, and
+ * Liquidation is fixed by the branch's MCR (110% on WETH, 120% on
+ * wstETH/rETH). The shell is intentionally roomy so future
+ * Liquity-V2-specific preferences (default redemption-risk view,
+ * batch-manager filters, etc.) can land here without rebuilding the surface.
  */
 
 export function LiquityPreferencesModal({ onClose }: { onClose: () => void }) {
@@ -43,26 +45,18 @@ export function LiquityPreferencesModal({ onClose }: { onClose: () => void }) {
 
   const setBranchThreshold = (
     branch: LiquityV2Branch,
-    key: keyof LiquityV2BranchThresholds,
     value: number,
   ) => {
     if (!isFinite(value)) return;
     const mcr = getLiquidationThreshold(branch);
     const floor = mcr + 1; // any threshold ≤ MCR is meaningless for this branch
-    let { crConservativeMin, crModerateMin } = v2.byBranch[branch];
-    if (key === "crConservativeMin") {
-      crConservativeMin = Math.max(floor, value);
-      if (crConservativeMin <= crModerateMin) crModerateMin = Math.max(floor, crConservativeMin - 10);
-    } else {
-      crModerateMin = Math.max(floor, value);
-      if (crModerateMin >= crConservativeMin) crConservativeMin = crModerateMin + 10;
-    }
+    const crConservativeMin = Math.max(floor, value);
     update({
       liquityV2: {
         ...v2,
         byBranch: {
           ...v2.byBranch,
-          [branch]: { crConservativeMin, crModerateMin },
+          [branch]: { crConservativeMin },
         },
       },
     });
@@ -72,7 +66,7 @@ export function LiquityPreferencesModal({ onClose }: { onClose: () => void }) {
   const isDefault = LIQUITY_V2_BRANCHES.every((b) => {
     const cur = v2.byBranch[b];
     const def = DEFAULT_LIQUITY_V2_PREFERENCES.byBranch[b];
-    return cur.crConservativeMin === def.crConservativeMin && cur.crModerateMin === def.crModerateMin;
+    return cur.crConservativeMin === def.crConservativeMin;
   });
 
   return createPortal(
@@ -114,13 +108,15 @@ export function LiquityPreferencesModal({ onClose }: { onClose: () => void }) {
 
           <section>
             <div className="text-[10px] uppercase tracking-[0.12em] font-semibold text-rb-500 mb-3">
-              Risk-zone thresholds
+              Risk-zone threshold
             </div>
             <p className="text-xs text-rb-500 leading-relaxed mb-5">
-              Collateral-ratio cut-offs that classify a position as Conservative,
-              Moderate, or Aggressive. Each branch has its own MCR (Liquidation
-              line), so each carries its own thresholds. Used by the price-runway
-              widget on each trove and the CR colour on the timeline.
+              The Conservative cut-off — collateral ratios at or above this
+              value render emerald, anything below sits in Caution (amber)
+              until the trove crosses MCR and becomes liquidatable. Each
+              branch has its own MCR, so each carries its own threshold.
+              Used by the price-runway widget on each trove and the CR colour
+              on the timeline.
             </p>
 
             <div className="space-y-5">
@@ -129,7 +125,7 @@ export function LiquityPreferencesModal({ onClose }: { onClose: () => void }) {
                   key={branch}
                   branch={branch}
                   thresholds={v2.byBranch[branch]}
-                  onChange={(key, val) => setBranchThreshold(branch, key, val)}
+                  onChange={(val) => setBranchThreshold(branch, val)}
                 />
               ))}
             </div>
@@ -163,7 +159,7 @@ function BranchBlock({
 }: {
   branch: LiquityV2Branch;
   thresholds: LiquityV2BranchThresholds;
-  onChange: (key: keyof LiquityV2BranchThresholds, value: number) => void;
+  onChange: (value: number) => void;
 }) {
   const mcr = getLiquidationThreshold(branch);
   const floor = mcr + 1;
@@ -181,25 +177,16 @@ function BranchBlock({
         textClass="text-emerald-400"
         value={thresholds.crConservativeMin}
         floor={floor}
-        onChange={(v) => onChange("crConservativeMin", v)}
+        onChange={onChange}
         suffix="% CR or higher"
       />
       <ThresholdRow
-        label="Moderate"
+        label="Caution"
         dotClass="bg-amber-500"
         textClass="text-amber-400"
-        value={thresholds.crModerateMin}
-        floor={floor}
-        onChange={(v) => onChange("crModerateMin", v)}
-        suffix={`% CR up to ${thresholds.crConservativeMin}%`}
-      />
-      <ThresholdRow
-        label="Aggressive"
-        dotClass="bg-orange-500"
-        textClass="text-orange-400"
         value={null}
         floor={floor}
-        suffix={`${mcr}% (MCR) up to ${thresholds.crModerateMin}% CR`}
+        suffix={`${mcr}% (MCR) up to ${thresholds.crConservativeMin}% CR`}
       />
       <ThresholdRow
         label="Liquidation"
