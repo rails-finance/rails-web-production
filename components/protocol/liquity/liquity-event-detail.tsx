@@ -60,7 +60,7 @@ function DebtMetric({
         <StateTransition>
           {hasChange && (
             <>
-              <span className="font-bold ">{toLocaleStringHelper(before)}</span>
+              <span className="text-sm font-bold text-rb-500">{toLocaleStringHelper(before)}</span>
               <TransitionArrow />
             </>
           )}
@@ -117,9 +117,9 @@ function CollateralMetric({
         {hasChange && (
           <>
             <div className="flex items-center space-x-1">
-              <span className="font-bold ">{formatColl(before)}</span>
+              <span className="text-sm font-bold text-rb-500">{formatColl(before)}</span>
               {isLiquidation && beforeInUsd > 0 && (
-                <span className="text-xs flex font-bold items-center  border-l-2 border-r-2 ml-2 border-rb-400 dark:border-rb-600 rounded-sm px-1 py-0">
+                <span className="text-xs flex font-bold items-center text-rb-500 border-l-2 border-r-2 ml-2 border-rb-500 rounded-sm px-1 py-0">
                   {formatUsd(beforeInUsd)}
                 </span>
               )}
@@ -135,7 +135,7 @@ function CollateralMetric({
               {after === 0 ? "0" : formatColl(after)}
             </span>
             {after > 0 && (
-              <span className="text-xs flex font-bold items-center  border-l-2 border-r-2 ml-2 border-rb-400 dark:border-rb-600 rounded-sm px-1 py-0">
+              <span className="text-xs flex font-bold items-center text-rb-500 border-l-2 border-r-2 ml-2 border-rb-500 rounded-sm px-1 py-0">
                 {formatUsd(afterInUsd)}
               </span>
             )}
@@ -175,7 +175,7 @@ function InterestRateMetric({
       <StateTransition>
         {hasChange && (
           <>
-            <span className="font-bold ">
+            <span className="text-sm font-bold ">
               {(before * 100).toFixed(1)}<span className="ml-0.5">%</span>
             </span>
             <TransitionArrow />
@@ -210,7 +210,7 @@ function CollateralRatioMetric({ before, after, afterDebt, isClose }: { before: 
       <StateTransition>
         {hasChange && (
           <>
-            <span className={`font-bold ${crColor(before)}`}>
+            <span className={`text-sm font-bold ${crColor(before)}`}>
               {formatRatio(before, mode, 2)}
             </span>
             <TransitionArrow />
@@ -428,14 +428,23 @@ export function LiquityEventDetail({ ctx, txHash, previousEvent, currentEvent }:
         </div>
       )}
 
-      {/* Zombie + batch badges */}
-      {(ctx.isZombieTrove || ctx.isInBatch) && (
+      {/* Zombie + batch badges + historic collateral price pill */}
+      {(ctx.isZombieTrove || ctx.isInBatch || collPrice > 0) && (
         <div className="flex items-center gap-2 px-4 py-2">
           {ctx.isZombieTrove && (
             <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 font-bold">Zombie Trove</span>
           )}
           {ctx.isInBatch && (
             <span className="text-xs px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-400 font-bold">Batched</span>
+          )}
+          {collPrice > 0 && (
+            <span
+              className="ml-auto inline-flex items-center gap-1.5 text-xs font-bold text-rb-500 bg-rb-200/60 dark:bg-rb-800/60 px-2 py-1 rounded-md"
+              title={`${ctx.collateralType} price at the time of this event`}
+            >
+              {formatUsd(collPrice)}
+              <TokenChipIcon symbol={ctx.collateralType} size={14} />
+            </span>
           )}
         </div>
       )}
