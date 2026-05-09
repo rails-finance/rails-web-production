@@ -98,9 +98,9 @@ function WarningIcon({ size }: { size: number }) {
   );
 }
 
-function RateIcon({ size }: { size: number }) {
+function RateIcon({ size, color = "var(--color-rb-500)" }: { size: number; color?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="var(--color-rb-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <line x1="19" y1="5" x2="5" y2="19" />
       <circle cx="6.5" cy="6.5" r="2.5" />
       <circle cx="17.5" cy="17.5" r="2.5" />
@@ -116,29 +116,6 @@ function DirectionArrow({ direction, size }: { direction: "up" | "down"; size: n
         <><path d="M12 19V5" /><path d="m5 12 7-7 7 7" /></>
       ) : (
         <><path d="M12 5v14" /><path d="m19 12-7 7-7-7" /></>
-      )}
-    </svg>
-  );
-}
-
-function DelegateIcon({ size }: { size: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="var(--color-rb-500)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
-  );
-}
-
-function DelegateBadge({ join, size }: { join: boolean; size: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={join ? "#22C55E" : "#EF4444"} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-      {join ? (
-        <><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></>
-      ) : (
-        <line x1="5" y1="12" x2="19" y2="12" />
       )}
     </svg>
   );
@@ -282,11 +259,14 @@ export function SpineColumn({ tokens, icon, iconDirection, tokenSymbol, spine = 
           );
         case "delegate":
           return (
+            // Mirrors the rate-change row: % glyph + up/down direction arrow.
+            // Tinted purple to match the "Delegate"/batch-manager pill colour
+            // used elsewhere in the trove header.
             <div className="grid grid-rows-1 items-center justify-items-center" style={{ gridTemplateColumns: scale.gridCols }}>
               <span />
               <span />
-              <DelegateIcon size={scale.tokenSize} />
-              <DelegateBadge join={iconDirection === "up"} size={Math.round(scale.arrowSize * 0.6)} />
+              <RateIcon size={scale.tokenSize} color="#A78BFA" />
+              <DirectionArrow direction={iconDirection ?? "up"} size={Math.round(scale.arrowSize * 0.7)} />
               <span />
             </div>
           );
