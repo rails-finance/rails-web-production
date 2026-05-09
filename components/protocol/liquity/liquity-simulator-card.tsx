@@ -166,7 +166,7 @@ export function LiquitySimulatorCard({ troveId, current, currentPrice, avatar, o
         {/* Collateral */}
         <StateMetric label="Collateral">
           <div className="flex items-center space-x-1 mb-2">
-            <span className="font-bold ">{formatColl(current.coll)}</span>
+            <span className="text-sm font-bold text-rb-500">{formatColl(current.coll)}</span>
             <DeltaArrow
               base={current.coll}
               onChange={setSimColl}
@@ -182,7 +182,7 @@ export function LiquitySimulatorCard({ troveId, current, currentPrice, avatar, o
               max={collMax}
             />
             <TokenChipIcon symbol={current.collateralType} size={16} />
-            <span className="text-xs flex font-bold items-center  border-l-2 border-r-2 ml-1 border-rb-400 dark:border-rb-600 rounded-sm px-1 py-0">
+            <span className="text-xs flex font-bold items-center text-rb-500 border-l-2 border-r-2 ml-1 border-rb-500 rounded-sm px-1 py-0">
               {formatUsd(sim.collValueUsd)}
             </span>
           </div>
@@ -199,7 +199,7 @@ export function LiquitySimulatorCard({ troveId, current, currentPrice, avatar, o
         {/* Debt */}
         <StateMetric label="Debt">
           <div className="flex items-center space-x-1 mb-2">
-            <span className="font-bold ">{toLocaleStringHelper(current.debt)}</span>
+            <span className="text-sm font-bold text-rb-500">{toLocaleStringHelper(current.debt)}</span>
             <DeltaArrow
               base={current.debt}
               onChange={setSimDebt}
@@ -235,7 +235,7 @@ export function LiquitySimulatorCard({ troveId, current, currentPrice, avatar, o
             axis above; this cell just surfaces the derived CR transition. */}
         <StateMetric label={ratioLabel(ratioMode)}>
           <div className="flex items-center space-x-1 mb-2">
-            <span className={`font-bold ${crColor(base.cr)}`}>
+            <span className={`text-sm font-bold ${crColor(base.cr)}`}>
               {formatRatio(base.cr, ratioMode, 2)}
             </span>
             <TransitionArrow />
@@ -258,7 +258,7 @@ export function LiquitySimulatorCard({ troveId, current, currentPrice, avatar, o
             both read/write the same percent number. */}
         <StateMetric label="Interest Rate">
           <div className="flex items-center space-x-1 mb-2">
-            <span className="font-bold ">
+            <span className="text-sm font-bold text-rb-500">
               {current.annualInterestRate.toFixed(1)}<span className="ml-0.5">%</span>
             </span>
             <DeltaArrow
