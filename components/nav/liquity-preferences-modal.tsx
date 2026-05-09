@@ -99,11 +99,11 @@ export function LiquityPreferencesModal({ onClose }: { onClose: () => void }) {
           </button>
 
           <div className="flex items-center gap-3 mb-6">
-            <span className="w-10 h-10 shrink-0 rounded-xl bg-rb-100 dark:bg-rb-800 flex items-center justify-center overflow-hidden">
-              <svg className="w-7 h-7" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <use href="#icon-liquity" />
-              </svg>
-            </span>
+            <img
+              src="/icons/protocols/liquity.png"
+              alt=""
+              className="w-10 h-10 shrink-0 rounded-xl"
+            />
             <div>
               <h2 className="text-xl font-bold leading-tight">Liquity V2 preferences</h2>
               <p className="text-xs text-rb-500 mt-0.5">
