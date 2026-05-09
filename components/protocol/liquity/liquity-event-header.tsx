@@ -8,6 +8,7 @@ import { getBatchManagerName } from "@/lib/liquity/batch-managers";
 import { usePreferences } from "@/lib/shared/preferences-context";
 import { formatRatio, ratioLabelShort, ratioColorClass } from "@/lib/shared/ratio-format";
 import { useHeaderValueHideClass } from "@/lib/shared/header-values";
+import { AlertTriangle } from "lucide-react";
 
 const crColor = (cr: number) => ratioColorClass(cr);
 
@@ -263,6 +264,17 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
             </span>
           )}
 
+          {/* Zombie claimable collateral — when a redemption fully clears
+              the debt of a zombie trove, the leftover coll is unlocked for
+              the owner. Mirrors the legacy "claimable" pill. */}
+          {ctx.operation === "redeemCollateral" && ctx.isZombieTrove && stateAfter.debt === 0 && stateAfter.coll > 0 && (
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+              <span className="font-bold tabular-nums">{stateAfter.coll.toFixed(4)}</span>
+              <TokenChipIcon symbol={ctx.collateralType} size={14} />
+              claimable
+            </span>
+          )}
+
           {/* Rate change value for interest rate operations */}
           {rateChanged && !hasDebtChange && !hasCollChange && ctx.operation !== "setBatchManagerAnnualInterestRate" && (
             <span className="text-sm font-bold text-foreground">
@@ -284,6 +296,21 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
             )}
           </span>
           <span className="ml-auto inline-flex items-center gap-2">
+            {ctx.operation === "redeemCollateral" && ctx.isZombieTrove && (
+              <span
+                className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-bold rounded ${
+                  stateAfter.debt === 0
+                    ? "bg-red-400/90 dark:bg-red-500/20 text-white dark:text-red-400"
+                    : "bg-yellow-400/90 dark:bg-yellow-500/20 text-white dark:text-yellow-400"
+                }`}
+                title={stateAfter.debt === 0
+                  ? "Zombie trove fully redeemed — debt cleared, collateral now claimable"
+                  : "Zombie trove — debt below the minimum, redeemable until restored"}
+              >
+                <AlertTriangle className="w-3 h-3" />
+                <span className="hidden md:inline">Zombie</span>
+              </span>
+            )}
             {timestamp > 0 && (
               <span className="text-xs ">
                 <EventTime ts={timestamp} />
