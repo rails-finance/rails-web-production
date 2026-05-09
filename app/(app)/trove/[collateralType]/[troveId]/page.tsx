@@ -24,6 +24,8 @@ import { fetchTroveTimeline } from "@/lib/api/fetch-timeline";
 import type { BaseActivityEvent } from "@/lib/shared/types/event-shape";
 import { isLiquityEvent } from "@/lib/shared/types/event-shape";
 import { LiquityEventCard } from "@/components/protocol/liquity/liquity-event-card";
+import { EventDateContext } from "@/components/shared/event-time";
+import { dayKey, shortDate, shortDateYear } from "@/lib/shared/format-event";
 import { TimelineDisplayProvider, useTimelineDisplay } from "@/components/shared/timeline-display-context";
 import { LiquityTroveBarsProvider } from "@/lib/liquity/use-trove-bars";
 import { FilterDropdown, DisplaySettingsIcon, type FilterOption } from "@/components/shared/filter-dropdown";
@@ -529,16 +531,27 @@ export default function TrovePage() {
                   // openTrove), stable across asc/desc display flips.
                   const tempIdx = sortedEvents.indexOf(event);
                   const previousEvent = tempIdx > 0 ? sortedEvents[tempIdx - 1] : undefined;
+                  // Day-grouping: show the date alongside the time only on the
+                  // first event of each calendar day in *display* order. Works
+                  // for both asc and desc — we compare against the previous
+                  // displayed event, not the chronologically-prior one.
+                  const prevDisplayed = idx > 0 ? displayedEvents[idx - 1] : undefined;
+                  const showDate =
+                    !prevDisplayed || dayKey(event.timestamp) !== dayKey(prevDisplayed.timestamp);
+                  const datePrefix = showDate
+                    ? `${shortDate(event.timestamp)} ${shortDateYear(event.timestamp)}`
+                    : null;
                   return (
-                    <LiquityEventCard
-                      key={event.id}
-                      event={event}
-                      addressDisplay="hidden"
-                      isFirst={idx === 0}
-                      isLast={idx === displayedEvents.length - 1}
-                      previousEvent={previousEvent}
-                      eventNumber={tempIdx + 1}
-                    />
+                    <EventDateContext.Provider key={event.id} value={datePrefix}>
+                      <LiquityEventCard
+                        event={event}
+                        addressDisplay="hidden"
+                        isFirst={idx === 0}
+                        isLast={idx === displayedEvents.length - 1}
+                        previousEvent={previousEvent}
+                        eventNumber={tempIdx + 1}
+                      />
+                    </EventDateContext.Provider>
                   );
                 })}
               </div>

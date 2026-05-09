@@ -8,6 +8,21 @@ export function formatTimestamp(unix: number): string {
   return `${hh}:${mm}`;
 }
 
+/** Stable per-day key for grouping ("Tue Apr 14 2026") — local time. */
+export function dayKey(unix: number): string {
+  return new Date(unix * 1000).toDateString();
+}
+
+/** Compact day-month label, e.g. "Apr 14" (locale-aware month abbrev). */
+export function shortDate(unix: number): string {
+  return new Date(unix * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+/** Two-digit-year suffix, e.g. "'26" — pair with shortDate for full prefix. */
+export function shortDateYear(unix: number): string {
+  return "'" + String(new Date(unix * 1000).getFullYear()).slice(-2);
+}
+
 /** Format a number with locale grouping. Default 2 decimal places. */
 export function formatNum(v: string | number, decimals = 2): string {
   const n = typeof v === "string" ? parseFloat(v) : v;
