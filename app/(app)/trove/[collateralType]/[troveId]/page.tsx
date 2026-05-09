@@ -31,6 +31,7 @@ import { LiquityTroveBarsProvider } from "@/lib/liquity/use-trove-bars";
 import { TroveSimulatorProvider } from "@/lib/liquity/use-simulator";
 import { FilterDropdown, DisplaySettingsIcon, type FilterOption } from "@/components/shared/filter-dropdown";
 import { getEventActionKey, actionLabel, DEMOTED_ACTIONS } from "@/lib/shared/event-filter-helpers";
+import { TransactionHeatmap } from "@/components/shared/transaction-heatmap";
 
 /** DISPLAY toggle dropdown — Liquity-only subset of rails-explorer's
  * TimelineDisplayToggle. USD Values + Ticker Labels are omitted because they
@@ -341,9 +342,21 @@ export default function TrovePage() {
     [sortedEvents, hiddenSet],
   );
 
+  // Heatmap-driven date range filter. Heatmap reflects the type-filtered set,
+  // so adjusting type filters reshapes the heatmap; the date range narrows on
+  // top of that into the rendered timeline.
+  const [dateRange, setDateRange] = useState<[number, number] | null>(null);
+  const [heatmapOpen, setHeatmapOpen] = useState(false);
+
+  const dateFilteredEvents = useMemo(() => {
+    if (!dateRange) return visibleEvents;
+    const [start, end] = dateRange;
+    return visibleEvents.filter((e) => e.timestamp >= start && e.timestamp <= end);
+  }, [visibleEvents, dateRange]);
+
   const displayedEvents = useMemo(
-    () => (sortDirection === "desc" ? [...visibleEvents].reverse() : visibleEvents),
-    [visibleEvents, sortDirection],
+    () => (sortDirection === "desc" ? [...dateFilteredEvents].reverse() : dateFilteredEvents),
+    [dateFilteredEvents, sortDirection],
   );
 
   // Action-type buckets for the FilterDropdown. Demoted (noisy) actions are
@@ -485,7 +498,12 @@ export default function TrovePage() {
                 <ArrowUpDown size={12} />
               </button>
               <span className="text-xs text-rb-500 tabular-nums">
-                {hiddenSet.size > 0 ? `${visibleEvents.length} of ${sortedEvents.length}` : `${sortedEvents.length}`} event{sortedEvents.length === 1 ? "" : "s"}
+                {(() => {
+                  const filtered = hiddenSet.size > 0 || dateRange !== null;
+                  return filtered
+                    ? `${dateFilteredEvents.length} of ${sortedEvents.length}`
+                    : `${sortedEvents.length}`;
+                })()} event{sortedEvents.length === 1 ? "" : "s"}
               </span>
               {eventOptions.length > 1 && (
                 <FilterDropdown
@@ -499,9 +517,43 @@ export default function TrovePage() {
                   onToggle={(act) => toggleHiddenAction(act)}
                 />
               )}
+              {(() => {
+                const dateActive = dateRange !== null;
+                const dateLabel = dateActive
+                  ? `${new Date(dateRange[0] * 1000).toLocaleDateString(undefined, { month: "short", day: "numeric" })} – ${new Date(dateRange[1] * 1000).toLocaleDateString(undefined, { month: "short", day: "numeric" })}`
+                  : "Date";
+                const heatmapShown = heatmapOpen || dateActive;
+                return (
+                  <button
+                    type="button"
+                    onClick={() => setHeatmapOpen((v) => !v)}
+                    aria-pressed={heatmapShown}
+                    className={`px-2.5 py-1 text-xs font-semibold rounded border transition-colors ${
+                      dateActive
+                        ? "border-amber-500/60 bg-amber-500/15 text-amber-400 hover:text-amber-300"
+                        : heatmapShown
+                          ? "border-rb-400 dark:border-rb-600 bg-rb-200 dark:bg-rb-900 text-foreground"
+                          : "border-rb-300/60 dark:border-rb-700/60 text-rb-500 hover:text-foreground hover:bg-rb-200/60 dark:hover:bg-rb-900/60"
+                    }`}
+                    title={heatmapShown ? "Hide activity heatmap" : "Filter by date range"}
+                  >
+                    {dateLabel}
+                  </button>
+                );
+              })()}
               <TimelineDisplayToggle />
             </div>
           </div>
+
+          {(heatmapOpen || dateRange !== null) && visibleEvents.length > 0 && (
+            <div className="mb-3">
+              <TransactionHeatmap
+                events={visibleEvents}
+                value={dateRange}
+                onChange={setDateRange}
+              />
+            </div>
+          )}
 
           {displayedEvents.length > 0 ? (
             <LiquityTroveBarsProvider events={sortedEvents}>
@@ -542,8 +594,8 @@ export default function TrovePage() {
             </LiquityTroveBarsProvider>
           ) : (
             <div className="text-center py-8 text-rb-500">
-              {hiddenSet.size > 0 && sortedEvents.length > 0
-                ? "All events filtered out — adjust the type filter to show some."
+              {(hiddenSet.size > 0 || dateRange !== null) && sortedEvents.length > 0
+                ? "All events filtered out — adjust the type or date filter to show some."
                 : "No transaction history available"}
             </div>
           )}
