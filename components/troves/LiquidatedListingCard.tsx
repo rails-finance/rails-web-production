@@ -5,7 +5,7 @@ import { TokenIcon } from "../icons/tokenIcon";
 import { formatDuration } from "@/lib/date";
 import { TroveSummary } from "@/types/api/trove";
 
-export function LiquidatedListingCard({ trove }: { trove: TroveSummary }) {
+export function LiquidatedListingCard({ trove, selectorMode = false }: { trove: TroveSummary; selectorMode?: boolean }) {
   // Save scroll position when navigating to trove detail
   const handleClick = (e: React.MouseEvent) => {
     if (typeof window !== "undefined") {
@@ -17,7 +17,11 @@ export function LiquidatedListingCard({ trove }: { trove: TroveSummary }) {
     <Link
       href={`/trove/${trove.collateralType}/${trove.id}`}
       onClick={handleClick}
-      className="block relative rounded-xl text-foreground bg-red-50 dark:bg-red-950/50 hover:bg-red-100 dark:hover:bg-red-950 transition-colors cursor-pointer group"
+      className={
+        selectorMode
+          ? "block relative text-foreground transition-colors cursor-pointer group"
+          : "block relative rounded-xl text-foreground bg-red-50 dark:bg-red-950/50 hover:bg-red-100 dark:hover:bg-red-950 transition-colors cursor-pointer group"
+      }
       aria-label={`View liquidated trove ${trove.id.substring(0, 8)}... with ${trove.collateralType} collateral, last owned by ${trove.lastOwner?.substring(0, 6)}...${trove.lastOwner?.substring(38)}`}
     >
       {/* Header section */}
@@ -67,13 +71,15 @@ export function LiquidatedListingCard({ trove }: { trove: TroveSummary }) {
             <Icon name="clock-zap" size={14} className="inline mr-1" />
             {formatDuration(trove.activity.lastActivityAt, new Date())} ago
           </span>
-          <div className="flex items-center bg-rb-300 dark:bg-rb-800 group-hover:bg-blue-500 transition-colors rounded-full pl-3 pr-2 py-1">
-            <span className="text-sm text-rb-500 group-hover:text-white font-semibold flex items-center gap-1">
-              <Icon name="timeline" size={20} aria-hidden="true" />
-              View
-              <ChevronRight className="w-4 h-4" aria-hidden="true" />
-            </span>
-          </div>
+          {!selectorMode && (
+            <div className="flex items-center bg-rb-300 dark:bg-rb-800 group-hover:bg-blue-500 transition-colors rounded-full pl-3 pr-2 py-1">
+              <span className="text-sm text-rb-500 group-hover:text-white font-semibold flex items-center gap-1">
+                <Icon name="timeline" size={20} aria-hidden="true" />
+                View
+                <ChevronRight className="w-4 h-4" aria-hidden="true" />
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </Link>

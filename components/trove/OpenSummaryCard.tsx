@@ -13,6 +13,7 @@ import { Users, Loader2, AlertTriangle } from "lucide-react";
 import { TroveStateData } from "@/types/api/troveState";
 import { OraclePricesData } from "@/types/api/oracle";
 import { FadeNumber } from "@/components/ui/FadeNumber";
+import { formatDuration } from "@/lib/date";
 
 const ARM_DEPRECATION_ANNOUNCEMENT = "https://discord.com/channels/700620821198143498/711975093940519012/1487025900208783530";
 
@@ -24,6 +25,10 @@ interface OpenSummaryCardProps {
     message: string | null;
     snapshotDate?: number;
   };
+  /** Detail page passes true so the live-data loader spinner shows while
+   *  liveState resolves. Chooser/listing contexts leave it false — they
+   *  intentionally don't fetch liveState and shouldn't appear "loading". */
+  expectsLiveState?: boolean;
 }
 
 // Liq prices vary widely (BTC ~$100k, USDC ~$1). Match rails-explorer's
@@ -37,7 +42,7 @@ function fmtLiqPrice(p: number): string {
   return "$" + (p / 1_000_000).toFixed(2) + "M";
 }
 
-export function OpenSummaryCard({ trove, liveState, prices, loadingStatus }: OpenSummaryCardProps) {
+export function OpenSummaryCard({ trove, liveState, prices, loadingStatus, expectsLiveState = false }: OpenSummaryCardProps) {
   const batchManagerInfo = getBatchManagerByAddress(trove.batch.manager);
   const deprecation = getBatchManagerDeprecation(trove.batch.manager);
 
@@ -45,11 +50,13 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus }: Ope
   const displayInterestRate = liveState?.rates.annualInterestRate ?? trove.metrics.interestRate;
   const displayCollateral = liveState?.collateral.entire ?? trove.collateral.amount;
 
-  const hasLiveData = liveState && prices;
+  // Snapshot data is the floor; price-derived metrics work whenever prices
+  // are available, even if liveState hasn't (or won't) resolve.
   const collateralTokenKey = trove.collateralType.toLowerCase() as keyof OraclePricesData;
-  const currentPrice = hasLiveData ? prices[collateralTokenKey] : null;
-  const collateralUsd = hasLiveData && currentPrice ? displayCollateral * currentPrice : null;
-  const collateralRatio = hasLiveData && collateralUsd && displayDebt > 0 ? (collateralUsd / displayDebt) * 100 : null;
+  const currentPrice = prices ? prices[collateralTokenKey] : null;
+  const collateralUsd = currentPrice ? displayCollateral * currentPrice : null;
+  const collateralRatio = collateralUsd && displayDebt > 0 ? (collateralUsd / displayDebt) * 100 : null;
+  const animateValues = expectsLiveState;
 
   const mcr = getLiquidationThreshold(trove.collateralType);
   const liqPrice = displayCollateral > 0 && displayDebt > 0
@@ -84,7 +91,7 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus }: Ope
         <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
           <span className="flex items-center gap-2 flex-wrap">
             <span className="font-bold tracking-wider px-2 py-0.5 text-white bg-green-500 dark:bg-green-950 dark:text-green-500/70 rounded-xs text-xs">
-              ACTIVE
+              OPEN
             </span>
             <span className="text-xs font-bold uppercase tracking-wide text-foreground/80">
               {trove.collateralType}
@@ -100,11 +107,15 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus }: Ope
                 <Users className="w-3.5 h-3.5" aria-hidden="true" />
               </span>
             )}
-            {(!hasLiveData || !currentPrice) && (
+            {expectsLiveState && (!liveState || !currentPrice) && (
               <Loader2 className="w-3.5 h-3.5 text-rb-500 animate-spin" />
             )}
           </span>
-          <span className="flex items-center gap-2 text-xs">
+          <span className="flex items-center gap-2 text-xs text-rb-500">
+            <span className="inline-flex items-center gap-1">
+              <Icon name="clock-zap" size={12} />
+              {formatDuration(trove.activity.lastActivityAt, new Date())} ago
+            </span>
             {trove.activity.redemptionCount > 0 && (
               <span className="inline-flex items-center text-orange-400">
                 <Icon name="triangle" size={12} />
@@ -112,7 +123,7 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus }: Ope
               </span>
             )}
             {txCount > 0 && (
-              <span className="inline-flex items-center text-rb-500">
+              <span className="inline-flex items-center">
                 <Icon name="arrow-left-right" size={12} />
                 <span className="ml-1">{txCount}</span>
               </span>
@@ -127,7 +138,7 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus }: Ope
             <div className="flex items-center gap-1.5">
               <span className="text-3xl font-bold">
                 <HighlightableValue type="collateral" state="after" value={displayCollateral}>
-                  <FadeNumber value={displayCollateral} animateOnMount={true} />
+                  <FadeNumber value={displayCollateral} animateOnMount={animateValues} />
                 </HighlightableValue>
               </span>
               <TokenIcon assetSymbol={trove.collateralType} className="inline-block w-7 h-7" />
@@ -137,12 +148,12 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus }: Ope
                 <>
                   ≈{" "}
                   <HighlightableValue type="collateralUsd" state="after" value={collateralUsd}>
-                    <FadeNumber value={collateralUsd} formatFn={formatUsdValue} animateOnMount={true} />
+                    <FadeNumber value={collateralUsd} formatFn={formatUsdValue} animateOnMount={animateValues} />
                   </HighlightableValue>
                 </>
-              ) : hasLiveData ? null : (
+              ) : expectsLiveState ? (
                 <span className="inline-block h-3 w-16 bg-rb-200 dark:bg-rb-800 rounded animate-pulse" />
-              )}
+              ) : null}
             </div>
           </div>
 
@@ -152,14 +163,14 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus }: Ope
             <div className="flex items-center gap-1.5">
               <span className="text-3xl font-bold">
                 <HighlightableValue type="debt" state="after" value={displayDebt}>
-                  <FadeNumber value={displayDebt} formatFn={formatPrice} animateOnMount={true} />
+                  <FadeNumber value={displayDebt} formatFn={formatPrice} animateOnMount={animateValues} />
                 </HighlightableValue>
               </span>
               <TokenIcon assetSymbol="BOLD" className="inline-block w-7 h-7" />
             </div>
             <div className="text-xs mt-0.5 text-rb-500">
               <HighlightableValue type="interestRate" state="after" value={displayInterestRate}>
-                <FadeNumber value={displayInterestRate} decimals={2} animateOnMount={true} />%
+                <FadeNumber value={displayInterestRate} decimals={2} animateOnMount={animateValues} />%
               </HighlightableValue>
               {" "}interest rate
             </div>
@@ -168,16 +179,16 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus }: Ope
           {/* Collateral Ratio */}
           <div>
             <div className="text-xs text-rb-500 font-semibold mb-1">Collateral Ratio</div>
-            {hasLiveData && currentPrice && collateralRatio !== null && collateralRatio > 0 ? (
+            {currentPrice && collateralRatio !== null && collateralRatio > 0 ? (
               <div className="text-3xl font-bold">
                 <HighlightableValue type="collRatio" state="after" value={parseFloat(collateralRatio.toFixed(1))}>
-                  <FadeNumber value={collateralRatio} decimals={1} animateOnMount={true} />%
+                  <FadeNumber value={collateralRatio} decimals={1} animateOnMount={animateValues} />%
                 </HighlightableValue>
               </div>
-            ) : hasLiveData ? (
-              <div className="text-3xl font-bold text-rb-500">—</div>
-            ) : (
+            ) : expectsLiveState ? (
               <div className="h-9 w-20 bg-rb-200 dark:bg-rb-800 rounded animate-pulse" />
+            ) : (
+              <div className="text-3xl font-bold text-rb-500">—</div>
             )}
             <div className="text-xs mt-0.5 text-rb-500">Min {mcr}% threshold</div>
           </div>
@@ -198,9 +209,9 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus }: Ope
             <div className="text-xs mt-0.5 text-rb-500 min-h-[1rem]">
               {headroomPct !== null ? (
                 <>{headroomPct.toFixed(0)}% headroom</>
-              ) : hasLiveData ? null : (
+              ) : expectsLiveState ? (
                 <span className="inline-block h-3 w-20 bg-rb-200 dark:bg-rb-800 rounded animate-pulse" />
-              )}
+              ) : null}
             </div>
           </div>
         </div>

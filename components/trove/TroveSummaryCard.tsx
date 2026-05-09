@@ -13,9 +13,12 @@ interface TroveSummaryCardProps {
     message: string | null;
     snapshotDate?: number;
   };
+  /** Detail page passes true: shows the live-data loader spinner and animates
+   *  values when liveState resolves. Chooser/listing contexts leave it false. */
+  expectsLiveState?: boolean;
 }
 
-export function TroveSummaryCard({ trove, liveState, prices, loadingStatus }: TroveSummaryCardProps) {
+export function TroveSummaryCard({ trove, liveState, prices, loadingStatus, expectsLiveState }: TroveSummaryCardProps) {
   if (trove.status === "liquidated") {
     return <LiquidatedSummaryCard trove={trove} />;
   }
@@ -27,6 +30,7 @@ export function TroveSummaryCard({ trove, liveState, prices, loadingStatus }: Tr
         liveState={liveState}
         prices={prices}
         loadingStatus={loadingStatus}
+        expectsLiveState={expectsLiveState}
       />
     );
   }

@@ -1,6 +1,5 @@
-import { formatDateRange, formatDuration } from "@/lib/date";
+import { formatDuration } from "@/lib/date";
 import { Icon } from "@/components/icons/icon";
-import { HighlightableValue } from "@/components/transaction-timeline/explanation/HighlightableValue";
 import { TroveIdentityRow } from "./trove-identity-row";
 import { TroveSummary } from "@/types/api/trove";
 
@@ -9,13 +8,14 @@ interface LiquidatedSummaryCardProps {
 }
 
 export function LiquidatedSummaryCard({ trove }: LiquidatedSummaryCardProps) {
+  const txCount = trove.activity.transactionCount - trove.activity.redemptionCount;
   return (
     <div>
       <div className="text-foreground">
-        {/* Header — flat, no card background. LIQUIDATED pill carries the
-            only chrome. */}
-        <div className="grid grid-cols-[auto_1fr] gap-2 items-start">
-          <div className="flex items-center gap-2 flex-wrap">
+        {/* Header mirrors Open/Closed: status pill + asset + identity on the
+            left, "X ago" pill + redemption/tx counters on the right. */}
+        <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+          <span className="flex items-center gap-2 flex-wrap">
             <span className="font-bold tracking-wider px-2 py-0.5 bg-red-700 text-white rounded-xs text-xs">
               LIQUIDATED
             </span>
@@ -23,31 +23,25 @@ export function LiquidatedSummaryCard({ trove }: LiquidatedSummaryCardProps) {
               {trove.collateralType}
             </span>
             <TroveIdentityRow troveId={trove.id} collateralType={trove.collateralType} />
-          </div>
-          <div className="flex items-center gap-2 text-xs flex-wrap justify-end pt-0.5">
-            <HighlightableValue type="dateRange" state="after">
-              <span className="text-rb-500">
-                {formatDateRange(trove.activity.createdAt, trove.activity.lastActivityAt)}
+          </span>
+          <span className="flex items-center gap-2 text-xs text-rb-500">
+            <span className="inline-flex items-center gap-1">
+              <Icon name="clock-zap" size={12} />
+              {formatDuration(trove.activity.lastActivityAt, new Date())} ago
+            </span>
+            {trove.activity.redemptionCount > 0 && (
+              <span className="inline-flex items-center text-orange-400">
+                <Icon name="triangle" size={12} />
+                <span className="ml-1">{trove.activity.redemptionCount}</span>
               </span>
-            </HighlightableValue>
-            <div className="flex items-center gap-1">
-              <HighlightableValue type="duration" state="after">
-                <span className="text-rb-500 rounded-lg bg-rb-100 dark:bg-rb-900 px-2">
-                  {formatDuration(trove.activity.createdAt, trove.activity.lastActivityAt)}
-                </span>
-              </HighlightableValue>
-              {trove.activity.redemptionCount > 0 && (
-                <span className="inline-flex items-center text-orange-400">
-                  <Icon name="triangle" size={12} />
-                  <span className="ml-1">{trove.activity.redemptionCount}</span>
-                </span>
-              )}
-              <span className="inline-flex items-center text-rb-500">
+            )}
+            {txCount > 0 && (
+              <span className="inline-flex items-center">
                 <Icon name="arrow-left-right" size={12} />
-                <span className="ml-1">{trove.activity.transactionCount - trove.activity.redemptionCount}</span>
+                <span className="ml-1">{txCount}</span>
               </span>
-            </div>
-          </div>
+            )}
+          </span>
         </div>
       </div>
     </div>

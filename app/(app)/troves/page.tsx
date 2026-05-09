@@ -2,7 +2,8 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { TroveListingCard } from "@/components/troves/TroveListingCard";
+import Link from "next/link";
+import { TroveSummaryCard } from "@/components/trove/TroveSummaryCard";
 import { TroveListFilters, TroveListFilterParams } from "@/components/troves/components/TroveListFilters";
 import { TroveSummary } from "@/types/api/trove";
 import { PaginationControls } from "@/components/troves/components/PaginationControls";
@@ -279,7 +280,17 @@ function TrovesPageContent() {
             >
               {troves.map((trove) => (
                 <motion.div key={trove.id} variants={itemVariants}>
-                  <TroveListingCard trove={trove} prices={prices} />
+                  <Link
+                    href={`/trove/${trove.collateralType}/${trove.id}`}
+                    onClick={() => {
+                      if (typeof window !== "undefined") {
+                        sessionStorage.setItem("troves-scroll-position", String(window.scrollY));
+                      }
+                    }}
+                    className="group/card block w-full text-left rounded-lg transition-all cursor-pointer border border-transparent hover:bg-rb-200/50 dark:hover:bg-rb-900 hover:border-blue-500 px-5 py-4"
+                  >
+                    <TroveSummaryCard trove={trove} prices={prices ?? undefined} />
+                  </Link>
                 </motion.div>
               ))}
             </motion.div>

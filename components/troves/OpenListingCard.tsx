@@ -9,7 +9,7 @@ import { formatDuration } from "@/lib/date";
 import { formatBatchManagerDisplay, getBatchManagerDeprecation } from "@/lib/services/batch-manager-service";
 import { OraclePricesData } from "@/types/api/oracle";
 
-export function OpenListingCard({ trove, prices }: { trove: TroveSummary; prices?: OraclePricesData | null }) {
+export function OpenListingCard({ trove, prices, selectorMode = false }: { trove: TroveSummary; prices?: OraclePricesData | null; selectorMode?: boolean }) {
   // Save scroll position when navigating to trove detail
   const handleClick = () => {
     if (typeof window !== "undefined") {
@@ -31,7 +31,11 @@ export function OpenListingCard({ trove, prices }: { trove: TroveSummary; prices
     <Link
       href={`/trove/${trove.collateralType}/${trove.id}`}
       onClick={handleClick}
-      className="block relative rounded-xl text-foreground bg-rb-100 dark:bg-rb-850 hover:bg-rb-200 dark:hover:bg-rb-800 transition-colors cursor-pointer group"
+      className={
+        selectorMode
+          ? "block relative text-foreground transition-colors cursor-pointer group"
+          : "block relative rounded-xl text-foreground bg-rb-100 dark:bg-rb-850 hover:bg-rb-200 dark:hover:bg-rb-800 transition-colors cursor-pointer group"
+      }
       aria-label={`View active trove ${trove.id.substring(0, 8)}... with ${formatApproximate(trove.debt.current)} BOLD debt`}
     >
       {/* Header section */}
@@ -144,13 +148,15 @@ export function OpenListingCard({ trove, prices }: { trove: TroveSummary; prices
             dateText={`${formatDuration(trove.activity.lastActivityAt, new Date())} ago`}
             showDetailedInfo={false}
           />
-          <div className="flex items-center bg-rb-200 dark:bg-rb-800 group-hover:bg-blue-500 transition-colors rounded-full pl-3 pr-2 py-1">
-            <span className="text-sm text-rb-500 group-hover:text-white font-semibold flex items-center gap-1">
-              <Icon name="timeline" size={20} aria-hidden="true" />
-              View
-              <ChevronRight className="w-4 h-4" aria-hidden="true" />
-            </span>
-          </div>
+          {!selectorMode && (
+            <div className="flex items-center bg-rb-200 dark:bg-rb-800 group-hover:bg-blue-500 transition-colors rounded-full pl-3 pr-2 py-1">
+              <span className="text-sm text-rb-500 group-hover:text-white font-semibold flex items-center gap-1">
+                <Icon name="timeline" size={20} aria-hidden="true" />
+                View
+                <ChevronRight className="w-4 h-4" aria-hidden="true" />
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </Link>

@@ -7,7 +7,7 @@ import { ChevronRight } from "lucide-react";
 import { formatDuration } from "@/lib/date";
 import { TokenIcon } from "../icons/tokenIcon";
 
-export function ClosedListingCard({ trove }: { trove: TroveSummary }) {
+export function ClosedListingCard({ trove, selectorMode = false }: { trove: TroveSummary; selectorMode?: boolean }) {
   // Save scroll position when navigating to trove detail
   const handleClick = (e: React.MouseEvent) => {
     if (typeof window !== "undefined") {
@@ -19,7 +19,11 @@ export function ClosedListingCard({ trove }: { trove: TroveSummary }) {
     <Link
       href={`/trove/${trove.collateralType}/${trove.id}`}
       onClick={handleClick}
-      className="block relative rounded-xl text-foreground bg-rb-200 dark:bg-rb-900 hover:bg-rb-300 dark:hover:bg-rb-800 transition-colors cursor-pointer group"
+      className={
+        selectorMode
+          ? "block relative text-foreground transition-colors cursor-pointer group"
+          : "block relative rounded-xl text-foreground bg-rb-200 dark:bg-rb-900 hover:bg-rb-300 dark:hover:bg-rb-800 transition-colors cursor-pointer group"
+      }
       aria-label={`View closed trove ${trove.id.substring(0, 8)}... with peak debt of ${formatApproximate(trove.debt.peak)} BOLD`}
     >
       {/* Header section */}
@@ -79,13 +83,15 @@ export function ClosedListingCard({ trove }: { trove: TroveSummary }) {
             dateText={`${formatDuration(trove.activity.lastActivityAt, new Date())} ago`}
             showDetailedInfo={false}
           />
-          <div className="flex items-center bg-rb-300 dark:bg-rb-800 group-hover:bg-blue-500 transition-colors rounded-full pl-3 pr-2 py-1">
-            <span className="text-sm text-rb-500 group-hover:text-white font-semibold flex items-center gap-1">
-              <Icon name="timeline" size={20} aria-hidden="true" />
-              View
-              <ChevronRight className="w-4 h-4" aria-hidden="true" />
-            </span>
-          </div>
+          {!selectorMode && (
+            <div className="flex items-center bg-rb-300 dark:bg-rb-800 group-hover:bg-blue-500 transition-colors rounded-full pl-3 pr-2 py-1">
+              <span className="text-sm text-rb-500 group-hover:text-white font-semibold flex items-center gap-1">
+                <Icon name="timeline" size={20} aria-hidden="true" />
+                View
+                <ChevronRight className="w-4 h-4" aria-hidden="true" />
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </Link>

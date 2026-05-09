@@ -62,12 +62,18 @@ export function HoverProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// No-op fallback so HighlightableValue can render in surfaces that don't
+// mount a HoverProvider (chooser rows, listing cards) — those have no
+// counterpart explanation to highlight, so silent degradation is correct.
+const HOVER_NOOP: HoverContextType = {
+  hoveredValue: null,
+  setHoveredValue: () => {},
+  hoverEnabled: false,
+  setHoverEnabled: () => {},
+};
+
 export function useHover() {
-  const context = useContext(HoverContext);
-  if (!context) {
-    throw new Error("useHover must be used within a HoverProvider");
-  }
-  return context;
+  return useContext(HoverContext) ?? HOVER_NOOP;
 }
 
 // Helper function to check if a value should be highlighted
