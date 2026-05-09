@@ -4,7 +4,15 @@
  *  `protocols` list so the same WalletSession storage shape works
  *  if the umbrella ever shares with sub-apps. */
 
-export const SESSIONS_KEY = "defi-explorer-sessions";
+/** Per-deployment storage scope. Each mono-rail (liquity-v2, future aave-v4,
+ *  …) sets `NEXT_PUBLIC_SESSION_SCOPE` so its pinned/recent list lives in its
+ *  own localStorage keyspace, leaving room for a separate "mingled" explorer
+ *  with a tagged session shape later. The env var is inlined at build time
+ *  (NEXT_PUBLIC_*), so the value is identical on server and client. */
+const SESSION_SCOPE =
+  process.env.NEXT_PUBLIC_SESSION_SCOPE ?? "liquity-v2";
+
+export const SESSIONS_KEY = `${SESSION_SCOPE}-sessions`;
 
 export interface WalletSession {
   key: string;

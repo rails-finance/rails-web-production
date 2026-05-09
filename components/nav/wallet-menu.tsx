@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { FloatingPanel } from "@/components/shared/floating-panel";
 import { Facehash } from "@/components/shared/facehash";
+import { ProtocolSearchBar } from "@/components/shared/protocol-search-bar";
 import {
   loadSessions,
   renameSession,
@@ -324,6 +325,8 @@ export function WalletMenu({
       <div className="p-3 space-y-3">
         {currentSession && <CurrentHeading session={currentSession} />}
 
+        <ProtocolSearchBar compact onAfterSubmit={onClose} />
+
         {hasAny && (
           <div className="flex items-center gap-1 border-b border-rb-200 dark:border-rb-800">
             <TabButton
@@ -356,7 +359,11 @@ export function WalletMenu({
                 key={s.key}
                 session={s}
                 isCurrent={s.key === activeKey}
-                href={`/address/${s.addresses.join("+")}`}
+                /* Stopgap until /address/<addr> exists in rails-web-mig:
+                 * the troves page already filters by `?ownerAddress=` and
+                 * hydrates the wallet pill when it sees the param. Sessions
+                 * always store one lowercase 0x address as the primary key. */
+                href={`/troves?ownerAddress=${s.addresses[0]}`}
                 onTogglePin={togglePin}
                 onRemove={removeSession}
                 onRename={renameSessionLocal}

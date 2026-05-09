@@ -12,6 +12,8 @@ import { TroveListError } from "@/components/troves/components/TroveListError";
 import { FeedbackButton } from "@/components/FeedbackButton";
 import { OraclePricesData, OraclePricesResponse } from "@/types/api/oracle";
 import { motion, AnimatePresence } from "framer-motion";
+import { useWalletContext } from "@/components/nav/wallet-context";
+import { upsertSession } from "@/lib/shared/sessions";
 
 // Constants
 const ITEMS_PER_PAGE = 20;
@@ -123,6 +125,19 @@ function TrovesPageContent() {
   };
 
   const filters = getFiltersFromUrl();
+
+  // When the troves page is being used as a wallet view (filter set via the
+  // WalletMenu pin/recent links), surface the address in the header pill and
+  // record the visit. Mirrors what the trove detail page does — the troves
+  // page is the de-facto `/address/<addr>` until a dedicated route exists.
+  const { setWallets } = useWalletContext();
+  useEffect(() => {
+    if (!filters.ownerAddress) return;
+    const lower = filters.ownerAddress.toLowerCase();
+    if (!/^0x[a-f0-9]{40}$/.test(lower)) return;
+    setWallets([lower], { [lower]: null });
+    upsertSession([lower], { [lower]: null }, ["liquity-v2-troves"]);
+  }, [filters.ownerAddress, setWallets]);
 
   // Helper to build URL search params from filters
   const buildSearchParams = (filterParams: TroveListFilterParams, page?: number, includePageAndLimit?: boolean) => {

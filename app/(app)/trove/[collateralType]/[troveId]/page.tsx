@@ -18,6 +18,7 @@ import { OraclePricesData, OraclePricesResponse } from "@/types/api/oracle";
 import { useTroveUiState } from "@/hooks/useTroveUiState";
 import { useDebtInFront } from "@/hooks/useDebtInFront";
 import { useWalletContext } from "@/components/nav/wallet-context";
+import { upsertSession } from "@/lib/shared/sessions";
 
 import { fetchTroveTimeline } from "@/lib/api/fetch-timeline";
 import type { BaseActivityEvent } from "@/lib/shared/types/event-shape";
@@ -197,7 +198,12 @@ export default function TrovePage() {
   useEffect(() => {
     if (!effectiveOwner) return;
     const lower = effectiveOwner.toLowerCase();
-    setWallets([lower], { [lower]: troveData?.ownerEns ?? null });
+    const ens = troveData?.ownerEns ?? null;
+    setWallets([lower], { [lower]: ens });
+    // Record the wallet in the recent/pinned list so it surfaces in the
+    // header WalletMenu on subsequent visits. Tagged with the canonical
+    // protocol id used across rails-explorer.
+    upsertSession([lower], { [lower]: ens }, ["liquity-v2-troves"]);
   }, [effectiveOwner, troveData?.ownerEns, setWallets]);
 
   // Fetch sibling troves the same wallet holds across all collateral branches,

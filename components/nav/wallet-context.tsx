@@ -9,7 +9,12 @@ import {
   type ReactNode,
 } from "react";
 
-const SESSION_KEY = "rails-wallet-session";
+/** Namespaced per deployment so a future sibling mono-rail (e.g. aave-v4)
+ *  doesn't inherit the Liquity wallet pill on first load. Mirrors the scope
+ *  convention in `lib/shared/sessions.ts`. */
+const SESSION_SCOPE =
+  process.env.NEXT_PUBLIC_SESSION_SCOPE ?? "liquity-v2";
+const SESSION_KEY = `${SESSION_SCOPE}-current-wallet`;
 
 interface WalletContextValue {
   /** Currently viewed address (length 0 or 1 — single-protocol focused). */
