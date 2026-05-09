@@ -260,11 +260,11 @@ export function LiquitySimulatorCard({ troveId, current, currentPrice, avatar, o
             axis above; this cell just surfaces the derived CR transition. */}
         <StateMetric label={ratioLabel(ratioMode)}>
           <div className="flex items-center space-x-1 mb-2">
-            <span className={`text-sm font-bold ${crColor(base.cr)}`}>
+            <span className={`text-sm font-bold ${crColor(base.cr, current.collateralType)}`}>
               {formatRatio(base.cr, ratioMode, 2)}
             </span>
             <TransitionArrow />
-            <span className={`text-sm font-bold tabular-nums ${crColor(sim.cr)}`}>
+            <span className={`text-sm font-bold tabular-nums ${crColor(sim.cr, current.collateralType)}`}>
               {simDebt > 0 ? formatRatio(sim.cr, ratioMode, 2) : "N/A"}
             </span>
           </div>

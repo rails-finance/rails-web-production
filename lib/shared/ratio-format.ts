@@ -1,5 +1,11 @@
 import { useMemo } from 'react';
-import type { RatioMode } from '@/lib/shared/preferences';
+import {
+  type LiquityV2Branch,
+  type LiquityV2BranchThresholds,
+  type RatioMode,
+  LIQUITY_V2_BRANCHES,
+  DEFAULT_LIQUITY_V2_PREFERENCES,
+} from '@/lib/shared/preferences';
 import { usePreferences } from '@/lib/shared/preferences-context';
 
 export function ratioLabel(mode: RatioMode): string {
@@ -51,18 +57,38 @@ export function ratioColorClass(cr: number, opts: RatioColorOptions = {}): strin
   return safeClass;
 }
 
+/** Resolve a collateral-type string ("WETH", "wstETH", "rETH" — sometimes
+ *  rendered as "ETH" in legacy events) to the branch key used by preferences.
+ *  Unknown branches fall back to WETH so the colour palette is never undefined. */
+export function resolveLiquityBranch(collateralType: string | undefined): LiquityV2Branch {
+  if (!collateralType) return 'WETH';
+  const normalised = collateralType === 'ETH' ? 'WETH' : collateralType;
+  return (LIQUITY_V2_BRANCHES as readonly string[]).includes(normalised)
+    ? (normalised as LiquityV2Branch)
+    : 'WETH';
+}
+
 /**
  * React hook that returns a Liquity V2-aware ratio colourer. Reads the user's
- * threshold preferences (Conservative / Moderate CR mins) and produces a
- * function `(cr, opts?) => className`. Callers pass any extra opts they want
- * — e.g. the position card overrides `safeClass` to neutral foreground — and
- * the prefs-driven thresholds win over the static defaults.
+ * per-branch threshold preferences (Conservative / Moderate CR mins) and
+ * produces a function `(cr, branch, extraOpts?) => className`. Callers pass
+ * the trove's collateral type so each branch's thresholds apply correctly —
+ * a wstETH trove (MCR 120) uses different cut-offs from a WETH trove (MCR 110).
+ * `extraOpts` lets specific call sites override class names — e.g. the
+ * position card uses neutral foreground for the Conservative band.
  */
-export function useLiquityRatioColorClass(): (cr: number, extraOpts?: RatioColorOptions) => string {
+export function useLiquityRatioColorClass(): (
+  cr: number,
+  branch: LiquityV2Branch | string | undefined,
+  extraOpts?: RatioColorOptions,
+) => string {
   const { prefs } = usePreferences();
-  const v2 = prefs.liquityV2;
+  const byBranch = prefs.liquityV2.byBranch;
   return useMemo(() => {
-    return (cr: number, extraOpts: RatioColorOptions = {}) =>
-      ratioColorClass(cr, { danger: v2.crModerateMin, warn: v2.crConservativeMin, ...extraOpts });
-  }, [v2.crModerateMin, v2.crConservativeMin]);
+    return (cr: number, branchInput: LiquityV2Branch | string | undefined, extraOpts: RatioColorOptions = {}) => {
+      const branch = resolveLiquityBranch(branchInput);
+      const t: LiquityV2BranchThresholds = byBranch[branch] ?? DEFAULT_LIQUITY_V2_PREFERENCES.byBranch[branch];
+      return ratioColorClass(cr, { danger: t.crModerateMin, warn: t.crConservativeMin, ...extraOpts });
+    };
+  }, [byBranch]);
 }

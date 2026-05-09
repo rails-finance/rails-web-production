@@ -198,7 +198,7 @@ function InterestRateMetric({
   );
 }
 
-function CollateralRatioMetric({ before, after, afterDebt, isClose }: { before: number; after: number; afterDebt: number; isClose: boolean }) {
+function CollateralRatioMetric({ before, after, afterDebt, isClose, collateralType }: { before: number; after: number; afterDebt: number; isClose: boolean; collateralType: string }) {
   const { prefs } = usePreferences();
   const mode = prefs.ratioMode;
   const crColor = useLiquityRatioColorClass();
@@ -209,7 +209,7 @@ function CollateralRatioMetric({ before, after, afterDebt, isClose }: { before: 
       <StateTransition>
         {hasChange && (
           <>
-            <span className={`text-sm font-bold ${crColor(before)}`}>
+            <span className={`text-sm font-bold ${crColor(before, collateralType)}`}>
               {formatRatio(before, mode, 2)}
             </span>
             <TransitionArrow />
@@ -220,7 +220,7 @@ function CollateralRatioMetric({ before, after, afterDebt, isClose }: { before: 
         ) : afterDebt === 0 ? (
           <span className="text-sm font-bold ">N/A</span>
         ) : (
-          <span className={`text-sm font-bold ${crColor(after)}`}>
+          <span className={`text-sm font-bold ${crColor(after, collateralType)}`}>
             {formatRatio(after, mode, 2)}
           </span>
         )}
@@ -349,7 +349,7 @@ export function LiquityEventDetail({ ctx, txHash, previousEvent, currentEvent }:
                 accruedManagementFees={accruedManagementFees}
                 stablecoinSymbol={ctx.assetType}
               />
-              <CollateralRatioMetric before={beforeCollRatio} after={stateAfter.collateralRatio} afterDebt={stateAfter.debt} isClose={isClose} />
+              <CollateralRatioMetric before={beforeCollRatio} after={stateAfter.collateralRatio} afterDebt={stateAfter.debt} isClose={isClose} collateralType={ctx.collateralType} />
               <InterestRateMetric
                 before={beforeInterestRate}
                 after={stateAfter.annualInterestRate}

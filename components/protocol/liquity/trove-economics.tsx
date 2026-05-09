@@ -21,7 +21,7 @@ import { FilterDropdown, DisplaySettingsIcon, type FilterOption } from "@/compon
 import { usePreferences } from "@/lib/shared/preferences-context";
 import { TrovePriceAxis } from "@/components/protocol/liquity/trove-price-axis";
 import { getLiquidationThreshold } from "@/lib/utils/liquidation-utils";
-import { formatRatio, ratioLabel, useLiquityRatioColorClass } from "@/lib/shared/ratio-format";
+import { formatRatio, ratioLabel, useLiquityRatioColorClass, resolveLiquityBranch } from "@/lib/shared/ratio-format";
 import { useTroveSimulator } from "@/lib/liquity/use-simulator";
 import { LiquitySimulatorCard } from "@/components/protocol/liquity/liquity-simulator-card";
 
@@ -749,7 +749,7 @@ export function TroveEconomicsSummary({
           <div>
             <div className=" text-xs">{ratioLabel(ratioMode)}</div>
             {collRatio !== null && (
-              <div className={`text-2xl font-bold tabular-nums mt-1 ${crColor(collRatio, { safeClass: "text-foreground" })}`}>
+              <div className={`text-2xl font-bold tabular-nums mt-1 ${crColor(collRatio, meta.collateralType, { safeClass: "text-foreground" })}`}>
                 {formatRatio(collRatio, ratioMode)}
               </div>
             )}
@@ -890,8 +890,10 @@ export function TroveEconomicsSummary({
                     const priceAtCR = liqPrice * (cr / mcr);
                     return Math.max(0, Math.min(liqBoundary, ((refPrice - priceAtCR) / denom) * liqBoundary));
                   };
-                  const t1 = ctc(prefs.liquityV2.crConservativeMin);
-                  let t2 = ctc(prefs.liquityV2.crModerateMin);
+                  const branchKey = resolveLiquityBranch(meta.collateralType);
+                  const branchThresholds = prefs.liquityV2.byBranch[branchKey];
+                  const t1 = ctc(branchThresholds.crConservativeMin);
+                  let t2 = ctc(branchThresholds.crModerateMin);
                   if (t2 < t1) t2 = t1;
                   const zoneBoundaries: [number, number, number] = [t1, t2, liqBoundary];
 

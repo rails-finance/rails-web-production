@@ -284,7 +284,7 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
           {/* Right side: CR (rate only on rate-change operations) */}
           <span className="inline-flex items-center gap-1.5">
             {stateAfter.collateralRatio > 0 && (
-              <span className={`text-xs ${crColor(stateAfter.collateralRatio)}`}>
+              <span className={`text-xs ${crColor(stateAfter.collateralRatio, ctx.collateralType)}`}>
                 {formatRatio(stateAfter.collateralRatio, ratioMode, 0)} {ratioLabelShort(ratioMode)}
               </span>
             )}

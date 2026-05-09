@@ -91,9 +91,14 @@ const ProtocolButton = ({
   >
     {inProtocol ? (
       <>
-        <svg className="w-4 h-4" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <use href="#icon-liquity" />
-        </svg>
+        {/* App icons render as rounded squares (paired with facehashes); only
+            tokens stay circular. The icon-liquity SVG is itself a circle, so
+            we frame it in a square chip to read as a protocol/app identity. */}
+        <span className="w-5 h-5 shrink-0 rounded-[5px] bg-rb-100 dark:bg-rb-800 flex items-center justify-center overflow-hidden">
+          <svg className="w-4 h-4" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <use href="#icon-liquity" />
+          </svg>
+        </span>
         <span className="text-xs font-semibold text-foreground">Liquity V2</span>
       </>
     ) : (

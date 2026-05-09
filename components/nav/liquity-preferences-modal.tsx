@@ -3,30 +3,31 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { usePreferences } from "@/lib/shared/preferences-context";
-import { DEFAULT_LIQUITY_V2_PREFERENCES } from "@/lib/shared/preferences";
+import {
+  DEFAULT_LIQUITY_V2_PREFERENCES,
+  LIQUITY_V2_BRANCHES,
+  type LiquityV2Branch,
+  type LiquityV2BranchThresholds,
+} from "@/lib/shared/preferences";
+import { getLiquidationThreshold } from "@/lib/utils/liquidation-utils";
+import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 
 /**
  * Fullscreen modal for Liquity V2 preferences.
  *
- * Today this surfaces the risk-zone CR thresholds — Conservative and Moderate
- * minimums — which drive both the price-runway widget's segment colours and
- * the timeline's CR colour. Liquidation is fixed by each branch's MCR (110%
- * on WETH, 120% on wstETH/rETH) and is not user-editable. The thresholds
- * apply across all branches, so they must sit safely above the highest MCR
- * in the protocol. The shell is intentionally roomy so future Liquity-V2-
- * specific preferences (default redemption-risk view, batch-manager filters,
- * etc.) can land here without rebuilding the surface.
+ * Each collateral branch (WETH / wstETH / rETH) has its own MCR and its own
+ * Conservative / Moderate CR thresholds. The modal renders a section per
+ * branch so the user can tune them independently. Liquidation is fixed by
+ * the branch's MCR (110% on WETH, 120% on wstETH/rETH) and not user-editable.
+ * The shell is intentionally roomy so future Liquity-V2-specific preferences
+ * (default redemption-risk view, batch-manager filters, etc.) can land here
+ * without rebuilding the surface.
  */
-
-// Highest MCR in the protocol (wstETH/rETH branches use 120%). User-editable
-// thresholds must clear this so the boundary is meaningful for every branch.
-const MIN_THRESHOLD_FLOOR = 121;
 
 export function LiquityPreferencesModal({ onClose }: { onClose: () => void }) {
   const { prefs, update } = usePreferences();
   const v2 = prefs.liquityV2;
 
-  // Esc closes; body scroll locked while open so the backdrop stays glued.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", handler);
@@ -40,26 +41,39 @@ export function LiquityPreferencesModal({ onClose }: { onClose: () => void }) {
 
   if (typeof document === "undefined") return null;
 
-  const setThreshold = (key: "crConservativeMin" | "crModerateMin", value: number) => {
+  const setBranchThreshold = (
+    branch: LiquityV2Branch,
+    key: keyof LiquityV2BranchThresholds,
+    value: number,
+  ) => {
     if (!isFinite(value)) return;
-    // Keep ordering invariant: Conservative ≥ Moderate ≥ MCR (110). If the user
-    // pushes one threshold past the other, slide the neighbour to maintain a
-    // valid gradient instead of letting the zones invert.
-    let { crConservativeMin, crModerateMin } = v2;
+    const mcr = getLiquidationThreshold(branch);
+    const floor = mcr + 1; // any threshold ≤ MCR is meaningless for this branch
+    let { crConservativeMin, crModerateMin } = v2.byBranch[branch];
     if (key === "crConservativeMin") {
-      crConservativeMin = Math.max(MIN_THRESHOLD_FLOOR, value);
-      if (crConservativeMin <= crModerateMin) crModerateMin = Math.max(MIN_THRESHOLD_FLOOR, crConservativeMin - 10);
+      crConservativeMin = Math.max(floor, value);
+      if (crConservativeMin <= crModerateMin) crModerateMin = Math.max(floor, crConservativeMin - 10);
     } else {
-      crModerateMin = Math.max(MIN_THRESHOLD_FLOOR, value);
+      crModerateMin = Math.max(floor, value);
       if (crModerateMin >= crConservativeMin) crConservativeMin = crModerateMin + 10;
     }
-    update({ liquityV2: { crConservativeMin, crModerateMin } });
+    update({
+      liquityV2: {
+        ...v2,
+        byBranch: {
+          ...v2.byBranch,
+          [branch]: { crConservativeMin, crModerateMin },
+        },
+      },
+    });
   };
 
   const reset = () => update({ liquityV2: DEFAULT_LIQUITY_V2_PREFERENCES });
-  const isDefault =
-    v2.crConservativeMin === DEFAULT_LIQUITY_V2_PREFERENCES.crConservativeMin &&
-    v2.crModerateMin === DEFAULT_LIQUITY_V2_PREFERENCES.crModerateMin;
+  const isDefault = LIQUITY_V2_BRANCHES.every((b) => {
+    const cur = v2.byBranch[b];
+    const def = DEFAULT_LIQUITY_V2_PREFERENCES.byBranch[b];
+    return cur.crConservativeMin === def.crConservativeMin && cur.crModerateMin === def.crModerateMin;
+  });
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] overflow-y-auto" onClick={onClose}>
@@ -69,13 +83,13 @@ export function LiquityPreferencesModal({ onClose }: { onClose: () => void }) {
       />
       <div className="relative min-h-full flex items-start sm:items-center justify-center p-4">
         <div
-          className="relative rounded-2xl max-w-2xl w-full my-8 p-6 sm:p-8 shadow-xl"
+          className="relative rounded-2xl max-w-3xl w-full my-8 p-6 sm:p-8 shadow-xl"
           style={{ background: "var(--surface-overlay)" }}
           onClick={(e) => e.stopPropagation()}
         >
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 btn-ghost cursor-pointer p-2 rounded-lg hover:bg-rb-200 dark:hover:bg-rb-800 transition-colors"
+            className="absolute top-4 right-4 cursor-pointer p-2 rounded-lg hover:bg-rb-200 dark:hover:bg-rb-800 transition-colors"
             aria-label="Close"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -93,7 +107,7 @@ export function LiquityPreferencesModal({ onClose }: { onClose: () => void }) {
             <div>
               <h2 className="text-xl font-bold leading-tight">Liquity V2 preferences</h2>
               <p className="text-xs text-rb-500 mt-0.5">
-                Customise the risk thresholds applied across this protocol's positions.
+                Customise the risk thresholds applied to each collateral branch.
               </p>
             </div>
           </div>
@@ -104,46 +118,21 @@ export function LiquityPreferencesModal({ onClose }: { onClose: () => void }) {
             </div>
             <p className="text-xs text-rb-500 leading-relaxed mb-5">
               Collateral-ratio cut-offs that classify a position as Conservative,
-              Moderate, or Aggressive. Used by the price-runway widget on each
-              trove and the CR colour on the timeline. Liquidation occurs at
-              each branch's MCR (110% on WETH, 120% on wstETH and rETH) and is
-              not user-editable. Thresholds apply across all branches.
+              Moderate, or Aggressive. Each branch has its own MCR (Liquidation
+              line), so each carries its own thresholds. Used by the price-runway
+              widget on each trove and the CR colour on the timeline.
             </p>
 
-            <ThresholdRow
-              label="Conservative"
-              dotClass="bg-emerald-500"
-              textClass="text-emerald-400"
-              value={v2.crConservativeMin}
-              onChange={(v) => setThreshold("crConservativeMin", v)}
-              suffix="% CR or higher"
-              hint={`Default ${DEFAULT_LIQUITY_V2_PREFERENCES.crConservativeMin}%`}
-            />
-            <ThresholdRow
-              label="Moderate"
-              dotClass="bg-amber-500"
-              textClass="text-amber-400"
-              value={v2.crModerateMin}
-              onChange={(v) => setThreshold("crModerateMin", v)}
-              suffix={`% CR up to ${v2.crConservativeMin}%`}
-              hint={`Default ${DEFAULT_LIQUITY_V2_PREFERENCES.crModerateMin}%`}
-            />
-            <ThresholdRow
-              label="Aggressive"
-              dotClass="bg-orange-500"
-              textClass="text-orange-400"
-              value={null}
-              suffix={`branch MCR up to ${v2.crModerateMin}% CR`}
-              hint="Auto — derived"
-            />
-            <ThresholdRow
-              label="Liquidation"
-              dotClass="bg-red-500"
-              textClass="text-red-400"
-              value={null}
-              suffix="below branch MCR (110% WETH · 120% wstETH/rETH)"
-              hint="Fixed by protocol"
-            />
+            <div className="space-y-5">
+              {LIQUITY_V2_BRANCHES.map((branch) => (
+                <BranchBlock
+                  key={branch}
+                  branch={branch}
+                  thresholds={v2.byBranch[branch]}
+                  onChange={(key, val) => setBranchThreshold(branch, key, val)}
+                />
+              ))}
+            </div>
           </section>
 
           <div className="flex items-center justify-end mt-8">
@@ -157,7 +146,7 @@ export function LiquityPreferencesModal({ onClose }: { onClose: () => void }) {
                   : "text-rb-500 hover:text-foreground hover:bg-rb-200 dark:hover:bg-rb-800 cursor-pointer"
               }`}
             >
-              Reset to defaults
+              Reset all branches to defaults
             </button>
           </div>
         </div>
@@ -167,26 +156,83 @@ export function LiquityPreferencesModal({ onClose }: { onClose: () => void }) {
   );
 }
 
+function BranchBlock({
+  branch,
+  thresholds,
+  onChange,
+}: {
+  branch: LiquityV2Branch;
+  thresholds: LiquityV2BranchThresholds;
+  onChange: (key: keyof LiquityV2BranchThresholds, value: number) => void;
+}) {
+  const mcr = getLiquidationThreshold(branch);
+  const floor = mcr + 1;
+  return (
+    <div className="rounded-xl border border-rb-200/60 dark:border-rb-800/60 p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <TokenChipIcon symbol={branch} size={20} />
+        <span className="text-sm font-bold tabular-nums">{branch}</span>
+        <span className="text-[11px] text-rb-500">MCR {mcr}%</span>
+      </div>
+
+      <ThresholdRow
+        label="Conservative"
+        dotClass="bg-emerald-500"
+        textClass="text-emerald-400"
+        value={thresholds.crConservativeMin}
+        floor={floor}
+        onChange={(v) => onChange("crConservativeMin", v)}
+        suffix="% CR or higher"
+      />
+      <ThresholdRow
+        label="Moderate"
+        dotClass="bg-amber-500"
+        textClass="text-amber-400"
+        value={thresholds.crModerateMin}
+        floor={floor}
+        onChange={(v) => onChange("crModerateMin", v)}
+        suffix={`% CR up to ${thresholds.crConservativeMin}%`}
+      />
+      <ThresholdRow
+        label="Aggressive"
+        dotClass="bg-orange-500"
+        textClass="text-orange-400"
+        value={null}
+        floor={floor}
+        suffix={`${mcr}% (MCR) up to ${thresholds.crModerateMin}% CR`}
+      />
+      <ThresholdRow
+        label="Liquidation"
+        dotClass="bg-red-500"
+        textClass="text-red-400"
+        value={null}
+        floor={floor}
+        suffix={`below ${mcr}% CR (MCR)`}
+      />
+    </div>
+  );
+}
+
 function ThresholdRow({
   label,
   dotClass,
   textClass,
   value,
+  floor,
   onChange,
   suffix,
-  hint,
 }: {
   label: string;
   dotClass: string;
   textClass: string;
   value: number | null;
+  floor: number;
   onChange?: (v: number) => void;
   suffix: string;
-  hint: string;
 }) {
   const editable = value !== null && !!onChange;
   return (
-    <div className="flex items-center gap-3 py-2.5 border-b border-rb-200/40 dark:border-rb-800/40 last:border-b-0">
+    <div className="flex items-center gap-3 py-2 border-b border-rb-200/40 dark:border-rb-800/40 last:border-b-0">
       <span className={`w-2.5 h-2.5 rounded-full ${dotClass} shrink-0`} aria-hidden="true" />
       <span className={`text-sm font-semibold ${textClass} w-28`}>{label}</span>
       <span className="text-xs text-rb-500 flex-1">
@@ -196,7 +242,7 @@ function ThresholdRow({
               type="number"
               inputMode="numeric"
               value={value!}
-              min={121}
+              min={floor}
               max={1000}
               step={5}
               onChange={(e) => {
@@ -211,7 +257,6 @@ function ThresholdRow({
           <span className="text-rb-500 italic">{suffix}</span>
         )}
       </span>
-      <span className="text-[10px] text-rb-500 shrink-0 tabular-nums">{hint}</span>
     </div>
   );
 }
