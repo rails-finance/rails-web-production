@@ -58,27 +58,61 @@ export function LiquitySimulatorCard({ troveId, current, currentPrice, avatar, o
   const { prefs } = usePreferences();
   const ratioMode = prefs.ratioMode;
   const simulator = useTroveSimulator();
-  const [simColl, setSimColl] = useState(current.coll);
-  const [simDebt, setSimDebt] = useState(current.debt);
+  // After-state for coll/debt starts at zero, signalling "imagine the trove is
+  // closed, now plan your changes". Rate + price stay at the live values
+  // because they are properties of the trove / market, not user actions —
+  // dropping them to zero would crash the price-axis math and force the user
+  // to set them before any what-if is meaningful.
+  const [simCollRaw, setSimCollRaw] = useState(0);
+  const [simDebtRaw, setSimDebtRaw] = useState(0);
   // simRatePct mirrors the input verbatim — the snapshot value is already in
   // percent units (e.g. 0.9 means 0.9% APR), so no scale conversion here. We
   // divide by 100 only when feeding simulateTrove (which expects a fraction).
   const [simRatePct, setSimRatePct] = useState(current.annualInterestRate);
   const [simPrice, setSimPrice] = useState(currentPrice);
 
+  // Per-field "user has touched this" flags. Lets us keep the header pinned to
+  // "What if?" until the user actually edits coll or debt — without these
+  // flags the default after=0 would immediately fire "Withdraw all + Repay
+  // all" chips, which reads as a decision the user hasn't made yet.
+  const [collEdited, setCollEdited] = useState(false);
+  const [debtEdited, setDebtEdited] = useState(false);
+  const [rateEdited, setRateEdited] = useState(false);
+  const [priceEdited, setPriceEdited] = useState(false);
+
+  const setSimColl = (v: number) => { setSimCollRaw(v); setCollEdited(true); };
+  const setSimDebt = (v: number) => { setSimDebtRaw(v); setDebtEdited(true); };
+  const setSimRate = (v: number) => { setSimRatePct(v); setRateEdited(true); };
+  const setSimPriceAndMark = (v: number) => { setSimPrice(v); setPriceEdited(true); };
+
+  // The values that flow into the math + display. Until the user touches the
+  // field, simColl/simDebt stay at zero (the "untouched" sentinel) and
+  // simRatePct/simPrice stay at the live snapshot.
+  const simColl = simCollRaw;
+  const simDebt = simDebtRaw;
+
   // Oracle price is driven by the draggable tick on the liquidation-price
   // axis, not a slider inside this card. Pick up new requestedPrice values
   // from the simulator context so the card's derived state stays in sync.
+  // Dragging the oracle is a user action, so it counts as a price edit.
   const requestedPrice = simulator?.requestedPrice ?? null;
   useEffect(() => {
-    if (requestedPrice != null && requestedPrice > 0) setSimPrice(requestedPrice);
+    if (requestedPrice != null && requestedPrice > 0) setSimPriceAndMark(requestedPrice);
   }, [requestedPrice]);
 
   const reset = useCallback(() => {
-    setSimColl(current.coll);
-    setSimDebt(current.debt);
+    // Resets to the same "after = 0 for coll/debt, after = current for
+    // rate/price" baseline the simulator opens in. Uses the raw setters so
+    // the edited flags clear at the same time — otherwise the next render
+    // would still see the field as touched and keep the chips alive.
+    setSimCollRaw(0);
+    setSimDebtRaw(0);
     setSimRatePct(current.annualInterestRate);
     setSimPrice(currentPrice);
+    setCollEdited(false);
+    setDebtEdited(false);
+    setRateEdited(false);
+    setPriceEdited(false);
   }, [current, currentPrice]);
 
   // Publish live edits — ref-guarded so the effect depends on primitives only,
@@ -89,12 +123,21 @@ export function LiquitySimulatorCard({ troveId, current, currentPrice, avatar, o
   useEffect(() => {
     // Edits are published as fractions (consumers of LiquitySimulatorEdits
     // assume 0.05 = 5%); convert from the percent-units we hold internally.
+    // Unedited fields fall back to the live snapshot so downstream consumers
+    // (price axis, segment builders) keep showing the real trove until the
+    // user actually changes that field — the after=0 default is meaningful
+    // inside the card but would read as "trove unwound" everywhere else.
     simulatorRef.current?.publishEdits({
       troveId,
       base: { coll: current.coll, debt: current.debt, rate: current.annualInterestRate / 100, price: currentPrice },
-      sim: { coll: simColl, debt: simDebt, rate: simRatePct / 100, price: simPrice },
+      sim: {
+        coll: collEdited ? simColl : current.coll,
+        debt: debtEdited ? simDebt : current.debt,
+        rate: (rateEdited ? simRatePct : current.annualInterestRate) / 100,
+        price: priceEdited ? simPrice : currentPrice,
+      },
     });
-  }, [troveId, current.coll, current.debt, current.annualInterestRate, currentPrice, simColl, simDebt, simRatePct, simPrice]);
+  }, [troveId, current.coll, current.debt, current.annualInterestRate, currentPrice, simColl, simDebt, simRatePct, simPrice, collEdited, debtEdited, rateEdited, priceEdited]);
   useEffect(() => () => { simulatorRef.current?.publishEdits(null); }, []);
 
   const sim = useMemo(
@@ -108,11 +151,14 @@ export function LiquitySimulatorCard({ troveId, current, currentPrice, avatar, o
 
   const collDelta = simColl - current.coll;
   const debtDelta = simDebt - current.debt;
-  const hasCollChange = Math.abs(collDelta) >= 0.0001;
-  const hasDebtChange = Math.abs(debtDelta) >= 0.01;
-  const hasChanges = hasCollChange || hasDebtChange
-    || simRatePct !== current.annualInterestRate
-    || simPrice !== currentPrice;
+  // A field is "changed" only after the user has actually touched it. The
+  // default after=0 baseline for coll/debt would otherwise read as a giant
+  // Withdraw + Repay every time the simulator opens.
+  const hasCollChange = collEdited && Math.abs(collDelta) >= 0.0001;
+  const hasDebtChange = debtEdited && Math.abs(debtDelta) >= 0.01;
+  const hasRateChange = rateEdited && simRatePct !== current.annualInterestRate;
+  const hasPriceChange = priceEdited && simPrice !== currentPrice;
+  const hasChanges = hasCollChange || hasDebtChange || hasRateChange || hasPriceChange;
 
   // Ranges — match original simulator
   const collMax = Math.max(current.coll * 3, 10);
@@ -263,7 +309,7 @@ export function LiquitySimulatorCard({ troveId, current, currentPrice, avatar, o
             </span>
             <DeltaArrow
               base={current.annualInterestRate}
-              onChange={setSimRatePct}
+              onChange={setSimRate}
               min={0.5}
               max={25}
               decimals={1}
@@ -271,7 +317,7 @@ export function LiquitySimulatorCard({ troveId, current, currentPrice, avatar, o
             <EditableNumber
               value={simRatePct}
               decimals={1}
-              onChange={setSimRatePct}
+              onChange={setSimRate}
               min={0.5}
               max={25}
               className=""
@@ -280,7 +326,7 @@ export function LiquitySimulatorCard({ troveId, current, currentPrice, avatar, o
           </div>
           <SimSlider
             value={simRatePct}
-            onChange={setSimRatePct}
+            onChange={setSimRate}
             min={0.5}
             max={25}
             step={0.1}

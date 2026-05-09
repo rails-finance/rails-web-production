@@ -11,11 +11,12 @@ import { InfoIconButton } from "@/components/shared/info-icon-button";
  *   liqPrice = debt × MCR / coll
  * (MCR = 110% on all V2 branches at launch.)
  *
- * Layout: collateral-icon price pill on the left (green = live, blue =
- * simulated), colour bar filling the remaining width with the liquidation
- * label above, and a white circle handle marking the oracle. A small (i)
- * button opens a tooltip with the narrative caption; when the trove is at or
- * below the liquidation threshold the (i) swaps to a red warning triangle.
+ * Layout: colour bar filling most of the width with the liquidation label
+ * above and a white circle handle marking the oracle, then the
+ * collateral-icon price pill on the right (green = live, blue = simulated),
+ * then a small (i) button opening a tooltip with the narrative caption. When
+ * the trove is at or below the liquidation threshold the (i) swaps to a red
+ * warning triangle.
  *
  * Drag handlers are wired but only fire when `onOraclePriceChange` is
  * supplied (Phase-2 simulator); read-only callers omit it.
@@ -182,15 +183,6 @@ export function TrovePriceAxis({
   return (
     <div>
       <div className="flex items-center gap-3">
-      <PricePill
-        symbol={collateralSymbol}
-        address={collateralAddress}
-        price={oraclePrice}
-        simulated={simulated}
-        onChange={onOraclePriceChange}
-        min={priceMin}
-        max={priceMax}
-      />
       <div
         ref={axisRef}
         className={`relative flex-1 min-w-[180px] ${draggable ? "cursor-ew-resize select-none" : ""}`}
@@ -236,6 +228,15 @@ export function TrovePriceAxis({
         />
       </div>
 
+        <PricePill
+          symbol={collateralSymbol}
+          address={collateralAddress}
+          price={oraclePrice}
+          simulated={simulated}
+          onChange={onOraclePriceChange}
+          min={priceMin}
+          max={priceMax}
+        />
         <InfoIconButton
           open={infoOpen}
           onClick={() => setInfoOpen((v) => !v)}
