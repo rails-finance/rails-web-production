@@ -876,22 +876,33 @@ export function TroveEconomicsSummary({
                   const axisPriceMax = Math.max(effectivePrice * 2.5, 10000);
 
                   // Translate the user's CR-based thresholds into bar-position
-                  // zone boundaries. The bar's domain runs from `effectivePrice`
-                  // (live, 0%) to `liqPrice` (sim, 75%). For CR threshold T:
+                  // zone boundaries. The bar's domain runs from `barTopPrice`
+                  // (left, 0%) to `liqPrice` (right, 75%). For CR threshold T:
                   //   priceAtT = liqPrice × T / mcr
-                  //   bar%(priceAtT) = (refPrice − priceAtT)/(refPrice − liqPrice) × 75
-                  // Clamp to keep t1 ≤ t2 ≤ t3 — high-CR troves see a wide
-                  // Conservative band, tight troves see it collapse to 0.
+                  //   bar%(priceAtT) = (barTop − priceAtT)/(barTop − liqPrice) × 75
+                  // The bar's left edge anchors to the live price so the
+                  // marker sits at 0% when the trove is well into the
+                  // Conservative band. When CR drops below the Conservative
+                  // threshold, the price at which the trove would re-enter
+                  // Conservative is *higher* than current — without help, the
+                  // Conservative band collapses off the runway. To keep all
+                  // four zones legible we lift `barTopPrice` just enough that
+                  // Conservative occupies ≥ 20% of the [0..liqBoundary]
+                  // region; the marker then slides rightward into whichever
+                  // band the trove actually sits in.
                   const liqBoundary = 75;
-                  const refPrice = effectivePrice;
-                  const denom = refPrice - liqPrice;
+                  const branchKey = resolveLiquityBranch(meta.collateralType);
+                  const branchThresholds = prefs.liquityV2.byBranch[branchKey];
+                  const priceAtConservativeMin = liqPrice * (branchThresholds.crConservativeMin / mcr);
+                  const minConsFrac = 0.2; // Conservative ≥ 20% of [0..liqBoundary] (=15% of full bar)
+                  const barTopFromConservative = (priceAtConservativeMin - minConsFrac * liqPrice) / (1 - minConsFrac);
+                  const barTopPrice = Math.max(effectivePrice, barTopFromConservative);
+                  const denom = barTopPrice - liqPrice;
                   const ctc = (cr: number): number => {
                     if (denom <= 0) return 0;
                     const priceAtCR = liqPrice * (cr / mcr);
-                    return Math.max(0, Math.min(liqBoundary, ((refPrice - priceAtCR) / denom) * liqBoundary));
+                    return Math.max(0, Math.min(liqBoundary, ((barTopPrice - priceAtCR) / denom) * liqBoundary));
                   };
-                  const branchKey = resolveLiquityBranch(meta.collateralType);
-                  const branchThresholds = prefs.liquityV2.byBranch[branchKey];
                   const t1 = ctc(branchThresholds.crConservativeMin);
                   let t2 = ctc(branchThresholds.crModerateMin);
                   if (t2 < t1) t2 = t1;
@@ -904,10 +915,12 @@ export function TroveEconomicsSummary({
                         debtSymbol={stableSymbol}
                         oraclePrice={axisOraclePrice}
                         liquidationPrice={liqPrice}
-                        // Anchor the runway to the live price so the segmented
-                        // zones (Conservative → Liquidation) keep a stable
-                        // scale while the user edits the price pill.
-                        referenceOraclePrice={effectivePrice}
+                        // Anchor the runway to `barTopPrice` (= live price, or
+                        // lifted just enough to keep the Conservative band
+                        // visible when the trove sits below that threshold).
+                        // This keeps the segmented zones stable while the
+                        // user edits the price pill.
+                        referenceOraclePrice={barTopPrice}
                         zoneBoundaries={zoneBoundaries}
                         simulated={isSimulated}
                         onOraclePriceChange={axisEditable ? (p) => simulatorCtx!.requestPrice(p) : undefined}
