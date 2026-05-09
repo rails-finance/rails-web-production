@@ -143,14 +143,13 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus, expec
               </span>
               <TokenIcon assetSymbol={trove.collateralType} className="inline-block w-7 h-7" />
             </div>
-            <div className="text-xs mt-0.5 text-rb-500 min-h-[1rem]">
+            <div className="text-xs mt-0.5 min-h-[1rem]">
               {collateralUsd !== null && collateralUsd > 0 ? (
-                <>
-                  ≈{" "}
-                  <HighlightableValue type="collateralUsd" state="after" value={collateralUsd}>
+                <span className="inline-flex items-center font-bold text-green-400 border-l-2 border-r-2 border-green-400 rounded-sm px-1 py-0">
+                  <HighlightableValue type="collateralUsd" state="after" value={collateralUsd} className="text-green-400">
                     <FadeNumber value={collateralUsd} formatFn={formatUsdValue} animateOnMount={animateValues} />
                   </HighlightableValue>
-                </>
+                </span>
               ) : expectsLiveState ? (
                 <span className="inline-block h-3 w-16 bg-rb-200 dark:bg-rb-800 rounded animate-pulse" />
               ) : null}
