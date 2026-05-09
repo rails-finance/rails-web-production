@@ -52,7 +52,7 @@ export function NavigationContent({ onLinkClick }: NavigationContentProps) {
       hoverColor: "hover:text-purple-600 dark:hover:text-purple-600",
     },
     {
-      href: "/troves",
+      href: "/liquity-v2",
       label: "Explore Troves",
       icon: <Search size={16} />,
       iconBg: "bg-indigo-600",

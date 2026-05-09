@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { ChevronLeft, ArrowUpDown } from "lucide-react";
+import { useParams } from "next/navigation";
+import { ArrowUpDown } from "lucide-react";
 import { TroveSummary, TrovesResponse } from "@/types/api/trove";
 import { TroveSummaryCardSelector } from "@/components/trove/TroveSummaryCardSelector";
 import { TroveDetailsBand } from "@/components/trove/TroveDetailsBand";
@@ -31,18 +31,6 @@ import { LiquityTroveBarsProvider } from "@/lib/liquity/use-trove-bars";
 import { TroveSimulatorProvider } from "@/lib/liquity/use-simulator";
 import { FilterDropdown, DisplaySettingsIcon, type FilterOption } from "@/components/shared/filter-dropdown";
 import { getEventActionKey, actionLabel, DEMOTED_ACTIONS } from "@/lib/shared/event-filter-helpers";
-
-function BackButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className="mb-4 inline-flex items-center gap-1 pl-1.5 pr-3 py-1.5 rounded-full text-sm font-medium text-foreground bg-rb-100 dark:bg-rb-800 hover:bg-rb-200 dark:hover:bg-rb-700 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-    >
-      <ChevronLeft className="w-4 h-4" />
-      Back
-    </button>
-  );
-}
 
 /** DISPLAY toggle dropdown — Liquity-only subset of rails-explorer's
  * TimelineDisplayToggle. USD Values + Ticker Labels are omitted because they
@@ -158,7 +146,6 @@ function TroveSummaryStack({
 
 export default function TrovePage() {
   const params = useParams();
-  const router = useRouter();
   const troveId = params.troveId as string;
   const collateralType = params.collateralType as string;
   const troveKey = `${collateralType}:${troveId}`;
@@ -396,7 +383,6 @@ export default function TrovePage() {
       <>
         <FeedbackButton />
         <div className="space-y-6 py-8">
-          <BackButton onClick={() => router.back()} />
           <div className="bg-rb-100 dark:bg-rb-800 rounded-lg h-48 animate-pulse" />
           <div className="space-y-4">
             <div className="h-8 bg-rb-100 dark:bg-rb-800 rounded w-1/4 animate-pulse" />
@@ -412,7 +398,6 @@ export default function TrovePage() {
       <>
         <FeedbackButton />
         <div className="space-y-6 py-8">
-          <BackButton onClick={() => router.back()} />
           <div className="bg-red-500/10 border border-red-500/40 rounded-lg p-4">
             <p className="text-red-600 dark:text-red-400">{error || "Trove not found"}</p>
             <button
@@ -431,8 +416,6 @@ export default function TrovePage() {
     <TroveSimulatorProvider activeTroveId={troveData.id}>
       <FeedbackButton />
       <div className="space-y-6 py-8">
-        <BackButton onClick={() => router.back()} />
-
         {/* Single HoverProvider wraps the whole summary stack so
             HighlightableValues in the expanded explanation can highlight
             their counterparts up in the summary card and details band. */}

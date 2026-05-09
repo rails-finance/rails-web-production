@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     title: "Rails | Explore Liquity V2 Troves",
     description:
       "Explore all Liquity V2 Troves across ETH, wstETH, and rETH collateral types. Filter and analyze troves with detailed transaction timelines.",
-    url: "https://rails.finance/troves",
+    url: "https://rails.finance/liquity-v2",
     type: "website",
   },
   twitter: {
@@ -19,6 +19,6 @@ export const metadata: Metadata = {
   },
 };
 
-export default function TrovesLayout({ children }: { children: React.ReactNode }) {
+export default function LiquityV2Layout({ children }: { children: React.ReactNode }) {
   return children;
 }

@@ -13,7 +13,7 @@ interface ProtocolSearchBarProps {
   autoFocus?: boolean;
 }
 
-/** Single-input Liquity search wired to the existing /troves filter behavior:
+/** Single-input Liquity search wired to the existing /liquity-v2 filter behavior:
  *  Trove ID → ?troveId=, address → ?ownerAddress=, ENS → ?ownerEns=.
  *  Lifted out of HomeHero so the new /liquity-v2 protocol landing can use it
  *  without dragging the whole hero animation along. */
@@ -52,7 +52,7 @@ export function ProtocolSearchBar({
       upsertSession([lower], { [lower]: null }, ["liquity-v2-troves"]);
     }
 
-    router.push(`/troves?${params.toString()}`);
+    router.push(`/liquity-v2?${params.toString()}`);
     setValue("");
     onAfterSubmit?.();
   };

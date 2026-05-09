@@ -360,10 +360,10 @@ export function WalletMenu({
                 session={s}
                 isCurrent={s.key === activeKey}
                 /* Stopgap until /address/<addr> exists in rails-web-mig:
-                 * the troves page already filters by `?ownerAddress=` and
+                 * the /liquity-v2 page already filters by `?ownerAddress=` and
                  * hydrates the wallet pill when it sees the param. Sessions
                  * always store one lowercase 0x address as the primary key. */
-                href={`/troves?ownerAddress=${s.addresses[0]}`}
+                href={`/liquity-v2?ownerAddress=${s.addresses[0]}`}
                 onTogglePin={togglePin}
                 onRemove={removeSession}
                 onRename={renameSessionLocal}

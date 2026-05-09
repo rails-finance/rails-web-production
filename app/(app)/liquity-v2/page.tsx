@@ -1,174 +1,344 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
-import { ProtocolStats } from "@/types/api/stats";
+import { TroveSummaryCard } from "@/components/trove/TroveSummaryCard";
+import { TroveListFilters, TroveListFilterParams } from "@/components/troves/components/TroveListFilters";
 import { TroveSummary } from "@/types/api/trove";
+import { PaginationControls } from "@/components/troves/components/PaginationControls";
+import { TroveListLoadingSkeleton } from "@/components/troves/components/TroveListLoadingSkeleton";
+import { TroveListError } from "@/components/troves/components/TroveListError";
+import { FeedbackButton } from "@/components/FeedbackButton";
 import { OraclePricesData, OraclePricesResponse } from "@/types/api/oracle";
-import { CollateralBreakdown } from "@/components/stats/CollateralBreakdown";
-import { TroveListingCard } from "@/components/troves/TroveListingCard";
-import { ProtocolSearchBar } from "@/components/shared/protocol-search-bar";
+import { motion, AnimatePresence } from "framer-motion";
+import { useWalletContext } from "@/components/nav/wallet-context";
+import { upsertSession } from "@/lib/shared/sessions";
 
-const RECENT_LIMIT = 3;
+// Constants
+const ITEMS_PER_PAGE = 20;
+const AVAILABLE_COLLATERAL_TYPES = ["WETH", "wstETH", "rETH"];
 
-export default function LiquityV2LandingPage() {
-  const [stats, setStats] = useState<ProtocolStats | null>(null);
-  const [statsLoading, setStatsLoading] = useState(true);
-  const [recent, setRecent] = useState<TroveSummary[]>([]);
-  const [recentLoading, setRecentLoading] = useState(true);
+// Animation variants for staggered list
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1, // 0.1s delay between each child
+    },
+  },
+  exit: {
+    opacity: 0,
+    transition: {
+      duration: 0.2,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.3,
+      ease: "easeOut" as const,
+    },
+  },
+};
+
+function TrovesPageContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // State management
+  const [troves, setTroves] = useState<TroveSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [totalCount, setTotalCount] = useState(0);
   const [prices, setPrices] = useState<OraclePricesData | null>(null);
+  const [dataKey, setDataKey] = useState(() => searchParams.toString());
 
+  // Get page from URL
+  const currentPage = Number(searchParams.get("page")) || 1;
+
+  // Parse filters from URL - simple and direct
+  const getFiltersFromUrl = (): TroveListFilterParams => {
+    const filters: TroveListFilterParams = {};
+
+    const troveId = searchParams.get("troveId");
+    if (troveId) filters.troveId = troveId;
+
+    const status = searchParams.get("status");
+    if (status === "all") {
+      filters.status = undefined;
+    } else if (status) {
+      filters.status = status;
+    }
+    // No default — show all statuses (open + closed + liquidated). The
+    // /liquity-v2 landing's recent-activity strip still passes status=open
+    // explicitly, so its open-only filter is unaffected.
+
+    const collateralType = searchParams.get("collateralType");
+    if (collateralType) filters.collateralType = collateralType;
+
+    const ownerAddress = searchParams.get("ownerAddress");
+    const ownerEns = searchParams.get("ownerEns");
+    if (ownerAddress) {
+      filters.ownerAddress = ownerAddress;
+    }
+    if (ownerEns) {
+      filters.ownerEns = ownerEns;
+    }
+
+    const activeWithin = searchParams.get("activeWithin");
+    if (activeWithin) filters.activeWithin = activeWithin;
+
+    const createdWithin = searchParams.get("createdWithin");
+    if (createdWithin) filters.createdWithin = createdWithin;
+
+    // Parse boolean parameters
+    const batchOnlyParam = searchParams.get("batchOnly");
+    if (batchOnlyParam === "true") filters.batchOnly = true;
+
+    const individualOnlyParam = searchParams.get("individualOnly");
+    if (individualOnlyParam === "true") filters.individualOnly = true;
+
+    // Handle hasRedemptions with true/false values
+    const hasRedemptionsParam = searchParams.get("hasRedemptions");
+    if (hasRedemptionsParam === "true") filters.hasRedemptions = true;
+    if (hasRedemptionsParam === "false") filters.hasRedemptions = false;
+
+    // Handle showZombie with true/false values
+    const showZombieParam = searchParams.get("showZombie");
+    if (showZombieParam === "true") filters.showZombie = true;
+    if (showZombieParam === "false") filters.showZombie = false;
+
+    const sortBy = searchParams.get("sortBy");
+    if (sortBy) filters.sortBy = sortBy;
+
+    const sortOrder = searchParams.get("sortOrder");
+    if (sortOrder === "asc" || sortOrder === "desc") filters.sortOrder = sortOrder;
+
+    return filters;
+  };
+
+  const filters = getFiltersFromUrl();
+
+  // When the troves page is being used as a wallet view (filter set via the
+  // WalletMenu pin/recent links), surface the address in the header pill and
+  // record the visit. Mirrors what the trove detail page does — the troves
+  // page is the de-facto `/address/<addr>` until a dedicated route exists.
+  const { setWallets } = useWalletContext();
   useEffect(() => {
-    let cancelled = false;
+    if (!filters.ownerAddress) return;
+    const lower = filters.ownerAddress.toLowerCase();
+    if (!/^0x[a-f0-9]{40}$/.test(lower)) return;
+    setWallets([lower], { [lower]: null });
+    upsertSession([lower], { [lower]: null }, ["liquity-v2-troves"]);
+  }, [filters.ownerAddress, setWallets]);
 
-    (async () => {
-      try {
-        const r = await fetch("/api/stats");
-        const j = await r.json();
-        if (!cancelled && j.success && j.data) setStats(j.data);
-      } catch (e) {
-        console.error("stats fetch failed", e);
-      } finally {
-        if (!cancelled) setStatsLoading(false);
-      }
-    })();
+  // Helper to build URL search params from filters
+  const buildSearchParams = (filterParams: TroveListFilterParams, page?: number, includePageAndLimit?: boolean) => {
+    const params = new URLSearchParams();
 
-    (async () => {
-      try {
-        const params = new URLSearchParams({
-          status: "open",
-          sortBy: "lastActivity",
-          sortOrder: "desc",
-          limit: String(RECENT_LIMIT),
-          offset: "0",
-        });
-        const r = await fetch(`/api/troves?${params}`);
-        const j = await r.json();
-        if (!cancelled && j.success && Array.isArray(j.data)) setRecent(j.data);
-      } catch (e) {
-        console.error("recent troves fetch failed", e);
-      } finally {
-        if (!cancelled) setRecentLoading(false);
-      }
-    })();
+    // Add pagination if requested
+    if (includePageAndLimit) {
+      params.set("limit", ITEMS_PER_PAGE.toString());
+      // For API calls, we need to calculate offset from the page number
+      params.set("offset", (((page || currentPage) - 1) * ITEMS_PER_PAGE).toString());
+    } else if (page && page > 1) {
+      // For URL updates, only include page if > 1
+      params.set("page", page.toString());
+    }
 
-    (async () => {
-      try {
-        const r = await fetch("/api/oracle/liquity-v2");
-        if (!r.ok) return;
-        const j: OraclePricesResponse = await r.json();
-        if (!cancelled && j.success && j.data) setPrices(j.data);
-      } catch {
-        /* prices are optional */
-      }
-    })();
+    // Add filters
+    if (filterParams.troveId) params.set("troveId", filterParams.troveId);
+    if (filterParams.status) params.set("status", filterParams.status);
+    if (filterParams.collateralType) params.set("collateralType", filterParams.collateralType);
+    if (filterParams.ownerAddress) params.set("ownerAddress", filterParams.ownerAddress);
+    if (filterParams.ownerEns) params.set("ownerEns", filterParams.ownerEns);
+    if (filterParams.activeWithin) params.set("activeWithin", filterParams.activeWithin);
+    if (filterParams.createdWithin) params.set("createdWithin", filterParams.createdWithin);
+    if (filterParams.batchOnly) params.set("batchOnly", "true");
+    if (filterParams.individualOnly) params.set("individualOnly", "true");
+    if (filterParams.hasRedemptions !== undefined) {
+      params.set("hasRedemptions", String(filterParams.hasRedemptions));
+    }
+    if (filterParams.showZombie !== undefined) {
+      params.set("showZombie", String(filterParams.showZombie));
+    }
+    if (filterParams.sortBy) params.set("sortBy", filterParams.sortBy);
+    if (filterParams.sortOrder) params.set("sortOrder", filterParams.sortOrder);
 
-    return () => {
-      cancelled = true;
+    return params;
+  };
+
+  // Update URL when filters change - simple push to let page reload
+  const updateUrl = (newFilters?: TroveListFilterParams, newPage?: number) => {
+    const appliedFilters = newFilters || filters;
+    const page = newPage || currentPage;
+    const params = buildSearchParams(appliedFilters, page);
+    const url = params.toString() ? `/liquity-v2?${params.toString()}` : "/liquity-v2";
+    router.push(url);
+  };
+
+  const goToPage = (page: number) => {
+    updateUrl(filters, page);
+  };
+
+  const handleFiltersChange = (newFilters: TroveListFilterParams) => {
+    updateUrl(newFilters, 1); // Reset to page 1 when filters change
+  };
+
+  const handleSortChange = (newSortBy: string, newSortOrder?: "asc" | "desc") => {
+    const updatedFilters = {
+      ...filters,
+      sortBy: newSortBy,
+      sortOrder: newSortOrder || filters.sortOrder || "desc",
     };
+    updateUrl(updatedFilters, currentPage);
+  };
+
+  // Load oracle prices - one-time fetch
+  const loadPrices = async () => {
+    try {
+      const response = await fetch("/api/oracle/liquity-v2");
+      if (response.ok) {
+        const data: OraclePricesResponse = await response.json();
+        if (data.success && data.data) {
+          setPrices(data.data);
+        }
+      }
+    } catch (err) {
+      console.error("Error loading oracle prices:", err);
+      // Silently fail - prices are optional enhancement
+    }
+  };
+
+  // Load troves - simple single API call based on URL params
+  const loadTroves = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const params = buildSearchParams(filters, currentPage, true);
+      const response = await fetch(`/api/troves?${params}`);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch troves: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setTroves(data.data || []);
+      if (data.pagination) {
+        setTotalCount(data.pagination.total || 0);
+      }
+      setDataKey(searchParams.toString());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load troves");
+      console.error("Error loading troves:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load prices once on mount
+  useEffect(() => {
+    loadPrices();
   }, []);
 
+  // Load troves when URL changes (filters or pagination)
+  useEffect(() => {
+    loadTroves();
+  }, [currentPage, searchParams]); // React to URL changes
+
+  // Pagination calculations
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+
+  if (loading && troves.length === 0) {
+    return <TroveListLoadingSkeleton />;
+  }
+
+  if (error) {
+    return <TroveListError message={error} />;
+  }
+
   return (
-    <div className="py-8 md:py-12 space-y-12">
-      {/* ═══ HEADER ═══ */}
-      <header className="text-center max-w-2xl mx-auto px-2">
-        <div className="flex items-center justify-center gap-3 mb-4">
-          <svg className="w-12 h-12" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-            <use href="#icon-liquity" />
-          </svg>
-          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">Liquity V2</h1>
-        </div>
-        <p className="text-rb-700 dark:text-rb-300 text-base md:text-lg leading-relaxed">
-          Deposit ETH, wstETH, or rETH as collateral, mint BOLD stablecoins,
-          and set your own interest rate.
-        </p>
-      </header>
-
-      {/* ═══ SEARCH ═══ */}
-      <section className="max-w-lg mx-auto w-full px-4 sm:px-0">
-        <ProtocolSearchBar />
-        <p className="text-[11px] text-rb-500 mt-2.5 text-center font-light">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="inline-block align-[-1px] mr-1"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <path d="m4.9 4.9 14.2 14.2" />
-          </svg>
-          Rails is read-only.
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="inline-block align-[-1px] mx-0.5"
-          >
-            <path d="M20 6 9 17l-5-5" />
-          </svg>
-          No wallet connection or login required.
-        </p>
-      </section>
-
-      {/* ═══ STATS ═══ */}
-      <section className="space-y-3">
-        <div className="flex items-end justify-between">
-          <h2 className="text-lg font-semibold text-foreground">Protocol stats</h2>
-        </div>
-        <CollateralBreakdown
-          data={stats?.byCollateral || {}}
-          mode="overview"
-          loading={statsLoading}
+    <main className="min-h-screen">
+      <FeedbackButton />
+      <div className="max-w-7xl mx-auto py-8">
+        {/* Filters */}
+        <TroveListFilters
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+          sortBy={filters.sortBy || "lastActivity"}
+          sortOrder={filters.sortOrder || "desc"}
+          onSortChange={handleSortChange}
+          availableCollateralTypes={AVAILABLE_COLLATERAL_TYPES}
         />
-      </section>
 
-      {/* ═══ RECENT ACTIVITY ═══ */}
-      <section className="space-y-3">
-        <div className="flex items-end justify-between">
-          <h2 className="text-lg font-semibold text-foreground">Recently active troves</h2>
-          <Link
-            href="/troves"
-            className="inline-flex items-center gap-1 text-sm font-medium text-blue-500 hover:text-blue-400 transition-colors"
-          >
-            View all
-            <ChevronRight className="w-4 h-4" aria-hidden="true" />
-          </Link>
-        </div>
+        {/* Troves */}
+        <AnimatePresence mode="wait">
+          {troves.length > 0 ? (
+            <motion.div
+              key={dataKey}
+              className={`grid grid-cols-1 gap-6 ${loading ? "pointer-events-none" : ""}`}
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+            >
+              {troves.map((trove) => (
+                <motion.div key={trove.id} variants={itemVariants}>
+                  <Link
+                    href={`/trove/${trove.collateralType}/${trove.id}`}
+                    onClick={() => {
+                      if (typeof window !== "undefined") {
+                        sessionStorage.setItem("troves-scroll-position", String(window.scrollY));
+                      }
+                    }}
+                    className="group/card block w-full text-left rounded-lg transition-all cursor-pointer border border-transparent bg-rb-200/50 dark:bg-rb-900 hover:border-blue-500 px-5 py-4"
+                  >
+                    <TroveSummaryCard trove={trove} prices={prices ?? undefined} />
+                  </Link>
+                </motion.div>
+              ))}
+            </motion.div>
+          ) : (
+            <motion.div
+              key="empty"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="text-center py-12"
+            >
+              <div className="text-rb-500 text-lg">
+                <p className="mb-2">No troves found</p>
+                <p className="text-sm">Try adjusting your filters</p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {recentLoading ? (
-          <div className="grid grid-cols-1 gap-6">
-            {Array.from({ length: RECENT_LIMIT }).map((_, i) => (
-              <div
-                key={i}
-                className="bg-rb-100 dark:bg-rb-900 rounded-xl h-40 animate-pulse"
-              />
-            ))}
-          </div>
-        ) : recent.length === 0 ? (
-          <div className="text-center py-10 text-rb-500 text-sm">
-            No recent activity.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-6">
-            {recent.map((trove) => (
-              <TroveListingCard key={trove.id} trove={trove} prices={prices} />
-            ))}
-          </div>
-        )}
-      </section>
-    </div>
+        {/* Pagination */}
+        <PaginationControls
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalCount={totalCount}
+          itemsPerPage={ITEMS_PER_PAGE}
+          onPageChange={goToPage}
+        />
+      </div>
+    </main>
+  );
+}
+
+export default function TrovesPage() {
+  return (
+    <Suspense fallback={<TroveListLoadingSkeleton />}>
+      <TrovesPageContent />
+    </Suspense>
   );
 }

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 
-/** Slim app footer used on protocol pages (/troves, /trove/*, /liquity-v2).
+/** Slim app footer used on protocol pages (/liquity-v2, /trove/*).
  *  Single-row: copyright + legal links on the left, built-with credit + a
  *  theme toggle on the right. The richer multi-column footer lives only on
  *  marketing routes (see SiteFooter). */

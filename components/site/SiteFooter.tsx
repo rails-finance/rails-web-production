@@ -108,7 +108,7 @@ export function SiteFooter() {
               </li>
               <li>
                 <Link
-                  href="/troves"
+                  href="/liquity-v2"
                   className="text-rb-500 hover:text-green-600 dark:hover:text-green-600 text-sm transition-colors duration-150"
                 >
                   Explore Troves

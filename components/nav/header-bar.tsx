@@ -19,7 +19,7 @@ import { ProtocolMenu } from "@/components/nav/protocol-menu";
  *  button is gated on these. Marketing routes (home, about, blog, …) hide
  *  the button entirely; once we add sibling mono-rails the dropdown lets
  *  users hop between them from any of these surfaces. */
-const PROTOCOL_PATH_PREFIXES = ["/liquity-v2", "/troves", "/trove", "/address"];
+const PROTOCOL_PATH_PREFIXES = ["/liquity-v2", "/trove", "/address"];
 
 function isProtocolPath(pathname: string | null): boolean {
   if (!pathname) return false;

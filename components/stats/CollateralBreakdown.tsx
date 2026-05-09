@@ -75,7 +75,7 @@ export function CollateralBreakdown({ data, loading, mode = "overview" }: Collat
         return (
           <div key={collateralType}>
             <Link
-              href={`/troves?collateralType=${collateralType}`}
+              href={`/liquity-v2?collateralType=${collateralType}`}
               className="group bg-rb-50 dark:bg-rb-900 hover:bg-rb-100 dark:hover:bg-rb-850 rounded-xl p-4 hover:shadow-lg transition-all cursor-pointer block"
               aria-label={`View ${stats.openTroveCount.toLocaleString()} ${collateralType} troves with ${formatNumber(stats.totalDebt)} BOLD total debt`}
             >

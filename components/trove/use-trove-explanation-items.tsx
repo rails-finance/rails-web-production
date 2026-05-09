@@ -91,7 +91,7 @@ function buildLiquidatedItems(trove: TroveSummary): React.ReactNode[] {
         </HighlightableValue>{" "}
         was held by{" "}
         <Link
-          href={`/troves?ownerAddress=${trove.lastOwner}`}
+          href={`/liquity-v2?ownerAddress=${trove.lastOwner}`}
           className="hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
         >
           <HighlightableValue type="ownerAddress" state="after">
@@ -382,7 +382,7 @@ function buildOpenItems({
         >{`${trove.id.substring(0, 8)}...`}</HighlightableValue>{" "}
         is held by wallet{" "}
         <Link
-          href={`/troves?ownerAddress=${trove.owner}`}
+          href={`/liquity-v2?ownerAddress=${trove.owner}`}
           className="hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
         >
           <HighlightableValue type="ownerAddress" state="after">
