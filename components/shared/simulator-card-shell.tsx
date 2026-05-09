@@ -77,7 +77,7 @@ export function SimulatorCardShell({
             onClick={(e) => { e.stopPropagation(); onReset(); }}
             disabled={!hasChanges}
             aria-label="Reset simulation"
-            title="Reset sliders to current state"
+            title="Reset inputs to current state"
             className={`inline-flex items-center justify-center rounded transition-colors ${
               hasChanges
                 ? "text-rb-500 hover:text-rb-700 dark:hover:text-rb-300 cursor-pointer"

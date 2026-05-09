@@ -5,33 +5,42 @@ import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import { InfoIconButton } from "@/components/shared/info-icon-button";
 
 /**
- * Liquidation-price axis for a Liquity V2 trove.
+ * Segmented price-runway bar for a Liquity V2 trove.
  *
- * Unlike LLAMMA, Liquity troves have a single liquidation price:
- *   liqPrice = debt × MCR / coll
- * (MCR = 110% on all V2 branches at launch.)
+ * Four zones across the bar — Conservative / Moderate / Aggressive /
+ * Liquidation — with the liquidation price sitting at the boundary between
+ * Aggressive and Liquidation (75% of the bar by default). Left edge anchors
+ * to the live reference price; the static dot marker shows where the
+ * (possibly-simulated) oracle price currently sits along the runway.
  *
- * Layout: colour bar filling most of the width with the liquidation label
- * above and a white circle handle marking the oracle, then the
- * collateral-icon price pill on the right (green = live, blue = simulated),
- * then a small (i) button opening a tooltip with the narrative caption. When
- * the trove is at or below the liquidation threshold the (i) swaps to a red
- * warning triangle.
+ * Threshold defaults are equal-quartile (25 / 50 / 75); accepted as a prop so
+ * a future settings surface can override them protocol-wide. Same component
+ * is intended to power Aave V4 and other lending protocols later — only the
+ * liquidation-price math is protocol-specific.
  *
- * Drag handlers are wired but only fire when `onOraclePriceChange` is
- * supplied (Phase-2 simulator); read-only callers omit it.
+ * Editing happens through the price pill on the right (click to enter a
+ * value); when `onOraclePriceChange` is omitted the pill is read-only.
  */
 
 export interface TrovePriceAxisProps {
   collateralSymbol: string;
   collateralAddress?: string;
   debtSymbol: string;
+  /** Price to plot. Equals the live oracle price in read mode, the simulated
+   *  price in simulator mode. */
   oraclePrice: number;
   liquidationPrice: number;
+  /** Anchor for the bar's left edge — keeps the runway scale stable while the
+   *  user edits the price pill. Defaults to `oraclePrice` so non-simulator
+   *  callers see the marker at 0%. */
+  referenceOraclePrice?: number;
   onOraclePriceChange?: (price: number) => void;
   simulated?: boolean;
   priceMin?: number;
   priceMax?: number;
+  /** Bar-position (% from left) at which each zone ends. Last value is also
+   *  where the liquidation marker sits. Default = [25, 50, 75]. */
+  zoneBoundaries?: [number, number, number];
 }
 
 function fmtPrice(v: number): string {
@@ -42,6 +51,13 @@ function fmtPrice(v: number): string {
   if (v < 1_000_000) return `$${(v / 1000).toFixed(1)}K`;
   return `$${(v / 1_000_000).toFixed(2)}M`;
 }
+
+const ZONE_META = [
+  { key: "conservative", label: "Conservative", active: "bg-emerald-500/55", muted: "bg-emerald-500/20", text: "text-emerald-400" },
+  { key: "moderate",     label: "Moderate",     active: "bg-amber-500/55",   muted: "bg-amber-500/20",   text: "text-amber-400" },
+  { key: "aggressive",   label: "Aggressive",   active: "bg-orange-500/55",  muted: "bg-orange-500/20",  text: "text-orange-400" },
+  { key: "liquidation",  label: "Liquidation",  active: "bg-red-500/55",     muted: "bg-red-500/20",     text: "text-red-400" },
+] as const;
 
 function PricePill({
   symbol,
@@ -88,6 +104,7 @@ function PricePill({
         <span>$</span>
         <input
           ref={inputRef}
+          data-sim-focus
           type="text"
           inputMode="decimal"
           value={text}
@@ -106,10 +123,11 @@ function PricePill({
   return (
     <button
       type="button"
+      data-sim-focus
       onClick={startEdit}
       disabled={!editable}
       className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-rb-200 dark:bg-rb-900 text-xs tabular-nums transition-colors ${
-        editable ? "hover:bg-rb-300 dark:hover:bg-rb-800" : "cursor-default"
+        editable ? "hover:bg-rb-300 dark:hover:bg-rb-800 cursor-text" : "cursor-default"
       }`}
     >
       <TokenChipIcon symbol={symbol} address={address} size={14} />
@@ -124,124 +142,147 @@ export function TrovePriceAxis({
   debtSymbol,
   oraclePrice,
   liquidationPrice,
+  referenceOraclePrice,
   onOraclePriceChange,
   simulated = false,
   priceMin,
   priceMax,
+  zoneBoundaries = [25, 50, 75],
 }: TrovePriceAxisProps) {
-  const draggable = !!onOraclePriceChange;
-  const axisRef = useRef<HTMLDivElement>(null);
-  const draggingRef = useRef(false);
   const [infoOpen, setInfoOpen] = useState(false);
+  const editable = !!onOraclePriceChange;
 
   if (!(oraclePrice > 0) || !(liquidationPrice > 0)) return null;
 
-  let leftEdge = Math.min(oraclePrice, liquidationPrice) * 0.7;
-  let rightEdge = Math.max(oraclePrice, liquidationPrice) * 1.3;
-  if (draggable) {
-    if (priceMin != null && priceMin > 0) leftEdge = Math.min(leftEdge, priceMin * 0.98);
-    if (priceMax != null && priceMax > 0) rightEdge = Math.max(rightEdge, priceMax * 1.02);
-  }
-  const range = rightEdge - leftEdge;
-  const liqPct = ((liquidationPrice - leftEdge) / range) * 100;
-  const oraclePct = ((oraclePrice - leftEdge) / range) * 100;
+  // Bar anchor — left edge is the live (reference) price; right edge sits past
+  // liquidation by a buffer so the Liquidation zone has visible width.
+  const refPrice = referenceOraclePrice && referenceOraclePrice > 0 ? referenceOraclePrice : oraclePrice;
+  const liqBoundary = zoneBoundaries[2]; // bar % at which liq sits
+  // Skip drawing when the live and liq prices coincide (degenerate runway).
+  if (!(refPrice > liquidationPrice)) return null;
+
+  const priceToPct = (p: number): number => {
+    // Linear: refPrice → 0%, liquidationPrice → liqBoundary%.
+    const consumedFrac = (refPrice - p) / (refPrice - liquidationPrice);
+    return Math.max(0, Math.min(100, consumedFrac * liqBoundary));
+  };
+
+  const oraclePct = priceToPct(oraclePrice);
+  const liqPct = liqBoundary;
+
+  // Active zone for highlight + label colour.
+  const activeZoneIdx = oraclePct < zoneBoundaries[0] ? 0
+    : oraclePct < zoneBoundaries[1] ? 1
+    : oraclePct < zoneBoundaries[2] ? 2
+    : 3;
+
+  // Zone widths — shrink each zone proportionally so the inter-zone gaps
+  // (1.5% × 3) fit inside the bar without overflowing. For default 25/50/75
+  // boundaries this yields four equal 23.875% segments — matching Aave V4.
+  const GAP = 1.5;
+  const numZones = ZONE_META.length;
+  const totalGap = (numZones - 1) * GAP;
+  const shrink = (100 - totalGap) / 100;
+  const intendedWidths = [
+    zoneBoundaries[0],
+    zoneBoundaries[1] - zoneBoundaries[0],
+    zoneBoundaries[2] - zoneBoundaries[1],
+    100 - zoneBoundaries[2],
+  ];
+  const zoneWidths = intendedWidths.map((w) => Math.max(0, w * shrink));
 
   const headroomPct = ((oraclePrice - liquidationPrice) / oraclePrice) * 100;
   const underwater = oraclePrice <= liquidationPrice;
 
-  const pointerToPrice = (clientX: number): number => {
-    const rect = axisRef.current?.getBoundingClientRect();
-    if (!rect || rect.width <= 0) return oraclePrice;
-    const relX = Math.max(0, Math.min(rect.width, clientX - rect.left));
-    const pct = relX / rect.width;
-    let next = leftEdge + pct * range;
-    if (priceMin != null && priceMin > 0) next = Math.max(priceMin, next);
-    if (priceMax != null && priceMax > 0) next = Math.min(priceMax, next);
-    return next;
-  };
-  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!onOraclePriceChange) return;
-    draggingRef.current = true;
-    (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
-    onOraclePriceChange(pointerToPrice(e.clientX));
-  };
-  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!draggingRef.current || !onOraclePriceChange) return;
-    onOraclePriceChange(pointerToPrice(e.clientX));
-  };
-  const endDrag = () => {
-    draggingRef.current = false;
-  };
-
-  const H_TOP_LABEL = 16;
-  const H_BAR_OFFSET = H_TOP_LABEL + 10;
-  const H_BAR = 8;
-  const HANDLE_SIZE = draggable ? 18 : 12;
-  const BAR_MID = H_BAR_OFFSET + H_BAR / 2;
-  const H_TOTAL = Math.max(H_BAR_OFFSET + H_BAR + 4, BAR_MID + HANDLE_SIZE / 2 + 2);
+  // Vertical layout — match Aave V4 dimensions (66px total).
+  const H_LIQ_LABEL = 0;
+  const H_BAR = 14;
+  const H_BAR_TOP = 32;
+  const H_LABELS_TOP = 52;
+  const MARKER_SIZE = 14;
+  const H_TOTAL = 66;
 
   return (
     <div>
-      <div className="flex items-center gap-3">
-      <div
-        ref={axisRef}
-        className={`relative flex-1 min-w-[180px] ${draggable ? "cursor-ew-resize select-none" : ""}`}
-        style={{ height: H_TOTAL }}
-        onPointerDown={draggable ? onPointerDown : undefined}
-        onPointerMove={draggable ? onPointerMove : undefined}
-        onPointerUp={draggable ? endDrag : undefined}
-        onPointerCancel={draggable ? endDrag : undefined}
-      >
+      <div className="flex items-start gap-3">
         <div
-          className="absolute text-xs tabular-nums whitespace-nowrap pointer-events-none"
-          style={{ left: `${liqPct}%`, transform: "translateX(-50%)", top: 0 }}
+          className="relative flex-1 min-w-[220px]"
+          style={{ height: H_TOTAL }}
         >
-          <span className="text-red-400 font-semibold">Liquidation</span>
-          <span className="text-rb-500 ml-1.5">{fmtPrice(liquidationPrice)}</span>
+          {/* Liquidation-price label, sitting above the boundary between
+              Aggressive and Liquidation zones. */}
+          <div
+            className="absolute text-[11px] tabular-nums whitespace-nowrap pointer-events-none leading-tight text-red-400 font-semibold"
+            style={{ left: `${liqPct}%`, transform: "translateX(-50%)", top: H_LIQ_LABEL }}
+          >
+            {fmtPrice(liquidationPrice)}
+          </div>
+
+          {/* Segmented bar — four zones with gaps. */}
+          <div className="absolute left-0 right-0 flex items-center" style={{ top: H_BAR_TOP, height: H_BAR }}>
+            {ZONE_META.map((zone, i) => (
+              <div
+                key={zone.key}
+                className={`h-full rounded-md transition-colors ${i === activeZoneIdx ? zone.active : zone.muted}`}
+                style={{
+                  width: `${zoneWidths[i]}%`,
+                  marginLeft: i === 0 ? 0 : `${GAP}%`,
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Oracle marker — purely visual; price edits go through the pill. */}
+          <div
+            className="absolute pointer-events-none flex items-center justify-center"
+            style={{
+              left: `calc(${oraclePct}% - ${MARKER_SIZE / 2}px)`,
+              top: H_BAR_TOP + H_BAR / 2 - MARKER_SIZE / 2,
+              width: MARKER_SIZE,
+              height: MARKER_SIZE,
+            }}
+          >
+            <span
+              className="flex items-center justify-center w-full h-full rounded-full bg-white border-2 border-rb-300 dark:border-rb-700"
+              style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.3)" }}
+            />
+          </div>
+
+          {/* Zone labels. */}
+          <div className="absolute left-0 right-0 flex items-center" style={{ top: H_LABELS_TOP }}>
+            {ZONE_META.map((zone, i) => (
+              <div
+                key={zone.key}
+                className={`text-[10px] text-center transition-colors ${i === activeZoneIdx ? `${zone.text} font-semibold` : "text-rb-500"}`}
+                style={{
+                  width: `${zoneWidths[i]}%`,
+                  marginLeft: i === 0 ? 0 : `${GAP}%`,
+                }}
+              >
+                {zone.label}
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div
-          className="absolute left-0 right-0 rounded-sm overflow-hidden bg-rb-200 dark:bg-rb-900"
-          style={{ top: H_BAR_OFFSET, height: H_BAR }}
-        >
-          <div
-            className="absolute left-0 top-0 bottom-0 bg-red-500/50"
-            style={{ width: `${Math.max(0, Math.min(100, liqPct))}%` }}
-          />
-          <div
-            className="absolute right-0 top-0 bottom-0 bg-emerald-500/25"
-            style={{ left: `${Math.max(0, Math.min(100, liqPct))}%` }}
+        <div style={{ marginTop: 27 }}>
+          <PricePill
+            symbol={collateralSymbol}
+            address={collateralAddress}
+            price={oraclePrice}
+            simulated={simulated}
+            onChange={onOraclePriceChange}
+            min={priceMin}
+            max={priceMax}
           />
         </div>
-
-        <div
-          className="absolute rounded-full pointer-events-none"
-          style={{
-            left: `calc(${oraclePct}% - ${HANDLE_SIZE / 2}px)`,
-            top: BAR_MID - HANDLE_SIZE / 2,
-            width: HANDLE_SIZE,
-            height: HANDLE_SIZE,
-            background: "#fff",
-            border: "2px solid var(--color-rb-700)",
-            boxShadow: "0 1px 4px rgba(0,0,0,0.3)",
-          }}
-        />
-      </div>
-
-        <PricePill
-          symbol={collateralSymbol}
-          address={collateralAddress}
-          price={oraclePrice}
-          simulated={simulated}
-          onChange={onOraclePriceChange}
-          min={priceMin}
-          max={priceMax}
-        />
-        <InfoIconButton
-          open={infoOpen}
-          onClick={() => setInfoOpen((v) => !v)}
-          warning={underwater}
-        />
+        <div style={{ marginTop: 29 }}>
+          <InfoIconButton
+            open={infoOpen}
+            onClick={() => setInfoOpen((v) => !v)}
+            warning={underwater}
+          />
+        </div>
       </div>
       {infoOpen && (
         <div className="mt-2 text-xs text-rb-500 leading-relaxed">
@@ -257,9 +298,9 @@ export function TrovePriceAxis({
               (to {fmtPrice(liquidationPrice)}) before this trove is liquidated. Liquity V2 uses a 110% minimum collateral ratio across branches.
             </>
           )}
-          {draggable ? (
+          {editable ? (
             <>
-              {" "}<span className="text-blue-400">Edit the pill or drag the handle to simulate a price move.</span>
+              {" "}<span className="text-blue-400">Click the price pill to simulate a different oracle value.</span>
             </>
           ) : null}
         </div>

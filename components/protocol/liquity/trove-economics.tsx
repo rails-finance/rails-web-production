@@ -20,7 +20,8 @@ import {
 import { FilterDropdown, DisplaySettingsIcon, type FilterOption } from "@/components/shared/filter-dropdown";
 import { usePreferences } from "@/lib/shared/preferences-context";
 import { TrovePriceAxis } from "@/components/protocol/liquity/trove-price-axis";
-import { formatRatio, ratioLabel, ratioColorClass } from "@/lib/shared/ratio-format";
+import { getLiquidationThreshold } from "@/lib/utils/liquidation-utils";
+import { formatRatio, ratioLabel, useLiquityRatioColorClass } from "@/lib/shared/ratio-format";
 import { useTroveSimulator } from "@/lib/liquity/use-simulator";
 import { LiquitySimulatorCard } from "@/components/protocol/liquity/liquity-simulator-card";
 
@@ -384,6 +385,7 @@ export function TroveEconomicsSummary({
 }: TroveEconomicsProps) {
   const { prefs } = usePreferences();
   const ratioMode = prefs.ratioMode;
+  const crColor = useLiquityRatioColorClass();
 
   const baseResult = useMemo(() => calculateEconomicsFromEvents(events), [events]);
   const redeemerStats = useMemo(() => calculateRedeemerStats(events), [events]);
@@ -747,7 +749,7 @@ export function TroveEconomicsSummary({
           <div>
             <div className=" text-xs">{ratioLabel(ratioMode)}</div>
             {collRatio !== null && (
-              <div className={`text-2xl font-bold tabular-nums mt-1 ${ratioColorClass(collRatio, { safeClass: "text-foreground" })}`}>
+              <div className={`text-2xl font-bold tabular-nums mt-1 ${crColor(collRatio, { safeClass: "text-foreground" })}`}>
                 {formatRatio(collRatio, ratioMode)}
               </div>
             )}
@@ -851,8 +853,8 @@ export function TroveEconomicsSummary({
                 {/* Liquidation-price axis — open troves only, requires a
                     current oracle price. When the simulator is open the
                     axis switches to the sim's coll/debt/price so it
-                    mirrors what the user is changing. The axis pushes
-                    drag updates through `simulatorCtx.requestPrice`,
+                    mirrors what the user is changing. Price edits via
+                    the axis pill flow through `simulatorCtx.requestPrice`,
                     which the simulator card folds back into its derived
                     state. We hide the axis entirely when the sim has
                     fully unwound the position (debt or coll = 0) — there
@@ -864,11 +866,35 @@ export function TroveEconomicsSummary({
                   const axisDebt = useSim ? simEdits.sim.debt : meta.currentDebt;
                   const axisOraclePrice = useSim ? simEdits.sim.price : effectivePrice;
                   if (!(axisColl > 0) || !(axisDebt > 0) || !(axisOraclePrice > 0)) return null;
-                  const liqPrice = (axisDebt * 1.1) / axisColl;
+                  // MCR varies per collateral branch — 110% on WETH, 120% on
+                  // wstETH/rETH. Always derive from the trove's collateralType.
+                  const mcr = getLiquidationThreshold(meta.collateralType);
+                  const liqPrice = (axisDebt * (mcr / 100)) / axisColl;
                   if (!(liqPrice > 0)) return null;
-                  const axisDraggable = isSimulated && !!simulatorCtx;
+                  const axisEditable = isSimulated && !!simulatorCtx;
                   const axisPriceMin = Math.max(0.01, effectivePrice * 0.1);
                   const axisPriceMax = Math.max(effectivePrice * 2.5, 10000);
+
+                  // Translate the user's CR-based thresholds into bar-position
+                  // zone boundaries. The bar's domain runs from `effectivePrice`
+                  // (live, 0%) to `liqPrice` (sim, 75%). For CR threshold T:
+                  //   priceAtT = liqPrice × T / mcr
+                  //   bar%(priceAtT) = (refPrice − priceAtT)/(refPrice − liqPrice) × 75
+                  // Clamp to keep t1 ≤ t2 ≤ t3 — high-CR troves see a wide
+                  // Conservative band, tight troves see it collapse to 0.
+                  const liqBoundary = 75;
+                  const refPrice = effectivePrice;
+                  const denom = refPrice - liqPrice;
+                  const ctc = (cr: number): number => {
+                    if (denom <= 0) return 0;
+                    const priceAtCR = liqPrice * (cr / mcr);
+                    return Math.max(0, Math.min(liqBoundary, ((refPrice - priceAtCR) / denom) * liqBoundary));
+                  };
+                  const t1 = ctc(prefs.liquityV2.crConservativeMin);
+                  let t2 = ctc(prefs.liquityV2.crModerateMin);
+                  if (t2 < t1) t2 = t1;
+                  const zoneBoundaries: [number, number, number] = [t1, t2, liqBoundary];
+
                   return (
                     <div className="mt-4">
                       <TrovePriceAxis
@@ -876,10 +902,15 @@ export function TroveEconomicsSummary({
                         debtSymbol={stableSymbol}
                         oraclePrice={axisOraclePrice}
                         liquidationPrice={liqPrice}
+                        // Anchor the runway to the live price so the segmented
+                        // zones (Conservative → Liquidation) keep a stable
+                        // scale while the user edits the price pill.
+                        referenceOraclePrice={effectivePrice}
+                        zoneBoundaries={zoneBoundaries}
                         simulated={isSimulated}
-                        onOraclePriceChange={axisDraggable ? (p) => simulatorCtx!.requestPrice(p) : undefined}
-                        priceMin={axisDraggable ? axisPriceMin : undefined}
-                        priceMax={axisDraggable ? axisPriceMax : undefined}
+                        onOraclePriceChange={axisEditable ? (p) => simulatorCtx!.requestPrice(p) : undefined}
+                        priceMin={axisEditable ? axisPriceMin : undefined}
+                        priceMax={axisEditable ? axisPriceMax : undefined}
                       />
                     </div>
                   );

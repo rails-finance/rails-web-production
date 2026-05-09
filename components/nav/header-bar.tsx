@@ -12,8 +12,8 @@ import {
 } from "@/lib/shared/sessions";
 import { useWalletContext } from "@/components/nav/wallet-context";
 import { WalletMenu } from "@/components/nav/wallet-menu";
-import { PreferencesMenu } from "@/components/nav/preferences-menu";
 import { ProtocolMenu } from "@/components/nav/protocol-menu";
+import { LiquityPreferencesModal } from "@/components/nav/liquity-preferences-modal";
 
 /** Routes that count as "inside the protocol" — the protocol app-switcher
  *  button is gated on these. Marketing routes (home, about, blog, …) hide
@@ -167,14 +167,16 @@ export function HeaderBar() {
 
   const protocolBtn = useRef<HTMLButtonElement>(null);
   const walletBtn = useRef<HTMLButtonElement>(null);
-  const prefsBtn = useRef<HTMLButtonElement>(null);
 
-  const [openMenu, setOpenMenu] = useState<
-    null | "protocol" | "wallet" | "prefs"
-  >(null);
+  const [openMenu, setOpenMenu] = useState<null | "protocol" | "wallet">(null);
   const close = useCallback(() => setOpenMenu(null), []);
-  const toggle = (m: "protocol" | "wallet" | "prefs") =>
+  const toggle = (m: "protocol" | "wallet") =>
     setOpenMenu((prev) => (prev === m ? null : m));
+
+  // Per-protocol preferences modal — opened from inside the protocol-menu
+  // dropdown. State lives here so the modal sits at the header level and
+  // overlays everything regardless of where it was triggered.
+  const [prefsForProtocol, setPrefsForProtocol] = useState<string | null>(null);
 
   const activeAddr = addresses[0];
   const activeSession = useActiveSession(addresses);
@@ -222,46 +224,20 @@ export function HeaderBar() {
           )}
         </div>
 
-        <button
-          ref={prefsBtn}
-          onClick={() => toggle("prefs")}
-          aria-haspopup="menu"
-          aria-expanded={openMenu === "prefs"}
-          className="shrink-0 p-2 rounded-lg hover:bg-rb-200 dark:hover:bg-rb-800 transition-colors cursor-pointer text-rb-500 hover:text-foreground"
-          title="Preferences"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.75"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-            <circle cx="12" cy="12" r="3" />
-          </svg>
-        </button>
       </div>
 
       <ProtocolMenu
         anchor={openMenu === "protocol" ? protocolBtn.current : null}
-        positionAnchor={prefsBtn.current}
         onClose={close}
+        onOpenPreferences={(protocolId) => setPrefsForProtocol(protocolId)}
       />
       <WalletMenu
         anchor={openMenu === "wallet" ? walletBtn.current : null}
-        positionAnchor={prefsBtn.current}
         onClose={close}
       />
-      <PreferencesMenu
-        anchor={openMenu === "prefs" ? prefsBtn.current : null}
-        onClose={close}
-      />
+      {prefsForProtocol === "liquity-v2" && (
+        <LiquityPreferencesModal onClose={() => setPrefsForProtocol(null)} />
+      )}
     </header>
   );
 }

@@ -5,13 +5,10 @@
  *
  * These started life inside the Liquity V2 simulator card and have been
  * lifted out so future simulators (f(x), Frankencoin, Aave, etc.) can
- * build on the same click-to-edit + slider vocabulary. The slider thumb
- * and track styling live in globals.css under `.sim-slider`.
+ * build on the same click-to-edit vocabulary.
  */
 
 import { useEffect, useRef, useState } from "react";
-
-export type SimSliderGradient = "health" | "risk";
 
 /**
  * Move focus to the next/previous editable simulator input (marked
@@ -81,19 +78,6 @@ export function useSimTabRouting() {
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, []);
-}
-
-export function SimSlider(_props: {
-  value: number;
-  onChange: (v: number) => void;
-  min: number;
-  max: number;
-  step: number;
-  gradient?: SimSliderGradient;
-}) {
-  // Temporarily hidden across all simulator cards. Edit-via-number / delta-arrow
-  // controls remain in the row header, so amount changes still flow through.
-  return null;
 }
 
 export function EditableNumber({

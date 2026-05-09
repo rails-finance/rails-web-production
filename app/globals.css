@@ -508,41 +508,6 @@ label[for] {
   z-index: 1;
 }
 
-/* Simulator slider */
-.sim-slider {
-  -webkit-appearance: none;
-  appearance: none;
-  background: transparent;
-  margin: 0;
-  z-index: 2;
-}
-.sim-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #fff;
-  border: 2px solid var(--color-rb-700);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-  cursor: pointer;
-  transition: border-color 150ms, box-shadow 150ms;
-}
-.sim-slider::-webkit-slider-thumb:hover {
-  border-color: var(--color-rb-500);
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15), 0 1px 4px rgba(0,0,0,0.3);
-}
-.sim-slider::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #fff;
-  border: 2px solid var(--color-rb-700);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-  cursor: pointer;
-}
-.sim-slider::-moz-range-track { background: transparent; border: none; }
-.sim-slider:focus { outline: none; }
-
 /* Terminal-style scrollbar (used by Rails Index activity tables) */
 .terminal-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
 .terminal-scroll::-webkit-scrollbar-track { background: transparent; }

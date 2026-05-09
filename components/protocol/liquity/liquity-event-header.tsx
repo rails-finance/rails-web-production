@@ -6,11 +6,9 @@ import { useTimelineDisplay } from "@/components/shared/timeline-display-context
 import type { LiquityContext } from "@/lib/shared/types/protocols/liquity";
 import { getBatchManagerName } from "@/lib/liquity/batch-managers";
 import { usePreferences } from "@/lib/shared/preferences-context";
-import { formatRatio, ratioLabelShort, ratioColorClass } from "@/lib/shared/ratio-format";
+import { formatRatio, ratioLabelShort, useLiquityRatioColorClass } from "@/lib/shared/ratio-format";
 import { useHeaderValueHideClass } from "@/lib/shared/header-values";
 import { AlertTriangle } from "lucide-react";
-
-const crColor = (cr: number) => ratioColorClass(cr);
 
 type OperationStyle = { label: string; color: string; bg: string; badge: boolean };
 
@@ -104,6 +102,7 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
   const { showTimestamps, showEventNumbers } = useTimelineDisplay();
   const { prefs } = usePreferences();
   const ratioMode = prefs.ratioMode;
+  const crColor = useLiquityRatioColorClass();
 
   const groupChip = ctx.blockGrouping?.isGrouped ? (
     <span

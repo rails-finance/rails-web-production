@@ -6,10 +6,8 @@ import { calculateInterestBetweenTransactions } from "@/lib/liquity/utils/intere
 import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import { LinkedAddress } from "@/components/shared/linked-address";
 import { usePreferences } from "@/lib/shared/preferences-context";
-import { formatRatio, ratioLabel, ratioColorClass } from "@/lib/shared/ratio-format";
+import { formatRatio, ratioLabel, useLiquityRatioColorClass } from "@/lib/shared/ratio-format";
 import { TransitionArrow, ClosedLabel, StateMetric, StateTransition } from "@/components/shared/state-transition";
-
-const crColor = (cr: number) => ratioColorClass(cr);
 
 // ── Formatters ──────────────────────────────────────────────────────
 
@@ -203,6 +201,7 @@ function InterestRateMetric({
 function CollateralRatioMetric({ before, after, afterDebt, isClose }: { before: number; after: number; afterDebt: number; isClose: boolean }) {
   const { prefs } = usePreferences();
   const mode = prefs.ratioMode;
+  const crColor = useLiquityRatioColorClass();
   const hasChange = before !== 0 && before !== after;
 
   return (
