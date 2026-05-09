@@ -80,7 +80,7 @@ export function CardSelectorShell<T extends CardSelectorItem>({
         )}
       </div>
 
-      {hasMultiple && (
+      {hasMultiple ? (
         <button
           onClick={() => setExpanded(v => !v)}
           className="flex flex-col items-center justify-start pt-10 gap-1 shrink-0 cursor-pointer"
@@ -88,6 +88,12 @@ export function CardSelectorShell<T extends CardSelectorItem>({
         >
           <ExpandChevron isOpen={expanded} group="card" />
         </button>
+      ) : (
+        // Reserve the chevron column even when there's nothing to expand,
+        // so the position card always renders at the same content width.
+        // Lets the supplementary stats below stay aligned to the same grid
+        // regardless of single- vs multi-position state.
+        <div className="shrink-0 w-5" aria-hidden="true" />
       )}
     </div>
   );

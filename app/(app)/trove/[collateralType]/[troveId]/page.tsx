@@ -126,19 +126,28 @@ function TroveSummaryStack({
         prices={prices}
         loadingStatus={loadingStatus}
       />
-      <TroveDetailsBand
-        trove={trove}
-        liveState={liveState}
-        prices={prices}
-        debtInFront={debtInFront}
-        trovesAhead={trovesAhead}
-        debtInFrontLoading={debtInFrontLoading}
-      />
-      <TroveContextRow
-        items={items}
-        isOpen={summaryExplanationOpen}
-        onToggle={onToggleSummaryExplanation}
-      />
+      {/* Match the active card's inner grid bounds: pl-5 mirrors the active
+          card's left padding; pr-12 = active card's right padding (px-5,
+          20px) + gap-2 (8px) + chevron column (20px) = 48px. Without this
+          the supplementary stats below extend past the position card grid
+          on the right and shift left by 20px on the left. */}
+      <div className="pl-5 pr-12">
+        <TroveDetailsBand
+          trove={trove}
+          liveState={liveState}
+          prices={prices}
+          debtInFront={debtInFront}
+          trovesAhead={trovesAhead}
+          debtInFrontLoading={debtInFrontLoading}
+        />
+      </div>
+      <div className="pl-5 pr-12">
+        <TroveContextRow
+          items={items}
+          isOpen={summaryExplanationOpen}
+          onToggle={onToggleSummaryExplanation}
+        />
+      </div>
     </div>
   );
 }

@@ -36,20 +36,14 @@ export function TroveSummaryCardSelector({
   prices,
   loadingStatus,
 }: TroveSummaryCardSelectorProps) {
-  // No selector when there's only one trove — render the rich summary alone.
-  if (!ownerTroves || ownerTroves.length <= 1) {
-    return (
-      <TroveSummaryCard
-        trove={trove}
-        liveState={liveState}
-        prices={prices}
-        loadingStatus={loadingStatus}
-        expectsLiveState
-      />
-    );
-  }
-
-  const items: TroveItem[] = ownerTroves.map(t => ({ id: t.id, trove: t }));
+  // Always go through CardSelectorShell, even when there's only one trove
+  // (or while the sibling-trove fetch is still in flight) — the shell
+  // reserves the chevron column slot in both cases, so the position card
+  // sits at a consistent inner width and the supplementary stats below
+  // (`pl-5 pr-12` in TroveSummaryStack) line up to its grid.
+  const items: TroveItem[] = (ownerTroves && ownerTroves.length > 0)
+    ? ownerTroves.map(t => ({ id: t.id, trove: t }))
+    : [{ id: trove.id, trove }];
 
   return (
     <CardSelectorShell
@@ -66,14 +60,18 @@ export function TroveSummaryCardSelector({
           // Active card — at rest just hover-tints (the chevron signals a
           // chooser is available). When the chooser is expanded we add the
           // blue border + bg so it visually stands apart from the alternates
-          // below. Mirrors rails-explorer Aave V4 selector behavior.
+          // below. Mirrors rails-explorer Aave V4 selector behavior. When
+          // there's no chooser to open (single trove), the click handler is
+          // a noop and the static-card branch keeps the styling neutral.
           <div
             onClick={props.onClick}
             className={
-              "w-full text-left rounded-lg transition-all cursor-pointer px-5 py-4 " +
+              "w-full text-left rounded-lg transition-all px-5 py-4 " +
+              (props.staticCard ? "" : "cursor-pointer ") +
               (props.isSelected
                 ? "border border-blue-500/30 bg-blue-500/5 group-hover/card:bg-blue-500/10"
-                : "border border-transparent group-hover/card:bg-rb-200/50 dark:group-hover/card:bg-rb-900")
+                : "border border-transparent " +
+                  (props.staticCard ? "" : "group-hover/card:bg-rb-200/50 dark:group-hover/card:bg-rb-900"))
             }
           >
             <TroveSummaryCard
