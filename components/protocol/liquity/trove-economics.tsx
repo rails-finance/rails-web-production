@@ -65,12 +65,14 @@ function calculateEconomicsFromEvents(events: MinimalEvent[]): (TroveEconomicsTy
   }
 
   // Separate third-party events (redeemer/liquidator acting on someone else's trove)
-  // from trove-owner events (wallet's own trove operations)
+  // from trove-owner events (wallet's own trove operations). Use ownedTroveIds
+  // membership rather than the presence of `troveOwner`/`redeemer` fields so
+  // the predicate works for both wallet-scoped and trove-scoped event feeds —
+  // on a trove page every event is on the displayed (owned) trove, so no
+  // redemption gets mis-classified as "against another trove".
   const ownerEvents = liquityEvents.filter(e => {
     const c = e.context.data;
-    // Redeemer-initiated redemption against another trove
-    if (c.operation === "redeemCollateral" && c.troveOwner) return false;
-    // Liquidation of a trove the wallet doesn't own (wallet is the liquidator)
+    if (c.operation === "redeemCollateral" && c.troveId && !ownedTroveIds.has(c.troveId)) return false;
     if (c.operation === "liquidate" && c.troveId && !ownedTroveIds.has(c.troveId)) return false;
     return true;
   });
@@ -254,9 +256,19 @@ interface RedeemerStats {
 
 function calculateRedeemerStats(events: MinimalEvent[]): RedeemerStats | null {
   const liquityEvents = events.filter(isLiquityMinimal);
+
+  // Mirror the ownedTroveIds derivation in calculateEconomicsFromEvents so the
+  // wallet-scoped vs trove-scoped predicate stays symmetric.
+  const OPEN_OPS = new Set(["openTrove", "openTroveAndJoinBatch"]);
+  const ownedTroveIds = new Set<string>();
+  for (const e of liquityEvents) {
+    const c = e.context.data;
+    if (OPEN_OPS.has(c.operation) && c.troveId) ownedTroveIds.add(c.troveId);
+  }
+
   const redeemerEvents = liquityEvents.filter(e => {
     const c = e.context.data;
-    return c.operation === "redeemCollateral" && c.troveOwner;
+    return c.operation === "redeemCollateral" && !!c.troveId && !ownedTroveIds.has(c.troveId);
   });
   if (redeemerEvents.length === 0) return null;
 
