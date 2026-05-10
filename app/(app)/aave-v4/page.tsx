@@ -55,7 +55,8 @@ function AaveV4ListPageContent() {
   const filters: AaveV4ListFilterParams = {
     wallet: searchParams.get("wallet") ?? undefined,
     ownerEns: searchParams.get("ownerEns") ?? undefined,
-    spoke: searchParams.get("spoke") ?? undefined,
+    spokes: (searchParams.get("spokes") ?? "").split(",").filter(Boolean),
+    hubs: (searchParams.get("hubs") ?? "").split(",").filter(Boolean),
     debt: (searchParams.get("debt") as AaveV4Debt | null) ?? "all",
     health: (searchParams.get("health") as AaveV4Health | null) ?? "all",
     sortBy: searchParams.get("sortBy") ?? "lastActivity",
@@ -74,7 +75,8 @@ function AaveV4ListPageContent() {
     const p = new URLSearchParams();
     if (next.wallet) p.set("wallet", next.wallet);
     if (next.ownerEns) p.set("ownerEns", next.ownerEns);
-    if (next.spoke) p.set("spoke", next.spoke);
+    if (next.spokes.length > 0) p.set("spokes", next.spokes.join(","));
+    if (next.hubs.length > 0) p.set("hubs", next.hubs.join(","));
     if (next.debt !== "all") p.set("debt", next.debt);
     if (next.health !== "all") p.set("health", next.health);
     if (next.sortBy !== "lastActivity") p.set("sortBy", next.sortBy);
@@ -105,7 +107,8 @@ function AaveV4ListPageContent() {
     fetchAaveV4SpokePositions({
       wallet: filters.wallet,
       ownerEns: filters.ownerEns,
-      spoke: filters.spoke,
+      spokes: filters.spokes,
+      hubs: filters.hubs,
       hasDebt: filters.debt === "withDebt",
       noDebt: filters.debt === "noDebt",
       healthBelow:

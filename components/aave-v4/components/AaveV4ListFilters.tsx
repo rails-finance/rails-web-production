@@ -1,15 +1,15 @@
 "use client";
 
-// Aave V4 list filters — visual analog of TroveListFilters.
-// Filter dropdown (status + advanced filters) + 3 spoke quick-pills +
-// search input + sort dropdown. The 11-spoke universe is too wide for an
-// all-pill row, so we keep the three most-trafficked spokes (Main,
-// Bluechip, EtherFi) as pills and surface the rest as a dropdown in the
-// filter menu — same affordance pattern as Liquity V2's collateral pills.
+// Aave V4 list filters — multi-select Hubs + Spokes dropdowns mirroring
+// the Aave V4 dashboard pattern. Filter dropdown carries the segmented
+// Position / Health controls; the two CheckboxMultiSelect pills next to
+// it slice the spoke universe by hub and by spoke independently (they
+// AND together at query time on the server). Search + sort to the right.
 
 import { useState, useEffect, useRef } from "react";
 import { ChevronDown, Search, X, Filter } from "lucide-react";
 import { useDebounce } from "@/lib/hooks/useDebounce";
+import { CheckboxMultiSelect } from "@/components/shared/checkbox-multi-select";
 
 export type AaveV4Debt = "all" | "withDebt" | "noDebt";
 export type AaveV4Health = "all" | "atRisk" | "underwater";
@@ -17,7 +17,10 @@ export type AaveV4Health = "all" | "atRisk" | "underwater";
 export interface AaveV4ListFilterParams {
   wallet?: string;
   ownerEns?: string;
-  spoke?: string;
+  /** Multi-select spoke keys. Empty = all spokes. */
+  spokes: string[];
+  /** Multi-select hub tiers (lowercase keys: "core", "plus", "prime"). */
+  hubs: string[];
   debt: AaveV4Debt;
   health: AaveV4Health;
   sortBy: string;
@@ -29,14 +32,13 @@ interface Props {
   onFiltersChange: (next: AaveV4ListFilterParams) => void;
 }
 
-const PILL_SPOKES = [
-  { key: "main", label: "Main" },
-  { key: "bluechip", label: "Bluechip" },
-  { key: "etherfi", label: "EtherFi" },
+const HUB_OPTIONS = [
+  { value: "core",  label: "Core"  },
+  { value: "plus",  label: "Plus"  },
+  { value: "prime", label: "Prime" },
 ];
 
-const ALL_SPOKES = [
-  { value: "",            label: "All spokes" },
+const SPOKE_OPTIONS = [
   { value: "main",        label: "Main" },
   { value: "bluechip",    label: "Bluechip" },
   { value: "ethena_corr", label: "Ethena Correlated" },
@@ -61,7 +63,6 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
   const [searchInput, setSearchInput] = useState<string>(initialSearch);
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [hoveredSpoke, setHoveredSpoke] = useState<string | null>(null);
   const sortRef = useRef<HTMLDivElement>(null);
   const filterRef = useRef<HTMLDivElement>(null);
 
@@ -119,28 +120,21 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
   };
 
   const activeFilterCount =
-    (filters.debt !== "all" ? 1 : 0) +
-    (filters.health !== "all" ? 1 : 0) +
-    (filters.spoke && !PILL_SPOKES.some((p) => p.key === filters.spoke) ? 1 : 0);
+    (filters.debt !== "all" ? 1 : 0) + (filters.health !== "all" ? 1 : 0);
 
   const setDebt = (debt: AaveV4Debt) => onFiltersChange({ ...filters, debt });
   const setHealth = (health: AaveV4Health) => onFiltersChange({ ...filters, health });
-  const setSpoke = (spoke: string) =>
-    onFiltersChange({ ...filters, spoke: spoke || undefined });
+  const setSpokes = (spokes: string[]) => onFiltersChange({ ...filters, spokes });
+  const setHubs = (hubs: string[]) => onFiltersChange({ ...filters, hubs });
 
   const resetFilters = () =>
-    onFiltersChange({
-      ...filters,
-      debt: "all",
-      health: "all",
-      spoke: undefined,
-    });
+    onFiltersChange({ ...filters, debt: "all", health: "all" });
 
   return (
     <div className="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 xl:gap-4">
       <div className="flex flex-col lg:flex-row lg:items-center gap-3 lg:flex-1">
-        <div className="flex items-center gap-2 w-full lg:w-auto">
-          {/* Filter dropdown */}
+        <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+          {/* Filter dropdown — segmented position + health controls. */}
           <div className="relative" ref={filterRef}>
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
@@ -165,7 +159,6 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
                 className="absolute top-full border border-rb-300 dark:border-rb-700 left-0 mt-2 bg-rb-100 dark:bg-rb-800 rounded-lg shadow-xl z-50 min-w-[280px] max-h-[460px] overflow-y-auto"
                 role="menu"
               >
-                {/* Debt segmented */}
                 <div className="p-3">
                   <div className="text-xs text-rb-500 uppercase tracking-wider mb-2">Position</div>
                   <div className="flex bg-rb-200 dark:bg-rb-900 rounded-lg p-1" role="group">
@@ -196,7 +189,6 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
                   </div>
                 </div>
 
-                {/* Health segmented */}
                 <div className="p-3">
                   <div className="text-xs text-rb-500 uppercase tracking-wider mb-2">Health</div>
                   <div className="flex bg-rb-200 dark:bg-rb-900 rounded-lg p-1" role="group">
@@ -227,23 +219,6 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
                   </div>
                 </div>
 
-                {/* Spoke select — all 11 spokes here so the 3 pills outside
-                    stay focused on the most-trafficked subset. */}
-                <div className="p-3">
-                  <div className="text-xs text-rb-500 uppercase tracking-wider mb-2">All spokes</div>
-                  <select
-                    value={filters.spoke ?? ""}
-                    onChange={(e) => setSpoke(e.target.value)}
-                    className="w-full px-3 py-2 rounded-md border border-rb-300 dark:border-rb-700 bg-rb-50 dark:bg-rb-900 text-foreground text-sm font-medium cursor-pointer"
-                  >
-                    {ALL_SPOKES.map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
                 {activeFilterCount > 0 && (
                   <div className="p-3">
                     <button
@@ -258,46 +233,21 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
             )}
           </div>
 
-          {/* Spoke quick-pills */}
-          <div
-            className="flex items-center gap-2 flex-1 lg:flex-initial"
-            role="group"
-            aria-label="Filter by spoke"
-          >
-            {PILL_SPOKES.map((p) => {
-              const isVisible = !filters.spoke || filters.spoke === p.key;
-              const isExclusive = filters.spoke === p.key;
-              const isPreview =
-                filters.spoke && hoveredSpoke && hoveredSpoke !== p.key && filters.spoke === hoveredSpoke;
-              return (
-                <button
-                  key={p.key}
-                  onMouseEnter={() => setHoveredSpoke(p.key)}
-                  onMouseLeave={() => setHoveredSpoke(null)}
-                  onClick={() => setSpoke(filters.spoke === p.key ? "" : p.key)}
-                  className={`cursor-pointer relative flex items-center duration-150 border-2 h-10 justify-center gap-1 lg:gap-2 px-2 lg:px-3 py-2 rounded-lg transition-colors flex-1 lg:flex-initial group focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    isExclusive
-                      ? "border-blue-700"
-                      : isVisible
-                      ? "border-rb-300 dark:border-rb-700 hover:border-blue-700/50"
-                      : isPreview
-                      ? "border-blue-400 dark:border-rb-700/50 opacity-75"
-                      : "border-rb-300 dark:border-rb-700 hover:dark:border-blue-700/50"
-                  }`}
-                  aria-pressed={isExclusive}
-                >
-                  <img
-                    src="/icons/protocols/aave-v4.png"
-                    alt=""
-                    className="w-5 h-5 rounded-[4px]"
-                  />
-                  <span className="hidden sm:inline text-foreground font-bold text-sm lg:text-base">
-                    {p.label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+          {/* Hubs + Spokes multi-select pills */}
+          <CheckboxMultiSelect
+            label="Hubs"
+            allLabel="All hubs"
+            value={filters.hubs}
+            onChange={setHubs}
+            options={HUB_OPTIONS}
+          />
+          <CheckboxMultiSelect
+            label="Spokes"
+            allLabel="All spokes"
+            value={filters.spokes}
+            onChange={setSpokes}
+            options={SPOKE_OPTIONS}
+          />
         </div>
 
         {/* Search input */}

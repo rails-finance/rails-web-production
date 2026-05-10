@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { ChevronDown, Search, X, Filter, Check } from "lucide-react";
+import { ChevronDown, Search, X, Filter } from "lucide-react";
 import { useDebounce } from "@/lib/hooks/useDebounce";
+import { CheckboxMultiSelect } from "@/components/shared/checkbox-multi-select";
 
 export interface TroveListFilterParams {
   troveId?: string;
   status?: string;
-  collateralType?: string;
+  /** Multi-select collateral types. Empty/undefined = all. */
+  collateralTypes?: string[];
   ownerAddress?: string;
   ownerEns?: string;
   activeWithin?: string;
@@ -42,7 +44,6 @@ export function TroveListFilters({
   const [searchInput, setSearchInput] = useState<string>(initialSearchValue);
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
-  const [hoveredCollateral, setHoveredCollateral] = useState<string | null>(null);
   const sortDropdownRef = useRef<HTMLDivElement>(null);
   const filterDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -381,57 +382,29 @@ export function TroveListFilters({
               </div>
             )}
           </div>
-          {/* Collateral Type Buttons */}
-          <div className="flex items-center gap-2 flex-1 lg:flex-initial" role="group" aria-label="Filter by collateral type">
-            {availableCollateralTypes.map((type) => {
-              // isVisible = this collateral type is currently being shown in the list
-              const isVisible = !filters.collateralType || filters.collateralType === type;
-              // isExclusivelySelected = this is the ONLY collateral type being shown
-              const isExclusivelySelected = filters.collateralType === type;
-              // Preview state: when hovering over exclusively selected button, highlight the others
-              const isPreviewHighlighted =
-                filters.collateralType &&
-                hoveredCollateral &&
-                hoveredCollateral !== type &&
-                filters.collateralType === hoveredCollateral;
-
-              return (
-                <button
-                  key={type}
-                  onMouseEnter={() => setHoveredCollateral(type)}
-                  onMouseLeave={() => setHoveredCollateral(null)}
-                  onClick={() => {
-                    // Single select behavior - clicking same button deselects, clicking different selects
-                    onFiltersChange({
-                      ...filters,
-                      collateralType: filters.collateralType === type ? undefined : type,
-                    });
-                  }}
-                  className={`cursor-pointer relative flex items-center duration-150 border-2 h-10 justify-center gap-1 lg:gap-2 px-2 lg:px-3 py-2 rounded-lg transition-colors flex-1 lg:flex-initial cursor-pointer group focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    isExclusivelySelected
-                      ? "border-blue-700  "
-                      : isVisible
-                      ? "border-rb-300 dark:border-rb-700 hover:border-blue-700/50"
-                      : isPreviewHighlighted
-                      ? "border-blue-400 dark:border-rb-700/50 opacity-75 "
-                      : "border-rb-300 dark:border-rb-700 hover:dark:border-blue-700/50 "
-                  }`}
-                  aria-pressed={isExclusivelySelected}
-                  aria-label={`${isExclusivelySelected ? 'Showing only' : 'Filter to'} ${type} collateral troves`}
-                >
-                  <svg className="w-5 h-5 z-1" aria-hidden="true">
+          {/* Collateral Type — multi-select with token icons */}
+          <CheckboxMultiSelect
+            label="Collateral"
+            allLabel="All collateral"
+            value={filters.collateralTypes ?? []}
+            onChange={(next) =>
+              onFiltersChange({ ...filters, collateralTypes: next.length > 0 ? next : undefined })
+            }
+            options={availableCollateralTypes.map((type) => ({
+              value: type,
+              label: type,
+              icon: (
+                <span className="inline-flex">
+                  <svg className="w-5 h-5" aria-hidden="true">
                     <use href={`#icon-${type.toLowerCase().replace("weth", "eth")}`} />
                   </svg>
                   <svg className="w-5 h-5 -ml-2.5" aria-hidden="true">
                     <use href={`#icon-bold`} />
                   </svg>
-                  <span className="hidden sm:inline text-foreground font-bold text-sm lg:text-base">{type}</span>
-
-
-                </button>
-              );
-            })}
-          </div>
+                </span>
+              ),
+            }))}
+          />
         </div>
 
         {/* Second row on mobile: Search Input */}

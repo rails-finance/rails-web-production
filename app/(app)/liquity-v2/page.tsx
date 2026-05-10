@@ -80,8 +80,16 @@ function TrovesPageContent() {
     // /liquity-v2 landing's recent-activity strip still passes status=open
     // explicitly, so its open-only filter is unaffected.
 
-    const collateralType = searchParams.get("collateralType");
-    if (collateralType) filters.collateralType = collateralType;
+    // collateralTypes (multi) is the canonical form; honor the legacy
+    // collateralType (single) for old links.
+    const collateralTypesRaw = searchParams.get("collateralTypes");
+    if (collateralTypesRaw) {
+      const parts = collateralTypesRaw.split(",").map((s) => s.trim()).filter(Boolean);
+      if (parts.length > 0) filters.collateralTypes = parts;
+    } else {
+      const collateralType = searchParams.get("collateralType");
+      if (collateralType) filters.collateralTypes = [collateralType];
+    }
 
     const ownerAddress = searchParams.get("ownerAddress");
     const ownerEns = searchParams.get("ownerEns");
@@ -156,7 +164,9 @@ function TrovesPageContent() {
     // Add filters
     if (filterParams.troveId) params.set("troveId", filterParams.troveId);
     if (filterParams.status) params.set("status", filterParams.status);
-    if (filterParams.collateralType) params.set("collateralType", filterParams.collateralType);
+    if (filterParams.collateralTypes && filterParams.collateralTypes.length > 0) {
+      params.set("collateralTypes", filterParams.collateralTypes.join(","));
+    }
     if (filterParams.ownerAddress) params.set("ownerAddress", filterParams.ownerAddress);
     if (filterParams.ownerEns) params.set("ownerEns", filterParams.ownerEns);
     if (filterParams.activeWithin) params.set("activeWithin", filterParams.activeWithin);

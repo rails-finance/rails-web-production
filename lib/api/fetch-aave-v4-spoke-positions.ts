@@ -49,7 +49,12 @@ export type AaveV4SpokePositionSort =
   | "healthFactor";
 
 export interface FetchAaveV4SpokePositionsParams {
-  spoke?: string;
+  /** Multi-spoke filter. Empty/undefined = no spoke restriction. */
+  spokes?: string[];
+  /** Multi-hub filter (Core/Plus/Prime). The server resolves to the union
+   *  of spokes belonging to those hubs and ANDs with `spokes` if both are
+   *  provided. */
+  hubs?: string[];
   wallet?: string;
   ownerEns?: string;
   hasDebt?: boolean;
@@ -67,7 +72,8 @@ export async function fetchAaveV4SpokePositions(
   p: FetchAaveV4SpokePositionsParams,
 ): Promise<AaveV4SpokePositionsResponse> {
   const qs = new URLSearchParams();
-  if (p.spoke) qs.set("spoke", p.spoke);
+  if (p.spokes && p.spokes.length > 0) qs.set("spokes", p.spokes.join(","));
+  if (p.hubs && p.hubs.length > 0) qs.set("hubs", p.hubs.join(","));
   if (p.wallet) qs.set("wallet", p.wallet);
   if (p.ownerEns) qs.set("ownerEns", p.ownerEns);
   if (p.hasDebt) qs.set("hasDebt", "true");
