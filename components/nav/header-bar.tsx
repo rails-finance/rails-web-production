@@ -16,17 +16,37 @@ import { ProtocolMenu } from "@/components/nav/protocol-menu";
 import { AppPreferencesModal } from "@/components/nav/app-preferences-modal";
 import { LiquityPreferencesModal } from "@/components/nav/liquity-preferences-modal";
 
-/** Routes that count as "inside the protocol" — the protocol app-switcher
- *  button is gated on these. Marketing routes (home, about, blog, …) hide
- *  the button entirely; once we add sibling mono-rails the dropdown lets
- *  users hop between them from any of these surfaces. */
-const PROTOCOL_PATH_PREFIXES = ["/liquity-v2", "/trove", "/address"];
+/** Routes that count as "inside the protocol" — keyed by the active protocol
+ *  so the header pill can render the right icon + label. Marketing routes
+ *  (home, about, blog, …) match nothing here and hide the protocol context. */
+const PROTOCOL_CONTEXTS: {
+  id: string;
+  label: string;
+  iconSrc: string;
+  prefixes: string[];
+}[] = [
+  {
+    id: "liquity-v2",
+    label: "Liquity V2",
+    iconSrc: "/icons/protocols/liquity.png",
+    prefixes: ["/liquity-v2", "/trove", "/address"],
+  },
+  {
+    id: "aave-v4",
+    label: "Aave V4",
+    iconSrc: "/icons/protocols/aave-v4.png",
+    prefixes: ["/aave-v4"],
+  },
+];
 
-function isProtocolPath(pathname: string | null): boolean {
-  if (!pathname) return false;
-  return PROTOCOL_PATH_PREFIXES.some(
-    (p) => pathname === p || pathname.startsWith(p + "/"),
-  );
+function activeProtocol(pathname: string | null) {
+  if (!pathname) return null;
+  for (const ctx of PROTOCOL_CONTEXTS) {
+    if (ctx.prefixes.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
+      return ctx;
+    }
+  }
+  return null;
 }
 
 /** Always-on Rails wordmark on the left, with an Explorer sublabel.
@@ -67,40 +87,38 @@ function RailsLogo() {
 }
 
 /** App-switcher trigger.
- *  - On a protocol surface: shows the protocol icon + label (current context).
+ *  - On a protocol surface: shows the active protocol's icon + label.
  *  - Elsewhere: shows a neutral apps-grid icon (no protocol selected yet).
- *  Today the dropdown lists Liquity V2 as the sole entry; future sibling
- *  mono-rails will appear in the same menu. */
+ *  The dropdown lists every wired-up mono-rail; click an entry to hop. */
 const ProtocolButton = ({
   isOpen,
   onToggle,
   btnRef,
-  inProtocol,
+  active,
 }: {
   isOpen: boolean;
   onToggle: () => void;
   btnRef: React.RefObject<HTMLButtonElement | null>;
-  inProtocol: boolean;
+  active: { label: string; iconSrc: string } | null;
 }) => (
   <button
     ref={btnRef}
     onClick={onToggle}
     aria-haspopup="menu"
     aria-expanded={isOpen}
-    title={inProtocol ? "Switch protocol" : "Choose protocol"}
+    title={active ? "Switch protocol" : "Choose protocol"}
     className="group flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-rb-100 dark:hover:bg-rb-800 aria-expanded:bg-rb-100 dark:aria-expanded:bg-rb-800 transition-colors cursor-pointer"
   >
-    {inProtocol ? (
+    {active ? (
       <>
         {/* App icons are rounded-square PNGs (matched with facehashes);
-            tokens stay circular. Use the home-page protocol asset rather
-            than the circular icon-liquity SVG so the framing is consistent. */}
+            tokens stay circular. */}
         <img
-          src="/icons/protocols/liquity.png"
+          src={active.iconSrc}
           alt=""
           className="w-5 h-5 shrink-0 rounded-[5px]"
         />
-        <span className="text-xs font-semibold text-foreground">Liquity V2</span>
+        <span className="text-xs font-semibold text-foreground">{active.label}</span>
       </>
     ) : (
       <svg
@@ -203,7 +221,7 @@ export function HeaderBar() {
   // Protocol app-switcher always renders. Inside a protocol surface it shows
   // the active protocol icon + label; elsewhere it shows a neutral apps-grid
   // icon to advertise the picker without committing to a protocol context.
-  const inProtocol = isProtocolPath(pathname);
+  const active = activeProtocol(pathname);
 
   return (
     <header className="relative z-40 mb-2">
@@ -221,7 +239,7 @@ export function HeaderBar() {
             isOpen={openMenu === "protocol"}
             onToggle={() => toggle("protocol")}
             btnRef={protocolBtn}
-            inProtocol={inProtocol}
+            active={active}
           />
           {showWalletButton && (
             <WalletPillButton

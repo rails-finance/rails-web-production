@@ -189,6 +189,59 @@ export interface LiquityContext {
   blockGrouping: BlockGrouping;
 }
 
+// ───────────────────────── Aave V4 detail types ─────────────────────────
+
+export type AaveV4EventType =
+  | "supply"
+  | "withdraw"
+  | "borrow"
+  | "repay"
+  | "liquidation"
+  | "collateral_toggle";
+
+/** Mirror of rails-explorer's lib/shared/types/protocols/aave-v4.ts.
+ *  Numeric fields ship as strings to preserve precision across the wire. */
+export interface AaveV4Context {
+  eventType: AaveV4EventType;
+  /** Amount in reserve token (human-readable). */
+  amount?: string;
+  /** Reserve token symbol (resolved from reserve_id). */
+  reserveSymbol?: string;
+  /** Spoke display name ("Main", "Bluechip", …). */
+  spokeName?: string;
+  /** Spoke contract address (lowercase). */
+  spokeAddress?: string;
+  /** collateral_toggle: whether collateral was enabled. */
+  enabled?: boolean;
+  /** liquidation: collateral reserve symbol. */
+  collateralSymbol?: string;
+  /** liquidation: debt covered. */
+  debtToCover?: string;
+  /** liquidation: collateral seized. */
+  liquidatedCollateralAmount?: string;
+  /** liquidation: liquidator address. */
+  liquidator?: string;
+  /** Running supply balance before this event (human-readable). */
+  supplyBefore?: string;
+  /** Running supply balance after this event (human-readable). */
+  supplyAfter?: string;
+  /** Running debt balance before this event (human-readable). */
+  debtBefore?: string;
+  /** Running debt balance after this event (human-readable). */
+  debtAfter?: string;
+  /** All non-zero supply positions in this spoke after the event. */
+  allSupplies?: { symbol: string; amount: string }[];
+  /** All non-zero debt positions in this spoke after the event. */
+  allDebts?: { symbol: string; amount: string }[];
+  /** Same-tx supply + collateral_toggle merge — drives the
+   *  "Supply & Enable Collateral" card. */
+  alsoToggledCollateral?: boolean;
+  /** Effective supply APR derived from share/amount index changes. */
+  supplyAPR?: string;
+  /** Effective borrow APR derived from share/amount index changes. */
+  borrowAPR?: string;
+}
+
 // ───────────────────────── Generic / unknown ─────────────────────────
 
 export interface OtherContext {
@@ -202,15 +255,16 @@ export interface OtherContext {
 // ───────────────────────── Protocol identity ─────────────────────────
 //
 // ProtocolId and ProtocolContext are designed to grow as new protocol
-// transformers come online. Phase 1: Liquity V2 only. When a new protocol
-// gets a transformer, add its id to ProtocolId and a discriminant arm to
-// ProtocolContext. The frontend duplicate must mirror these additions.
+// transformers come online. When a new protocol gets a transformer, add
+// its id to ProtocolId and a discriminant arm to ProtocolContext. The
+// frontend duplicate must mirror these additions.
 
-export type ProtocolId = "liquity-v2-troves" | "other";
+export type ProtocolId = "liquity-v2-troves" | "aave-v4" | "other";
 
 /** Full protocol-specific detail, discriminated by `protocol`. */
 export type ProtocolContext =
   | { protocol: "liquity-v2-troves"; data: LiquityContext }
+  | { protocol: "aave-v4"; data: AaveV4Context }
   | { protocol: "other"; data: OtherContext };
 
 // ───────────────────────── The unified event ─────────────────────────
@@ -273,4 +327,12 @@ export function isLiquityEvent(
     e.context?.protocol === "liquity-v2-troves" &&
     !!(e.context.data as LiquityContext)?.collateralType
   );
+}
+
+export function isAaveV4Event(
+  e: BaseActivityEvent,
+): e is BaseActivityEvent & {
+  context: { protocol: "aave-v4"; data: AaveV4Context };
+} {
+  return e.context?.protocol === "aave-v4";
 }

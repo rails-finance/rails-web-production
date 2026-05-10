@@ -18,9 +18,8 @@ type ProtocolEntry = {
   hasPreferences?: boolean;
 };
 
-/** Single-entry today; the type list is the surface to grow when sibling
- *  mono-rails come online. Click → navigate to that protocol's home; the cog
- *  opens that protocol's preferences modal. */
+/** Click → navigate to that protocol's home; the cog opens that protocol's
+ *  preferences modal. Order matches the home-page mono-rail card grid. */
 const PROTOCOLS: ProtocolEntry[] = [
   {
     id: "liquity-v2",
@@ -29,6 +28,13 @@ const PROTOCOLS: ProtocolEntry[] = [
     iconSrc: "/icons/protocols/liquity.png",
     subtitle: "Borrow BOLD against ETH, wstETH, or rETH",
     hasPreferences: true,
+  },
+  {
+    id: "aave-v4",
+    label: "Aave V4",
+    href: "/aave-v4",
+    iconSrc: "/icons/protocols/aave-v4.png",
+    subtitle: "Multi-spoke lending across 11 asset-class spokes",
   },
 ];
 

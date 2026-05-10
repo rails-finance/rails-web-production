@@ -31,6 +31,7 @@ const MONO_RAILS: MonoRail[] = [
     label: "Aave V4",
     tags: ["Lend", "Borrow"],
     desc: "Multi-spoke lending with unified liquidity across asset classes",
+    href: "/aave-v4",
   },
   {
     id: "llamalend",

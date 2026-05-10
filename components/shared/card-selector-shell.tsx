@@ -5,18 +5,43 @@ import { ExpandChevron } from "@/components/shared/expand-chevron";
 
 // Generic shell for position/trove/spoke selectors: sticky active card + expandable
 // chooser list + chevron button. Each protocol supplies its own card body via
-// `renderCard`. Ported from rails-explorer (CardSelectorShell), trimmed for the
-// rails-web-mig surface — the chevron alone toggles expansion (the active card
-// stays passive so its inner buttons — copy badge, deprecation link — keep
-// their own click semantics).
+// `renderCard`.
+
+export type PositionCardStatus = "open" | "closed" | "liquidated";
+
+/**
+ * Shared hover surface for position chooser cards. Four states:
+ *  - staticCard: only one position, no hover affordance.
+ *  - active card while the chooser is expanded (`isSelected`): soft blue
+ *    tint matching the "currently selected" treatment used by header nav
+ *    dropdowns. Only shown while the user is actively choosing — collapsed
+ *    view stays neutral so the page doesn't carry a permanent blue accent.
+ *  - active card collapsed (`noHover`): transparent, with a subtle bg bump
+ *    when the parent group is hovered to hint the card is interactive.
+ *  - chooser cards: transparent at rest, hover bumps bg + flips the border
+ *    blue to advertise that clicking switches the active position.
+ */
+export function positionCardSurface(
+  _status: PositionCardStatus,
+  opts: { noHover?: boolean; staticCard?: boolean; isSelected?: boolean } = {},
+): string {
+  if (opts.staticCard) return "border border-transparent";
+  if (opts.isSelected) return "border border-blue-500/30 bg-blue-500/5 group-hover/card:bg-blue-500/10";
+  if (opts.noHover) return "border border-transparent group-hover/card:bg-rb-200/50 dark:group-hover/card:bg-rb-900";
+  return "border border-transparent hover:bg-rb-200/50 dark:hover:bg-rb-900 hover:border-blue-500";
+}
 
 export interface CardSelectorItem {
   id: string;
+  /** Optional — when present, the count pill above the chevron splits into
+   * open vs. closed/liquidated so users can see both at a glance. */
+  status?: PositionCardStatus;
 }
 
 export interface CardRenderProps {
   isActive: boolean;
   isSelected: boolean;
+  noHover: boolean;
   staticCard: boolean;
   onClick: () => void;
 }
@@ -52,6 +77,7 @@ export function CardSelectorShell<T extends CardSelectorItem>({
           {renderCard(activeItem, {
             isActive: true,
             isSelected: expanded,
+            noHover: true,
             staticCard: !hasMultiple,
             onClick: hasMultiple ? () => setExpanded(v => !v) : () => {},
           })}
@@ -66,6 +92,7 @@ export function CardSelectorShell<T extends CardSelectorItem>({
                     {renderCard(item, {
                       isActive: false,
                       isSelected: false,
+                      noHover: false,
                       staticCard: false,
                       onClick: () => {
                         onSelect(item.id);

@@ -1,26 +1,31 @@
 "use client";
 
-// rails-web-mig token chip — a thin wrapper that resolves Liquity V2 tokens
-// (BOLD, WETH/ETH, wstETH, rETH) to the existing SVG-sprite TokenIcon.
+// Token chip with a three-tier resolution:
+//   1. Local SVG sprite — covers Liquity V2's universe (ETH/WETH/wstETH/
+//      stETH/rETH/BOLD), already in the icons sprite.
+//   2. Trust Wallet CDN — looked up by address (caller-passed or resolved
+//      from TOKEN_ADDRESSES via the symbol). This covers the Aave V4
+//      universe and most ERC-20s without needing to ship sprites for them.
+//   3. UnknownTokenSvg placeholder — same visual vocabulary as Etherscan's
+//      empty-token glyph; reads as "unknown" rather than a brand mark.
 //
-// rails-explorer's version pulls in the full token-addresses + Trust Wallet
-// CDN system. rails-web-mig only renders Liquity V2 events, where the
-// universe of tokens is small and already covered by the local sprite.
-// Unknown symbols fall back to UnknownTokenSvg.
+// Plain <img> with onError fallback (vs next/image) avoids needing a
+// next.config remotePatterns entry for raw.githubusercontent.com. Icons
+// are 16-20px so optimization isn't load-bearing.
 
-import { createContext, useContext } from "react";
+import { createContext, useContext, useState } from "react";
 import { TokenIcon as SpriteTokenIcon } from "@/components/icons/tokenIcon";
 import { UnknownTokenSvg } from "@/components/shared/unknown-token-svg";
+import { getTokenAddress } from "@/lib/shared/token-addresses";
+import { getTokenLogoUrl } from "@/lib/shared/token-logo";
 
-// Token filter context — kept for source compatibility with rails-explorer's
-// timeline. rails-web-mig has no filter UI yet, so this is always null.
 const TokenFilterCtx = createContext<((symbol: string) => void) | null>(null);
 export const TokenFilterProvider = TokenFilterCtx.Provider;
 export function useTokenFilterCtx() {
   return useContext(TokenFilterCtx);
 }
 
-const KNOWN_SYMBOLS = new Set([
+const SPRITE_SYMBOLS = new Set([
   "ETH",
   "WETH",
   "wstETH",
@@ -37,7 +42,7 @@ export interface TokenChipIconProps {
   filterable?: boolean;
 }
 
-export function TokenChipIcon({ symbol, size = 16, onClick, filterable = true }: TokenChipIconProps) {
+export function TokenChipIcon({ symbol, address, size = 16, onClick, filterable = true }: TokenChipIconProps) {
   const ctxFilter = useTokenFilterCtx();
   const handler = onClick ?? (filterable && ctxFilter ? () => ctxFilter(symbol) : undefined);
   const clickable = !!handler;
@@ -55,23 +60,71 @@ export function TokenChipIcon({ symbol, size = 16, onClick, filterable = true }:
     ? "cursor-pointer hover:ring-2 hover:ring-rb-400 dark:hover:ring-rb-500 rounded-full transition-shadow"
     : "";
 
-  if (!KNOWN_SYMBOLS.has(symbol)) {
-    return <UnknownTokenSvg size={size} symbol={symbol} clickProps={clickProps} clickClass={clickClass} />;
+  // Tier 1 — local sprite for the Liquity V2 universe.
+  if (SPRITE_SYMBOLS.has(symbol)) {
+    return (
+      <span
+        className={`inline-flex items-center justify-center shrink-0 ${clickClass}`}
+        style={{ width: size, height: size }}
+        {...clickProps}
+      >
+        <SpriteTokenIcon
+          assetSymbol={symbol}
+          className="block"
+          width={size}
+          height={size}
+          sized
+        />
+      </span>
+    );
   }
 
-  return (
-    <span
-      className={`inline-flex items-center justify-center shrink-0 ${clickClass}`}
-      style={{ width: size, height: size }}
-      {...clickProps}
-    >
-      <SpriteTokenIcon
-        assetSymbol={symbol}
-        className="block"
-        width={size}
-        height={size}
-        sized
+  // Tier 2 — Trust Wallet CDN, from caller-passed address or symbol lookup.
+  // Tier 3 — UnknownTokenSvg placeholder when no address to look up (or, in
+  // CdnTokenIcon below, when the CDN load fails).
+  const resolvedAddress = address ?? getTokenAddress(symbol);
+  if (resolvedAddress) {
+    return (
+      <CdnTokenIcon
+        symbol={symbol}
+        address={resolvedAddress}
+        size={size}
+        clickClass={clickClass}
+        clickProps={clickProps}
       />
-    </span>
+    );
+  }
+  return <UnknownTokenSvg size={size} symbol={symbol} clickProps={clickProps} clickClass={clickClass} />;
+}
+
+/** Tiny inner component so we can localise the onError state per-image. */
+function CdnTokenIcon({
+  symbol,
+  address,
+  size,
+  clickClass,
+  clickProps,
+}: {
+  symbol: string;
+  address: string;
+  size: number;
+  clickClass: string;
+  clickProps: Record<string, unknown>;
+}) {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return <UnknownTokenSvg size={size} symbol={symbol} clickProps={clickProps} clickClass={clickClass} />;
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={getTokenLogoUrl(address)}
+      alt={symbol}
+      width={size}
+      height={size}
+      className={`shrink-0 rounded-full ${clickClass}`}
+      onError={() => setFailed(true)}
+      {...(clickProps as React.HTMLAttributes<HTMLImageElement>)}
+    />
   );
 }

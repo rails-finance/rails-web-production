@@ -10,6 +10,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
+export type SimSliderGradient = "health" | "risk";
+
 /**
  * Move focus to the next/previous editable simulator input (marked
  * `data-sim-focus`) relative to `current`. Used when committing a value with
@@ -78,6 +80,19 @@ export function useSimTabRouting() {
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, []);
+}
+
+export function SimSlider(_props: {
+  value: number;
+  onChange: (v: number) => void;
+  min: number;
+  max: number;
+  step: number;
+  gradient?: SimSliderGradient;
+}) {
+  // Temporarily hidden across all simulator cards. Edit-via-number / delta-arrow
+  // controls remain in the row header, so amount changes still flow through.
+  return null;
 }
 
 export function EditableNumber({

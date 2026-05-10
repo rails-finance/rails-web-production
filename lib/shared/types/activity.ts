@@ -19,4 +19,4 @@ export type {
   OtherContext,
 } from "./event-shape";
 
-export { isLiquityEvent } from "./event-shape";
+export { isLiquityEvent, isAaveV4Event } from "./event-shape";
