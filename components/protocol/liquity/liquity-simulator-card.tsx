@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import type { SpineTokenRow } from "@/components/shared/spine-column";
 import { simulateTrove } from "@/lib/liquity/utils/simulate";
+import { computeDebtInFront } from "@/lib/liquity/debt-in-front";
 import { useTroveSimulator } from "@/lib/liquity/use-simulator";
 import { usePreferences } from "@/lib/shared/preferences-context";
 import { formatRatio, ratioLabel, useLiquityRatioColorClass } from "@/lib/shared/ratio-format";
@@ -162,6 +163,8 @@ export function LiquitySimulatorCard({ troveId, current, currentPrice, avatar, o
   // Liquity V2 charges a minimum of (1 week) * annualRate on any debt increase.
   const upfrontFee = debtDelta > 0 ? (debtDelta * (simRatePct / 100) * 7) / 365 : 0;
 
+  const debtInFront = useMemo(() => computeDebtInFront(simRatePct / 100), [simRatePct]);
+
   const chips: SimulatorActionChip[] = [];
   if (hasCollChange) {
     chips.push({
@@ -311,6 +314,26 @@ export function LiquitySimulatorCard({ troveId, current, currentPrice, avatar, o
           )}
         </StateMetric>
       </div>
+
+      <p className="mt-3 text-xs text-rb-500 leading-relaxed">
+        {debtInFront.debt > 0 ? (
+          <>
+            Redemptions take from the lowest interest rate first —{" "}
+            <span className="font-bold text-foreground tabular-nums">{formatUsd(debtInFront.debt)}</span>{" "}
+            of {current.stablecoinSymbol} across{" "}
+            <span className="tabular-nums">{debtInFront.branchesWithDebt}</span> branch
+            {debtInFront.branchesWithDebt === 1 ? "" : "es"} sits below your{" "}
+            <span className="font-bold text-foreground tabular-nums">{simRatePct.toFixed(1)}%</span>{" "}
+            rate and would be redeemed before you.
+          </>
+        ) : (
+          <>
+            Redemptions take from the lowest interest rate first — at{" "}
+            <span className="font-bold text-foreground tabular-nums">{simRatePct.toFixed(1)}%</span>{" "}
+            you sit at the front of the queue, so any redemption hits you first.
+          </>
+        )}
+      </p>
     </SimulatorCardShell>
   );
 }
