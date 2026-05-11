@@ -7,9 +7,11 @@ import { EventTime } from "@/components/shared/event-time";
 import type { AaveV4Context, AaveV4PriceSource } from "@/lib/shared/types/protocols/aave-v4";
 
 /** Render an inline USD chip for a token flow. The number is `amount × usd`;
- *  source drives the qualifier — protocol-faithful prices show no prefix,
- *  approximations are marked `≈`. Returns null when there's nothing to show
- *  (no price row in the cache, or amount = 0). */
+ *  source drives the qualifier — protocol-faithful prices (`chainlink` for
+ *  the bluechip set, `iaave-oracle` if we ever produce it) show no prefix;
+ *  stablecoin-pinned prices show `≈` to signal the approximation. Returns
+ *  null when there's nothing to show. Note that `defillama` rows are
+ *  dropped server-side and won't reach here. */
 function UsdChip({
   amount,
   usd,
@@ -23,11 +25,12 @@ function UsdChip({
 }) {
   if (!(amount > 0) || !(usd > 0)) return null;
   const value = amount * usd;
-  const approx = source !== "iaave-oracle";
+  const approx = source === "stablecoin";
   const sourceLabel =
-    source === "iaave-oracle" ? "IAaveOracle at block"
+    source === "chainlink" ? "Chainlink feed at block"
+    : source === "iaave-oracle" ? "IAaveOracle at block"
     : source === "stablecoin" ? "stablecoin (pinned to $1)"
-    : "DefiLlama at block";
+    : "approximation";
   return (
     <span
       className="inline-flex items-center text-xs text-rb-500 tabular-nums"

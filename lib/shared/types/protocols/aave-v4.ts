@@ -42,7 +42,18 @@ export interface AaveV4Context {
   debtPrice?: { usd: number; source: AaveV4PriceSource };
 }
 
-/** Provenance of an Aave V4 historic price. 'iaave-oracle' is protocol-
- *  faithful (the value the contract used); 'defillama' is CEX/DEX-aggregated
- *  (approximate); 'stablecoin' is hard-pinned to 1.0 for the known set. */
-export type AaveV4PriceSource = "iaave-oracle" | "defillama" | "stablecoin";
+/** Provenance of an Aave V4 historic price.
+ *  - `chainlink` — Chainlink USD aggregator round at the event block. Used
+ *    for the bluechip allowlist (WETH, WBTC, cbBTC, AAVE, EURC, LINK,
+ *    USDC, USDT). No `≈` prefix on the chip.
+ *  - `iaave-oracle` — protocol-faithful IAaveOracle read. No `≈`.
+ *  - `stablecoin` — hard-pinned to $1.00 for the known stable set. `≈`.
+ *  - `defillama` — DEPRECATED. The server-side transformer drops these
+ *    rows from the wire response, so the UI never sees them. The variant
+ *    stays in the union so any historical row queried directly still
+ *    parses. */
+export type AaveV4PriceSource =
+  | "chainlink"
+  | "iaave-oracle"
+  | "stablecoin"
+  | "defillama";
