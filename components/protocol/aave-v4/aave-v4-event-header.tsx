@@ -1,45 +1,16 @@
 "use client";
 
 import { TokenChipIcon } from "@/components/shared/token-chip-icon";
-import { formatNum, formatUsd } from "@/lib/shared/format-event";
+import { formatNum } from "@/lib/shared/format-event";
 import { useHeaderValueHideClass } from "@/lib/shared/header-values";
 import { EventTime } from "@/components/shared/event-time";
-import type { AaveV4Context, AaveV4PriceSource } from "@/lib/shared/types/protocols/aave-v4";
+import type { AaveV4Context } from "@/lib/shared/types/protocols/aave-v4";
 
-/** Render an inline USD chip for a token flow. The number is `amount × usd`;
- *  source drives the qualifier — protocol-faithful prices (`chainlink` for
- *  the bluechip set, `iaave-oracle` if we ever produce it) show no prefix;
- *  stablecoin-pinned prices show `≈` to signal the approximation. Returns
- *  null when there's nothing to show. Note that `defillama` rows are
- *  dropped server-side and won't reach here. */
-function UsdChip({
-  amount,
-  usd,
-  source,
-  symbol,
-}: {
-  amount: number;
-  usd: number;
-  source: AaveV4PriceSource;
-  symbol: string;
-}) {
-  if (!(amount > 0) || !(usd > 0)) return null;
-  const value = amount * usd;
-  const approx = source === "stablecoin";
-  const sourceLabel =
-    source === "chainlink" ? "Chainlink feed at block"
-    : source === "iaave-oracle" ? "IAaveOracle at block"
-    : source === "stablecoin" ? "stablecoin (pinned to $1)"
-    : "approximation";
-  return (
-    <span
-      className="inline-flex items-center text-xs text-rb-500 tabular-nums"
-      title={`${approx ? "Approx. " : ""}${formatUsd(value)} (${formatUsd(usd)} / ${symbol}, ${sourceLabel})`}
-    >
-      {approx ? "≈" : ""}{formatUsd(value)}
-    </span>
-  );
-}
+// USD value lives in the expanded detail (next to the after-balance and as
+// a single asset-price pill in the footer), not in the header. Mirrors the
+// Liquity V2 card structure — the header stays as "action · amount · icon"
+// and the dollar number surfaces alongside the state transition where the
+// context (before, after, ratio) explains what the value actually represents.
 
 type OperationStyle = { label: string; color: string; bg: string; badge: boolean };
 
@@ -86,14 +57,6 @@ export function AaveV4EventHeader({ ctx, timestamp }: AaveV4EventHeaderProps) {
           <span className="inline-flex items-center gap-1.5 text-sm">
             <span className={`font-bold text-foreground ${hideVal}`}>{formatNum(amount)}</span>
             <TokenChipIcon symbol={ctx.reserveSymbol ?? "???"} size={16} />
-            {ctx.price && (
-              <UsdChip
-                amount={amount}
-                usd={ctx.price.usd}
-                source={ctx.price.source}
-                symbol={ctx.reserveSymbol ?? "???"}
-              />
-            )}
           </span>
         )}
         {ctx.eventType === "collateral_toggle" && ctx.reserveSymbol && (
@@ -110,27 +73,11 @@ export function AaveV4EventHeader({ ctx, timestamp }: AaveV4EventHeaderProps) {
         {ctx.eventType === "liquidation" && ctx.debtToCover && (
           <span className="inline-flex items-center gap-1.5 text-xs text-red-400">
             <span>Debt covered: {formatNum(ctx.debtToCover)} {ctx.reserveSymbol}</span>
-            {ctx.debtPrice && (
-              <UsdChip
-                amount={parseFloat(ctx.debtToCover)}
-                usd={ctx.debtPrice.usd}
-                source={ctx.debtPrice.source}
-                symbol={ctx.reserveSymbol ?? "???"}
-              />
-            )}
           </span>
         )}
         {ctx.eventType === "liquidation" && ctx.liquidatedCollateralAmount && ctx.collateralSymbol && (
           <span className="inline-flex items-center gap-1.5 text-xs text-red-400">
             <span>Seized: {formatNum(ctx.liquidatedCollateralAmount)} {ctx.collateralSymbol}</span>
-            {ctx.collateralPrice && (
-              <UsdChip
-                amount={parseFloat(ctx.liquidatedCollateralAmount)}
-                usd={ctx.collateralPrice.usd}
-                source={ctx.collateralPrice.source}
-                symbol={ctx.collateralSymbol}
-              />
-            )}
           </span>
         )}
         {ctx.spokeName && (

@@ -19,6 +19,14 @@ function fmt(v: string | number | undefined): string {
   return n.toLocaleString(undefined, { maximumFractionDigits: 4 });
 }
 
+/** USD value formatter matching Liquity V2's detail-row style:
+ *  `< $0.01` for sub-cent, `$0.XX` for sub-dollar, integer dollars otherwise. */
+function formatUsd(value: number | undefined | null): string {
+  if (value == null || isNaN(value) || value < 0.01) return "< $0.01";
+  if (value < 1) return `$${value.toFixed(2)}`;
+  return "$" + value.toLocaleString(undefined, { maximumFractionDigits: 0 });
+}
+
 const TransitionArrow = () => <SharedTransitionArrow size="sm" />;
 
 export interface AaveV4EventDetailProps {
@@ -27,10 +35,27 @@ export interface AaveV4EventDetailProps {
   wallet: string;
 }
 
-/** Render a single position row — with before→after if this asset changed, static otherwise.
- *  Icon trails the value; ticker text only renders when the display toggle is on. */
-function PositionRow({ symbol, amount, before, isChanged }: { symbol: string; amount: string; before?: string; isChanged: boolean }) {
+/** Render a single position row — with before→after if this asset changed,
+ *  static otherwise. When a per-unit USD price is supplied (the event's
+ *  primary asset), the dollar value of the AFTER balance shows as a small
+ *  bordered chip between the number and the icon — mirrors Liquity V2's
+ *  CollateralMetric pattern (`3.0321 [ $7,062 ] ◊`). */
+function PositionRow({
+  symbol,
+  amount,
+  before,
+  isChanged,
+  priceUsd,
+}: {
+  symbol: string;
+  amount: string;
+  before?: string;
+  isChanged: boolean;
+  priceUsd?: number;
+}) {
   const { showTickerLabels } = useTimelineDisplay();
+  const afterN = parseFloat(amount) || 0;
+  const afterUsd = priceUsd != null && afterN > 0 ? afterN * priceUsd : undefined;
   return (
     <span className="inline-flex items-center gap-1.5 text-sm">
       {isChanged && before != null ? (
@@ -41,6 +66,11 @@ function PositionRow({ symbol, amount, before, isChanged }: { symbol: string; am
         </>
       ) : (
         <span className="font-bold">{fmt(amount)}</span>
+      )}
+      {afterUsd != null && (
+        <span className="text-xs flex font-bold items-center text-rb-500 border-l-2 border-r-2 ml-0.5 border-rb-500 rounded-sm px-1 py-0">
+          {formatUsd(afterUsd)}
+        </span>
       )}
       <TokenChipIcon symbol={symbol} size={16} />
       {showTickerLabels && <span className="text-xs">{symbol}</span>}
@@ -145,15 +175,27 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
               <div>
                 <div className="text-rb-500 text-xs font-semibold mb-1.5">Collateral</div>
                 <div className="flex flex-col gap-1">
-                  {supplies.map(s => (
-                    <PositionRow
-                      key={s.symbol}
-                      symbol={s.symbol}
-                      amount={s.amount}
-                      before={(isSupplySide || isLiq) && s.symbol === (isLiq ? ctx.collateralSymbol : token) ? supplyBefore : undefined}
-                      isChanged={(isSupplySide || isLiq) && s.symbol === (isLiq ? ctx.collateralSymbol : token)}
-                    />
-                  ))}
+                  {supplies.map(s => {
+                    // The changed asset is the supply side's primary asset for
+                    // supply/withdraw, or the collateral asset for liquidations.
+                    const isThisChanged = (isSupplySide || isLiq) && s.symbol === (isLiq ? ctx.collateralSymbol : token);
+                    // Surface the USD chip only on the asset we have a price for
+                    // (the event's primary asset). Liquidations use collateralPrice;
+                    // everything else uses the primary `price` field.
+                    const priceUsd = !isThisChanged ? undefined
+                      : isLiq ? ctx.collateralPrice?.usd
+                      : ctx.price?.usd;
+                    return (
+                      <PositionRow
+                        key={s.symbol}
+                        symbol={s.symbol}
+                        amount={s.amount}
+                        before={isThisChanged ? supplyBefore : undefined}
+                        isChanged={isThisChanged}
+                        priceUsd={priceUsd}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -161,15 +203,22 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
               <div>
                 <div className="text-rb-500 text-xs font-semibold mb-1.5">Debt</div>
                 <div className="flex flex-col gap-1">
-                  {debts.map(d => (
-                    <PositionRow
-                      key={d.symbol}
-                      symbol={d.symbol}
-                      amount={d.amount}
-                      before={(isDebtSide || isLiq) && d.symbol === token ? debtBefore : undefined}
-                      isChanged={(isDebtSide || isLiq) && d.symbol === token}
-                    />
-                  ))}
+                  {debts.map(d => {
+                    const isThisChanged = (isDebtSide || isLiq) && d.symbol === token;
+                    const priceUsd = !isThisChanged ? undefined
+                      : isLiq ? ctx.debtPrice?.usd
+                      : ctx.price?.usd;
+                    return (
+                      <PositionRow
+                        key={d.symbol}
+                        symbol={d.symbol}
+                        amount={d.amount}
+                        before={isThisChanged ? debtBefore : undefined}
+                        isChanged={isThisChanged}
+                        priceUsd={priceUsd}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -194,6 +243,27 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Asset-price footer pill — single per-unit price for the event's
+          primary asset, mirroring Liquity V2's `$X,XXX ◊` chip. The pill is
+          source-aware via its tooltip; the ≈ prefix on stablecoin sources is
+          carried through so the user can tell pinned-$1 apart from market. */}
+      {ctx.price && ctx.price.usd > 0 && ctx.reserveSymbol && (
+        <div className="flex items-center gap-2 px-5 py-2">
+          <span
+            className="ml-auto inline-flex items-center gap-1.5 text-xs font-bold text-rb-500 bg-rb-200/60 dark:bg-rb-800/60 px-2 py-1 rounded-md"
+            title={`${ctx.reserveSymbol} price at the time of this event (${
+              ctx.price.source === "chainlink" ? "Chainlink feed"
+              : ctx.price.source === "iaave-oracle" ? "IAaveOracle"
+              : ctx.price.source === "stablecoin" ? "stablecoin, pinned to $1"
+              : "approximation"
+            })`}
+          >
+            {ctx.price.source === "stablecoin" ? "≈" : ""}{formatUsd(ctx.price.usd)}
+            <TokenChipIcon symbol={ctx.reserveSymbol} size={14} />
+          </span>
         </div>
       )}
     </>
