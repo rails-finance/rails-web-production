@@ -24,7 +24,18 @@ import { isAaveV4Event } from "@/lib/shared/types/event-shape";
 import { AaveV4EventCard } from "@/components/protocol/aave-v4/aave-v4-event-card";
 import { AaveV4SpokeCardSelector } from "@/components/protocol/aave-v4/aave-v4-spoke-card";
 import { AaveV4SpokeRunwayStack } from "@/components/protocol/aave-v4/aave-v4-spoke-runway-stack";
-import { buildAaveV4SpokeCards } from "@/lib/aave-v4/spoke-cards";
+import { AaveV4TowerChart } from "@/components/protocol/aave-v4/aave-v4-tower-chart";
+import { AaveV4SimulatorCard } from "@/components/protocol/aave-v4/aave-v4-simulator-card";
+import { buildAaveV4SpokeCards, groupBySpoke } from "@/lib/aave-v4/spoke-cards";
+import {
+  AaveV4SimulatorProvider,
+  useAaveV4Simulator,
+  type AaveV4SimBase,
+} from "@/lib/aave-v4/use-simulator";
+import { getLiquidationThreshold, isStable } from "@/lib/aave-v4/liquidation-thresholds";
+import { simulateAaveV4Position } from "@/lib/aave-v4/utils/simulate";
+import { resolvePrice, type PriceEntry } from "@/lib/aave/prices";
+import type { ReserveStats } from "@/lib/aave-v4/spoke-cards";
 import {
   TimelineDisplayProvider,
   useTimelineDisplay,
@@ -188,6 +199,10 @@ function AaveV4WalletPageInner() {
   // entire wallet event log so closed spokes are still listed in the chooser
   // — selecting one scopes the activity timeline below to that spoke.
   const prices = usePrices();
+  const spokeGroups = useMemo(
+    () => groupBySpoke(sortedEvents, undefined, prices),
+    [sortedEvents, prices],
+  );
   const spokeCards = useMemo(
     () => buildAaveV4SpokeCards(sortedEvents, undefined, prices),
     [sortedEvents, prices],
@@ -344,10 +359,19 @@ function AaveV4WalletPageInner() {
           onSelect={(name) => setSelectedSpoke(name)}
         />
 
-        {(() => {
-          const active = spokeCards.find((c) => c.name === selectedSpoke);
-          return active ? <AaveV4SpokeRunwayStack spoke={active} /> : null;
-        })()}
+        <AaveV4SimulatorProvider activeSpokeKey={selectedSpoke ?? null}>
+          {(() => {
+            const activeGroup = selectedSpoke ? spokeGroups.find((g) => g.name === selectedSpoke) : undefined;
+            const activeCard = selectedSpoke ? spokeCards.find((c) => c.name === selectedSpoke) : undefined;
+            return activeGroup ? (
+              <AaveV4SpokeEconomicsBand
+                activeName={activeGroup.name}
+                reserves={activeGroup.result.reserves}
+                prices={prices}
+                runwayCard={activeCard}
+              />
+            ) : null;
+          })()}
 
         <TimelineDisplayProvider>
           <div className="flex items-center justify-between flex-wrap gap-2">
@@ -443,7 +467,197 @@ function AaveV4WalletPageInner() {
             </div>
           )}
         </TimelineDisplayProvider>
+        </AaveV4SimulatorProvider>
       </div>
     </main>
   );
+}
+
+// ── Spoke economics band ─────────────────────────────────────────────────────
+// Tower chart + runway stack + simulator card, grouped inside a single
+// dashed-border container when the simulator is open for this spoke. Matches
+// rails-explorer's `aave-economics.tsx` layout (lines ~1105-1163).
+function AaveV4SpokeEconomicsBand({
+  activeName,
+  reserves,
+  prices,
+  runwayCard,
+}: {
+  activeName: string;
+  reserves: ReserveStats[];
+  prices: Record<string, PriceEntry | number>;
+  runwayCard: import("@/lib/aave-v4/spoke-cards").AaveSpokeCardInfo | undefined;
+}) {
+  const simulator = useAaveV4Simulator();
+
+  // SimBase snapshot from the active spoke's reserves — opens the simulator
+  // with the current on-chain numbers.
+  const simBase: AaveV4SimBase = useMemo(() => ({
+    supplies: reserves
+      .map((r) => {
+        const netSupply = Math.max(0, r.supplied - r.withdrawn);
+        if (netSupply <= 0.0001) return null;
+        const price = resolvePrice(r.symbol, prices) ?? 1;
+        const lt = getLiquidationThreshold(activeName, r.symbol);
+        const collateralEnabled = r.collateralEnabled ?? true;
+        return { symbol: r.symbol, amount: netSupply, price, lt, collateralEnabled };
+      })
+      .filter(Boolean) as AaveV4SimBase["supplies"],
+    debts: reserves
+      .map((r) => {
+        const netDebt = Math.max(0, r.borrowed - r.repaid);
+        if (netDebt <= 0.0001) return null;
+        const price = resolvePrice(r.symbol, prices) ?? 1;
+        return { symbol: r.symbol, amount: netDebt, price };
+      })
+      .filter(Boolean) as AaveV4SimBase["debts"],
+  }), [reserves, prices, activeName]);
+
+  const canSimulate = simBase.supplies.length > 0 || simBase.debts.length > 0;
+  const isSimulated = !!simulator && simulator.openSpokeKey === activeName;
+  const simEdits = simulator?.edits;
+  const simMatches = !!simEdits && simEdits.spokeKey === activeName;
+  const simActive = isSimulated && simMatches;
+
+  // Overlay reserves + prices with sim deltas when the simulator is driving
+  // this spoke — same fold as rails-explorer's aave-economics.tsx so the
+  // chart reflects the slider state.
+  const [chartReserves, chartPrices] = useMemo(() => {
+    if (!simActive || !simEdits) return [reserves, prices] as const;
+
+    const supplyBySym = new Map(simEdits.sim.supplies.map((s) => [s.symbol, s]));
+    const debtBySym = new Map(simEdits.sim.debts.map((d) => [d.symbol, d]));
+    const folded = reserves.map((r) => {
+      const nextSupply = supplyBySym.get(r.symbol);
+      const nextDebt = debtBySym.get(r.symbol);
+      const currentNetSupply = Math.max(0, r.supplied - r.withdrawn);
+      const currentNetDebt = Math.max(0, r.borrowed - r.repaid);
+      let supplied = r.supplied;
+      let withdrawn = r.withdrawn;
+      let borrowed = r.borrowed;
+      let repaid = r.repaid;
+      if (nextSupply) {
+        const delta = nextSupply.amount - currentNetSupply;
+        if (delta >= 0) supplied = r.supplied + delta;
+        else withdrawn = r.withdrawn - delta;
+      }
+      if (nextDebt) {
+        const delta = nextDebt.amount - currentNetDebt;
+        if (delta >= 0) borrowed = r.borrowed + delta;
+        else repaid = r.repaid - delta;
+      }
+      return { ...r, supplied, withdrawn, borrowed, repaid };
+    });
+
+    const bySym = new Map(folded.map((r) => [r.symbol, r]));
+    for (const a of simEdits.sim.addedSupplies) {
+      const existing = bySym.get(a.symbol);
+      if (existing) {
+        existing.supplied += a.amount;
+        existing.collateralEnabled = a.collateralEnabled;
+      } else {
+        const synthetic: ReserveStats = {
+          symbol: a.symbol,
+          supplied: a.amount, withdrawn: 0, borrowed: 0, repaid: 0,
+          liquidatedDebt: 0, liquidatedCollateral: 0, liquidationCount: 0,
+          eventCount: 0,
+          collateralEnabled: a.collateralEnabled,
+          debtSeries: [], peakDebt: 0, peakDebtTimestamp: 0, peakSupply: a.amount, flowEvents: [],
+        };
+        folded.push(synthetic);
+        bySym.set(a.symbol, synthetic);
+      }
+    }
+    for (const d of simEdits.sim.addedDebts) {
+      const existing = bySym.get(d.symbol);
+      if (existing) {
+        existing.borrowed += d.amount;
+      } else {
+        const synthetic: ReserveStats = {
+          symbol: d.symbol,
+          supplied: 0, withdrawn: 0, borrowed: d.amount, repaid: 0,
+          liquidatedDebt: 0, liquidatedCollateral: 0, liquidationCount: 0,
+          eventCount: 0,
+          debtSeries: [], peakDebt: 0, peakDebtTimestamp: 0, peakSupply: 0, flowEvents: [],
+        };
+        folded.push(synthetic);
+        bySym.set(d.symbol, synthetic);
+      }
+    }
+
+    // Overlay sim prices onto the address-keyed prices map.
+    const overlay: Record<string, PriceEntry | number> = { ...(prices ?? {}) };
+    for (const s of simEdits.sim.supplies) {
+      const addr = TOKEN_ADDR[s.symbol];
+      if (addr && s.price > 0) overlay[addr] = s.price;
+    }
+    for (const a of simEdits.sim.addedSupplies) {
+      const addr = TOKEN_ADDR[a.symbol];
+      if (addr && a.price > 0) overlay[addr] = a.price;
+    }
+    for (const d of simEdits.sim.addedDebts) {
+      const addr = TOKEN_ADDR[d.symbol];
+      if (addr && d.price > 0) overlay[addr] = d.price;
+    }
+
+    return [folded, overlay] as const;
+  }, [reserves, prices, simActive, simEdits]);
+
+  // Surplus symbols at base state — collateral whose individual liquidation
+  // can't trigger a basket liq with the others holding. Drives the tower-segment
+  // fade. Non-stable only — stables are exempt by definition.
+  const [surplusSymbols, hideSurplus, setHideSurplus] = useSurplusState(simBase);
+
+  if (!simulator) return null;
+
+  return (
+    <div className={`rounded-lg p-3 border transition-colors space-y-3 ${
+      simActive
+        ? "bg-blue-500/5 border-dashed border-rb-500"
+        : "border-transparent"
+    }`}>
+      <AaveV4TowerChart
+        reserves={chartReserves}
+        prices={chartPrices}
+        simulator={canSimulate ? {
+          isActive: isSimulated,
+          enter: () => { if (!isSimulated) simulator.toggle(activeName); },
+          exit: () => { if (isSimulated) simulator.close(); },
+        } : undefined}
+        surplusSymbols={surplusSymbols}
+        hideSurplus={hideSurplus}
+        onToggleHideSurplus={() => setHideSurplus((v) => !v)}
+      />
+
+      {runwayCard && <AaveV4SpokeRunwayStack spoke={runwayCard} />}
+
+      {isSimulated && canSimulate && (
+        <AaveV4SimulatorCard
+          spokeKey={activeName}
+          base={simBase}
+          onClose={() => simulator.close()}
+        />
+      )}
+    </div>
+  );
+}
+
+// Surplus-collateral state — recomputed from base whenever the spoke changes.
+// Pulled out so the band component reads cleanly; the math is identical to
+// rails-explorer's inline computation in aave-economics.tsx.
+function useSurplusState(simBase: AaveV4SimBase): [Set<string>, boolean, React.Dispatch<React.SetStateAction<boolean>>] {
+  const [hideSurplus, setHideSurplus] = useState(false);
+  const surplusSymbols = useMemo(() => {
+    const out = new Set<string>();
+    if (simBase.supplies.length > 0 && simBase.debts.length > 0) {
+      const axis = simulateAaveV4Position({ supplies: simBase.supplies, debts: simBase.debts });
+      for (let i = 0; i < simBase.supplies.length; i++) {
+        if (axis.assetLiqPrices[i]?.liqPrice === 0 && !isStable(simBase.supplies[i].symbol)) {
+          out.add(simBase.supplies[i].symbol);
+        }
+      }
+    }
+    return out;
+  }, [simBase]);
+  return [surplusSymbols, hideSurplus, setHideSurplus];
 }
