@@ -199,6 +199,18 @@ export type AaveV4EventType =
   | "liquidation"
   | "collateral_toggle";
 
+/** One row of the snapshot table — a single (asset, balance) tuple held in
+ *  this spoke at the event block, with an optional historic USD price. The
+ *  price is keyed by (asset_address, block_number) and carries the same
+ *  provenance enum as the primary-asset `ctx.price` field. Renderers should
+ *  drive the USD chip off `item.price`, falling back to "no chip" when
+ *  absent (analog to how the primary-asset chip behaves). */
+export interface AaveV4SnapshotItem {
+  symbol: string;
+  amount: string;
+  price?: { usd: number; source: AaveV4PriceSource };
+}
+
 /** Mirror of rails-explorer's lib/shared/types/protocols/aave-v4.ts.
  *  Numeric fields ship as strings to preserve precision across the wire. */
 export interface AaveV4Context {
@@ -229,13 +241,15 @@ export interface AaveV4Context {
   debtBefore?: string;
   /** Running debt balance after this event (human-readable). */
   debtAfter?: string;
-  /** All non-zero supply positions in this spoke after the event. Items may
-   *  carry an optional `price` (USD value at event block) when the asset
-   *  is in the categorical-pricing allowlist. See lib/shared/types/protocols/aave-v4.ts
-   *  for the canonical AaveV4SnapshotItem shape. */
-  allSupplies?: { symbol: string; amount: string; price?: { usd: number; source: string } }[];
-  /** All non-zero debt positions in this spoke after the event. */
-  allDebts?: { symbol: string; amount: string; price?: { usd: number; source: string } }[];
+  /** All non-zero supply positions in this spoke after the event. Each item
+   *  optionally carries the asset's USD price at the event block — populated
+   *  when an `aave_v4_historic_prices` row exists for (asset_address,
+   *  block_number) and is in the categorical-allowlist (chainlink /
+   *  iaave-oracle / stablecoin). `defillama` rows are wire-stripped. */
+  allSupplies?: AaveV4SnapshotItem[];
+  /** All non-zero debt positions in this spoke after the event. Same
+   *  per-item price plumbing as `allSupplies`. */
+  allDebts?: AaveV4SnapshotItem[];
   /** Same-tx supply + collateral_toggle merge — drives the
    *  "Supply & Enable Collateral" card. */
   alsoToggledCollateral?: boolean;
@@ -243,7 +257,40 @@ export interface AaveV4Context {
   supplyAPR?: string;
   /** Effective borrow APR derived from share/amount index changes. */
   borrowAPR?: string;
+  /** USD price of the event's primary asset at the event's block. Populated
+   *  on supply/withdraw/borrow/repay/collateral_toggle. Liquidation rows use
+   *  `collateralPrice` + `debtPrice` instead. Number is the float-precision
+   *  USD value (e.g. 2876.57); source indicates provenance. */
+  price?: { usd: number; source: AaveV4PriceSource };
+  /** Liquidation rows only — USD price of the collateral asset at event block. */
+  collateralPrice?: { usd: number; source: AaveV4PriceSource };
+  /** Liquidation rows only — USD price of the debt asset at event block. */
+  debtPrice?: { usd: number; source: AaveV4PriceSource };
 }
+
+/** Provenance of an Aave V4 historic price. Drives the UI's
+ *  approximate-vs-protocol-faithful chip.
+ *
+ *  Categorical model (current):
+ *    - `chainlink` — Chainlink USD aggregator round at the event block.
+ *      Used for the bluechip allowlist (WETH, WBTC, cbBTC, AAVE, EURC,
+ *      LINK, USDC, USDT). Same value Aave's oracle returned within
+ *      nominal accuracy; no `≈` prefix on the chip.
+ *    - `iaave-oracle` — protocol-faithful read from IAaveOracle. Reserved
+ *      for if/when a working V4 forward writer lands; not currently
+ *      producing rows. No `≈` prefix.
+ *    - `stablecoin` — hard-pinned to $1.00 for the known stable set.
+ *      Approximate by definition; `≈` prefix.
+ *    - `defillama` — DEPRECATED. DefiLlama-aggregated CEX/DEX price.
+ *      The transformer drops these rows from the wire response so the UI
+ *      never sees them; the source remains in the enum so historical
+ *      rows in `aave_v4_historic_prices` still parse if you query them
+ *      directly. */
+export type AaveV4PriceSource =
+  | "chainlink"
+  | "iaave-oracle"
+  | "stablecoin"
+  | "defillama";
 
 // ───────────────────────── Generic / unknown ─────────────────────────
 

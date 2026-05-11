@@ -41,3 +41,8 @@ public/workbox-*.js
 
 # Markdown files (optional - remove if you want to format markdown)
 *.md
+
+# Vendored sync target — must stay byte-for-byte in sync with the canonical
+# declaration in rails-server-mig/api/src/types/event-shape.ts (see file
+# header). Local prettier rules would diverge it from upstream.
+lib/shared/types/event-shape.ts
