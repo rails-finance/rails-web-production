@@ -18,11 +18,6 @@ export type PositionedSegment = TowerSegment & {
   heightPct: number;
 };
 
-export type SwatchHalf = {
-  className?: string;
-  style?: CSSProperties;
-};
-
 export type BreakdownRow = {
   sign: string;
   label: string;
@@ -33,13 +28,6 @@ export type BreakdownRow = {
   hidden?: boolean;
   swatchClass?: string;
   swatchStyle?: CSSProperties;
-  /** Vertically split swatch (top above bottom). Used to fold an asset's
-   *  hatched repaid/withdrawn history and its solid in-protocol contribution
-   *  onto a single legend row — the bar's stack order maps to swatch halves. */
-  swatchSplit?: { top: SwatchHalf; bottom: SwatchHalf };
-  /** Optional muted amount rendered before `amount` in the same cell — used
-   *  on merged rows to show the removed value alongside the added value. */
-  secondaryAmount?: string;
   indent?: boolean;
   /** Optional React node rendered after the label (e.g. token icon) */
   icon?: React.ReactNode;
@@ -260,18 +248,7 @@ export function BreakdownTable({ rows }: { rows: BreakdownRow[] }) {
             <tr key={i} className={rowText}>
               <td className={`py-1 text-right pr-0.5 tabular-nums ${cellBorder}`}>{row.sign}</td>
               <td className={`py-1 pr-1 ${cellBorder}`}>
-                {row.swatchSplit ? (
-                  <span className="inline-flex flex-col w-2 h-2 rounded-xs overflow-hidden align-middle">
-                    <span
-                      className={`flex-1 ${row.swatchSplit.top.className ?? ''}`}
-                      style={row.swatchSplit.top.style}
-                    />
-                    <span
-                      className={`flex-1 ${row.swatchSplit.bottom.className ?? ''}`}
-                      style={row.swatchSplit.bottom.style}
-                    />
-                  </span>
-                ) : (row.swatchClass || row.swatchStyle) ? (
+                {(row.swatchClass || row.swatchStyle) ? (
                   <span
                     className={`inline-block w-2 h-2 rounded-xs overflow-hidden ${row.swatchClass ?? ''}`}
                     style={row.swatchStyle}
@@ -280,7 +257,6 @@ export function BreakdownTable({ rows }: { rows: BreakdownRow[] }) {
               </td>
               <td className={`py-1 whitespace-nowrap overflow-hidden text-ellipsis ${cellBorder}`}>{row.label}{row.icon && <span className="inline-flex ml-1 align-middle">{row.icon}</span>}</td>
               <td className={`py-1 pl-3 text-right tabular-nums whitespace-nowrap ${cellBorder}`}>
-                {row.secondaryAmount && <span className="font-normal text-rb-500 mr-1.5">{row.secondaryAmount}</span>}
                 {row.amount}
                 {row.usdHint && <span className="font-normal ml-1">{row.usdHint}</span>}
               </td>

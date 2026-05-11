@@ -243,19 +243,6 @@ export function AaveV4TowerChart({
       ? { heightPct: (totalBorrowedUsd / towerMax) * CHART_HEIGHT, color: DEBT_GREEN_FADED }
       : undefined;
 
-  // Fold per-asset hatched-history rows into the matching solid in-protocol row.
-  // Orphans — withdrawn-only / repaid-only assets with no current position —
-  // keep their own hatched row above. The bar's hatched-on-solid stack maps to
-  // the merged row's top-hatched / bottom-solid split swatch.
-  const withdrawnBySymbol = new Map(withdrawnAssets.map((w) => [w.symbol, w]));
-  const repaidBySymbol = new Map(repaidAssets.map((r) => [r.symbol, r]));
-  const orphanWithdrawn = withdrawnAssets.filter(
-    (w) => !supplyAssets.some((s) => s.symbol === w.symbol),
-  );
-  const orphanRepaid = repaidAssets.filter(
-    (rA) => !debtAssets.some((d) => d.symbol === rA.symbol),
-  );
-
   const collRows: BreakdownRow[] = [
     ...(!isLiveView
       ? [
@@ -268,7 +255,7 @@ export function AaveV4TowerChart({
         ]
       : []),
     ...(!isLiveView
-      ? orphanWithdrawn.map((w) => ({
+      ? withdrawnAssets.map((w) => ({
           sign: "−",
           label: w.symbol,
           amount: fmt(w.amount),
@@ -277,32 +264,17 @@ export function AaveV4TowerChart({
           icon: <TokenChipIcon symbol={w.symbol} size={14} filterable={false} />,
         })) as BreakdownRow[]
       : []),
-    ...[...supplyAssets].reverse().map((r) => {
-      const solidClass = isSurplus(r.symbol) ? "bg-blue-500/60" : "bg-blue-500";
-      const withdrawn = !isLiveView ? withdrawnBySymbol.get(r.symbol) : undefined;
-      if (withdrawn) {
-        return {
+    ...[...supplyAssets].reverse().map(
+      (r) =>
+        ({
           sign: "",
           label: r.symbol,
           amount: fmt(r.netSupply),
-          secondaryAmount: `−${fmt(withdrawn.amount)}`,
           usdHint: hideUsd ? undefined : fmtUsdCompact(r.netSupplyUsd),
-          swatchSplit: {
-            top: { style: WITHDRAWN_PATTERN },
-            bottom: { className: solidClass },
-          },
+          swatchClass: "bg-blue-500",
           icon: <TokenChipIcon symbol={r.symbol} size={14} filterable={false} />,
-        } as BreakdownRow;
-      }
-      return {
-        sign: "",
-        label: r.symbol,
-        amount: fmt(r.netSupply),
-        usdHint: hideUsd ? undefined : fmtUsdCompact(r.netSupplyUsd),
-        swatchClass: solidClass,
-        icon: <TokenChipIcon symbol={r.symbol} size={14} filterable={false} />,
-      } as BreakdownRow;
-    }),
+        }) as BreakdownRow,
+    ),
     {
       sign: "",
       label: isLiveView ? "Total" : "In Protocol",
@@ -323,7 +295,7 @@ export function AaveV4TowerChart({
         ]
       : []),
     ...(!isLiveView
-      ? orphanRepaid.map((rA) => ({
+      ? repaidAssets.map((rA) => ({
           sign: "−",
           label: rA.symbol,
           amount: fmt(rA.amount),
@@ -332,31 +304,17 @@ export function AaveV4TowerChart({
           icon: <TokenChipIcon symbol={rA.symbol} size={14} filterable={false} />,
         })) as BreakdownRow[]
       : []),
-    ...[...debtAssets].reverse().map((r) => {
-      const repaid = !isLiveView ? repaidBySymbol.get(r.symbol) : undefined;
-      if (repaid) {
-        return {
+    ...[...debtAssets].reverse().map(
+      (r) =>
+        ({
           sign: "",
           label: r.symbol,
           amount: fmt(r.netDebt),
-          secondaryAmount: `−${fmt(repaid.amount)}`,
           usdHint: hideUsd ? undefined : fmtUsdCompact(r.netDebtUsd),
-          swatchSplit: {
-            top: { style: REPAID_PATTERN },
-            bottom: { className: "bg-emerald-400" },
-          },
+          swatchClass: "bg-emerald-400",
           icon: <TokenChipIcon symbol={r.symbol} size={14} filterable={false} />,
-        } as BreakdownRow;
-      }
-      return {
-        sign: "",
-        label: r.symbol,
-        amount: fmt(r.netDebt),
-        usdHint: hideUsd ? undefined : fmtUsdCompact(r.netDebtUsd),
-        swatchClass: "bg-emerald-400",
-        icon: <TokenChipIcon symbol={r.symbol} size={14} filterable={false} />,
-      } as BreakdownRow;
-    }),
+        }) as BreakdownRow,
+    ),
     {
       sign: "",
       label: "Outstanding",
