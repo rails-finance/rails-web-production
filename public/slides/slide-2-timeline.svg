@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg width="600" height="450" viewBox="0 0 600 450" xmlns="http://www.w3.org/2000/svg" style="overflow:hidden;  font-family:Inter, ui-sans-serif, system-ui, sans-serif;">
+  <style>
+
+@keyframes slFadeIn { from { opacity:0; } to { opacity:1; } }
+@keyframes slDropIn { from { opacity:0; transform:translateY(-12px); } to { opacity:1; transform:translateY(0); } }
+@keyframes slDropInBig { from { opacity:0; transform:translateY(-18px) scale(1.02); } to { opacity:1; transform:translateY(0) scale(1); } }
+@keyframes slDropInBar { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+@keyframes slSlideRight { from { opacity:0; transform:translateX(30px); } to { opacity:1; transform:translateX(0); } }
+@keyframes slRowDrop { from { opacity:0; transform:translateY(-30px) scale(1.02); } to { opacity:1; transform:translateY(0) scale(1); } }
+@keyframes slSpineGrow { from { opacity:0; transform:scaleY(0); } to { opacity:1; transform:scaleY(1); } }
+
+  </style>
+  <g transform="matrix(1, 0, 0, 1, 30, 0)">
+    <style>
+          @keyframes slPanDown { from { transform: translateY(-40px); } to { transform: translateY(0); } }
+        </style>
+    <g style="animation:slPanDown 1840ms cubic-bezier(0.16, 1, 0.3, 1) both">
+      <g style="animation:slDropIn 0.8s cubic-bezier(0.16,1,0.3,1) both;animation-delay:840ms">
+        <text x="-6" y="28" font-size="18" font-weight="700" fill="var(--tw-white)" style="white-space: pre; font-size: 18px;">Timeline</text>
+        <g transform="matrix(1, 0, 0, 1, 92, 16)">
+          <circle cx="7" cy="7" r="7" fill="none" stroke="var(--rb-text-500)" stroke-width="1.5"/>
+          <polyline points="7,4 7,7 9,8.2" fill="none" stroke="var(--rb-text-500)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+        <text x="110" y="27" font-size="12" fill="var(--rb-text-500)" style="white-space: pre; font-size: 12px;">2 mins ago</text>
+      </g>
+      <g>
+        <g style="animation:slSpineGrow 0.6s cubic-bezier(0.16,1,0.3,1) both;animation-delay:600ms;transform-origin:bottom center">
+          <line x1="80" y1="82" x2="80" y2="134" stroke="var(--rb-text-500)" stroke-width="1" stroke-dasharray="none"/>
+        </g>
+        <g style="animation:slRowDrop 0.5s cubic-bezier(0.16,1,0.3,1) both;animation-delay:600ms">
+          <g style="animation:slDropInBig 1.0s cubic-bezier(0.16,1,0.3,1) both;animation-delay:600ms">
+            <g transform="matrix(0, -1, 1, 0, 53, 76)">
+              <path d="M3.5 6.5l3.5-3.5 3.5 3.5" fill="none" stroke="var(--rb-text-500)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <line x1="7" y1="13" x2="7" y2="3" fill="none" stroke="var(--rb-text-500)" stroke-width="1.5" stroke-linecap="round"/>
+            </g>
+            <image href="/icons/tokens/weth.png" x="68" y="56" width="24" height="24" clip-path="circle(12px at 12px 12px)"/>
+            <text x="52" y="74" text-anchor="end" font-size="13" font-weight="700" fill="var(--rb-text-500)" style="font-variant-numeric: tabular-nums; white-space: pre;">15</text>
+          </g>
+        </g>
+        <g style="animation:slSlideRight 0.7s cubic-bezier(0.16,1,0.3,1) both;animation-delay:600ms">
+          <text x="170" y="68" font-size="14" font-weight="700" fill="var(--rb-text-500)" style="white-space: pre; font-size: 14px;">Withdraw</text>
+          <image href="/icons/tokens/weth.png" x="242" y="55" width="14" height="14" clip-path="circle(7px at 7px 7px)"/>
+          <text x="170" y="89" font-size="12" fill="var(--rb-text-500)" style="white-space: pre; font-size: 12px;">26 Mar 2026 at 02:56</text>
+          <text x="420" y="68" text-anchor="end" font-size="12" fill="var(--rb-text-500)" style="white-space: pre; font-size: 12px;">6</text>
+        </g>
+      </g>
+      <g>
+        <g style="animation:slSpineGrow 0.6s cubic-bezier(0.16,1,0.3,1) both;animation-delay:480ms;transform-origin:bottom center">
+          <line x1="80" y1="152" x2="80" y2="204" stroke="var(--rb-text-500)" stroke-width="1" stroke-dasharray="none"/>
+        </g>
+        <g style="animation:slRowDrop 0.5s cubic-bezier(0.16,1,0.3,1) both;animation-delay:480ms">
+          <g style="animation:slDropInBig 1.0s cubic-bezier(0.16,1,0.3,1) both;animation-delay:480ms">
+            <image href="/icons/tokens/weth.png" x="68" y="126" width="24" height="24" clip-path="circle(12px at 12px 12px)"/>
+            <g transform="matrix(0, 1, -1, 0, 111, 133)">
+              <path d="M3.5 6.5l3.5-3.5 3.5 3.5" fill="none" stroke="var(--rb-text-500)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <line x1="7" y1="13" x2="7" y2="3" fill="none" stroke="var(--rb-text-500)" stroke-width="1.5" stroke-linecap="round"/>
+            </g>
+            <text x="114" y="144" font-size="13" font-weight="700" fill="var(--rb-text-500)" style="font-variant-numeric: tabular-nums; white-space: pre; font-size: 13px;">80</text>
+          </g>
+        </g>
+        <g style="animation:slSlideRight 0.7s cubic-bezier(0.16,1,0.3,1) both;animation-delay:480ms">
+          <text x="170" y="138" font-size="14" font-weight="700" fill="var(--rb-text-500)" style="white-space: pre; font-size: 14px;">Add</text>
+          <image href="/icons/tokens/weth.png" x="199.5" y="125" width="14" height="14" clip-path="circle(7px at 7px 7px)"/>
+          <text x="170" y="159" font-size="12" fill="var(--rb-text-500)" style="white-space: pre; font-size: 12px;">5 Feb 2026 at 19:55</text>
+          <text x="420" y="138" text-anchor="end" font-size="12" fill="var(--rb-text-500)" style="white-space: pre; font-size: 12px;">5</text>
+        </g>
+      </g>
+      <g>
+        <g style="animation:slSpineGrow 0.6s cubic-bezier(0.16,1,0.3,1) both;animation-delay:360ms;transform-origin:bottom center">
+          <line x1="80" y1="222" x2="80" y2="274" stroke="var(--rb-text-500)" stroke-width="1" stroke-dasharray="none"/>
+        </g>
+        <g style="animation:slRowDrop 0.5s cubic-bezier(0.16,1,0.3,1) both;animation-delay:360ms">
+          <g style="animation:slDropInBig 1.0s cubic-bezier(0.16,1,0.3,1) both;animation-delay:360ms">
+            <g transform="matrix(0, -1, 1, 0, 55, 216)">
+              <path d="M3.5 6.5l3.5-3.5 3.5 3.5" fill="none" stroke="var(--rb-text-500)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <line x1="7" y1="13" x2="7" y2="3" fill="none" stroke="var(--rb-text-500)" stroke-width="1.5" stroke-linecap="round"/>
+            </g>
+            <image href="/icons/tokens/bold.png" x="68" y="196" width="24" height="24" clip-path="circle(12px at 12px 12px)"/>
+            <text x="52" y="214" text-anchor="end" font-size="13" font-weight="700" fill="var(--rb-text-500)" style="font-variant-numeric: tabular-nums; white-space: pre;">25,000</text>
+          </g>
+        </g>
+        <g style="animation:slSlideRight 0.7s cubic-bezier(0.16,1,0.3,1) both;animation-delay:360ms">
+          <text x="170" y="208" font-size="14" font-weight="700" fill="var(--rb-text-500)" style="white-space: pre; font-size: 14px;">Borrow</text>
+          <image href="/icons/tokens/bold.png" x="225" y="195" width="14" height="14" clip-path="circle(7px at 7px 7px)"/>
+          <text x="170" y="229" font-size="12" fill="var(--rb-text-500)" style="white-space: pre; font-size: 12px;">12 Sep 2025 at 11:46</text>
+          <text x="420" y="208" text-anchor="end" font-size="12" fill="var(--rb-text-500)" style="white-space: pre; font-size: 12px;">4</text>
+        </g>
+      </g>
+      <g>
+        <g style="animation: 0.6s cubic-bezier(0.16, 1, 0.3, 1) 240ms 1 normal both running slSpineGrow; transform-origin: center bottom;">
+          <line x1="80" y1="292" x2="80" y2="327" stroke="var(--rb-text-500)" stroke-width="1" stroke-dasharray="none"/>
+        </g>
+        <g style="animation:slRowDrop 0.5s cubic-bezier(0.16,1,0.3,1) both;animation-delay:240ms">
+          <g style="animation:slDropInBig 1.0s cubic-bezier(0.16,1,0.3,1) both;animation-delay:240ms">
+            <g transform="matrix(0, -1, 1, 0, 51, 286)">
+              <path d="M3.5 6.5l3.5-3.5 3.5 3.5" fill="none" stroke="var(--rb-text-500)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <line x1="7" y1="13" x2="7" y2="3" fill="none" stroke="var(--rb-text-500)" stroke-width="1.5" stroke-linecap="round"/>
+            </g>
+            <image href="/icons/tokens/weth.png" x="68" y="266" width="24" height="24" clip-path="circle(12px at 12px 12px)"/>
+            <text x="49" y="284" text-anchor="end" font-size="13" font-weight="700" fill="var(--rb-text-500)" style="font-variant-numeric: tabular-nums; white-space: pre; font-size: 13px;">125</text>
+          </g>
+        </g>
+        <g style="animation:slSlideRight 0.7s cubic-bezier(0.16,1,0.3,1) both;animation-delay:240ms">
+          <text x="170" y="278" font-size="14" font-weight="700" fill="var(--rb-text-500)" style="white-space: pre; font-size: 14px;">Withdraw</text>
+          <image href="/icons/tokens/weth.png" x="242" y="265" width="14" height="14" clip-path="circle(7px at 7px 7px)"/>
+          <text x="170" y="299" font-size="12" fill="var(--rb-text-500)" style="white-space: pre; font-size: 12px;">1 Sep 2025 at 10:01</text>
+          <text x="420" y="278" text-anchor="end" font-size="12" fill="var(--rb-text-500)" style="white-space: pre; font-size: 12px;">3</text>
+        </g>
+      </g>
+      <g>
+        <g style="animation:slSpineGrow 0.6s cubic-bezier(0.16,1,0.3,1) both;animation-delay:120ms;transform-origin:bottom center">
+          <line x1="80" y1="359" x2="80" y2="396" stroke="var(--rb-text-500)" stroke-width="1" stroke-dasharray="4 3"/>
+        </g>
+        <g style="animation:slRowDrop 0.5s cubic-bezier(0.16,1,0.3,1) both;animation-delay:120ms">
+          <g style="animation:slDropInBig 1.0s cubic-bezier(0.16,1,0.3,1) both;animation-delay:120ms">
+            <g transform="matrix(1, 0, 0, 1, 62, 340)">
+              <line x1="5" y1="2" x2="5" y2="8" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round"/>
+              <line x1="2" y1="5" x2="8" y2="5" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round"/>
+            </g>
+            <g transform="matrix(1, 0, 0, 1, 70, 334)">
+              <path d="M13.5 17.5v-1.5a3 3 0 0 0-3-3H5a3 3 0 0 0-3 3v1.5" fill="none" stroke="var(--rb-text-500)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" transform="scale(0.85)"/>
+              <circle cx="6.6" cy="5.1" r="2.9" fill="none" stroke="var(--rb-text-500)" stroke-width="1.5" transform="scale(0.85)"/>
+              <path d="M18.7 17.5v-1.5a3 3 0 0 0-2.5-3" fill="none" stroke="var(--rb-text-500)" stroke-width="1.5" stroke-linecap="round" transform="scale(0.85)"/>
+              <circle cx="13.6" cy="5.1" r="2.9" fill="none" stroke="var(--rb-text-500)" stroke-width="1.5" transform="scale(0.85)"/>
+            </g>
+          </g>
+        </g>
+        <g style="animation:slSlideRight 0.7s cubic-bezier(0.16,1,0.3,1) both;animation-delay:120ms">
+          <text x="170" y="348" font-size="14" font-weight="700" fill="var(--rb-text-500)" style="white-space: pre; font-size: 14px;">Delegate</text>
+          <rect x="239" y="335" width="50" height="18" rx="4" fill="rgba(168,85,247,0.15)" stroke="rgba(168,85,247,0.3)" stroke-width="1"/>
+          <text x="264" y="348" text-anchor="middle" font-size="11" font-weight="600" fill="#c084fc" style="white-space: pre; font-size: 11px;">5.01%</text>
+          <rect x="295" y="335" width="52" height="18" rx="4" fill="var(--card-bg)"/>
+          <text x="321" y="348" text-anchor="middle" font-size="11" font-weight="600" fill="var(--rb-text-500)" style="white-space: pre; font-size: 11px;">+ 0.1 %</text>
+          <text x="355" y="350" font-size="14" font-weight="700" fill="var(--rb-text-500)" style="white-space: pre; font-size: 14px;">ARM</text>
+          <text x="170" y="369" font-size="12" fill="var(--rb-text-500)" style="white-space: pre; font-size: 12px;">15 Jul 2025 at 11:43</text>
+          <text x="420" y="348" text-anchor="end" font-size="12" fill="var(--rb-text-500)" style="white-space: pre; font-size: 12px;">2</text>
+        </g>
+      </g>
+      <g>
+        <g style="animation:slRowDrop 0.5s cubic-bezier(0.16,1,0.3,1) both;animation-delay:0ms">
+          <g style="animation:slDropInBig 1.0s cubic-bezier(0.16,1,0.3,1) both;animation-delay:0ms">
+            <g transform="matrix(0, -1, 1, 0, 49, 425)">
+              <path d="M3.5 6.5l3.5-3.5 3.5 3.5" fill="none" stroke="var(--rb-text-500)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <line x1="7" y1="13" x2="7" y2="3" fill="none" stroke="var(--rb-text-500)" stroke-width="1.5" stroke-linecap="round"/>
+            </g>
+            <image href="/icons/tokens/bold.png" x="64" y="406" width="24" height="24" clip-path="circle(12px at 12px 12px)"/>
+            <image href="/icons/tokens/weth.png" x="84" y="406" width="24" height="24" clip-path="circle(12px at 12px 12px)"/>
+            <g transform="matrix(0, 1, -1, 0, 126, 411)">
+              <path d="M3.5 6.5l3.5-3.5 3.5 3.5" fill="none" stroke="var(--rb-text-500)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <line x1="7" y1="13" x2="7" y2="3" fill="none" stroke="var(--rb-text-500)" stroke-width="1.5" stroke-linecap="round"/>
+            </g>
+            <text x="48" y="422" text-anchor="end" font-size="13" font-weight="700" fill="var(--rb-text-500)" style="font-variant-numeric: tabular-nums; white-space: pre; font-size: 13px;">1,050,000</text>
+            <text x="128" y="422" font-size="13" font-weight="700" fill="var(--rb-text-500)" style="font-variant-numeric: tabular-nums; white-space: pre; font-size: 13px;">900</text>
+          </g>
+        </g>
+        <g style="animation:slSlideRight 0.7s cubic-bezier(0.16,1,0.3,1) both;animation-delay:0ms">
+          <rect x="170" y="405" width="42" height="18" rx="4" fill="rgba(168,85,247,0.2)"/>
+          <text x="191" y="418" text-anchor="middle" font-size="11" font-weight="700" fill="#c084fc" style="white-space: pre; font-size: 11px;">OPEN</text>
+          <rect x="218" y="405" width="40" height="18" rx="4" fill="var(--card-bg)"/>
+          <text x="238" y="418" text-anchor="middle" font-size="11" font-weight="600" fill="var(--rb-text-500)" style="white-space: pre; font-size: 11px;">5.2 %</text>
+          <text x="266" y="418" font-size="14" fill="var(--rb-text-500)" style="white-space: pre; font-size: 14px;">Supply</text>
+          <image href="/icons/tokens/weth.png" x="316" y="406" width="14" height="14" clip-path="circle(7px at 7px 7px)"/>
+          <text x="336" y="418" font-size="14" fill="var(--rb-text-500)" style="white-space: pre; font-size: 14px;">Borrow</text>
+          <image href="/icons/tokens/bold.png" x="388" y="406" width="14" height="14" clip-path="circle(7px at 7px 7px)"/>
+          <text x="170" y="439" font-size="12" fill="var(--rb-text-500)" style="white-space: pre; font-size: 12px;">19 May 2025 at 12:11</text>
+          <text x="420" y="418" text-anchor="end" font-size="12" fill="var(--rb-text-500)" style="white-space: pre; font-size: 12px;">1</text>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

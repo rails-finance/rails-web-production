@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
   const troveId = searchParams.get("troveId");
   const status = searchParams.get("status");
   const collateralType = searchParams.get("collateralType");
+  const collateralTypesParam = searchParams.get("collateralTypes");
   const ownerAddress = searchParams.get("ownerAddress");
   const ownerEns = searchParams.get("ownerEns");
   const activeWithin = searchParams.get("activeWithin");
@@ -118,7 +119,15 @@ export async function GET(request: NextRequest) {
     if (status && VALID_STATUSES.includes(status)) {
       backendParams.set("status", status);
     }
-    if (collateralType && VALID_COLLATERAL_TYPES.includes(collateralType)) {
+    // Forward the multi-select form when present, fall back to the legacy
+    // single param. The backend accepts either.
+    const collateralTypeList = (collateralTypesParam ?? "")
+      .split(",")
+      .map((c) => c.trim())
+      .filter((c) => c && VALID_COLLATERAL_TYPES.includes(c));
+    if (collateralTypeList.length > 0) {
+      backendParams.set("collateralTypes", collateralTypeList.join(","));
+    } else if (collateralType && VALID_COLLATERAL_TYPES.includes(collateralType)) {
       backendParams.set("collateralType", collateralType);
     }
     if (ownerAddress) backendParams.set("ownerAddress", ownerAddress);

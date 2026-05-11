@@ -53,9 +53,9 @@ export function SiteNavigation() {
               </div>
               <div>
                 <h1 className="p-2 sm:p-2 leading-none">
-                  <span className="text-2xl sm:text-3xl dark:text-white text-slate-700 font-bold tracking-tight">Rails</span>
+                  <span className="text-2xl sm:text-3xl text-foreground font-bold tracking-tight">Rails</span>
                   <br />
-                  <span className="text-md sm:text-xl tracking-tight text-slate-400 dark:text-slate-500 font-bold">DeFi Self&#8209;Service Support</span>
+                  <span className="text-md sm:text-xl tracking-tight text-rb-500 font-bold">DeFi Self&#8209;Service Support</span>
                 </h1>
               </div>
             </Link>
@@ -72,19 +72,19 @@ export function SiteNavigation() {
                   {/* Custom Hamburger Icon */}
                   <div className="w-6 h-5 relative flex flex-col justify-center">
                     <span
-                      className={`absolute w-full h-0.5 bg-slate-700 dark:bg-slate-300 transition-all duration-300 ease-in-out ${
+                      className={`absolute w-full h-0.5 bg-rb-700 dark:bg-rb-300 transition-all duration-300 ease-in-out ${
                         (isHovered && !isMobile) || (isMenuOpen && isMobile)
                           ? "rotate-45 translate-y-0"
                           : "-translate-y-2"
                       }`}
                     />
                     <span
-                      className={`absolute w-full h-0.5 bg-slate-700 dark:bg-slate-300 transition-all duration-300 ease-in-out ${
+                      className={`absolute w-full h-0.5 bg-rb-700 dark:bg-rb-300 transition-all duration-300 ease-in-out ${
                         (isHovered && !isMobile) || (isMenuOpen && isMobile) ? "opacity-0" : "opacity-100"
                       }`}
                     />
                     <span
-                      className={`absolute w-full h-0.5 bg-slate-700 dark:bg-slate-300 transition-all duration-300 ease-in-out ${
+                      className={`absolute w-full h-0.5 bg-rb-700 dark:bg-rb-300 transition-all duration-300 ease-in-out ${
                         (isHovered && !isMobile) || (isMenuOpen && isMobile)
                           ? "-rotate-45 translate-y-0"
                           : "translate-y-2"
@@ -96,7 +96,7 @@ export function SiteNavigation() {
                 {/* Desktop Tooltip Modal */}
                 {!isMobile && isHoverMenuOpen && (
                   <div
-                    className="absolute top-full right-0 mt-2 w-60 bg-white dark:bg-slate-800 shadow-2xl rounded-lg border border-slate-200 dark:border-slate-700 p-6 z-50"
+                    className="absolute top-full right-0 mt-2 w-60 bg-rb-50 dark:bg-rb-850 shadow-2xl rounded-xl border border-rb-200 dark:border-rb-800 p-6 z-50"
                     onMouseEnter={handleMouseEnter}
                     onMouseLeave={handleMouseLeave}
                   >
@@ -105,12 +105,12 @@ export function SiteNavigation() {
                       className="absolute -top-2 right-4 w-0 h-0
                       border-l-[8px] border-l-transparent
                       border-r-[8px] border-r-transparent
-                      border-b-[8px] border-b-white dark:border-b-slate-800
+                      border-b-[8px] border-b-rb-50 dark:border-b-rb-850
                       before:content-[''] before:absolute before:-top-[1px] before:-left-[9px]
                       before:w-0 before:h-0
                       before:border-l-[9px] before:border-l-transparent
                       before:border-r-[9px] before:border-r-transparent
-                      before:border-b-[9px] before:border-b-slate-200 dark:before:border-b-slate-700"
+                      before:border-b-[9px] before:border-b-rb-200 dark:before:border-b-rb-800"
                     />
                     <NavigationContent />
                   </div>
@@ -137,29 +137,29 @@ export function SiteNavigation() {
           aria-label="Close menu"
         >
           <div
-            className="fixed top-0 right-0 h-full w-80 bg-white dark:bg-slate-800 shadow-2xl"
+            className="fixed top-0 right-0 h-full w-80 bg-rb-50 dark:bg-rb-850 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="flex justify-between items-center p-6 border-b border-slate-200 dark:border-slate-700">
+            <div className="flex justify-between items-center p-6 border-b border-rb-200 dark:border-rb-800">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-green-600 rounded flex items-center justify-center">
                   <svg className="w-5 h-5" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                     <use href="#icon-rails" />
                   </svg>
                 </div>
-                <div className="text-lg font-bold text-slate-600 dark:text-slate-300">Rails</div>
+                <div className="text-lg font-bold text-foreground">Rails</div>
               </div>
               <button
                 onClick={toggleMenu}
-                className="p-3 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors duration-150 cursor-pointer touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="p-3 hover:bg-rb-200 dark:hover:bg-rb-800 rounded-lg transition-colors duration-150 cursor-pointer touch-manipulation focus:outline-none focus:ring-2 focus:ring-blue-500"
                 aria-label="Close menu"
               >
                 {/* X Icon */}
                 <div className="w-6 h-5 relative flex flex-col justify-center">
-                  <span className="absolute w-full h-0.5 bg-slate-700 dark:bg-slate-300 rotate-45 translate-y-0" />
-                  <span className="absolute w-full h-0.5 bg-slate-700 dark:bg-slate-300 opacity-0" />
-                  <span className="absolute w-full h-0.5 bg-slate-700 dark:bg-slate-300 -rotate-45 translate-y-0" />
+                  <span className="absolute w-full h-0.5 bg-rb-700 dark:bg-rb-300 rotate-45 translate-y-0" />
+                  <span className="absolute w-full h-0.5 bg-rb-700 dark:bg-rb-300 opacity-0" />
+                  <span className="absolute w-full h-0.5 bg-rb-700 dark:bg-rb-300 -rotate-45 translate-y-0" />
                 </div>
               </button>
             </div>

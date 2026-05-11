@@ -9,7 +9,7 @@ import { formatDuration } from "@/lib/date";
 import { formatBatchManagerDisplay, getBatchManagerDeprecation } from "@/lib/services/batch-manager-service";
 import { OraclePricesData } from "@/types/api/oracle";
 
-export function OpenListingCard({ trove, prices }: { trove: TroveSummary; prices?: OraclePricesData | null }) {
+export function OpenListingCard({ trove, prices, selectorMode = false }: { trove: TroveSummary; prices?: OraclePricesData | null; selectorMode?: boolean }) {
   // Save scroll position when navigating to trove detail
   const handleClick = () => {
     if (typeof window !== "undefined") {
@@ -31,7 +31,11 @@ export function OpenListingCard({ trove, prices }: { trove: TroveSummary; prices
     <Link
       href={`/trove/${trove.collateralType}/${trove.id}`}
       onClick={handleClick}
-      className="block relative rounded-lg text-slate-600 dark:text-slate-500 bg-slate-50 dark:bg-slate-900 hover:dark:bg-slate-900/70 hover:bg-slate-50/70 transition-all cursor-pointer group"
+      className={
+        selectorMode
+          ? "block relative text-foreground transition-colors cursor-pointer group"
+          : "block relative rounded-xl text-foreground bg-rb-100 dark:bg-rb-850 hover:bg-rb-200 dark:hover:bg-rb-800 transition-colors cursor-pointer group"
+      }
       aria-label={`View active trove ${trove.id.substring(0, 8)}... with ${formatApproximate(trove.debt.current)} BOLD debt`}
     >
       {/* Header section */}
@@ -42,7 +46,7 @@ export function OpenListingCard({ trove, prices }: { trove: TroveSummary; prices
           </span>
         </div>
         <div className="flex items-center gap-2 text-xs">
-          <span className="inline-flex items-center text-slate-600 dark:text-slate-400">
+          <span className="inline-flex items-center text-rb-500">
             <Icon name="arrow-left-right" size={12} />
             <span className="ml-1">{trove.activity.transactionCount - trove.activity.redemptionCount}</span>
           </span>
@@ -61,9 +65,9 @@ export function OpenListingCard({ trove, prices }: { trove: TroveSummary; prices
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 md:items-start">
           {/* Debt - spans 2 columns on mobile */}
           <div className="col-span-2 md:col-span-1">
-            <p className="text-xs text-slate-400 dark:text-slate-600 mb-1 font-bold">Debt</p>
+            <p className="text-xs text-rb-500 mb-1 font-semibold uppercase tracking-wider">Debt</p>
             <div className="flex items-center">
-              <h3 className="text-xl lg:text-3xl font-bold text-slate-600 dark:text-slate-200">
+              <h3 className="text-xl lg:text-3xl font-bold text-foreground">
                 {formatApproximate(trove.debt.current)}
               </h3>
               <span className="ml-2 font-bold text-green-500">
@@ -74,10 +78,10 @@ export function OpenListingCard({ trove, prices }: { trove: TroveSummary; prices
 
           {/* Backed by - full width on mobile */}
           <div className="col-span-2 md:col-span-1">
-            <p className="text-xs text-slate-400 dark:text-slate-600 mb-1 font-bold">Backed by</p>
+            <p className="text-xs text-rb-500 mb-1 font-semibold uppercase tracking-wider">Backed by</p>
             <div className="flex items-center">
               <span className="flex items-center">
-                <p className="text-lg md:text-xl font-bold mr-1 text-slate-600 dark:text-slate-200">
+                <p className="text-lg md:text-xl font-bold mr-1 text-foreground">
                   {trove.collateral.amount}
                 </p>
                 <TokenIcon assetSymbol={trove.collateralType} />
@@ -94,13 +98,13 @@ export function OpenListingCard({ trove, prices }: { trove: TroveSummary; prices
 
           {/* Collateral Ratio */}
           <div className="col-span-2 md:col-span-1">
-            <p className="text-xs text-slate-400 dark:text-slate-600 mb-1 font-bold">Collateral Ratio</p>
+            <p className="text-xs text-rb-500 mb-1 font-semibold uppercase tracking-wider">Collateral Ratio</p>
             {collateralRatio !== null ? (
-              <div className="text-lg md:text-xl font-bold text-slate-600 dark:text-slate-200">
+              <div className="text-lg md:text-xl font-bold text-foreground">
                 {collateralRatio.toFixed(1)}%
               </div>
             ) : (
-              <div className="text-lg md:text-xl font-bold text-slate-500">N/A</div>
+              <div className="text-lg md:text-xl font-bold text-rb-500">N/A</div>
             )}
           </div>
 
@@ -112,9 +116,9 @@ export function OpenListingCard({ trove, prices }: { trove: TroveSummary; prices
                   <Users className="w-3 h-3" aria-hidden="true" />
                 </span>
               )}
-              <p className="text-xs text-slate-400 dark:text-slate-600 font-bold">Interest Rate</p>
+              <p className="text-xs text-rb-500 font-semibold uppercase tracking-wider">Interest Rate</p>
             </div>
-            <div className="text-lg md:text-xl font-bold text-slate-600 dark:text-slate-200">
+            <div className="text-lg md:text-xl font-bold text-foreground">
               {trove.metrics.interestRate}%
             </div>
             {trove.batch.isMember && trove.batch.manager && (
@@ -144,13 +148,15 @@ export function OpenListingCard({ trove, prices }: { trove: TroveSummary; prices
             dateText={`${formatDuration(trove.activity.lastActivityAt, new Date())} ago`}
             showDetailedInfo={false}
           />
-          <div className="flex items-center bg-slate-300 dark:bg-slate-800 group-hover:bg-blue-500 transition-colors rounded-full pl-3 pr-2 py-1">
-            <span className="text-sm text-slate-50 dark:text-slate-500 group-hover:text-white font-bold flex items-center gap-1">
-              <Icon name="timeline" size={20} aria-hidden="true" />
-              View
-              <ChevronRight className="w-4 h-4" aria-hidden="true" />
-            </span>
-          </div>
+          {!selectorMode && (
+            <div className="flex items-center bg-rb-200 dark:bg-rb-800 group-hover:bg-blue-500 transition-colors rounded-full pl-3 pr-2 py-1">
+              <span className="text-sm text-rb-500 group-hover:text-white font-semibold flex items-center gap-1">
+                <Icon name="timeline" size={20} aria-hidden="true" />
+                View
+                <ChevronRight className="w-4 h-4" aria-hidden="true" />
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </Link>

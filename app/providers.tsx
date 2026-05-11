@@ -2,6 +2,7 @@
 
 import { ThemeProvider } from "next-themes";
 import { type ReactNode } from "react";
+import { PreferencesProvider } from "@/lib/shared/preferences-context";
 
 type Props = {
   children: ReactNode;
@@ -10,7 +11,7 @@ type Props = {
 export function Providers({ children }: Props) {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      {children}
+      <PreferencesProvider>{children}</PreferencesProvider>
     </ThemeProvider>
   );
 }

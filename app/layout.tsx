@@ -4,11 +4,18 @@ import "./globals.css";
 
 import { Providers } from "./providers";
 import { IconSymbols } from "@/components/icons/iconSymbols";
-import { Header } from "@/components/header";
+import { HeaderBar } from "@/components/nav/header-bar";
+import { WalletContextProvider } from "@/components/nav/wallet-context";
 import { ThemeScript } from "@/components/ThemeScript";
 import { StructuredData } from "@/components/StructuredData";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  // `optional` skips the FOUT swap — first paint either has Inter (if it
+  // arrived inside the 100ms block window) or the metric-adjusted fallback.
+  display: "optional",
+});
 
 export const viewport: Viewport = {
   themeColor: [
@@ -97,15 +104,26 @@ export default function RootLayout({
         <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <ThemeScript />
+        {/* Hero "already-seen" flag — flipped before first paint so CSS in
+            globals.css can disable the home-hero animation on subsequent
+            visits in the same session without a hydration flicker. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){try{if(sessionStorage.getItem('rails-hero-seen'))document.documentElement.dataset.heroSeen='1'}catch(e){}})()",
+          }}
+        />
         <StructuredData />
       </head>
       <body
-        className={`${inter.className} antialiased bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-100 min-h-screen overflow-x-hidden min-w-[320px]`}
+        className={`${inter.className} ${inter.variable} antialiased bg-background text-foreground min-h-screen overflow-x-hidden min-w-[320px]`}
       >
         <IconSymbols />
         <Providers>
-          <Header />
-          {children}
+          <WalletContextProvider>
+            <HeaderBar />
+            {children}
+          </WalletContextProvider>
         </Providers>
       </body>
     </html>

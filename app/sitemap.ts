@@ -21,7 +21,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
-      url: "https://rails.finance/troves",
+      url: "https://rails.finance/liquity-v2",
       lastModified: new Date(),
       changeFrequency: "hourly",
       priority: 0.9,

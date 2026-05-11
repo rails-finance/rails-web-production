@@ -9,6 +9,10 @@ interface TokenIconProps {
   className?: string;
   // Explicit flag for timeline usage
   isTimeline?: boolean;
+  /** When true, applies width/height as SVG attributes (for chip-style usage
+   * inside a flex container where the surrounding span sizes the slot but the
+   * svg itself has no intrinsic dimensions). */
+  sized?: boolean;
 }
 
 export const TokenIcon = ({
@@ -19,6 +23,7 @@ export const TokenIcon = ({
   height,
   className = "inline-block w-4 h-4 mr-1",
   isTimeline = false,
+  sized = false,
 }: TokenIconProps) => {
   let iconId: string;
   switch (assetSymbol?.toLowerCase()) {
@@ -47,7 +52,13 @@ export const TokenIcon = ({
 
   // Otherwise render for regular usage
   return (
-    <svg className={className} viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+    <svg
+      className={className}
+      viewBox="0 0 120 120"
+      xmlns="http://www.w3.org/2000/svg"
+      width={sized ? width : undefined}
+      height={sized ? height : undefined}
+    >
       <use href={`#${iconId}`} />
     </svg>
   );

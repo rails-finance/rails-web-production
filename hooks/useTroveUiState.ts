@@ -1,31 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { DEFAULT_HIDDEN_ACTIONS } from "@/lib/shared/event-filter-helpers";
 
-export type TransactionUiState = {
-  expanded: boolean;
-  explanationOpen: boolean;
-};
+type SortDirection = "asc" | "desc";
 
 type TroveUiState = {
-  hideDelegateRates: boolean;
-  hideRedemptions: boolean;
+  /** Action keys (Liquity operation IDs) hidden from the timeline. */
+  hiddenActions: string[];
   summaryExplanationOpen: boolean;
   economicsOpen: boolean;
-  transactions: Record<string, TransactionUiState>;
+  sortDirection: SortDirection;
 };
 
-const DEFAULT_TRANSACTION_STATE: TransactionUiState = {
-  expanded: false,
-  explanationOpen: false,
-};
+const DEFAULT_HIDDEN_FOR_TROVE = DEFAULT_HIDDEN_ACTIONS["liquity-v2-troves"] ?? [];
 
 const DEFAULT_TROVE_STATE: TroveUiState = {
-  hideDelegateRates: false,
-  hideRedemptions: false,
+  hiddenActions: [...DEFAULT_HIDDEN_FOR_TROVE],
   summaryExplanationOpen: false,
   economicsOpen: false,
-  transactions: {},
+  sortDirection: "desc",
 };
 
 const storageKey = (troveKey: string) => `rails-ui-${troveKey}`;
@@ -43,13 +37,24 @@ export function useTroveUiState(troveKey?: string) {
     try {
       const raw = localStorage.getItem(storageKey(troveKey));
       if (raw) {
-        const parsed = JSON.parse(raw) as Partial<TroveUiState>;
+        const parsed = JSON.parse(raw) as Partial<TroveUiState> & {
+          // legacy fields, migrated below
+          hideDelegateRates?: boolean;
+          hideRedemptions?: boolean;
+        };
+        // Migrate legacy boolean toggles into the unified hiddenActions list.
+        const migrated = new Set<string>(
+          Array.isArray(parsed.hiddenActions)
+            ? parsed.hiddenActions
+            : DEFAULT_HIDDEN_FOR_TROVE,
+        );
+        if (parsed.hideDelegateRates) migrated.add("setBatchManagerAnnualInterestRate");
+        if (parsed.hideRedemptions) migrated.add("redeemCollateral");
         setState({
-          hideDelegateRates: parsed.hideDelegateRates ?? false,
-          hideRedemptions: parsed.hideRedemptions ?? false,
+          hiddenActions: [...migrated],
           summaryExplanationOpen: parsed.summaryExplanationOpen ?? false,
           economicsOpen: parsed.economicsOpen ?? false,
-          transactions: parsed.transactions ?? {},
+          sortDirection: parsed.sortDirection === "desc" ? "desc" : "asc",
         });
       } else {
         setState(DEFAULT_TROVE_STATE);
@@ -72,13 +77,6 @@ export function useTroveUiState(troveKey?: string) {
     }
   }, [state, troveKey, hasHydrated]);
 
-  const getTransactionState = useCallback(
-    (transactionId: string): TransactionUiState => {
-      return state.transactions[transactionId] ?? DEFAULT_TRANSACTION_STATE;
-    },
-    [state.transactions],
-  );
-
   const setSummaryExplanationOpen = useCallback((isOpen: boolean) => {
     setState((prev) => ({ ...prev, summaryExplanationOpen: isOpen }));
   }, []);
@@ -87,56 +85,32 @@ export function useTroveUiState(troveKey?: string) {
     setState((prev) => ({ ...prev, economicsOpen: isOpen }));
   }, []);
 
-  const setHideDelegateRates = useCallback((hide: boolean) => {
-    setState((prev) => ({ ...prev, hideDelegateRates: hide }));
+  const setSortDirection = useCallback((dir: SortDirection) => {
+    setState((prev) => ({ ...prev, sortDirection: dir }));
   }, []);
 
-  const setHideRedemptions = useCallback((hide: boolean) => {
-    setState((prev) => ({ ...prev, hideRedemptions: hide }));
+  const setHiddenActions = useCallback((next: string[]) => {
+    setState((prev) => ({ ...prev, hiddenActions: next }));
   }, []);
 
-  const setTransactionExpanded = useCallback((transactionId: string, expanded: boolean) => {
-    setState((prev) => ({
-      ...prev,
-      transactions: {
-        ...prev.transactions,
-        [transactionId]: {
-          ...DEFAULT_TRANSACTION_STATE,
-          ...prev.transactions[transactionId],
-          expanded,
-        },
-      },
-    }));
+  const toggleHiddenAction = useCallback((action: string) => {
+    setState((prev) => {
+      const set = new Set(prev.hiddenActions);
+      if (set.has(action)) set.delete(action);
+      else set.add(action);
+      return { ...prev, hiddenActions: [...set] };
+    });
   }, []);
-
-  const setExplanationOpen = useCallback((transactionId: string, explanationOpen: boolean) => {
-    setState((prev) => ({
-      ...prev,
-      transactions: {
-        ...prev.transactions,
-        [transactionId]: {
-          ...DEFAULT_TRANSACTION_STATE,
-          ...prev.transactions[transactionId],
-          explanationOpen,
-        },
-      },
-    }));
-  }, []);
-
-  const transactions = useMemo(() => state.transactions, [state.transactions]);
 
   return {
-    hideDelegateRates: state.hideDelegateRates,
-    hideRedemptions: state.hideRedemptions,
+    hiddenActions: state.hiddenActions,
     summaryExplanationOpen: state.summaryExplanationOpen,
     economicsOpen: state.economicsOpen,
-    transactions,
-    getTransactionState,
-    setHideDelegateRates,
-    setHideRedemptions,
-    setTransactionExpanded,
-    setExplanationOpen,
+    sortDirection: state.sortDirection,
+    setHiddenActions,
+    toggleHiddenAction,
     setSummaryExplanationOpen,
     setEconomicsOpen,
+    setSortDirection,
   };
 }

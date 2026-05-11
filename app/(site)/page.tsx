@@ -1,296 +1,176 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowRight, GraduationCap, Wallet, Code2, ShieldAlert, Lightbulb, Activity } from "lucide-react";
-import Link from "next/link";
-import { ProtocolStats } from "@/types/api/stats";
+import { GraduationCap, Wallet, Code2, ShieldAlert } from "lucide-react";
 import { LiquityLogo } from "@/components/LiquityLogo";
-import { NetworkGraphic } from "@/components/NetworkGraphic";
-import { CollateralBreakdown } from "@/components/stats/CollateralBreakdown";
-import { ExplanationPanel } from "@/components/transaction-timeline/explanation/ExplanationPanel";
+import { HomeHero } from "@/components/home/home-hero";
+import { IndexSection } from "@/components/home/index-section";
+import { DemoSlider } from "@/components/home/demo-slider";
+import { MonoRailSection } from "@/components/home/mono-rail-section";
 
 export default function Home() {
-  const [searchValue, setSearchValue] = useState("");
-  const [liquityStats, setLiquityStats] = useState<ProtocolStats | null>(null);
-  const [statsLoading, setStatsLoading] = useState(true);
-  const router = useRouter();
-
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmedValue = searchValue.trim();
-
-    if (!trimmedValue) return;
-
-    // Detect input type (same logic as TroveListFilters)
-    const isTroveId = /^\d+$/.test(trimmedValue);
-    const isEns = trimmedValue.toLowerCase().endsWith(".eth");
-    const isAddress = /^0x[a-fA-F0-9]{40}$/.test(trimmedValue);
-
-    // Only navigate if input matches a valid pattern
-    if (!isTroveId && !isAddress && !isEns) {
-      return;
-    }
-
-    // Build URL params
-    const params = new URLSearchParams();
-
-    if (isTroveId) {
-      params.set("troveId", trimmedValue);
-    } else if (isAddress) {
-      params.set("ownerAddress", trimmedValue);
-    } else if (isEns) {
-      params.set("ownerEns", trimmedValue);
-    }
-
-    router.push(`/troves?${params.toString()}`);
-  };
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await fetch("/api/stats");
-        const result = await response.json();
-        if (result.success && result.data) {
-          setLiquityStats(result.data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch stats:", error);
-      } finally {
-        setStatsLoading(false);
-      }
-    };
-    fetchStats();
-  }, []);
-
   return (
-    <div className="bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 min-h-screen">
-      {/* Hero Section - Responsive */}
-      <div className="relative pt-24">
-        {/* Desktop Layout Container */}
-        <div className="md:relative md:h-[500px] md:flex">
-          {/* Content - Responsive positioning */}
-          <div className="px-4 pt-8 md:px-0 md:pt-0 md:w-1/2 md:max-w-[640px] md:mx-0 md:ml-auto md:relative">
-            <div className="md:flex md:flex-col md:h-full">
-              {/* Text Content - Same for both mobile and desktop */}
-              <div className="md:flex-1 md:px-6 md:py-8 md:flex md:flex-col md:justify-center md:relative md:z-10">
-                <p className="text-slate-700 dark:text-slate-200 text-xl md:text-3xl lg:text-4xl/12  font-bold mb-4">
-                  DeFi activity on&nbsp;simple timelines with in&#8209;depth analysis
-                </p>
+    <div className="min-h-screen">
+      {/* ═══ HERO ═══ */}
+      <HomeHero />
+
+      {/* ═══ RAILS INDEX ═══ */}
+      <IndexSection />
+
+      {/* ═══ THE SUITE — flagship demo slider ═══ */}
+      <div className="bg-gradient-to-b from-rb-100 to-rb-200 dark:from-rb-900 dark:to-rb-800 overflow-hidden">
+        <section className="max-w-7xl mx-auto px-4 py-4">
+          <DemoSlider />
+        </section>
+      </div>
+
+      {/* ═══ MONO-RAIL EXPLORERS ═══ */}
+      <MonoRailSection />
+
+      {/* Liquity V2 stats + search now live on /liquity-v2 — the home is
+          purely brand/marketing, with the hero CTA pointing to that page. */}
+
+      {/* ═══ WHO IS RAILS FOR ═══ */}
+      <div className="bg-rb-50 dark:bg-rb-900">
+        <div className="max-w-7xl mx-auto px-4 py-16">
+          <div className="text-center mb-6">
+            <h2 className="font-sans font-semibold tracking-tight leading-tight mb-10 text-center text-[clamp(24px,3.5vw,38px)]">
+              <span className="text-pink-500">DeFi</span> for everyone
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-rb-300 dark:bg-rb-800 rounded-xl overflow-hidden">
+            <div className="bg-rb-100/90 dark:bg-rb-950/90 p-8 flex flex-col hover:bg-rb-100 dark:hover:bg-rb-950 transition-colors">
+              <div className="flex items-center gap-2 mb-5">
+                <GraduationCap className="h-[18px] w-[18px] text-pink-500 shrink-0" aria-hidden="true" />
+                <p className="text-xs font-medium tracking-[0.12em] uppercase text-pink-500">The DeFi Curious</p>
               </div>
-
-              {/* Bottom spacer for desktop layout */}
-              <div className="hidden md:block md:flex-1"></div>
+              <h3 className="text-[17px] font-semibold tracking-tight leading-snug mb-3.5 text-foreground">Learn by example</h3>
+              <p className="text-[13px] leading-relaxed font-light flex-1 mb-6">
+                Browse real protocol activity to see how DeFi works in practice. No capital required — just explore the ecosystem, follow live events, and build your intuition before you commit.
+              </p>
             </div>
-          </div>
-
-          {/* Desktop Bottom Left Background SVG */}
-          <div
-            className="hidden md:block absolute bottom-0 left-0 h-1/2 pointer-events-none"
-            style={{
-              width: "50%",
-              backgroundImage: "url(/hero-bl.svg)",
-              backgroundRepeat: "no-repeat",
-              backgroundPosition: "right top",
-              backgroundSize: "auto 100%",
-            }}
-          />
-
-          {/* Desktop Right Side Background SVG */}
-          <div
-            className="hidden md:block md:w-1/2 md:h-1/2 md:-mt-24"
-            style={{
-              backgroundImage: "url(/hero-r.svg)",
-              backgroundRepeat: "no-repeat",
-              backgroundPosition: "left center",
-              backgroundSize: "auto 100%",
-              height: "calc(100% + 6rem)",
-            }}
-          />
-        </div>
-
-        {/* Mobile SVG Section */}
-        <div className="md:hidden w-full relative overflow-visible">
-          <img
-            src="/hero-mobile.svg"
-            alt="Hero mobile decoration"
-            className="w-full"
-            style={{ display: "block" }}
-          />
-        </div>
-      </div>
-
-      <div className="relative overflow-x-hidden pb-12">
-        <div className="relative z-10 w-full mx-auto px-4 max-w-7xl">
-          <div className="md:flex gap-8">
-            {/* Content Column continued */}
-            <div>
-              {/* Liquity V2 Protocol Card */}
-              <div className="">
-                <div className="bg-slate-100/50 dark:bg-slate-800 rounded-lg overflow-hidden">
-                  <div className="p-4 space-y-6">
-
-                    {/* Mobile: Stacked, Desktop: Two columns */}
-                    
-                    <div className="flex flex-col md:flex-row md:gap-8 md:items-center">
-                      <div className="text-slate-600  dark:text-slate-400 font-medium text-md leading-relaxed md:flex-1 flex flex-col mb-6 md:mb-0">
-                        <div className="flex items-center gap-2 mb-4">
-                          <span className="text-2xl text-slate-600 dark:text-slate-300 font-extrabold">Explore</span>
-                          <svg className="w-12 h-12" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                            <use href="#icon-liquity" />
-                          </svg>
-                          <span className="text-2xl text-slate-600 dark:text-slate-300 font-extrabold">Liquity V2</span>
-                        </div>
-                        <p>
-                          Liquity V2 enables users to deposit ETH, wstETH, or rETH as collateral to mint BOLD stablecoins and set their own interest rates.
-                        </p>
-                      </div>
-
-                      {/* Search Box - Mobile and Desktop */}
-                      <div className="md:flex-1 bg-white dark:bg-slate-900 rounded-lg p-4 transition-shadow hover:shadow-sm">
-                        <p className="text-slate-600 dark:text-slate-400 font-medium mb-3">
-                          View a Liquity V2 Trove on Rails:
-                        </p>
-                        <form onSubmit={handleSearch}>
-                          <div className="relative">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="20"
-                              height="20"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 dark:text-slate-400"
-                            >
-                              <circle cx="11" cy="11" r="8" />
-                              <path d="m21 21-4.3-4.3" />
-                            </svg>
-                            <input
-                              type="text"
-                              className="w-full pl-10 pr-4 py-2 text-sm bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-2 border-blue-500 dark:border-blue-500 hover:border-slate-400 dark:hover:border-slate-500 focus:border-blue-500 dark:focus:border-white focus:outline-none transition-colors placeholder-slate-500 dark:placeholder-slate-400 rounded-full"
-                              value={searchValue}
-                              onChange={(e) => setSearchValue(e.target.value)}
-                            />
-                          </div>
-                          <p className="text-slate-500 text-xs mt-2">Enter borrower address, ENS, or Trove ID</p>
-                        </form>
-                      </div>
-                    </div>
-                    {/* Collateral Overview */}
-                    <CollateralBreakdown
-                      data={liquityStats?.byCollateral || {}}
-                      mode="overview"
-                      loading={statsLoading}
-                    />
-
-                  </div>
-
-                </div>
+            <div className="bg-rb-100/90 dark:bg-rb-950/90 p-8 flex flex-col hover:bg-rb-100 dark:hover:bg-rb-950 transition-colors">
+              <div className="flex items-center gap-2 mb-5">
+                <Wallet className="h-[18px] w-[18px] text-emerald-500 shrink-0" aria-hidden="true" />
+                <p className="text-xs font-medium tracking-[0.12em] uppercase text-emerald-500">The Active DeFi User</p>
               </div>
+              <h3 className="text-[17px] font-semibold tracking-tight leading-snug mb-3.5 text-foreground">Stay on top of positions</h3>
+              <p className="text-[13px] leading-relaxed font-light flex-1 mb-6">
+                Monitor collateral ratios, redemption exposure, yield earned, and liquidation risk — all translated into plain language. Know exactly where you stand, without reading a transaction trace.
+              </p>
+            </div>
+            <div className="bg-rb-100/90 dark:bg-rb-950/90 p-8 flex flex-col hover:bg-rb-100 dark:hover:bg-rb-950 transition-colors">
+              <div className="flex items-center gap-2 mb-5">
+                <Code2 className="h-[18px] w-[18px] text-blue-500 shrink-0" aria-hidden="true" />
+                <p className="text-xs font-medium tracking-[0.12em] uppercase text-blue-500">DeFi Teams</p>
+              </div>
+              <h3 className="text-[17px] font-semibold tracking-tight leading-snug mb-3.5 text-foreground">Support your community</h3>
+              <p className="text-[13px] leading-relaxed font-light flex-1 mb-6">
+                Give your users a dedicated, verifiable window into their positions. A Rails integration means your protocol gets full coverage — and your community gets answers, not confusion.
+              </p>
+            </div>
+            <div className="bg-rb-100/90 dark:bg-rb-950/90 p-8 flex flex-col hover:bg-rb-100 dark:hover:bg-rb-950 transition-colors">
+              <div className="flex items-center gap-2 mb-5">
+                <ShieldAlert className="h-[18px] w-[18px] text-red-500 shrink-0" aria-hidden="true" />
+                <p className="text-xs font-medium tracking-[0.12em] uppercase text-red-500">Crisis Support</p>
+              </div>
+              <h3 className="text-[17px] font-semibold tracking-tight leading-snug mb-3.5 text-foreground">When frontends fail</h3>
+              <p className="text-[13px] leading-relaxed font-light flex-1 mb-6">
+                DNS hijacks. Frontend outages. Contract exploits. When your usual interface goes dark, Rails gives you read-only access to your positions — no wallet connection, no permissions, no exposure.
+              </p>
             </div>
           </div>
         </div>
       </div>
 
-      <section className="w-full pb-24">
-        <div className="max-w-7xl mx-auto px-4">
-          <h2 className="text-2xl font-extrabold text-slate-700 dark:text-slate-200 text-center mb-4">
-            Who is Rails for?
-          </h2>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <div className="h-full bg-white dark:bg-slate-800/60 rounded-xl p-6 shadow-sm flex flex-col">
-              <p className="text-sm font-semibold flex items-center gap-2 tracking-wide text-blue-600 dark:text-blue-500 mb-2">
-                <GraduationCap className="h-5 w-5" aria-hidden="true" />
-                The DeFi Curious
-              </p>
-              <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-3">Learn by example</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                New users can browse real transactions to see how DeFi protocols operate in practice, explore trove
-                timelines, and build intuition before they risk capital.
-              </p>
-            </div>
-            <div className="h-full bg-white dark:bg-slate-800/60 rounded-xl p-6 shadow-sm flex flex-col">
-              <p className="text-sm font-semibold flex items-center gap-2 tracking-wide text-emerald-600 dark:text-emerald-500 mb-2">
-                <Wallet className="h-5 w-5" aria-hidden="true" />
-                The Active DeFi User
-              </p>
-              <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-3">Stay on top of positions</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                Monitor positions, understand nuanced onchain events, and view interpreted logs so nothing stays
-                buried in transaction traces.
-              </p>
-            </div>
-            <div className="h-full bg-white dark:bg-slate-800/60 rounded-xl p-6 shadow-sm flex flex-col">
-              <p className="text-sm font-semibold flex items-center gap-2 tracking-wide text-purple-600 dark:text-purple-500 mb-2">
-                <Code2 className="h-5 w-5" aria-hidden="true" />
-                DeFi Teams
-              </p>
-              <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-3">Support your community</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed flex-1">
-                Provide verifiable support with a Rails explorer tailored to your protocol. Give users clear timelines,
-                and human-readable insights.
-              </p>
-            </div>
-            <div className="h-full bg-white dark:bg-slate-800/60 rounded-xl p-6 shadow-sm flex flex-col">
-              <p className="text-sm font-semibold flex items-center gap-2 tracking-wide text-amber-600 dark:text-amber-500 mb-2">
-                <ShieldAlert className="h-5 w-5" aria-hidden="true" />
-                Crisis Support
-              </p>
-              <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-3">When frontends fail</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed flex-1">
-                Check your positions safely during DNS hijacks or frontend failures. No wallet connection required—just read-only access when you need it most.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* ═══ GET IN TOUCH ═══ */}
+      <GetInTouch />
+    </div>
+  );
+}
 
-      {/* Our Supporters Section */}
-      <div className="w-full pb-24">
-        <div className="sm:max-w-5xl mx-auto px-4">
-          <p className="sm:text-center text-xl md:text-2xl leading-8 text-slate-700 dark:text-slate-300 mb-6">
-            Rails is building essential DeFi support infrastructure, starting with Liquity V2. Our roadmap includes
-            integration with Liquity V2 forks and expansion across the broader DeFi ecosystem.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <a
-              href="/about"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-150"
-            >
-              <Lightbulb className="h-5 w-5" />
-              Learn about Rails
-            </a>
-            <a
-              href="/pulse"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-colors duration-150"
-            >
-              <Activity className="h-5 w-5" />
-              Check our Pulse
-            </a>
+/** Founding-supporter voice + Telegram QR — ported verbatim from the
+ *  rails-explorer umbrella, with the LiquityLogo source pointed at the
+ *  rails-web-mig component (which renders the same mark + wordmark). */
+function GetInTouch() {
+  return (
+    <div className="bg-rb-200 dark:bg-rb-800">
+      <div className="max-w-7xl mx-auto px-4 py-16">
+        <h2 className="font-semibold tracking-tight leading-tight pb-4 text-[clamp(28px,4vw,42px)]">
+          Get in touch
+        </h2>
+
+        <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-10">
+          <div className="md:text-left flex flex-col md:items-start flex-1">
+            <p className="leading-relaxed max-w-md mb-8">
+              Working with a protocol team or building DeFi infrastructure?
+              We partner with sponsors on <span className="font-bold">integrations</span> for the
+              umbrella explorer and dedicated <span className="font-bold">custom explorers</span> —
+              mono-rail subdomains scoped to a single protocol, with the same
+              depth as the umbrella. <span className="text-blue-500">Liquity</span> is our founding supporter.
+            </p>
+            <div className="mb-8">
+              <a href="https://liquity.org" target="_blank" rel="noopener noreferrer" className="block">
+                <LiquityLogo />
+              </a>
+            </div>
           </div>
-        </div>
-      </div>
-      {/* Our Supporters Section */}
-      <div className="w-full pb-24">
-        <div className="max-w-7xl mx-auto px-4">
-          <h2 className="text-2xl font-extrabold text-slate-500 dark:text-slate-400 text-center mb-8">
-            Our Supporters
-          </h2>
-          <div className="flex justify-center">
-            <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-8" style={{ width: "400px", height: "120px" }}>
-              <div className="flex items-center justify-center h-full">
-                <a href="https://liquity.org" target="_blank" rel="noopener noreferrer" className="h-full">
-                  <LiquityLogo />
+
+          <div className="flex items-end shrink-0 md:mb-[-64px]">
+            <div
+              className="relative rounded-2xl md:rounded-b-none overflow-hidden w-[280px] sm:w-[300px]"
+              style={{
+                background: "linear-gradient(135deg, #0c1a3a 0%, #0a1228 100%)",
+                height: 340,
+                boxShadow:
+                  "0 -10px 40px rgba(0,0,0,0.4), 0 0 80px rgba(59,130,246,0.06)",
+              }}
+            >
+              <div className="absolute top-4 left-5 flex items-center gap-0.5 text-blue-400/30">
+                <svg width="28" height="28" viewBox="0 0 200 200" fill="none">
+                  <path fill="currentColor" d="M79.763 159.671L111.637 159.671L52.168 41.625L20.295 41.625L79.763 159.671Z" />
+                  <path fill="currentColor" d="M98.578 97.056L130.451 97.056L105.044 47.853L73.171 47.853L98.578 97.056Z" />
+                  <path fill="currentColor" d="M148.892 142.388L180.766 142.388L155.359 93.185L123.486 93.185L148.892 142.388Z" />
+                </svg>
+                <span className="font-sans font-semibold tracking-wide text-blue-400/30">Rails</span>
+              </div>
+              <span className="absolute top-5 right-5 font-sans text-[13px] font-bold tracking-[0.3em] uppercase text-blue-400/30">
+                Telegram
+              </span>
+              <svg
+                className="absolute pointer-events-none"
+                style={{ left: -80, top: -80, width: "120%", height: "120%" }}
+                viewBox="0 0 300 340"
+                fill="none"
+              >
+                <path
+                  d="M150 30 L168 150 L290 170 L168 190 L150 310 L132 190 L10 170 L132 150 Z"
+                  fill="#3B82F6"
+                  fillOpacity="0.05"
+                />
+              </svg>
+              <div
+                className="absolute inset-0 flex flex-col items-center justify-center gap-3 pt-4"
+                style={{ color: "#cbd5e1" }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/telegram-qr.svg" alt="Rails Finance Telegram QR" width={200} height={200} />
+                <a
+                  href="https://t.me/railsfinance"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex text-blue-400 hover:text-blue-500 items-center gap-1.5 text-xs font-medium transition-colors"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+                  </svg>
+                  railsfinance
                 </a>
               </div>
             </div>
           </div>
         </div>
       </div>
-      
     </div>
   );
 }

@@ -28,7 +28,7 @@ export default function IntroducingRailsFinance() {
 <p>The position got hit because it had a 4.2% interest rate&mdash;one of the lowest in the wstETH branch. Now you understand something crucial about how the protocol works: <strong>interest rate determines redemption risk</strong>. Low rate = low cost borrowing, but higher chance of redemption when the peg weakens. High rate = more expensive, but protection from redemptions.</p>
 <p>After the redemption the borrower immediately increased their interest rate from 4.2% to 4.7%.</p>
 <h2>See the patterns</h2>
-<p>Look at the <a href="https://rails.finance/troves">Trove list</a> view. Notice interest rates with labels like "Summerstone" or "ARM"? That's a batch manager&mdash;a service that actively manages interest rates for you. Being able to judge the performance of these delegates will help you decide if you should manage rates yourself or delegate to a service.</p>
+<p>Look at the <a href="https://rails.finance/liquity-v2">Trove list</a> view. Notice interest rates with labels like "Summerstone" or "ARM"? That's a batch manager&mdash;a service that actively manages interest rates for you. Being able to judge the performance of these delegates will help you decide if you should manage rates yourself or delegate to a service.</p>
 <p>See the closed Trove with 1.46 million BOLD debt? <a href="https://rails.finance/trove/WETH/86492959577850149240240812252549298434003808930398513838023494031629517707047">Check its timeline</a>. You can view its entire history&mdash;when it borrowed, how it adjusted rates, when it got redeemed, how it was closed. Every mechanic of the protocol visible in one position's lifecycle.</p>
 <p>This is how you really understand a protocol: watching the underlying mechanics operate through real positions.</p>
 <h2>Beyond raw data</h2>
@@ -46,7 +46,7 @@ export default function IntroducingRailsFinance() {
 <li>Explore redemption patterns and borrowing strategies</li>
 <li>Understand how the protocol actually works before risking capital</li>
 </ul>
-<p>Start with the <a href="https://rails.finance/troves">Trove list</a>. Filter by collateral type. Sort by interest rate or debt size. Click into positions and explore their timelines. See the mechanics operate through hundreds of real transactions.</p>
+<p>Start with the <a href="https://rails.finance/liquity-v2">Trove list</a>. Filter by collateral type. Sort by interest rate or debt size. Click into positions and explore their timelines. See the mechanics operate through hundreds of real transactions.</p>
 <p>Then decide if the protocol is right for you.</p>
 <p>Try it: <a href="https://rails.finance/">rails.finance</a></p>
     </>
