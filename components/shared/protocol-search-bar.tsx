@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { upsertSession } from "@/lib/shared/sessions";
+import { dispatchWalletSearch } from "@/lib/shared/wallet-dispatch";
 
 interface ProtocolSearchBarProps {
   /** Fires after a successful router.push — the dropdown variant uses this to
@@ -13,10 +14,12 @@ interface ProtocolSearchBarProps {
   autoFocus?: boolean;
 }
 
-/** Single-input Liquity search wired to the existing /liquity-v2 filter behavior:
- *  Trove ID → ?troveId=, address → ?ownerAddress=, ENS → ?ownerEns=.
- *  Lifted out of HomeHero so the new /liquity-v2 protocol landing can use it
- *  without dragging the whole hero animation along. */
+/** Single-input cross-protocol search.
+ *  - Trove ID → /liquity-v2?troveId= (filtered Liquity listing).
+ *  - Address / ENS → dispatched via `dispatchWalletSearch`: lands on the
+ *    correct per-protocol wallet page when only one protocol has hits, on
+ *    /wallet/[address] when multiple do, and on /wallet/[address] (empty
+ *    state) when none do. */
 export function ProtocolSearchBar({
   onAfterSubmit,
   compact = false,
@@ -24,45 +27,54 @@ export function ProtocolSearchBar({
 }: ProtocolSearchBarProps = {}) {
   const [value, setValue] = useState("");
   const [focused, setFocused] = useState(false);
+  const [dispatching, setDispatching] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (dispatching) return;
     const trimmed = value.trim();
     if (!trimmed) return;
 
     const isTroveId = /^\d+$/.test(trimmed);
-    const isEns = trimmed.toLowerCase().endsWith(".eth");
-    const isAddress = /^0x[a-fA-F0-9]{40}$/.test(trimmed);
-    if (!isTroveId && !isAddress && !isEns) return;
-
-    const params = new URLSearchParams();
-    if (isTroveId) params.set("troveId", trimmed);
-    else if (isAddress) params.set("ownerAddress", trimmed);
-    else if (isEns) params.set("ownerEns", trimmed);
-
-    // Record address submissions immediately so the wallet appears in the
-    // recent list. ENS submissions wait until the trove page resolves them
-    // to a 0x address (sessions are keyed on lowercase addresses, never on
-    // the .eth string). Trove-ID submissions never record — they're a trove
-    // lookup, not a wallet visit.
-    if (isAddress) {
-      const lower = trimmed.toLowerCase();
-      upsertSession([lower], { [lower]: null }, ["liquity-v2-troves"]);
+    if (isTroveId) {
+      router.push(`/liquity-v2?troveId=${encodeURIComponent(trimmed)}`);
+      setValue("");
+      onAfterSubmit?.();
+      return;
     }
 
-    router.push(`/liquity-v2?${params.toString()}`);
-    setValue("");
-    onAfterSubmit?.();
+    setDispatching(true);
+    try {
+      const result = await dispatchWalletSearch(trimmed);
+      if (!result) return; // unparseable input — leave value untouched
+
+      // Record the wallet in recents only when we have a resolved address and
+      // at least one protocol with hits. Avoids polluting recents with typos
+      // or random addresses that match no protocol coverage.
+      if (result.resolvedAddress && result.protocols.length > 0) {
+        upsertSession(
+          [result.resolvedAddress],
+          { [result.resolvedAddress]: result.ensName },
+          result.protocols,
+        );
+      }
+
+      router.push(result.url);
+      setValue("");
+      onAfterSubmit?.();
+    } finally {
+      setDispatching(false);
+    }
   };
 
   const iconSize = compact ? 16 : 18;
   // Compact (dropdown) variant uses rounded-lg to match the session card
   // shape; full variant keeps the pill on the hero/landing.
   const inputClasses = compact
-    ? "w-full pl-10 pr-3 py-2.5 text-sm bg-rb-100 dark:bg-rb-900 text-foreground border border-rb-300 dark:border-rb-700 hover:border-rb-400 dark:hover:border-rb-600 focus:border-blue-500 dark:focus:border-blue-500 focus:outline-none transition-colors placeholder-rb-500 rounded-lg"
-    : "w-full pl-11 pr-4 py-3 text-sm bg-rb-100 dark:bg-rb-900 text-foreground border border-rb-300 dark:border-rb-700 hover:border-rb-400 dark:hover:border-rb-600 focus:border-blue-500 dark:focus:border-blue-500 focus:outline-none transition-colors placeholder-rb-500 rounded-full";
+    ? "w-full pl-10 pr-3 py-2.5 text-sm bg-rb-100 dark:bg-rb-900 text-foreground border border-rb-300 dark:border-rb-700 hover:border-rb-400 dark:hover:border-rb-600 focus:border-blue-500 dark:focus:border-blue-500 focus:outline-none transition-colors placeholder-rb-500 rounded-lg disabled:opacity-60 disabled:cursor-progress"
+    : "w-full pl-11 pr-4 py-3 text-sm bg-rb-100 dark:bg-rb-900 text-foreground border border-rb-300 dark:border-rb-700 hover:border-rb-400 dark:hover:border-rb-600 focus:border-blue-500 dark:focus:border-blue-500 focus:outline-none transition-colors placeholder-rb-500 rounded-full disabled:opacity-60 disabled:cursor-progress";
   const iconClasses = compact
     ? "absolute left-3 top-1/2 -translate-y-1/2 text-rb-500"
     : "absolute left-4 top-1/2 -translate-y-1/2 text-rb-500";
@@ -103,9 +115,10 @@ export function ProtocolSearchBar({
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           autoFocus={autoFocus}
-          placeholder={placeholder}
+          placeholder={dispatching ? "Searching…" : placeholder}
           className={inputClasses}
           aria-label="Search address, ENS, or Trove ID"
+          disabled={dispatching}
         />
       </div>
     </form>

@@ -87,7 +87,7 @@ export function TroveSummaryCardSelector({
           // at rest, rb-tint on chevron-hover, blue border on direct hover.
           // The <Link> owns navigation; no liveState (snapshot data only).
           <Link
-            href={`/trove/${item.trove.collateralType}/${item.trove.id}`}
+            href={`/liquity-v2/trove/${item.trove.collateralType}/${item.trove.id}`}
             className="block w-full text-left rounded-lg transition-all cursor-pointer border border-transparent group-hover/card:bg-rb-200/50 dark:group-hover/card:bg-rb-900 hover:border-blue-500 px-5 py-4"
           >
             <TroveSummaryCard trove={item.trove} prices={prices} />

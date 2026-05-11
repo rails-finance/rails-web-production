@@ -17,7 +17,7 @@ export function ClosedListingCard({ trove, selectorMode = false }: { trove: Trov
 
   return (
     <Link
-      href={`/trove/${trove.collateralType}/${trove.id}`}
+      href={`/liquity-v2/trove/${trove.collateralType}/${trove.id}`}
       onClick={handleClick}
       className={
         selectorMode

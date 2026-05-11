@@ -303,7 +303,7 @@ function TrovesPageContent() {
               {troves.map((trove) => (
                 <motion.div key={trove.id} variants={itemVariants}>
                   <Link
-                    href={`/trove/${trove.collateralType}/${trove.id}`}
+                    href={`/liquity-v2/trove/${trove.collateralType}/${trove.id}`}
                     onClick={() => {
                       if (typeof window !== "undefined") {
                         sessionStorage.setItem("troves-scroll-position", String(window.scrollY));

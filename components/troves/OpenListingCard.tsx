@@ -29,7 +29,7 @@ export function OpenListingCard({ trove, prices, selectorMode = false }: { trove
 
   return (
     <Link
-      href={`/trove/${trove.collateralType}/${trove.id}`}
+      href={`/liquity-v2/trove/${trove.collateralType}/${trove.id}`}
       onClick={handleClick}
       className={
         selectorMode

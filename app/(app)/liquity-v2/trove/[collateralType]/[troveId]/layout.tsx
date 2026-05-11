@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: `Liquity V2 ${collateralDisplay}/BOLD Trove ${truncatedTroveId}`,
       description: `View detailed transaction timeline and analytics for Trove ${troveId} with ${collateralDisplay} collateral.`,
-      url: `https://rails.finance/trove/${collateralType}/${troveId}`,
+      url: `https://rails.finance/liquity-v2/trove/${collateralType}/${troveId}`,
       type: "website",
     },
     twitter: {
