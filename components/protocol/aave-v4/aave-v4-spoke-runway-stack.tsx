@@ -20,7 +20,7 @@ export function AaveV4SpokeRunwayStack({ spoke }: { spoke: AaveSpokeCardInfo }) 
   if (rows.length === 0) return null;
 
   return (
-    <div className="mt-4 rounded-lg border border-rb-200 dark:border-rb-800 bg-rb-100/40 dark:bg-rb-950/40 p-4">
+    <div className="mt-4 p-4">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-rb-500">
           Liquidation runway

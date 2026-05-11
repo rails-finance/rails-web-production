@@ -364,12 +364,19 @@ function AaveV4WalletPageInner() {
             const activeGroup = selectedSpoke ? spokeGroups.find((g) => g.name === selectedSpoke) : undefined;
             const activeCard = selectedSpoke ? spokeCards.find((c) => c.name === selectedSpoke) : undefined;
             return activeGroup ? (
-              <AaveV4SpokeEconomicsBand
-                activeName={activeGroup.name}
-                reserves={activeGroup.result.reserves}
-                prices={prices}
-                runwayCard={activeCard}
-              />
+              // Full-bleed economics band — escapes the max-w-7xl gutter so
+              // the gray background extends edge-to-edge, matching the
+              // /trove/[…] page on Liquity V2.
+              <div className="relative left-1/2 -translate-x-1/2 w-screen bg-rb-100 dark:bg-rb-900 py-6">
+                <div className="max-w-7xl mx-auto px-4 md:px-6">
+                  <AaveV4SpokeEconomicsBand
+                    activeName={activeGroup.name}
+                    reserves={activeGroup.result.reserves}
+                    prices={prices}
+                    runwayCard={activeCard}
+                  />
+                </div>
+              </div>
             ) : null;
           })()}
 
