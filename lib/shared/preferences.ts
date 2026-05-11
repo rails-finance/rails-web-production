@@ -24,6 +24,19 @@ export interface LiquityV2Preferences {
   byBranch: Record<LiquityV2Branch, LiquityV2BranchThresholds>;
 }
 
+/** Aave V4 risk-zone preferences. Aave's collateral assets each have their own
+ *  liquidation threshold (LT), so there's no single MCR to express prefs
+ *  against the way Liquity does. Instead the user picks how much *headroom*
+ *  above an asset's liquidation price they consider "Conservative": a single
+ *  global percentage that applies to every collateral asset across every
+ *  spoke. The price runway maps this to a per-asset price via
+ *  `thresholdPrice = liqPrice × (1 + headroomConservativeMin/100)`. */
+export interface AaveV4Preferences {
+  /** Conservative zone starts at `liqPrice × (1 + this/100)`. Anything below
+   *  it but above liqPrice sits in Caution; below liqPrice is Liquidation. */
+  headroomConservativeMin: number;
+}
+
 export interface UserPreferences {
   _version: 1;
   expandedEvents: string[];         // txHash list, FIFO capped at MAX_EXPANDED
@@ -31,6 +44,7 @@ export interface UserPreferences {
   ratioMode: RatioMode;             // Display collateral health as Collateral Ratio (CR) or Loan-to-Value (LTV)
   hideClosedPositions: boolean;     // Hide closed/liquidated positions from selectors and the protocol nav
   liquityV2: LiquityV2Preferences;  // Per-branch risk thresholds
+  aaveV4: AaveV4Preferences;        // Global headroom preference for the price runway
 }
 
 const STORAGE_KEY = 'defi-explorer-preferences';
@@ -47,6 +61,14 @@ export const DEFAULT_LIQUITY_V2_PREFERENCES: LiquityV2Preferences = {
   },
 };
 
+/** 25% above liq price is a comfortable default. Conservative defaults already
+ *  span an asset's typical daily-to-weekly volatility for the bluechip side of
+ *  Aave's collateral list; volatile assets sit deeper into Caution at the same
+ *  setting, which is the desired conservatism. */
+export const DEFAULT_AAVE_V4_PREFERENCES: AaveV4Preferences = {
+  headroomConservativeMin: 25,
+};
+
 export const DEFAULT_PREFERENCES: UserPreferences = {
   _version: 1,
   expandedEvents: [],
@@ -54,6 +76,7 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
   ratioMode: 'cr',
   hideClosedPositions: false,
   liquityV2: DEFAULT_LIQUITY_V2_PREFERENCES,
+  aaveV4: DEFAULT_AAVE_V4_PREFERENCES,
 };
 
 /** Migrate older preference shapes:
@@ -89,6 +112,14 @@ function normaliseLiquityV2(stored: unknown): LiquityV2Preferences {
   return out;
 }
 
+function normaliseAaveV4(stored: unknown): AaveV4Preferences {
+  if (!stored || typeof stored !== 'object') return { ...DEFAULT_AAVE_V4_PREFERENCES };
+  const s = stored as Record<string, unknown>;
+  const headroom = typeof s.headroomConservativeMin === 'number' ? s.headroomConservativeMin : null;
+  if (headroom === null || !isFinite(headroom) || headroom <= 0) return { ...DEFAULT_AAVE_V4_PREFERENCES };
+  return { headroomConservativeMin: headroom };
+}
+
 export function loadPreferences(): UserPreferences {
   if (typeof window === 'undefined') return { ...DEFAULT_PREFERENCES };
   try {
@@ -100,6 +131,7 @@ export function loadPreferences(): UserPreferences {
       ...DEFAULT_PREFERENCES,
       ...parsed,
       liquityV2: normaliseLiquityV2(parsed.liquityV2),
+      aaveV4: normaliseAaveV4(parsed.aaveV4),
     };
   } catch {
     return { ...DEFAULT_PREFERENCES };

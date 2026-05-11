@@ -35,6 +35,7 @@ const PROTOCOLS: ProtocolEntry[] = [
     href: "/aave-v4",
     iconSrc: "/icons/protocols/aave-v4.png",
     subtitle: "Multi-spoke lending across 11 asset-class spokes",
+    hasPreferences: true,
   },
 ];
 

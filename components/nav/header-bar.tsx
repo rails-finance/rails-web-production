@@ -15,6 +15,7 @@ import { WalletMenu } from "@/components/nav/wallet-menu";
 import { ProtocolMenu } from "@/components/nav/protocol-menu";
 import { AppPreferencesModal } from "@/components/nav/app-preferences-modal";
 import { LiquityPreferencesModal } from "@/components/nav/liquity-preferences-modal";
+import { AaveV4PreferencesModal } from "@/components/nav/aave-v4-preferences-modal";
 
 /** Routes that count as "inside the protocol" — keyed by the active protocol
  *  so the header pill can render the right icon + label. Marketing routes
@@ -291,6 +292,9 @@ export function HeaderBar() {
       )}
       {prefsForProtocol === "liquity-v2" && (
         <LiquityPreferencesModal onClose={() => setPrefsForProtocol(null)} />
+      )}
+      {prefsForProtocol === "aave-v4" && (
+        <AaveV4PreferencesModal onClose={() => setPrefsForProtocol(null)} />
       )}
     </header>
   );

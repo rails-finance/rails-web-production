@@ -6,78 +6,53 @@ import { InfoIconButton } from "@/components/shared/info-icon-button";
 import { advanceToNextSimInput } from "@/components/shared/simulator-inputs";
 
 /**
- * Per-asset price runway for the Aave V4 simulator.
+ * Per-asset price runway for an Aave V4 spoke.
  *
- * Aave liquidations aren't band-gradient like LLAMMA — a position is either
- * above HF 1 or it isn't. For a single collateral asset, the liquidation price
- * is the value at which `Σ(other_coll · price · LT) + coll_i · p_liq · LT_i
- *   = Σ(debt · price)`, solved for `p_liq`. The rest of the position is held
- * at its current state, so every asset's axis reflects what happens when only
- * *that* asset's price moves.
+ * Three zones across the bar — Conservative / Caution / Liquidation — mirroring
+ * the shape used on Liquity V2's trove pages. The Conservative→Caution
+ * boundary is user-editable: a global "headroom %" preference computes
+ * `thresholdPrice = liqPrice × (1 + headroom/100)` and feeds it in here. The
+ * Caution interior is bounded between thresholdPrice and liqPrice; Conservative
+ * and Liquidation get fixed visual widths since both are open-ended in price
+ * space.
  *
- * Layout: editable price pill on the left, a four-zone runway bar in the
- * middle (Liquidation / Aggressive / Moderate / Conservative), info button on
- * the right. Each zone is a fixed ~25% slice of the bar; within a zone the
- * handle position interpolates linearly between the zone's price boundaries,
- * so the visual weight of "headroom" is consistent across assets regardless
- * of how far the actual price sits from liq.
+ * Marker placement uses one of two modes:
+ *   • **Threshold-based** (preferred) — caller passes `thresholdPrice`. Marker
+ *     pins to 0% while price ≥ threshold, slides through the Caution interior
+ *     between thresholdPrice (b0) and liqPrice (b1), then pushes into the
+ *     Liquidation cap if underwater.
+ *   • **Linear fallback** — when `thresholdPrice` is omitted, the marker maps
+ *     linearly between currentPrice (0%) and liqPrice (b1). Used by callsites
+ *     that haven't wired up a threshold yet.
+ *
+ * The price pill is editable when `onPriceChange` is supplied (sim mode);
+ * otherwise it renders as a read-only chip.
  */
 
-const ZONE_AGGRESSIVE_MULT = 1.10;
-const ZONE_MODERATE_MULT = 1.25;
-const ZONE_CONSERVATIVE_CAP_MULT = 2;
-
-type ZoneIndex = 0 | 1 | 2 | 3;
-
-function priceToBarPct(price: number, liq: number): number {
-  if (liq <= 0 || price <= 0) return 100;
-  const aggrEnd = liq * ZONE_AGGRESSIVE_MULT;
-  const modEnd = liq * ZONE_MODERATE_MULT;
-  const consEnd = liq * ZONE_CONSERVATIVE_CAP_MULT;
-  if (price < liq) return Math.min(100, 75 + ((liq - price) / liq) * 25);
-  if (price < aggrEnd) return 50 + ((aggrEnd - price) / (aggrEnd - liq)) * 25;
-  if (price < modEnd) return 25 + ((modEnd - price) / (modEnd - aggrEnd)) * 25;
-  return Math.max(0, 25 - Math.max(0, (price - modEnd) / (consEnd - modEnd)) * 25);
-}
-
-function priceToZone(price: number, liq: number): ZoneIndex {
-  if (liq <= 0) return 0;
-  if (price < liq) return 3;
-  if (price < liq * ZONE_AGGRESSIVE_MULT) return 2;
-  if (price < liq * ZONE_MODERATE_MULT) return 1;
-  return 0;
-}
-
-const ZONE_LABELS = ["Conservative", "Moderate", "Aggressive", "Liquidation"] as const;
-const ZONE_BG = [
-  "bg-emerald-500/20",
-  "bg-amber-500/20",
-  "bg-orange-500/20",
-  "bg-red-500/20",
-];
-const ZONE_BG_ACTIVE = [
-  "bg-emerald-500/55",
-  "bg-amber-500/65",
-  "bg-orange-500/65",
-  "bg-red-500/65",
-];
-const ZONE_TEXT_ACTIVE = [
-  "text-emerald-400",
-  "text-amber-400",
-  "text-orange-400",
-  "text-red-400",
-];
+const ZONE_META = [
+  { key: "conservative", label: "Conservative", active: "bg-emerald-500/55", muted: "bg-emerald-500/20", text: "text-emerald-400" },
+  { key: "caution",      label: "Caution",      active: "bg-amber-500/55",   muted: "bg-amber-500/20",   text: "text-amber-400" },
+  { key: "liquidation",  label: "Liquidation",  active: "bg-red-500/55",     muted: "bg-red-500/20",     text: "text-red-400" },
+] as const;
 
 export interface AaveV4PriceRunwayProps {
   collateralSymbol: string;
   collateralAddress?: string;
   currentPrice: number;
   liqPrice: number | null;
+  /** Conservative→Caution boundary price. Activates the piecewise marker
+   *  mapping; price ≥ this → Conservative (marker pins at 0%). Defaults to
+   *  `liqPrice × 1.25` when omitted — matches the global default headroom. */
+  thresholdPrice?: number;
   simulated?: boolean;
   onPriceChange?: (price: number) => void;
   priceMin?: number;
   priceMax?: number;
   showZoneLabels?: boolean;
+  /** Bar-position (% from left) at which each zone ends. Last value is also
+   *  where the liquidation marker sits. Default = [25, 75] — Conservative
+   *  and Liquidation caps each take 25%, Caution interior takes 50%. */
+  zoneBoundaries?: [number, number];
 }
 
 function fmtPrice(v: number): string {
@@ -186,29 +161,64 @@ export function AaveV4PriceRunway({
   collateralAddress,
   currentPrice,
   liqPrice,
+  thresholdPrice,
   simulated = false,
   onPriceChange,
   priceMin,
   priceMax,
   showZoneLabels = true,
+  zoneBoundaries = [25, 75],
 }: AaveV4PriceRunwayProps) {
   const [infoOpen, setInfoOpen] = useState(false);
 
   const hasLiq = liqPrice != null && liqPrice > 0;
   const underwater = hasLiq && currentPrice <= liqPrice!;
   const overCovered = liqPrice === 0;
+  const editable = !!onPriceChange;
 
-  const liqRef = hasLiq ? liqPrice! : 0;
-  const pricePct = hasLiq ? priceToBarPct(currentPrice, liqRef) : 0;
-  const currentZone: ZoneIndex = hasLiq ? priceToZone(currentPrice, liqRef) : 0;
+  const liqBoundary = zoneBoundaries[1];
+  const effectiveThreshold = hasLiq
+    ? (thresholdPrice && thresholdPrice > liqPrice! ? thresholdPrice : liqPrice! * 1.25)
+    : 0;
+  const usePiecewise = hasLiq && effectiveThreshold > liqPrice!;
+
+  const priceToPct = (p: number): number => {
+    if (!hasLiq) return 0;
+    if (usePiecewise) {
+      const pCons = effectiveThreshold;
+      const pLiq = liqPrice!;
+      const [b0, b1] = zoneBoundaries;
+      if (p >= pCons) return 0;
+      if (p >= pLiq) return b0 + ((pCons - p) / (pCons - pLiq)) * (b1 - b0);
+      const t = Math.min(1, (pLiq - p) / pLiq);
+      return Math.min(100, b1 + t * (100 - b1));
+    }
+    // Linear fallback — currentPrice anchors 0%, liqPrice anchors liqBoundary.
+    const consumedFrac = (currentPrice - p) / (currentPrice - liqPrice!);
+    return Math.max(0, Math.min(100, consumedFrac * liqBoundary));
+  };
+
+  const oraclePct = hasLiq ? priceToPct(currentPrice) : 0;
+  const activeZoneIdx = oraclePct < zoneBoundaries[0] ? 0
+    : oraclePct < zoneBoundaries[1] ? 1
+    : 2;
+
+  const GAP = 1.5;
+  const numZones = ZONE_META.length;
+  const totalGap = (numZones - 1) * GAP;
+  const shrink = (100 - totalGap) / 100;
+  const intendedWidths = [
+    zoneBoundaries[0],
+    zoneBoundaries[1] - zoneBoundaries[0],
+    100 - zoneBoundaries[1],
+  ];
+  const zoneWidths = intendedWidths.map((w) => Math.max(0, w * shrink));
 
   const headroomPct = hasLiq && currentPrice > 0
     ? ((currentPrice - liqPrice!) / currentPrice) * 100
     : null;
 
   const H_BAR = 14;
-  const ZONE_GAP_PCT = 1.5;
-  const SEG_WIDTH_PCT = (100 - ZONE_GAP_PCT * 3) / 4;
   const H_TOP_LABEL = 26;
   const H_BAR_OFFSET = H_TOP_LABEL + 6;
   const HANDLE_SIZE = 18;
@@ -237,7 +247,7 @@ export function AaveV4PriceRunway({
           {hasLiq && (
             <div
               className="absolute text-[11px] tabular-nums whitespace-nowrap pointer-events-none leading-tight text-red-400 font-semibold"
-              style={{ left: "75%", transform: "translateX(-50%)", top: 0 }}
+              style={{ left: `${liqBoundary}%`, transform: "translateX(-50%)", top: 0 }}
             >
               {fmtPrice(liqPrice!)}
             </div>
@@ -246,18 +256,18 @@ export function AaveV4PriceRunway({
             className="absolute left-0 right-0 flex items-center"
             style={{ top: H_BAR_OFFSET, height: H_BAR }}
           >
-            {([0, 1, 2, 3] as ZoneIndex[]).map((zi) => {
-              const isActive = hasLiq && zi === currentZone;
-              const fill = !hasLiq && zi === 0
-                ? ZONE_BG_ACTIVE[0]
-                : isActive ? ZONE_BG_ACTIVE[zi] : ZONE_BG[zi];
+            {ZONE_META.map((zone, i) => {
+              const isActive = hasLiq && i === activeZoneIdx;
+              const fill = !hasLiq && i === 0
+                ? zone.active
+                : isActive ? zone.active : zone.muted;
               return (
                 <div
-                  key={zi}
+                  key={zone.key}
                   className={`h-full rounded-md transition-colors ${fill}`}
                   style={{
-                    width: `${SEG_WIDTH_PCT}%`,
-                    marginLeft: zi === 0 ? 0 : `${ZONE_GAP_PCT}%`,
+                    width: `${zoneWidths[i]}%`,
+                    marginLeft: i === 0 ? 0 : `${GAP}%`,
                   }}
                 />
               );
@@ -267,7 +277,7 @@ export function AaveV4PriceRunway({
           <div
             className="absolute pointer-events-none flex items-center justify-center"
             style={{
-              left: `calc(${Math.max(0, Math.min(100, pricePct))}% - ${HANDLE_SIZE / 2}px)`,
+              left: `calc(${Math.max(0, Math.min(100, oraclePct))}% - ${HANDLE_SIZE / 2}px)`,
               top: BAR_MID - HANDLE_SIZE / 2,
               width: HANDLE_SIZE,
               height: HANDLE_SIZE,
@@ -286,20 +296,20 @@ export function AaveV4PriceRunway({
               className="absolute left-0 right-0 flex items-center"
               style={{ top: ZONE_LABEL_TOP }}
             >
-              {([0, 1, 2, 3] as ZoneIndex[]).map((zi) => {
-                const isActive = hasLiq && zi === currentZone;
+              {ZONE_META.map((zone, i) => {
+                const isActive = hasLiq && i === activeZoneIdx;
                 return (
                   <div
-                    key={zi}
+                    key={zone.key}
                     className={`text-[10px] text-center transition-colors ${
-                      isActive ? `${ZONE_TEXT_ACTIVE[zi]} font-semibold` : "text-rb-500"
+                      isActive ? `${zone.text} font-semibold` : "text-rb-500"
                     }`}
                     style={{
-                      width: `${SEG_WIDTH_PCT}%`,
-                      marginLeft: zi === 0 ? 0 : `${ZONE_GAP_PCT}%`,
+                      width: `${zoneWidths[i]}%`,
+                      marginLeft: i === 0 ? 0 : `${GAP}%`,
                     }}
                   >
-                    {ZONE_LABELS[zi]}
+                    {zone.label}
                   </div>
                 );
               })}
@@ -335,7 +345,7 @@ export function AaveV4PriceRunway({
           ) : (
             <>No debt on this spoke, so there&apos;s no liquidation price to plot.</>
           )}
-          {onPriceChange ? (
+          {editable ? (
             <>
               {" "}<span className="text-blue-400">Edit the price pill to simulate a price move.</span>
             </>
