@@ -179,12 +179,15 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
                     // The changed asset is the supply side's primary asset for
                     // supply/withdraw, or the collateral asset for liquidations.
                     const isThisChanged = (isSupplySide || isLiq) && s.symbol === (isLiq ? ctx.collateralSymbol : token);
-                    // Surface the USD chip only on the asset we have a price for
-                    // (the event's primary asset). Liquidations use collateralPrice;
-                    // everything else uses the primary `price` field.
-                    const priceUsd = !isThisChanged ? undefined
-                      : isLiq ? ctx.collateralPrice?.usd
-                      : ctx.price?.usd;
+                    // Prefer the per-row price (server enriches every snapshot
+                    // item with its historic USD price). Fall back to the
+                    // event's primary price on the changed row so older clients
+                    // / older payloads without per-row prices still render.
+                    const priceUsd = s.price?.usd ?? (
+                      !isThisChanged ? undefined
+                        : isLiq ? ctx.collateralPrice?.usd
+                        : ctx.price?.usd
+                    );
                     return (
                       <PositionRow
                         key={s.symbol}
@@ -205,9 +208,11 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
                 <div className="flex flex-col gap-1">
                   {debts.map(d => {
                     const isThisChanged = (isDebtSide || isLiq) && d.symbol === token;
-                    const priceUsd = !isThisChanged ? undefined
-                      : isLiq ? ctx.debtPrice?.usd
-                      : ctx.price?.usd;
+                    const priceUsd = d.price?.usd ?? (
+                      !isThisChanged ? undefined
+                        : isLiq ? ctx.debtPrice?.usd
+                        : ctx.price?.usd
+                    );
                     return (
                       <PositionRow
                         key={d.symbol}

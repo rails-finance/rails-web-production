@@ -22,7 +22,7 @@ import { usePrices } from "@/lib/shared/prices-context";
 const AaveV4BarsContext = createContext<Map<string, PositionBarData> | null>(null);
 
 function usdTotal(
-  entries: { symbol: string; amount: string }[] | undefined,
+  entries: { symbol: string; amount: string; price?: { usd: number } }[] | undefined,
   prices?: Record<string, PriceEntry | number>,
 ): number {
   if (!entries) return 0;
@@ -30,7 +30,11 @@ function usdTotal(
   for (const e of entries) {
     const amt = parseFloat(e.amount);
     if (!isFinite(amt) || amt <= 0) continue;
-    const price = resolvePrice(e.symbol, prices) ?? 0;
+    // Prefer the per-row historic price (block-anchored) when the server
+    // shipped one. Fall back to the global prices map so legacy payloads
+    // and any reserve outside the categorical allowlist still contribute
+    // something — better an approximate scale than a flat zero.
+    const price = e.price?.usd ?? resolvePrice(e.symbol, prices) ?? 0;
     sum += amt * price;
   }
   return sum;

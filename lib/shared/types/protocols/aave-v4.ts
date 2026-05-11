@@ -12,6 +12,16 @@ export type AaveV4EventType =
   | "liquidation"
   | "collateral_toggle";
 
+/** Snapshot row carried in `allSupplies` / `allDebts`. Optional `price` is
+ *  populated for every reserve that has an `aave_v4_historic_prices` row at
+ *  the event's block matching the categorical allowlist. Mirrors the
+ *  server-side type. */
+export interface AaveV4SnapshotItem {
+  symbol: string;
+  amount: string;
+  price?: { usd: number; source: AaveV4PriceSource };
+}
+
 export interface AaveV4Context {
   eventType: AaveV4EventType;
   amount?: string;
@@ -27,8 +37,8 @@ export interface AaveV4Context {
   supplyAfter?: string;
   debtBefore?: string;
   debtAfter?: string;
-  allSupplies?: { symbol: string; amount: string }[];
-  allDebts?: { symbol: string; amount: string }[];
+  allSupplies?: AaveV4SnapshotItem[];
+  allDebts?: AaveV4SnapshotItem[];
   alsoToggledCollateral?: boolean;
   supplyAPR?: string;
   borrowAPR?: string;

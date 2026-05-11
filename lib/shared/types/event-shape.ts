@@ -229,10 +229,13 @@ export interface AaveV4Context {
   debtBefore?: string;
   /** Running debt balance after this event (human-readable). */
   debtAfter?: string;
-  /** All non-zero supply positions in this spoke after the event. */
-  allSupplies?: { symbol: string; amount: string }[];
+  /** All non-zero supply positions in this spoke after the event. Items may
+   *  carry an optional `price` (USD value at event block) when the asset
+   *  is in the categorical-pricing allowlist. See lib/shared/types/protocols/aave-v4.ts
+   *  for the canonical AaveV4SnapshotItem shape. */
+  allSupplies?: { symbol: string; amount: string; price?: { usd: number; source: string } }[];
   /** All non-zero debt positions in this spoke after the event. */
-  allDebts?: { symbol: string; amount: string }[];
+  allDebts?: { symbol: string; amount: string; price?: { usd: number; source: string } }[];
   /** Same-tx supply + collateral_toggle merge — drives the
    *  "Supply & Enable Collateral" card. */
   alsoToggledCollateral?: boolean;
