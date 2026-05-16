@@ -1,20 +1,18 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import { InfoIconButton } from "@/components/shared/info-icon-button";
-import { advanceToNextSimInput } from "@/components/shared/simulator-inputs";
 
 /**
  * Per-asset price runway for an Aave V4 spoke.
  *
  * Three zones across the bar — Conservative / Caution / Liquidation — mirroring
  * the shape used on Liquity V2's trove pages. The Conservative→Caution
- * boundary is user-editable: a global "headroom %" preference computes
- * `thresholdPrice = liqPrice × (1 + headroom/100)` and feeds it in here. The
- * Caution interior is bounded between thresholdPrice and liqPrice; Conservative
- * and Liquidation get fixed visual widths since both are open-ended in price
- * space.
+ * boundary is set by a global "headroom %" preference: thresholdPrice =
+ * liqPrice × (1 + headroom/100). The Caution interior is bounded between
+ * thresholdPrice and liqPrice; Conservative and Liquidation get fixed visual
+ * widths since both are open-ended in price space.
  *
  * Marker placement uses one of two modes:
  *   • **Threshold-based** (preferred) — caller passes `thresholdPrice`. Marker
@@ -25,8 +23,8 @@ import { advanceToNextSimInput } from "@/components/shared/simulator-inputs";
  *     linearly between currentPrice (0%) and liqPrice (b1). Used by callsites
  *     that haven't wired up a threshold yet.
  *
- * The price pill is editable when `onPriceChange` is supplied (sim mode);
- * otherwise it renders as a read-only chip.
+ * Read-only — renders current oracle-derived state. Hypothetical price
+ * simulation deferred per the truth principle (see migration/phase-2-mono-explorers.md).
  */
 
 const ZONE_META = [
@@ -44,10 +42,6 @@ export interface AaveV4PriceRunwayProps {
    *  mapping; price ≥ this → Conservative (marker pins at 0%). Defaults to
    *  `liqPrice × 1.25` when omitted — matches the global default headroom. */
   thresholdPrice?: number;
-  simulated?: boolean;
-  onPriceChange?: (price: number) => void;
-  priceMin?: number;
-  priceMax?: number;
   showZoneLabels?: boolean;
   /** Bar-position (% from left) at which each zone ends. Last value is also
    *  where the liquidation marker sits. Default = [25, 75] — Conservative
@@ -68,91 +62,16 @@ function PricePill({
   symbol,
   address,
   price,
-  simulated,
-  onChange,
-  min,
-  max,
 }: {
   symbol: string;
   address?: string;
   price: number;
-  simulated: boolean;
-  onChange?: (v: number) => void;
-  min?: number;
-  max?: number;
 }) {
-  const [editing, setEditing] = useState(false);
-  const [text, setText] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
-  const editable = !!onChange;
-  const priceColor = simulated ? "text-blue-400" : "text-green-400";
-
-  const startEdit = () => {
-    if (!editable) return;
-    setText(price < 1 ? price.toFixed(4) : String(Math.round(price)));
-    setEditing(true);
-    requestAnimationFrame(() => inputRef.current?.select());
-  };
-  const commit = () => {
-    setEditing(false);
-    const v = parseFloat(text);
-    if (!isNaN(v) && v > 0) {
-      const clamped = Math.min(max ?? Infinity, Math.max(min ?? 0, v));
-      onChange?.(clamped);
-    }
-  };
-
-  if (editing) {
-    return (
-      <span className="inline-flex items-center gap-1.5">
-        <TokenChipIcon symbol={symbol} address={address} size={32} />
-        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-rb-200 dark:bg-rb-900 text-xs tabular-nums ring-1 ring-blue-500/50">
-          <span>$</span>
-          <input
-            ref={inputRef}
-            data-sim-focus
-            type="text"
-            inputMode="decimal"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onBlur={commit}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                const el = e.currentTarget;
-                commit();
-                advanceToNextSimInput(el, 1);
-              } else if (e.key === "Tab") {
-                const el = e.currentTarget;
-                const dir: 1 | -1 = e.shiftKey ? -1 : 1;
-                if (advanceToNextSimInput(el, dir)) {
-                  e.preventDefault();
-                  commit();
-                }
-              } else if (e.key === "Escape") {
-                setEditing(false);
-              }
-            }}
-            className={`bg-transparent outline-none w-20 font-bold tabular-nums ${priceColor}`}
-          />
-        </span>
-      </span>
-    );
-  }
-
   return (
-    <button
-      type="button"
-      data-sim-focus={editable ? "" : undefined}
-      onClick={startEdit}
-      disabled={!editable}
-      className={`inline-flex items-center gap-1.5 text-xs tabular-nums ${
-        editable ? "cursor-text" : "cursor-default"
-      }`}
-    >
+    <span className="inline-flex items-center gap-1.5 text-xs tabular-nums cursor-default">
       <TokenChipIcon symbol={symbol} address={address} size={32} />
-      <span className={`font-bold ${priceColor}`}>{fmtPrice(price)}</span>
-    </button>
+      <span className="font-bold text-green-400">{fmtPrice(price)}</span>
+    </span>
   );
 }
 
@@ -162,10 +81,6 @@ export function AaveV4PriceRunway({
   currentPrice,
   liqPrice,
   thresholdPrice,
-  simulated = false,
-  onPriceChange,
-  priceMin,
-  priceMax,
   showZoneLabels = true,
   zoneBoundaries = [25, 75],
 }: AaveV4PriceRunwayProps) {
@@ -174,7 +89,6 @@ export function AaveV4PriceRunway({
   const hasLiq = liqPrice != null && liqPrice > 0;
   const underwater = hasLiq && currentPrice <= liqPrice!;
   const overCovered = liqPrice === 0;
-  const editable = !!onPriceChange;
 
   const liqBoundary = zoneBoundaries[1];
   const effectiveThreshold = hasLiq
@@ -234,10 +148,6 @@ export function AaveV4PriceRunway({
             symbol={collateralSymbol}
             address={collateralAddress}
             price={currentPrice}
-            simulated={simulated}
-            onChange={onPriceChange}
-            min={priceMin}
-            max={priceMax}
           />
         </div>
         <div
@@ -345,11 +255,6 @@ export function AaveV4PriceRunway({
           ) : (
             <>No debt on this spoke, so there&apos;s no liquidation price to plot.</>
           )}
-          {editable ? (
-            <>
-              {" "}<span className="text-blue-400">Edit the price pill to simulate a price move.</span>
-            </>
-          ) : null}
         </div>
       )}
     </div>

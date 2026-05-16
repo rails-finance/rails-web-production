@@ -7,9 +7,7 @@
 // Renders one collateral tower (blue) + one debt tower (emerald) per spoke.
 // Withdrawn / repaid amounts render as hatched segments on top of the active
 // segments so the chart tells the lifetime story; the Display dropdown collapses
-// back to current-state-only. Hooks into the simulator via the `simulator` prop
-// — when active, the chart sits inside a dashed-border container that visually
-// pairs it with the simulator card below.
+// back to current-state-only.
 
 import { useState } from "react";
 import { TokenChipIcon } from "@/components/shared/token-chip-icon";
@@ -111,8 +109,6 @@ function AaveChartDisplayMenu({
 export interface AaveV4TowerChartProps {
   reserves: ReserveStats[];
   prices?: Record<string, PriceEntry | number>;
-  /** When provided, the chart toolbar exposes a Simulator pill. */
-  simulator?: { isActive: boolean; enter: () => void; exit: () => void };
   /** Symbols whose individual liquidation can't trigger a basket liq at base
    *  state — rendered with a softer blue so the prominent blue answers
    *  "what's bearing the risk?". */
@@ -124,7 +120,6 @@ export interface AaveV4TowerChartProps {
 export function AaveV4TowerChart({
   reserves,
   prices,
-  simulator,
   surplusSymbols,
   hideSurplus,
   onToggleHideSurplus,
@@ -191,7 +186,6 @@ export function AaveV4TowerChart({
 
   const hasLive = supplyAssets.length > 0 || debtAssets.length > 0;
   const hasHistory = totalWithdrawnUsd > 1 || totalRepaidUsd > 1 || closedRows.length > 0;
-  const simActive = !!simulator?.isActive;
   const isLiveView = hideHistorical && (hasLive || !hasHistory);
 
   const collSegments: TowerSegment[] = [
@@ -332,22 +326,8 @@ export function AaveV4TowerChart({
 
   return (
     <div className="space-y-2">
-      {(hasLive || hasHistory || simulator) && (
+      {(hasLive || hasHistory) && (
         <div className="flex justify-end gap-1.5">
-          {simulator && (
-            <button
-              type="button"
-              onClick={() => (simulator.isActive ? simulator.exit() : simulator.enter())}
-              className={`px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider transition-colors rounded border ${
-                simActive
-                  ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
-                  : "border-rb-200/60 dark:border-rb-800/60 text-rb-500 hover:text-amber-400"
-              }`}
-              title={simActive ? "Close simulator" : "Project a hypothetical position from current state"}
-            >
-              Simulator
-            </button>
-          )}
           <AaveChartDisplayMenu
             hideHistorical={hideHistorical}
             onToggleHistorical={() => setHideHistorical((v) => !v)}

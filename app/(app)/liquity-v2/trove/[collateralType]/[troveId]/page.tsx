@@ -28,7 +28,6 @@ import { EventDateContext } from "@/components/shared/event-time";
 import { dayKey, shortDate, shortDateYear } from "@/lib/shared/format-event";
 import { TimelineDisplayProvider, useTimelineDisplay } from "@/components/shared/timeline-display-context";
 import { LiquityTroveBarsProvider } from "@/lib/liquity/use-trove-bars";
-import { TroveSimulatorProvider } from "@/lib/liquity/use-simulator";
 import { FilterDropdown, DisplaySettingsIcon, type FilterOption } from "@/components/shared/filter-dropdown";
 import { getEventActionKey, actionLabel, DEMOTED_ACTIONS } from "@/lib/shared/event-filter-helpers";
 import { TransactionHeatmap } from "@/components/shared/transaction-heatmap";
@@ -426,7 +425,7 @@ export default function TrovePage() {
   }
 
   return (
-    <TroveSimulatorProvider activeTroveId={troveData.id}>
+    <>
       <FeedbackButton />
       <div className="space-y-6 py-8">
         {/* Single HoverProvider wraps the whole summary stack so
@@ -601,6 +600,6 @@ export default function TrovePage() {
           )}
         </TimelineDisplayProvider>
       </div>
-    </TroveSimulatorProvider>
+    </>
   );
 }

@@ -22,14 +22,6 @@ import { usePreferences } from "@/lib/shared/preferences-context";
 import { TrovePriceAxis } from "@/components/protocol/liquity/trove-price-axis";
 import { getLiquidationThreshold } from "@/lib/utils/liquidation-utils";
 import { formatRatio, ratioLabel, useLiquityRatioColorClass, resolveLiquityBranch } from "@/lib/shared/ratio-format";
-import { useTroveSimulator } from "@/lib/liquity/use-simulator";
-import { LiquitySimulatorCard } from "@/components/protocol/liquity/liquity-simulator-card";
-
-// Phase-2: simulator overlay is wired through `useTroveSimulator()` — the
-// "What if?" toggle in the chart toolbar opens an interactive card below the
-// liquidation-price axis. Tower segments + breakdown rows still reflect the
-// historical/live snapshot; threading sim edits through them is a follow-up.
-
 // ---- Types ----
 
 /** Minimal event shape — works with both BaseActivityEvent and TimelineEvent */
@@ -406,27 +398,6 @@ export function TroveEconomicsSummary({
   // true → live view (current open position only).
   const [hideHistorical, setHideHistorical] = useState(false);
 
-  // Simulator overlay context — present only when the trove page mounts a
-  // <TroveSimulatorProvider>. The `simSnapshot` seeds the simulator card with
-  // the latest stateAfter from the timeline (open troves only).
-  const simulatorCtx = useTroveSimulator();
-  const simSnapshot = useMemo(() => {
-    const liq = events.filter(isLiquityMinimal);
-    if (liq.length === 0) return null;
-    const sorted = [...liq].sort((a, b) => a.timestamp - b.timestamp);
-    const ctx = sorted[sorted.length - 1].context.data as LiquityContext;
-    const sa = ctx.stateAfter;
-    if (!sa || !(sa.coll > 0) || !(sa.debt > 0)) return null;
-    return {
-      troveId: ctx.troveId,
-      coll: sa.coll,
-      debt: sa.debt,
-      annualInterestRate: sa.annualInterestRate,
-      collateralType: ctx.collateralType,
-      stablecoinSymbol: ctx.assetType || "BOLD",
-    };
-  }, [events]);
-
   // Pure redeemer — no own trove operations
   if (!baseResult && redeemerStats) {
     return <RedeemerSummary stats={redeemerStats} currentPrice={currentPrice} />;
@@ -450,17 +421,6 @@ export function TroveEconomicsSummary({
   const stableSymbol = meta.stablecoinSymbol;
   const redemption = economics.redemption;
   const liquidation = economics.liquidation ?? null;
-
-  // Simulator open-state derived from context. The toggle below opens/closes
-  // the simulator for *this* trove; the panel collapses automatically when the
-  // active trove changes (handled inside TroveSimulatorProvider).
-  const simTroveId = simSnapshot?.troveId ?? "";
-  const isSimulated = !!simTroveId && simulatorCtx?.openTroveId === simTroveId;
-  const canShowSimToggle = !!simulatorCtx
-    && !!simSnapshot
-    && meta.status === "open"
-    && !!effectivePrice
-    && effectivePrice > 0;
 
   // Include pending interest so "Current Debt" matches reality.
   // For batched troves, meta.interestRate already includes the management fee
@@ -809,37 +769,20 @@ export function TroveEconomicsSummary({
                 ? `${meta.status === "closed" ? "opacity-60" : ""}`
                 : "p-3 border border-transparent"
             }`}>
-            {((hasLive && hasHistory) || canShowSimToggle) && (
+            {hasLive && hasHistory && (
               <div className="flex items-center justify-end gap-2 mb-2 min-h-[28px]">
-                {canShowSimToggle && (
-                  <button
-                    type="button"
-                    onClick={() => simulatorCtx!.toggle(simTroveId)}
-                    aria-pressed={isSimulated}
-                    title={isSimulated ? "Close the simulator" : "Open the what-if simulator"}
-                    className={`text-xs font-medium px-2 py-1 rounded-md transition-colors cursor-pointer ${
-                      isSimulated
-                        ? "bg-blue-500/20 text-blue-300 border border-blue-500/40 hover:bg-blue-500/30"
-                        : "bg-rb-200 dark:bg-rb-900 text-rb-500 hover:text-foreground hover:bg-rb-300 dark:hover:bg-rb-800 border border-transparent"
-                    }`}
-                  >
-                    What if?
-                  </button>
-                )}
-                {hasLive && hasHistory && (
-                  <FilterDropdown
-                    label="Display"
-                    options={[{ key: "hide-historical", label: "Hide inactive / repaid" } satisfies FilterOption]}
-                    selected={hideHistorical ? new Set(["hide-historical"]) : new Set<string>()}
-                    onSelect={() => {}}
-                    multi
-                    minimal
-                    align="right"
-                    variant="ghost"
-                    triggerIcon={<DisplaySettingsIcon size={14} />}
-                    onToggle={() => setHideHistorical((v) => !v)}
-                  />
-                )}
+                <FilterDropdown
+                  label="Display"
+                  options={[{ key: "hide-historical", label: "Hide inactive / repaid" } satisfies FilterOption]}
+                  selected={hideHistorical ? new Set(["hide-historical"]) : new Set<string>()}
+                  onSelect={() => {}}
+                  multi
+                  minimal
+                  align="right"
+                  variant="ghost"
+                  triggerIcon={<DisplaySettingsIcon size={14} />}
+                  onToggle={() => setHideHistorical((v) => !v)}
+                />
               </div>
             )}
             {debtPeak > 0 && (
@@ -863,37 +806,19 @@ export function TroveEconomicsSummary({
                   maxValue={towerMax}
                 />
                 {/* Liquidation-price axis — open troves only, requires a
-                    current oracle price. When the simulator is open the
-                    axis switches to the sim's coll/debt/price so it
-                    mirrors what the user is changing. Price edits via
-                    the axis pill flow through `simulatorCtx.requestPrice`,
-                    which the simulator card folds back into its derived
-                    state. We hide the axis entirely when the sim has
-                    fully unwound the position (debt or coll = 0) — there
-                    is no liquidation price for an empty trove. */}
+                    current oracle price. Read-only: shows the current
+                    oracle position relative to the trove's liquidation
+                    price derived from current collateral/debt. */}
                 {meta.status === "open" && meta.collateralAmount > 0 && meta.currentDebt > 0 && effectivePrice && effectivePrice > 0 && (() => {
-                  const simEdits = isSimulated ? simulatorCtx?.edits ?? null : null;
-                  const useSim = simEdits && simEdits.troveId === simTroveId;
-                  const axisColl = useSim ? simEdits.sim.coll : meta.collateralAmount;
-                  const axisDebt = useSim ? simEdits.sim.debt : meta.currentDebt;
-                  const axisOraclePrice = useSim ? simEdits.sim.price : effectivePrice;
-                  if (!(axisColl > 0) || !(axisDebt > 0) || !(axisOraclePrice > 0)) return null;
                   // MCR varies per collateral branch — 110% on WETH, 120% on
                   // wstETH/rETH. Always derive from the trove's collateralType.
                   const mcr = getLiquidationThreshold(meta.collateralType);
-                  const liqPrice = (axisDebt * (mcr / 100)) / axisColl;
+                  const liqPrice = (meta.currentDebt * (mcr / 100)) / meta.collateralAmount;
                   if (!(liqPrice > 0)) return null;
-                  const axisEditable = isSimulated && !!simulatorCtx;
-                  const axisPriceMin = Math.max(0.01, effectivePrice * 0.1);
-                  const axisPriceMax = Math.max(effectivePrice * 2.5, 10000);
 
                   // Translate the user's Conservative CR threshold into the
                   // single price at which the Conservative→Caution boundary
                   // sits: priceAtConservativeMin = liqPrice × consMin / mcr.
-                  // TrovePriceAxis owns the price→position mapping — the
-                  // marker pins to 0% while CR ≥ Conservative threshold,
-                  // then slides through the bounded Caution interior toward
-                  // the Liquidation cap as the (sim-aware) price drops.
                   const branchKey = resolveLiquityBranch(meta.collateralType);
                   const branchThresholds = prefs.liquityV2.byBranch[branchKey];
                   const thresholdPrice = liqPrice * (branchThresholds.crConservativeMin / mcr);
@@ -903,33 +828,13 @@ export function TroveEconomicsSummary({
                       <TrovePriceAxis
                         collateralSymbol={collateralSymbol}
                         debtSymbol={stableSymbol}
-                        oraclePrice={axisOraclePrice}
+                        oraclePrice={effectivePrice}
                         liquidationPrice={liqPrice}
                         thresholdPrice={thresholdPrice}
-                        simulated={isSimulated}
-                        onOraclePriceChange={axisEditable ? (p) => simulatorCtx!.requestPrice(p) : undefined}
-                        priceMin={axisEditable ? axisPriceMin : undefined}
-                        priceMax={axisEditable ? axisPriceMax : undefined}
                       />
                     </div>
                   );
                 })()}
-                {isSimulated && simSnapshot && simTroveId && effectivePrice && (
-                  <div className="mt-4">
-                    <LiquitySimulatorCard
-                      troveId={simTroveId}
-                      current={{
-                        coll: simSnapshot.coll,
-                        debt: simSnapshot.debt,
-                        annualInterestRate: simSnapshot.annualInterestRate,
-                        collateralType: simSnapshot.collateralType,
-                        stablecoinSymbol: simSnapshot.stablecoinSymbol,
-                      }}
-                      currentPrice={effectivePrice}
-                      onClose={() => simulatorCtx!.close()}
-                    />
-                  </div>
-                )}
               </>
             )}
             </div>

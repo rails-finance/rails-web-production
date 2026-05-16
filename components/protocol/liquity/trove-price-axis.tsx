@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import { InfoIconButton } from "@/components/shared/info-icon-button";
 
@@ -29,16 +29,15 @@ import { InfoIconButton } from "@/components/shared/info-icon-button";
  *     refPrice (0%) and liquidationPrice (Caution/Liquidation boundary). Used
  *     by callers without a threshold concept.
  *
- * Editing happens through the price pill on the right (click to enter a
- * value); when `onOraclePriceChange` is omitted the pill is read-only.
+ * Read-only — renders current oracle-derived state. Hypothetical price
+ * simulation deferred per the truth principle (see migration/phase-2-mono-explorers.md).
  */
 
 export interface TrovePriceAxisProps {
   collateralSymbol: string;
   collateralAddress?: string;
   debtSymbol: string;
-  /** Price to plot. Equals the live oracle price in read mode, the simulated
-   *  price in simulator mode. */
+  /** Price to plot — current live oracle price. */
   oraclePrice: number;
   liquidationPrice: number;
   /** Anchor for the bar's left edge in the linear-fallback mode. Ignored
@@ -47,10 +46,6 @@ export interface TrovePriceAxisProps {
   /** Conservative→Caution boundary price. Activates the piecewise marker
    *  mapping; below this price the marker enters the Caution interior. */
   thresholdPrice?: number;
-  onOraclePriceChange?: (price: number) => void;
-  simulated?: boolean;
-  priceMin?: number;
-  priceMax?: number;
   /** Bar-position (% from left) at which each zone ends. Last value is also
    *  where the liquidation marker sits. Default = [25, 75] — Conservative
    *  and Liquidation caps each take 25%, Caution interior takes 50%. */
@@ -76,76 +71,16 @@ function PricePill({
   symbol,
   address,
   price,
-  simulated,
-  onChange,
-  min,
-  max,
 }: {
   symbol: string;
   address?: string;
   price: number;
-  simulated: boolean;
-  onChange?: (v: number) => void;
-  min?: number;
-  max?: number;
 }) {
-  const [editing, setEditing] = useState(false);
-  const [text, setText] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
-  const editable = !!onChange;
-  const priceColor = simulated ? "text-blue-400" : "text-green-400";
-
-  const startEdit = () => {
-    if (!editable) return;
-    setText(price < 1 ? price.toFixed(4) : String(Math.round(price)));
-    setEditing(true);
-    requestAnimationFrame(() => inputRef.current?.select());
-  };
-  const commit = () => {
-    setEditing(false);
-    const v = parseFloat(text);
-    if (!isNaN(v) && v > 0) {
-      const clamped = Math.min(max ?? Infinity, Math.max(min ?? 0, v));
-      onChange?.(clamped);
-    }
-  };
-
-  if (editing) {
-    return (
-      <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-rb-200 dark:bg-rb-900 text-xs tabular-nums ring-1 ring-blue-500/50">
-        <TokenChipIcon symbol={symbol} address={address} size={14} />
-        <span>$</span>
-        <input
-          ref={inputRef}
-          data-sim-focus
-          type="text"
-          inputMode="decimal"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onBlur={commit}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") commit();
-            if (e.key === "Escape") setEditing(false);
-          }}
-          className={`bg-transparent outline-none w-20 font-bold tabular-nums ${priceColor}`}
-        />
-      </span>
-    );
-  }
-
   return (
-    <button
-      type="button"
-      data-sim-focus
-      onClick={startEdit}
-      disabled={!editable}
-      className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-rb-200 dark:bg-rb-900 text-xs tabular-nums transition-colors ${
-        editable ? "hover:bg-rb-300 dark:hover:bg-rb-800 cursor-text" : "cursor-default"
-      }`}
-    >
+    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-rb-200 dark:bg-rb-900 text-xs tabular-nums cursor-default">
       <TokenChipIcon symbol={symbol} address={address} size={14} />
-      <span className={`font-bold ${priceColor}`}>{fmtPrice(price)}</span>
-    </button>
+      <span className="font-bold text-green-400">{fmtPrice(price)}</span>
+    </span>
   );
 }
 
@@ -157,14 +92,9 @@ export function TrovePriceAxis({
   liquidationPrice,
   referenceOraclePrice,
   thresholdPrice,
-  onOraclePriceChange,
-  simulated = false,
-  priceMin,
-  priceMax,
   zoneBoundaries = [25, 75],
 }: TrovePriceAxisProps) {
   const [infoOpen, setInfoOpen] = useState(false);
-  const editable = !!onOraclePriceChange;
 
   if (!(oraclePrice > 0) || !(liquidationPrice > 0)) return null;
 
@@ -295,10 +225,6 @@ export function TrovePriceAxis({
             symbol={collateralSymbol}
             address={collateralAddress}
             price={oraclePrice}
-            simulated={simulated}
-            onChange={onOraclePriceChange}
-            min={priceMin}
-            max={priceMax}
           />
         </div>
         <div style={{ marginTop: 29 }}>
@@ -323,11 +249,6 @@ export function TrovePriceAxis({
               (to {fmtPrice(liquidationPrice)}) before this trove is liquidated. Liquity V2 uses a 110% minimum collateral ratio across branches.
             </>
           )}
-          {editable ? (
-            <>
-              {" "}<span className="text-blue-400">Click the price pill to simulate a different oracle value.</span>
-            </>
-          ) : null}
         </div>
       )}
     </div>
