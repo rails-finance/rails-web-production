@@ -33,19 +33,18 @@ export const metadata: Metadata = {
     template: "Rails | %s",
   },
   description:
-    "Self-service support for DeFi users. Rails displays your DeFi activity on simple timelines with clear explanations and in-depth transaction analysis. Track Liquity V2 Troves and more.",
+    "Rails is a DeFi self-service support platform. Each protocol gets its own dedicated explorer — a mono-rail — with on-chain-verifiable positions, timelines, and event detail. Live rails: Liquity V2 and Aave V4.",
   keywords: [
     "DeFi",
-    "Liquity V2",
-    "Trove",
-    "Transaction Analysis",
     "Ethereum",
+    "Liquity V2",
+    "Aave V4",
+    "Trove",
     "BOLD",
     "Stablecoin",
-    "ETH",
-    "wstETH",
-    "rETH",
+    "Transaction Analysis",
     "Lending Protocol",
+    "Self-Service Support",
   ],
   authors: [{ name: "Rails", url: "https://rails.finance" }],
   creator: "Rails",
@@ -56,7 +55,7 @@ export const metadata: Metadata = {
     url: "https://rails.finance",
     title: "Rails - DeFi Self-Service Support",
     description:
-      "Self-service support for DeFi users. Rails displays your DeFi activity with clear explanations and in-depth transaction analysis.",
+      "A DeFi self-service support platform — dedicated mono-rail explorers per protocol, with on-chain-verifiable positions, timelines, and event detail.",
     siteName: "Rails",
     images: [
       {
@@ -71,7 +70,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Rails - DeFi Self-Service Support",
     description:
-      "Self-service support for DeFi users. Rails displays your DeFi activity with clear explanations and in-depth transaction analysis.",
+      "A DeFi self-service support platform — dedicated mono-rail explorers per protocol, with on-chain-verifiable positions, timelines, and event detail.",
     images: ["/twitter-image.png"],
     creator: "@rails_finance",
     site: "@rails_finance",

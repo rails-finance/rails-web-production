@@ -1,17 +1,18 @@
 import { SlideAnimation } from "./slides";
 
 /**
- * Flagship feature spotlight — Simulation + Timeline visuals. Ported from
- * rails-explorer; the 'View example' link is intentionally omitted because
- * rails-web-mig has no /address page yet (deferred).
+ * Flagship feature spotlight — Economics + Timeline visuals. Truth principle:
+ * the Economics panel shows current-state, on-chain-verifiable values only
+ * (health, liquidation, rate). Simulators were pulled in W1; if hypotheticals
+ * return they'll be a separate, clearly-labelled surface.
  */
 
 const FEATURES = [
   {
-    heading: "Plan your journey",
-    name: "Simulation",
+    heading: "Know where you stand",
+    name: "Economics",
     description:
-      "Preview how a position behaves before you commit — stress-test scenarios and account for exactly where it stands.",
+      "Health, liquidation price, and rate exposure — each value derived from on-chain state, with the inputs visible. No estimates, no hypotheticals.",
     slidePath: "/slides/slide-1-economics.svg",
   },
   {

@@ -3,7 +3,6 @@
 import { GraduationCap, Wallet, Code2, ShieldAlert } from "lucide-react";
 import { LiquityLogo } from "@/components/LiquityLogo";
 import { HomeHero } from "@/components/home/home-hero";
-import { IndexSection } from "@/components/home/index-section";
 import { DemoSlider } from "@/components/home/demo-slider";
 import { MonoRailSection } from "@/components/home/mono-rail-section";
 
@@ -13,21 +12,16 @@ export default function Home() {
       {/* ═══ HERO ═══ */}
       <HomeHero />
 
-      {/* ═══ RAILS INDEX ═══ */}
-      <IndexSection />
+      {/* ═══ THE RAILS — promoted to the lead position; each rail is the
+          product, not a flavour of an umbrella. ═══ */}
+      <MonoRailSection />
 
-      {/* ═══ THE SUITE — flagship demo slider ═══ */}
+      {/* ═══ FEATURE SPOTLIGHT — Economics + Timeline ═══ */}
       <div className="bg-gradient-to-b from-rb-100 to-rb-200 dark:from-rb-900 dark:to-rb-800 overflow-hidden">
         <section className="max-w-7xl mx-auto px-4 py-4">
           <DemoSlider />
         </section>
       </div>
-
-      {/* ═══ MONO-RAIL EXPLORERS ═══ */}
-      <MonoRailSection />
-
-      {/* Liquity V2 stats + search now live on /liquity-v2 — the home is
-          purely brand/marketing, with the hero CTA pointing to that page. */}
 
       {/* ═══ WHO IS RAILS FOR ═══ */}
       <div className="bg-rb-50 dark:bg-rb-900">
@@ -104,10 +98,10 @@ function GetInTouch() {
           <div className="md:text-left flex flex-col md:items-start flex-1">
             <p className="leading-relaxed max-w-md mb-8">
               Working with a protocol team or building DeFi infrastructure?
-              We partner with sponsors on <span className="font-bold">integrations</span> for the
-              umbrella explorer and dedicated <span className="font-bold">custom explorers</span> —
-              mono-rail subdomains scoped to a single protocol, with the same
-              depth as the umbrella. <span className="text-blue-500">Liquity</span> is our founding supporter.
+              Rails partners with sponsors to launch <span className="font-bold">mono-rails</span> —
+              dedicated explorers scoped to a single protocol, with the
+              activity, position, and event depth a self-service support
+              surface needs. <span className="text-blue-500">Liquity</span> is our founding supporter.
             </p>
             <div className="mb-8">
               <a href="https://liquity.org" target="_blank" rel="noopener noreferrer" className="block">

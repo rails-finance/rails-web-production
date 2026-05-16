@@ -50,9 +50,9 @@ function activeProtocol(pathname: string | null) {
   return null;
 }
 
-/** Always-on Rails wordmark on the left, with an Explorer sublabel.
- *  rails-web-mig is single-protocol (Liquity V2), so the sublabel is fixed —
- *  no Index/Explorer split like the umbrella. */
+/** Always-on Rails wordmark on the left. Rails is the platform; the protocol
+ *  pill (right of the wordmark) names the active rail when inside one. No
+ *  "Explorer" sublabel — there isn't a single explorer, there are mono-rails. */
 function RailsLogo() {
   return (
     <Link href="/" className="group flex items-center gap-1.5 text-foreground shrink-0">
@@ -79,9 +79,8 @@ function RailsLogo() {
           d="M 148.892 142.388 L 180.766 142.388 L 155.359 93.185 L 123.486 93.185 L 148.892 142.388 Z"
         />
       </svg>
-      <span className="text-base tracking-wide font-semibold">
-        <span className="opacity-80 group-hover:opacity-100 transition-opacity">Rails</span>
-        <span className="ml-1 text-blue-500">Explorer</span>
+      <span className="text-base tracking-wide font-semibold opacity-80 group-hover:opacity-100 transition-opacity">
+        Rails
       </span>
     </Link>
   );

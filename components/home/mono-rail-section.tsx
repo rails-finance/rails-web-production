@@ -1,11 +1,10 @@
 /**
- * Mono-rail showcase — ported from rails-explorer's umbrella with external
- * https://host links removed (rails-web-mig is itself a mono-rail; outbound
- * navigation to sibling subdomains is reserved for a later pass).
+ * Mono-rail directory — the home page's primary CTA grid. Rails is a
+ * platform that produces mono-rails; each card here points at a live rail.
  *
- * Liquity V2 is the only card with an internal `href` (the new /liquity-v2
- * landing page); the others stay static placeholders until those mono-rails
- * exist as routes.
+ * Wired rails get an internal `href`; rails not yet built render as static
+ * placeholders to signal what's queued without making a promise we can't
+ * keep. When a third protocol comes online, add a card with its `href`.
  */
 
 import Link from "next/link";
@@ -47,11 +46,12 @@ export function MonoRailSection() {
       <div className="max-w-7xl mx-auto px-4 py-16">
         <div className="text-center mb-10">
           <h2 className="font-sans font-semibold tracking-tight leading-tight mb-3 text-[clamp(24px,3.5vw,38px)]">
-            <span className="text-blue-500">Mono</span> Rails
+            The <span className="text-blue-500">Rails</span>
           </h2>
           <p className="text-sm text-rb-500 max-w-xl mx-auto leading-relaxed">
-            A mono-rail is Rails distilled to a single protocol — sponsor-branded,
-            scoped, and free of cross-protocol noise.
+            Each rail is a dedicated explorer for one protocol — sponsor-anchored,
+            on-chain-verifiable, and built around the events and positions that
+            protocol's holders actually need to read.
           </p>
         </div>
 

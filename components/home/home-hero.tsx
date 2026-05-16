@@ -3,16 +3,14 @@
 import { useEffect } from "react";
 
 /**
- * Home hero — ported from rails-explorer's umbrella HomeHero, adapted for the
- * single-protocol Liquity V2 surface. Animation runs once per session via the
- * `data-hero-seen` flag set on <html> by the inline blocking script in
- * app/layout.tsx (matching CSS in globals.css disables the keyframes once
- * flipped). Doing the gate purely in CSS keeps SSR markup identical to
- * post-hydration markup so there's no flicker.
+ * Home hero — platform-level brand statement; Rails is a mono-rail-producing
+ * platform, so the hero doesn't pick a protocol. Entry to a rail goes through
+ * the mono-rail cards directly below the hero, or the header app-switcher.
  *
- * The search + CTA previously rendered here moved out: the search now lives
- * on /liquity-v2 alongside the stats panel, and entry to the protocol
- * surface goes through the mono-rail card and the header app-switcher.
+ * Animation runs once per session via the `data-hero-seen` flag set on <html>
+ * by the inline blocking script in app/layout.tsx (matching CSS in
+ * globals.css disables the keyframes once flipped). Doing the gate purely in
+ * CSS keeps SSR markup identical to post-hydration markup so there's no flicker.
  */
 export function HomeHero() {
   useEffect(() => {
@@ -36,7 +34,7 @@ export function HomeHero() {
         className="relative font-sans font-light text-rb-500 tracking-tight mb-2 text-xl sm:text-2xl lg:text-3xl animate-hero-fade-up"
         style={{ animationDelay: "0.3s" }}
       >
-        Explore DeFi on Ethereum.
+        A dedicated explorer for every protocol.
       </p>
 
       {/* Track lines graphic — inline retro stripes (verbatim from rails-explorer) */}
