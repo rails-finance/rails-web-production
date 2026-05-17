@@ -145,95 +145,111 @@ function RichSessionCard({
     setDraftName("");
   };
 
-  const inner = (
-    <>
-      <div
-        style={{ borderRadius: 5, boxShadow: "0 0 0 2px var(--facehash-ring)" }}
-        className="shrink-0"
-      >
-        <Facehash address={primary} size={18} />
-      </div>
-      {editing ? (
-        <input
-          autoFocus
-          value={draftName}
-          onChange={(e) => setDraftName(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              commitEdit();
-            } else if (e.key === "Escape") {
-              e.preventDefault();
-              cancelEdit();
-            }
-          }}
-          onBlur={commitEdit}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-          placeholder={fallback}
-          className="flex-1 min-w-0 text-xs font-bold px-1.5 py-0.5 rounded bg-rb-100 dark:bg-rb-900 border border-rb-300 dark:border-rb-700 outline-none"
-        />
-      ) : (
-        <div className="text-xs font-bold truncate flex-1 text-foreground" title={primary}>
-          {label}
-        </div>
-      )}
-      <div className="flex items-center gap-0.5 shrink-0">
-        <CopyButton text={primary} />
-        {!editing && (
-          <VerbButton
-            onClick={startEdit}
-            title="Rename"
-            icon={
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 20h9" />
-                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
-              </svg>
-            }
-          />
-        )}
-        <VerbButton
-          onClick={() => onRemove(session.key)}
-          title="Remove"
-          danger
-          icon={
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 6h18" />
-              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-            </svg>
-          }
-        />
-        <VerbButton
-          onClick={() => onTogglePin(session.key)}
-          title={session.pinned ? "Unpin" : "Pin"}
-          icon={
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill={session.pinned ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 17v5" />
-              <path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z" />
-            </svg>
-          }
-        />
-      </div>
-    </>
+  const avatar = (
+    <div
+      style={{ borderRadius: 5, boxShadow: "0 0 0 2px var(--facehash-ring)" }}
+      className="shrink-0"
+    >
+      <Facehash address={primary} size={18} />
+    </div>
   );
 
-  const baseClasses = `group flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-colors border ${
+  const labelEl = editing ? (
+    <input
+      autoFocus
+      value={draftName}
+      onChange={(e) => setDraftName(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          commitEdit();
+        } else if (e.key === "Escape") {
+          e.preventDefault();
+          cancelEdit();
+        }
+      }}
+      onBlur={commitEdit}
+      placeholder={fallback}
+      className="flex-1 min-w-0 text-xs font-bold px-1.5 py-0.5 rounded bg-rb-100 dark:bg-rb-900 border border-rb-300 dark:border-rb-700 outline-none"
+    />
+  ) : (
+    <div className="text-xs font-bold truncate flex-1 text-foreground" title={primary}>
+      {label}
+    </div>
+  );
+
+  const verbButtons = (
+    <div className="flex items-center gap-0.5 shrink-0">
+      <CopyButton text={primary} />
+      {!editing && (
+        <VerbButton
+          onClick={startEdit}
+          title="Rename"
+          icon={
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+            </svg>
+          }
+        />
+      )}
+      <VerbButton
+        onClick={() => onRemove(session.key)}
+        title="Remove"
+        danger
+        icon={
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 6h18" />
+            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+          </svg>
+        }
+      />
+      <VerbButton
+        onClick={() => onTogglePin(session.key)}
+        title={session.pinned ? "Unpin" : "Pin"}
+        icon={
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill={session.pinned ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 17v5" />
+            <path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z" />
+          </svg>
+        }
+      />
+    </div>
+  );
+
+  const rowClasses = `group flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-colors border ${
     isCurrent
       ? "border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10"
       : "border-transparent hover:border-blue-500 hover:bg-rb-100 dark:hover:bg-rb-900"
   }`;
 
+  // The avatar+label area is the navigable target; the verb buttons sit
+  // alongside it so their click handlers fire reliably. Nesting <button>
+  // inside <a> is invalid HTML and was eating the pin/delete/rename clicks.
   if (editing) {
-    return <div className={baseClasses}>{inner}</div>;
+    return (
+      <div className={rowClasses}>
+        {avatar}
+        {labelEl}
+        {verbButtons}
+      </div>
+    );
   }
 
   return (
-    <Link href={href} onClick={onNavigate} draggable={false} className={baseClasses}>
-      {inner}
-    </Link>
+    <div className={rowClasses}>
+      <Link
+        href={href}
+        onClick={onNavigate}
+        draggable={false}
+        className="flex items-center gap-2.5 flex-1 min-w-0"
+      >
+        {avatar}
+        {labelEl}
+      </Link>
+      {verbButtons}
+    </div>
   );
 }
 
