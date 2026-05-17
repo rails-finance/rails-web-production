@@ -22,8 +22,9 @@ export function SiteFooter() {
               <h3 className="text-xl font-semibold tracking-wide">Rails</h3>
             </div>
             <p className="text-foreground text-sm leading-relaxed mb-4">
-              Making DeFi more understandable and accessible for everyone. Rails displays your DeFi activity on simple
-              timelines with clear explanations and in-depth transaction analysis.
+              A platform that produces mono-rails — dedicated, read-only
+              explorers, one per protocol. On-chain-verifiable positions,
+              timelines, and event detail for the protocols you actually use.
             </p>
             <div className="flex items-center gap-4">
               <a
@@ -62,9 +63,28 @@ export function SiteFooter() {
             </div>
           </div>
 
-          {/* Quick Links */}
+          {/* The Rails */}
           <div>
-            <h4 className="text-sm font-semibold text-foreground mb-3">Quick Links</h4>
+            <h4 className="text-sm font-semibold text-foreground mb-3">The Rails</h4>
+            <ul className="space-y-2 mb-5">
+              <li>
+                <Link
+                  href="/liquity-v2"
+                  className="text-rb-500 hover:text-green-600 dark:hover:text-green-600 text-sm transition-colors duration-150"
+                >
+                  Liquity V2
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/aave-v4"
+                  className="text-rb-500 hover:text-green-600 dark:hover:text-green-600 text-sm transition-colors duration-150"
+                >
+                  Aave V4
+                </Link>
+              </li>
+            </ul>
+            <h4 className="text-sm font-semibold text-foreground mb-3">Platform</h4>
             <ul className="space-y-2">
               <li>
                 <Link
@@ -84,6 +104,14 @@ export function SiteFooter() {
               </li>
               <li>
                 <Link
+                  href="/how-it-works"
+                  className="text-rb-500 hover:text-green-600 dark:hover:text-green-600 text-sm transition-colors duration-150"
+                >
+                  How It Works
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/pulse"
                   className="text-rb-500 hover:text-green-600 dark:hover:text-green-600 text-sm transition-colors duration-150"
                 >
@@ -96,22 +124,6 @@ export function SiteFooter() {
                   className="text-rb-500 hover:text-green-600 dark:hover:text-green-600 text-sm transition-colors duration-150"
                 >
                   Blog
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/how-it-works"
-                  className="text-rb-500 hover:text-green-600 dark:hover:text-green-600 text-sm transition-colors duration-150"
-                >
-                  How It Works
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/liquity-v2"
-                  className="text-rb-500 hover:text-green-600 dark:hover:text-green-600 text-sm transition-colors duration-150"
-                >
-                  Explore Troves
                 </Link>
               </li>
             </ul>
