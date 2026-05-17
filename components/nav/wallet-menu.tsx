@@ -359,11 +359,11 @@ export function WalletMenu({
                 key={s.key}
                 session={s}
                 isCurrent={s.key === activeKey}
-                /* Stopgap until /address/<addr> exists in rails-web-mig:
-                 * the /liquity-v2 page already filters by `?ownerAddress=` and
-                 * hydrates the wallet pill when it sees the param. Sessions
+                /* Every session click lands on the cross-rail umbrella, which
+                 * shows the wallet across every protocol it has positions in.
+                 * From there the user clicks into a specific rail. Sessions
                  * always store one lowercase 0x address as the primary key. */
-                href={`/liquity-v2?ownerAddress=${s.addresses[0]}`}
+                href={`/wallet/${s.addresses[0]}`}
                 onTogglePin={togglePin}
                 onRemove={removeSession}
                 onRename={renameSessionLocal}

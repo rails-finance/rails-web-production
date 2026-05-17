@@ -190,7 +190,7 @@ export function HeaderBar() {
   const pathname = usePathname();
 
   const protocolBtn = useRef<HTMLButtonElement>(null);
-  const walletBtn = useRef<HTMLButtonElement>(null);
+  const historyBtn = useRef<HTMLButtonElement>(null);
 
   const [openMenu, setOpenMenu] = useState<null | "protocol" | "wallet">(null);
   const close = useCallback(() => setOpenMenu(null), []);
@@ -214,13 +214,13 @@ export function HeaderBar() {
       ? ensNames[activeAddr] || `${activeAddr.slice(0, 6)}…${activeAddr.slice(-4)}`
       : "");
 
-  // Whether to render the wallet button (only when a wallet is active OR the
-  // user has prior sessions to pick from).
+  // Wallet pill renders only when there's an active address — clicking it
+  // navigates to /wallet/[address] (the umbrella). The history button is
+  // separate, shown whenever there's anything to manage (active OR prior
+  // sessions). Protocol app-switcher always renders.
   const hasSessions = useHasSessions();
-  const showWalletButton = Boolean(activeAddr) || hasSessions;
-  // Protocol app-switcher always renders. Inside a protocol surface it shows
-  // the active protocol icon + label; elsewhere it shows a neutral apps-grid
-  // icon to advertise the picker without committing to a protocol context.
+  const showWalletPill = Boolean(activeAddr);
+  const showHistoryButton = Boolean(activeAddr) || hasSessions;
   const active = activeProtocol(pathname);
 
   return (
@@ -232,7 +232,7 @@ export function HeaderBar() {
 
         <div
           className={`relative z-[90] flex items-center gap-1 shrink-0 bg-rb-200/60 border border-rb-300 dark:bg-rb-700/50 dark:border-rb-700 rounded-full pl-1 ${
-            showWalletButton ? "pr-0" : "pr-2"
+            showWalletPill ? "pr-0" : "pr-2"
           }`}
         >
           <ProtocolButton
@@ -241,16 +241,21 @@ export function HeaderBar() {
             btnRef={protocolBtn}
             active={active}
           />
-          {showWalletButton && (
-            <WalletPillButton
-              btnRef={walletBtn}
-              isOpen={openMenu === "wallet"}
-              onClick={() => toggle("wallet")}
+          {showWalletPill && activeAddr && (
+            <WalletPillLink
               activeAddr={activeAddr}
               triggerLabel={triggerLabel}
             />
           )}
         </div>
+
+        {showHistoryButton && (
+          <HistoryButton
+            btnRef={historyBtn}
+            isOpen={openMenu === "wallet"}
+            onClick={() => toggle("wallet")}
+          />
+        )}
 
         <button
           type="button"
@@ -283,7 +288,7 @@ export function HeaderBar() {
         onOpenPreferences={(protocolId) => setPrefsForProtocol(protocolId)}
       />
       <WalletMenu
-        anchor={openMenu === "wallet" ? walletBtn.current : null}
+        anchor={openMenu === "wallet" ? historyBtn.current : null}
         onClose={close}
       />
       {appPrefsOpen && (
@@ -299,44 +304,72 @@ export function HeaderBar() {
   );
 }
 
-/** The address/wallet pill — extracted because it now renders either inside
- *  the outer protocol pill (on protocol routes) or standalone (everywhere else). */
-function WalletPillButton({
+/** The active-wallet identity pill. Clicking navigates to the umbrella view
+ *  (/wallet/[address]) — the wallet's cross-rail summary. Management of past
+ *  sessions lives in the separate HistoryButton; this pill is identity, not
+ *  a menu trigger. */
+function WalletPillLink({
+  activeAddr,
+  triggerLabel,
+}: {
+  activeAddr: string;
+  triggerLabel: string;
+}) {
+  return (
+    <Link
+      href={`/wallet/${activeAddr}`}
+      className="group flex items-center gap-1.5 bg-rb-100 dark:bg-rb-700 rounded-full px-4 py-2.5 hover:bg-rb-200 dark:hover:bg-rb-800 transition-colors cursor-pointer text-rb-text-500 shrink-0"
+      title="View this wallet across all rails"
+    >
+      <div className="rounded-md relative z-10">
+        <Facehash address={activeAddr} size={16} />
+      </div>
+      <span className="text-xs font-semibold truncate max-w-[140px] hidden sm:inline opacity-80 group-hover:opacity-100 transition-opacity">
+        {triggerLabel}
+      </span>
+    </Link>
+  );
+}
+
+/** Wallet history / session-management trigger. Distinct from the wallet pill
+ *  so identity (click to view) and management (open menu) live in separate
+ *  affordances. */
+function HistoryButton({
   btnRef,
   isOpen,
   onClick,
-  activeAddr,
-  triggerLabel,
 }: {
   btnRef: React.RefObject<HTMLButtonElement | null>;
   isOpen: boolean;
   onClick: () => void;
-  activeAddr: string | undefined;
-  triggerLabel: string;
 }) {
   return (
     <button
       ref={btnRef}
+      type="button"
       onClick={onClick}
       aria-haspopup="menu"
       aria-expanded={isOpen}
-      className="group flex items-center gap-1.5 bg-rb-100 dark:bg-rb-700 rounded-full px-4 py-2.5 hover:bg-rb-200 dark:hover:bg-rb-800 aria-expanded:bg-rb-200 dark:aria-expanded:bg-rb-800 transition-colors cursor-pointer text-rb-text-500 shrink-0"
-      title="Wallets"
+      aria-label="Wallet history"
+      title="Wallet history"
+      className="shrink-0 p-2 rounded-lg hover:bg-rb-200 dark:hover:bg-rb-800 aria-expanded:bg-rb-200 dark:aria-expanded:bg-rb-800 transition-colors cursor-pointer text-rb-500 hover:text-foreground"
     >
-      {activeAddr ? (
-        <>
-          <div className="rounded-md relative z-10">
-            <Facehash address={activeAddr} size={16} />
-          </div>
-          <span className="text-xs font-semibold truncate max-w-[140px] hidden sm:inline opacity-80 group-hover:opacity-100 transition-opacity">
-            {triggerLabel}
-          </span>
-        </>
-      ) : (
-        <span className="text-xs font-semibold opacity-80 group-hover:opacity-100 transition-opacity">
-          Wallets
-        </span>
-      )}
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M3 12a9 9 0 1 0 9-9 9.74 9.74 0 0 0-6.74 2.74L3 8" />
+        <path d="M3 3v5h5" />
+        <path d="M12 7v5l4 2" />
+      </svg>
     </button>
   );
 }
