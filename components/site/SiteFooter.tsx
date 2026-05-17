@@ -1,6 +1,17 @@
+"use client";
+
 import Link from "next/link";
+import { useWalletContext } from "@/components/nav/wallet-context";
 
 export function SiteFooter() {
+  // The "The Rails" links carry the active wallet through, mirroring the
+  // wallet-as-session behaviour the protocol-menu used to enforce. The footer
+  // is now the primary cross-rail switch when no wallet is active; with a
+  // wallet active, the wallet pill (umbrella) is the more obvious path, but
+  // the footer still routes correctly if the user reaches for it.
+  const { addresses } = useWalletContext();
+  const activeWallet = addresses[0]?.toLowerCase();
+  const railHref = (base: string) => (activeWallet ? `${base}/${activeWallet}` : base);
   return (
     <footer className="bg-rb-100 dark:bg-rb-900 border-rb-200 mt-24">
       <div className="max-w-7xl mx-auto px-4 py-12">
@@ -69,7 +80,7 @@ export function SiteFooter() {
             <ul className="space-y-2 mb-5">
               <li>
                 <Link
-                  href="/liquity-v2"
+                  href={railHref("/liquity-v2")}
                   className="text-rb-500 hover:text-green-600 dark:hover:text-green-600 text-sm transition-colors duration-150"
                 >
                   Liquity V2
@@ -77,7 +88,7 @@ export function SiteFooter() {
               </li>
               <li>
                 <Link
-                  href="/aave-v4"
+                  href={railHref("/aave-v4")}
                   className="text-rb-500 hover:text-green-600 dark:hover:text-green-600 text-sm transition-colors duration-150"
                 >
                   Aave V4

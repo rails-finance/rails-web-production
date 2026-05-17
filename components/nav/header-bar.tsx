@@ -12,7 +12,6 @@ import {
 } from "@/lib/shared/sessions";
 import { useWalletContext } from "@/components/nav/wallet-context";
 import { WalletMenu } from "@/components/nav/wallet-menu";
-import { ProtocolMenu } from "@/components/nav/protocol-menu";
 import { AppPreferencesModal } from "@/components/nav/app-preferences-modal";
 import { LiquityPreferencesModal } from "@/components/nav/liquity-preferences-modal";
 import { AaveV4PreferencesModal } from "@/components/nav/aave-v4-preferences-modal";
@@ -86,77 +85,55 @@ function RailsLogo() {
   );
 }
 
-/** App-switcher trigger.
- *  - On a protocol surface: shows the active protocol's icon + label.
- *  - Elsewhere: shows a neutral apps-grid icon (no protocol selected yet).
- *  The dropdown lists every wired-up mono-rail; click an entry to hop. */
-const ProtocolButton = ({
-  isOpen,
-  onToggle,
-  btnRef,
-  active,
+/** Non-interactive protocol identity that sits beneath the Rails wordmark
+ *  when the user is inside a rail. Reads as "you're here", not "switch from
+ *  here". A small inline cog opens that rail's preferences modal — the only
+ *  reachable entry point to per-protocol settings now that the top-nav
+ *  switcher is gone. Protocol switching itself happens via the footer (no
+ *  wallet) or the wallet umbrella (with wallet). */
+function ProtocolLabel({
+  protocol,
+  onOpenPreferences,
 }: {
-  isOpen: boolean;
-  onToggle: () => void;
-  btnRef: React.RefObject<HTMLButtonElement | null>;
-  active: { label: string; iconSrc: string } | null;
-}) => (
-  <button
-    ref={btnRef}
-    onClick={onToggle}
-    aria-haspopup="menu"
-    aria-expanded={isOpen}
-    title={active ? "Switch protocol" : "Choose protocol"}
-    className="group flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-rb-100 dark:hover:bg-rb-800 aria-expanded:bg-rb-100 dark:aria-expanded:bg-rb-800 transition-colors cursor-pointer"
-  >
-    {active ? (
-      <>
-        {/* App icons are rounded-square PNGs (matched with facehashes);
-            tokens stay circular. */}
-        <img
-          src={active.iconSrc}
-          alt=""
-          className="w-5 h-5 shrink-0 rounded-[5px]"
-        />
-        <span className="text-xs font-semibold text-foreground">{active.label}</span>
-      </>
-    ) : (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-        className="text-rb-500 group-hover:text-foreground transition-colors"
+  protocol: { id: string; label: string; iconSrc: string };
+  onOpenPreferences: (protocolId: string) => void;
+}) {
+  return (
+    <div className="ml-9 mt-0.5 flex items-center gap-1.5">
+      <img
+        src={protocol.iconSrc}
+        alt=""
+        className="w-3.5 h-3.5 shrink-0 rounded-[3px]"
+      />
+      <span className="text-[10px] uppercase tracking-[0.14em] font-semibold text-rb-500">
+        {protocol.label}
+      </span>
+      <button
+        type="button"
+        onClick={() => onOpenPreferences(protocol.id)}
+        aria-label={`${protocol.label} preferences`}
+        title={`${protocol.label} preferences`}
+        className="text-rb-500 hover:text-foreground transition-colors cursor-pointer rounded p-0.5"
       >
-        <rect width="7" height="7" x="3" y="3" rx="1" />
-        <rect width="7" height="7" x="14" y="3" rx="1" />
-        <rect width="7" height="7" x="14" y="14" rx="1" />
-        <rect width="7" height="7" x="3" y="14" rx="1" />
-      </svg>
-    )}
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="12"
-      height="12"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      className={`text-rb-500 transition-transform ${isOpen ? "rotate-180" : ""}`}
-    >
-      <path d="m6 9 6 6 6-6" />
-    </svg>
-  </button>
-);
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="11"
+          height="11"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
+      </button>
+    </div>
+  );
+}
 
 /** Look up the active session in localStorage so the wallet pill can show
  *  the user-set custom name without an API roundtrip. */
@@ -189,21 +166,19 @@ export function HeaderBar() {
   const { addresses, ensNames } = useWalletContext();
   const pathname = usePathname();
 
-  const protocolBtn = useRef<HTMLButtonElement>(null);
   const historyBtn = useRef<HTMLButtonElement>(null);
 
-  const [openMenu, setOpenMenu] = useState<null | "protocol" | "wallet">(null);
-  const close = useCallback(() => setOpenMenu(null), []);
-  const toggle = (m: "protocol" | "wallet") =>
-    setOpenMenu((prev) => (prev === m ? null : m));
+  const [walletMenuOpen, setWalletMenuOpen] = useState(false);
+  const closeWalletMenu = useCallback(() => setWalletMenuOpen(false), []);
+  const toggleWalletMenu = () => setWalletMenuOpen((v) => !v);
 
-  // App-wide preferences modal — opened from the cog button in the header.
-  // Distinct from per-protocol prefs (which live behind the cog inside each
-  // protocol-menu entry); this surface holds settings that apply everywhere.
+  // App-wide preferences modal — opened from the cog button at the top right.
+  // Distinct from per-protocol prefs (which open from the small cog next to
+  // the protocol label beneath the Rails wordmark on rail pages).
   const [appPrefsOpen, setAppPrefsOpen] = useState(false);
-  // Per-protocol preferences modal — opened from inside the protocol-menu
-  // dropdown. State lives here so the modal sits at the header level and
-  // overlays everything regardless of where it was triggered.
+  // Per-protocol preferences modal — opened from the inline cog next to the
+  // protocol label. State lives here so the modal sits at the header level
+  // and overlays everything regardless of where it was triggered.
   const [prefsForProtocol, setPrefsForProtocol] = useState<string | null>(null);
 
   const activeAddr = addresses[0];
@@ -217,7 +192,9 @@ export function HeaderBar() {
   // Wallet pill renders only when there's an active address — clicking it
   // navigates to /wallet/[address] (the umbrella). The history button is
   // separate, shown whenever there's anything to manage (active OR prior
-  // sessions). Protocol app-switcher always renders.
+  // sessions). The protocol identity, when inside a rail, hangs beneath the
+  // Rails wordmark as a non-interactive label — switching happens via the
+  // footer (no wallet) or the wallet umbrella (with wallet active).
   const hasSessions = useHasSessions();
   const showWalletPill = Boolean(activeAddr);
   const showHistoryButton = Boolean(activeAddr) || hasSessions;
@@ -226,34 +203,30 @@ export function HeaderBar() {
   return (
     <header className="relative z-40 mb-2">
       <div className="max-w-7xl mx-auto py-5 px-4 md:px-6 flex items-center gap-4">
-        <RailsLogo />
-
-        <div className="flex-1" />
-
-        <div
-          className={`relative z-[90] flex items-center gap-1 shrink-0 bg-rb-200/60 border border-rb-300 dark:bg-rb-700/50 dark:border-rb-700 rounded-full pl-1 ${
-            showWalletPill ? "pr-0" : "pr-2"
-          }`}
-        >
-          <ProtocolButton
-            isOpen={openMenu === "protocol"}
-            onToggle={() => toggle("protocol")}
-            btnRef={protocolBtn}
-            active={active}
-          />
-          {showWalletPill && activeAddr && (
-            <WalletPillLink
-              activeAddr={activeAddr}
-              triggerLabel={triggerLabel}
+        <div className="flex flex-col items-start shrink-0">
+          <RailsLogo />
+          {active && (
+            <ProtocolLabel
+              protocol={active}
+              onOpenPreferences={setPrefsForProtocol}
             />
           )}
         </div>
 
+        <div className="flex-1" />
+
+        {showWalletPill && activeAddr && (
+          <WalletPillLink
+            activeAddr={activeAddr}
+            triggerLabel={triggerLabel}
+          />
+        )}
+
         {showHistoryButton && (
           <HistoryButton
             btnRef={historyBtn}
-            isOpen={openMenu === "wallet"}
-            onClick={() => toggle("wallet")}
+            isOpen={walletMenuOpen}
+            onClick={toggleWalletMenu}
           />
         )}
 
@@ -282,14 +255,9 @@ export function HeaderBar() {
         </button>
       </div>
 
-      <ProtocolMenu
-        anchor={openMenu === "protocol" ? protocolBtn.current : null}
-        onClose={close}
-        onOpenPreferences={(protocolId) => setPrefsForProtocol(protocolId)}
-      />
       <WalletMenu
-        anchor={openMenu === "wallet" ? historyBtn.current : null}
-        onClose={close}
+        anchor={walletMenuOpen ? historyBtn.current : null}
+        onClose={closeWalletMenu}
       />
       {appPrefsOpen && (
         <AppPreferencesModal onClose={() => setAppPrefsOpen(false)} />
@@ -318,13 +286,13 @@ function WalletPillLink({
   return (
     <Link
       href={`/wallet/${activeAddr}`}
-      className="group flex items-center gap-1.5 bg-rb-100 dark:bg-rb-700 rounded-full px-4 py-2.5 hover:bg-rb-200 dark:hover:bg-rb-800 transition-colors cursor-pointer text-rb-text-500 shrink-0"
+      className="group flex items-center gap-2 rounded-full px-3 py-2 hover:bg-rb-200/60 dark:hover:bg-rb-800/60 transition-colors cursor-pointer text-rb-text-500 shrink-0"
       title="View this wallet across all rails"
     >
       <div className="rounded-md relative z-10">
         <Facehash address={activeAddr} size={16} />
       </div>
-      <span className="text-xs font-semibold truncate max-w-[140px] hidden sm:inline opacity-80 group-hover:opacity-100 transition-opacity">
+      <span className="text-xs font-semibold truncate max-w-[140px] hidden sm:inline text-rb-500 group-hover:text-foreground transition-colors">
         {triggerLabel}
       </span>
     </Link>
