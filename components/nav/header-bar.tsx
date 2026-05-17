@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 
 import { Facehash } from "@/components/shared/facehash";
@@ -11,14 +11,11 @@ import {
   type WalletSession,
 } from "@/lib/shared/sessions";
 import { useWalletContext } from "@/components/nav/wallet-context";
-import { WalletMenu } from "@/components/nav/wallet-menu";
-import { AppPreferencesModal } from "@/components/nav/app-preferences-modal";
-import { LiquityPreferencesModal } from "@/components/nav/liquity-preferences-modal";
-import { AaveV4PreferencesModal } from "@/components/nav/aave-v4-preferences-modal";
 
 /** Routes that count as "inside the protocol" — keyed by the active protocol
- *  so the header pill can render the right icon + label. Marketing routes
- *  (home, about, blog, …) match nothing here and hide the protocol context. */
+ *  so the header can render the protocol label and the wallet pill. Marketing
+ *  routes (home, about, blog, …) match nothing here, which keeps the chrome
+ *  on those pages a single Rails wordmark — no protocol, no wallet, no cog. */
 const PROTOCOL_CONTEXTS: {
   id: string;
   label: string;
@@ -47,6 +44,29 @@ function activeProtocol(pathname: string | null) {
     }
   }
   return null;
+}
+
+/** True when the current URL is bound to a specific wallet — wallet umbrella,
+ *  a per-protocol wallet view, or a trove detail page. The bare protocol
+ *  listing (`/liquity-v2`, `/aave-v4`) is browsing the universe, not viewing
+ *  a wallet, so the pill stays hidden there even when a wallet is "logged in"
+ *  in localStorage. The user explicitly asked for this scoping: pill only
+ *  surfaces when the page below it is about the wallet. */
+function isWalletScopedRoute(pathname: string | null): boolean {
+  if (!pathname) return false;
+  // /wallet/[address]
+  if (/^\/wallet\/[^/]+\/?$/.test(pathname)) return true;
+  // /liquity-v2/trove/[collateralType]/[troveId]
+  if (/^\/liquity-v2\/trove\/[^/]+\/[^/]+\/?$/.test(pathname)) return true;
+  // /liquity-v2/[wallet] and /aave-v4/[wallet] — but not the bare listing
+  // (zero further segments) and not the `trove` intermediate.
+  const m = pathname.match(/^\/(liquity-v2|aave-v4)\/([^/]+)\/?$/);
+  if (m) {
+    const second = m[2];
+    if (second === "trove") return false;
+    return true;
+  }
+  return false;
 }
 
 /** Always-on Rails wordmark on the left. Rails is the platform; the protocol
@@ -85,52 +105,26 @@ function RailsLogo() {
   );
 }
 
-/** Non-interactive protocol identity that sits beneath the Rails wordmark
- *  when the user is inside a rail. Reads as "you're here", not "switch from
- *  here". A small inline cog opens that rail's preferences modal — the only
- *  reachable entry point to per-protocol settings now that the top-nav
- *  switcher is gone. Protocol switching itself happens via the footer (no
- *  wallet) or the wallet umbrella (with wallet). */
+/** Non-interactive protocol identity that sits inline to the right of the
+ *  Rails wordmark when the user is inside a rail. Reads as "you're here",
+ *  not "switch from here". Smaller, dimmed uppercase keeps the visual
+ *  subordination — Rails is the brand, the protocol label names the rail.
+ *  Protocol switching happens via the footer. */
 function ProtocolLabel({
   protocol,
-  onOpenPreferences,
 }: {
   protocol: { id: string; label: string; iconSrc: string };
-  onOpenPreferences: (protocolId: string) => void;
 }) {
   return (
-    <div className="ml-9 mt-0.5 flex items-center gap-1.5">
+    <div className="ml-3 flex items-center gap-1.5">
       <img
         src={protocol.iconSrc}
         alt=""
-        className="w-3.5 h-3.5 shrink-0 rounded-[3px]"
+        className="w-4 h-4 shrink-0 rounded-[3px]"
       />
-      <span className="text-[10px] uppercase tracking-[0.14em] font-semibold text-rb-500">
+      <span className="text-[11px] uppercase tracking-[0.14em] font-semibold text-rb-500">
         {protocol.label}
       </span>
-      <button
-        type="button"
-        onClick={() => onOpenPreferences(protocol.id)}
-        aria-label={`${protocol.label} preferences`}
-        title={`${protocol.label} preferences`}
-        className="text-rb-500 hover:text-foreground transition-colors cursor-pointer rounded p-0.5"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="11"
-          height="11"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-          <circle cx="12" cy="12" r="3" />
-        </svg>
-      </button>
     </div>
   );
 }
@@ -166,21 +160,6 @@ export function HeaderBar() {
   const { addresses, ensNames } = useWalletContext();
   const pathname = usePathname();
 
-  const historyBtn = useRef<HTMLButtonElement>(null);
-
-  const [walletMenuOpen, setWalletMenuOpen] = useState(false);
-  const closeWalletMenu = useCallback(() => setWalletMenuOpen(false), []);
-  const toggleWalletMenu = () => setWalletMenuOpen((v) => !v);
-
-  // App-wide preferences modal — opened from the cog button at the top right.
-  // Distinct from per-protocol prefs (which open from the small cog next to
-  // the protocol label beneath the Rails wordmark on rail pages).
-  const [appPrefsOpen, setAppPrefsOpen] = useState(false);
-  // Per-protocol preferences modal — opened from the inline cog next to the
-  // protocol label. State lives here so the modal sits at the header level
-  // and overlays everything regardless of where it was triggered.
-  const [prefsForProtocol, setPrefsForProtocol] = useState<string | null>(null);
-
   const activeAddr = addresses[0];
   const activeSession = useActiveSession(addresses);
   const triggerLabel =
@@ -189,28 +168,21 @@ export function HeaderBar() {
       ? ensNames[activeAddr] || `${activeAddr.slice(0, 6)}…${activeAddr.slice(-4)}`
       : "");
 
-  // Wallet pill renders only when there's an active address — clicking it
-  // navigates to /wallet/[address] (the umbrella). The history button is
-  // separate, shown whenever there's anything to manage (active OR prior
-  // sessions). The protocol identity, when inside a rail, hangs beneath the
-  // Rails wordmark as a non-interactive label — switching happens via the
-  // footer (no wallet) or the wallet umbrella (with wallet active).
-  const hasSessions = useHasSessions();
-  const showWalletPill = Boolean(activeAddr);
-  const showHistoryButton = Boolean(activeAddr) || hasSessions;
+  // Wallet pill renders only when there's an active address AND the current
+  // URL is bound to a wallet (umbrella, per-protocol wallet view, trove
+  // detail). Bare protocol listings, marketing pages, and the platform home
+  // stay pill-less — the pill reflects "you're viewing this wallet's
+  // positions," not "this wallet is remembered in localStorage." Recent/
+  // pinned history lives in the search bar dropdown on each protocol page.
   const active = activeProtocol(pathname);
+  const showWalletPill = Boolean(activeAddr) && isWalletScopedRoute(pathname);
 
   return (
     <header className="relative z-40 mb-2">
       <div className="max-w-7xl mx-auto py-5 px-4 md:px-6 flex items-center gap-4">
-        <div className="flex flex-col items-start shrink-0">
+        <div className="flex items-center shrink-0">
           <RailsLogo />
-          {active && (
-            <ProtocolLabel
-              protocol={active}
-              onOpenPreferences={setPrefsForProtocol}
-            />
-          )}
+          {active && <ProtocolLabel protocol={active} />}
         </div>
 
         <div className="flex-1" />
@@ -221,61 +193,13 @@ export function HeaderBar() {
             triggerLabel={triggerLabel}
           />
         )}
-
-        {showHistoryButton && (
-          <HistoryButton
-            btnRef={historyBtn}
-            isOpen={walletMenuOpen}
-            onClick={toggleWalletMenu}
-          />
-        )}
-
-        <button
-          type="button"
-          onClick={() => setAppPrefsOpen(true)}
-          aria-label="Preferences"
-          title="Preferences"
-          className="shrink-0 p-2 rounded-lg hover:bg-rb-200 dark:hover:bg-rb-800 transition-colors cursor-pointer text-rb-500 hover:text-foreground"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.75"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-            <circle cx="12" cy="12" r="3" />
-          </svg>
-        </button>
       </div>
-
-      <WalletMenu
-        anchor={walletMenuOpen ? historyBtn.current : null}
-        onClose={closeWalletMenu}
-      />
-      {appPrefsOpen && (
-        <AppPreferencesModal onClose={() => setAppPrefsOpen(false)} />
-      )}
-      {prefsForProtocol === "liquity-v2" && (
-        <LiquityPreferencesModal onClose={() => setPrefsForProtocol(null)} />
-      )}
-      {prefsForProtocol === "aave-v4" && (
-        <AaveV4PreferencesModal onClose={() => setPrefsForProtocol(null)} />
-      )}
     </header>
   );
 }
 
 /** The active-wallet identity pill. Clicking navigates to the umbrella view
- *  (/wallet/[address]) — the wallet's cross-rail summary. Management of past
- *  sessions lives in the separate HistoryButton; this pill is identity, not
- *  a menu trigger. */
+ *  (/wallet/[address]) — the wallet's cross-rail summary. */
 function WalletPillLink({
   activeAddr,
   triggerLabel,
@@ -297,64 +221,4 @@ function WalletPillLink({
       </span>
     </Link>
   );
-}
-
-/** Wallet history / session-management trigger. Distinct from the wallet pill
- *  so identity (click to view) and management (open menu) live in separate
- *  affordances. */
-function HistoryButton({
-  btnRef,
-  isOpen,
-  onClick,
-}: {
-  btnRef: React.RefObject<HTMLButtonElement | null>;
-  isOpen: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      ref={btnRef}
-      type="button"
-      onClick={onClick}
-      aria-haspopup="menu"
-      aria-expanded={isOpen}
-      aria-label="Wallet history"
-      title="Wallet history"
-      className="shrink-0 p-2 rounded-lg hover:bg-rb-200 dark:hover:bg-rb-800 aria-expanded:bg-rb-200 dark:aria-expanded:bg-rb-800 transition-colors cursor-pointer text-rb-500 hover:text-foreground"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        <path d="M3 12a9 9 0 1 0 9-9 9.74 9.74 0 0 0-6.74 2.74L3 8" />
-        <path d="M3 3v5h5" />
-        <path d="M12 7v5l4 2" />
-      </svg>
-    </button>
-  );
-}
-
-/** Reactive flag — true when localStorage has at least one session. Lets the
- *  wallet button surface even when no address is currently being viewed. */
-function useHasSessions(): boolean {
-  const [hasAny, setHasAny] = useState(false);
-  useEffect(() => {
-    const sync = () => setHasAny(loadSessions().length > 0);
-    sync();
-    window.addEventListener("storage", sync);
-    window.addEventListener(SESSIONS_CHANGED_EVENT, sync);
-    return () => {
-      window.removeEventListener("storage", sync);
-      window.removeEventListener(SESSIONS_CHANGED_EVENT, sync);
-    };
-  }, []);
-  return hasAny;
 }

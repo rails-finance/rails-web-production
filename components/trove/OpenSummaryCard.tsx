@@ -17,6 +17,39 @@ import { formatDuration } from "@/lib/date";
 
 const ARM_DEPRECATION_ANNOUNCEMENT = "https://discord.com/channels/700620821198143498/711975093940519012/1487025900208783530";
 
+// OpenSummaryCard is rendered inside Link-wrapped cards on listing/umbrella
+// pages, so an inner <a> would nest anchors (invalid HTML, React hydration
+// error). Render the announcement as a focusable span that opens the URL via
+// click/keypress and stops propagation so the card's outer Link doesn't fire.
+function AnnouncementLink() {
+  const open = () => {
+    if (typeof window !== "undefined") {
+      window.open(ARM_DEPRECATION_ANNOUNCEMENT, "_blank", "noopener,noreferrer");
+    }
+  };
+  return (
+    <span
+      role="link"
+      tabIndex={0}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        open();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          e.stopPropagation();
+          open();
+        }
+      }}
+      className="underline hover:no-underline cursor-pointer"
+    >
+      Official announcement
+    </span>
+  );
+}
+
 interface OpenSummaryCardProps {
   trove: TroveSummary;
   liveState?: TroveStateData;
@@ -79,9 +112,9 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus, expec
           <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
           <p>
             {deprecation.isPast ? (
-              <>The {batchManagerInfo?.name} delegate is no longer maintained and has been removed from the frontend. Please move your position to a new delegate. <a href={ARM_DEPRECATION_ANNOUNCEMENT} target="_blank" rel="noopener noreferrer" className="underline hover:no-underline">Official announcement</a></>
+              <>The {batchManagerInfo?.name} delegate is no longer maintained and has been removed from the frontend. Please move your position to a new delegate. <AnnouncementLink /></>
             ) : (
-              <>The {batchManagerInfo?.name} delegate will no longer be maintained after {new Date(deprecation.deprecatedDate + "T00:00:00Z").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}. Please move your position to a new delegate before this date. <a href={ARM_DEPRECATION_ANNOUNCEMENT} target="_blank" rel="noopener noreferrer" className="underline hover:no-underline">Official announcement</a></>
+              <>The {batchManagerInfo?.name} delegate will no longer be maintained after {new Date(deprecation.deprecatedDate + "T00:00:00Z").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}. Please move your position to a new delegate before this date. <AnnouncementLink /></>
             )}
           </p>
         </div>

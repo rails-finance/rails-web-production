@@ -10,6 +10,8 @@ import { useState, useEffect, useRef } from "react";
 import { ChevronDown, Search, X, Filter } from "lucide-react";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { CheckboxMultiSelect } from "@/components/shared/checkbox-multi-select";
+import { WalletHistoryDropdown } from "@/components/shared/wallet-history-dropdown";
+import { upsertSession } from "@/lib/shared/sessions";
 
 export type AaveV4Debt = "all" | "withDebt" | "noDebt";
 export type AaveV4Health = "all" | "atRisk" | "underwater";
@@ -61,8 +63,10 @@ const SORT_OPTIONS = [
 export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
   const initialSearch = filters.wallet ?? filters.ownerEns ?? "";
   const [searchInput, setSearchInput] = useState<string>(initialSearch);
+  const [searchFocused, setSearchFocused] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
   const filterRef = useRef<HTMLDivElement>(null);
 
@@ -83,11 +87,19 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
     const isEns = trimmed.toLowerCase().endsWith(".eth");
     const isAddress = /^0x[a-fA-F0-9]{40}$/.test(trimmed);
     if (!isEns && !isAddress) return;
+    const lowered = trimmed.toLowerCase();
     onFiltersChange({
       ...filters,
-      wallet: isAddress ? trimmed.toLowerCase() : undefined,
-      ownerEns: isEns ? trimmed.toLowerCase() : undefined,
+      wallet: isAddress ? lowered : undefined,
+      ownerEns: isEns ? lowered : undefined,
     });
+    // Record cross-rail history on address typing so the wallet appears in
+    // the dropdown next time — same recents list used on every protocol.
+    // ENS-typed entries aren't recorded here (no resolution yet); they'll
+    // get picked up when the user drills into a wallet's detail page.
+    if (isAddress) {
+      upsertSession([lowered], { [lowered]: null }, ["aave-v4"]);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearch]);
 
@@ -250,13 +262,18 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
           />
         </div>
 
-        {/* Search input */}
-        <div className="relative w-full lg:flex-1">
+        {/* Search input — wraps in a relative container so the recent/pinned
+            dropdown can anchor beneath it when focused-empty. The dropdown's
+            session list is shared across protocols (cross-rail memory), but
+            picking a row just fills this input — same code path as typing —
+            so the filter stays Aave-V4-scoped. */}
+        <div ref={searchRef} className="relative w-full lg:flex-1">
           <input
             type="text"
             placeholder="Address or ENS…"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
+            onFocus={() => setSearchFocused(true)}
             className="w-full px-4 py-2 pr-10 bg-rb-100 dark:bg-rb-900 h-10 border border-rb-300 dark:border-rb-700 rounded-lg text-foreground placeholder-rb-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             aria-label="Search by wallet address or ENS name"
           />
@@ -272,6 +289,15 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
           ) : (
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-rb-500 pointer-events-none" aria-hidden="true" />
           )}
+          <WalletHistoryDropdown
+            show={searchFocused && searchInput.trim() === ""}
+            containerRef={searchRef}
+            onClose={() => setSearchFocused(false)}
+            onPick={(address) => {
+              setSearchInput(address);
+              setSearchFocused(false);
+            }}
+          />
         </div>
       </div>
 

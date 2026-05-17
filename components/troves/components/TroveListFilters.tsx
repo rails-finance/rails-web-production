@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { ChevronDown, Search, X, Filter } from "lucide-react";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { CheckboxMultiSelect } from "@/components/shared/checkbox-multi-select";
+import { WalletHistoryDropdown } from "@/components/shared/wallet-history-dropdown";
+import { upsertSession } from "@/lib/shared/sessions";
 
 export interface TroveListFilterParams {
   troveId?: string;
@@ -42,8 +44,10 @@ export function TroveListFilters({
   // Initialize with actual filter value that's set (troveId, address, or ENS)
   const initialSearchValue = filters.troveId || filters.ownerAddress || filters.ownerEns || "";
   const [searchInput, setSearchInput] = useState<string>(initialSearchValue);
+  const [searchFocused, setSearchFocused] = useState(false);
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
+  const searchRef = useRef<HTMLFormElement>(null);
   const sortDropdownRef = useRef<HTMLDivElement>(null);
   const filterDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -110,6 +114,14 @@ export function TroveListFilters({
       ownerAddress: isAddress ? trimmedValue : undefined,
       ownerEns: isEns ? trimmedValue : undefined,
     });
+    // Record cross-rail history on address typing so the wallet appears in
+    // the dropdown next time — same recents list used on every protocol.
+    // ENS-typed entries aren't recorded here (no resolution yet); they'll
+    // get picked up when the user drills into a wallet's detail page.
+    if (isAddress) {
+      const lowered = trimmedValue.toLowerCase();
+      upsertSession([lowered], { [lowered]: null }, ["liquity-v2-troves"]);
+    }
   };
 
   const handleClearSearch = () => {
@@ -407,13 +419,17 @@ export function TroveListFilters({
           />
         </div>
 
-        {/* Second row on mobile: Search Input */}
-        <form onSubmit={handleSearchSubmit} className="relative w-full lg:flex-1">
+        {/* Second row on mobile: Search Input. The relatively-positioned form
+            anchors the recent/pinned dropdown when focused-empty. Picking a
+            row just fills the input — the existing debounce/filter pipeline
+            handles everything else, keeping the search Liquity-scoped. */}
+        <form ref={searchRef} onSubmit={handleSearchSubmit} className="relative w-full lg:flex-1">
           <input
             type="text"
             placeholder="Address, ENS, or ID..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
+            onFocus={() => setSearchFocused(true)}
             className="w-full px-4 py-2 pr-10 bg-rb-100 dark:bg-rb-900 h-10 border border-rb-300 dark:border-rb-700 rounded-lg text-foreground placeholder-rb-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             aria-label="Search by wallet address, ENS name, or trove ID"
           />
@@ -429,6 +445,15 @@ export function TroveListFilters({
           ) : (
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-rb-500 pointer-events-none" aria-hidden="true" />
           )}
+          <WalletHistoryDropdown
+            show={searchFocused && searchInput.trim() === ""}
+            containerRef={searchRef}
+            onClose={() => setSearchFocused(false)}
+            onPick={(address) => {
+              setSearchInput(address);
+              setSearchFocused(false);
+            }}
+          />
         </form>
       </div>
 

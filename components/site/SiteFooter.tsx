@@ -1,17 +1,10 @@
-"use client";
-
 import Link from "next/link";
-import { useWalletContext } from "@/components/nav/wallet-context";
 
 export function SiteFooter() {
-  // The "The Rails" links carry the active wallet through, mirroring the
-  // wallet-as-session behaviour the protocol-menu used to enforce. The footer
-  // is now the primary cross-rail switch when no wallet is active; with a
-  // wallet active, the wallet pill (umbrella) is the more obvious path, but
-  // the footer still routes correctly if the user reaches for it.
-  const { addresses } = useWalletContext();
-  const activeWallet = addresses[0]?.toLowerCase();
-  const railHref = (base: string) => (activeWallet ? `${base}/${activeWallet}` : base);
+  // Footer rail links are deliberately dumb — they land on the protocol's
+  // home page (`/aave-v4`, `/liquity-v2`) where the search box is the wallet
+  // entry point (with recent/pinned in its dropdown). The chrome stays
+  // simple: one route to discover, one to drill in.
   return (
     <footer className="bg-rb-100 dark:bg-rb-900 border-rb-200 mt-24">
       <div className="max-w-7xl mx-auto px-4 py-12">
@@ -80,17 +73,33 @@ export function SiteFooter() {
             <ul className="space-y-2 mb-5">
               <li>
                 <Link
-                  href={railHref("/liquity-v2")}
-                  className="text-rb-500 hover:text-green-600 dark:hover:text-green-600 text-sm transition-colors duration-150"
+                  href="/liquity-v2"
+                  className="group flex items-center gap-2 text-rb-500 hover:text-green-600 dark:hover:text-green-600 text-sm transition-colors duration-150"
                 >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/icons/protocols/liquity.png"
+                    alt=""
+                    width={16}
+                    height={16}
+                    className="rounded-[3px] shrink-0"
+                  />
                   Liquity V2
                 </Link>
               </li>
               <li>
                 <Link
-                  href={railHref("/aave-v4")}
-                  className="text-rb-500 hover:text-green-600 dark:hover:text-green-600 text-sm transition-colors duration-150"
+                  href="/aave-v4"
+                  className="group flex items-center gap-2 text-rb-500 hover:text-green-600 dark:hover:text-green-600 text-sm transition-colors duration-150"
                 >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/icons/protocols/aave-v4.png"
+                    alt=""
+                    width={16}
+                    height={16}
+                    className="rounded-[3px] shrink-0"
+                  />
                   Aave V4
                 </Link>
               </li>
