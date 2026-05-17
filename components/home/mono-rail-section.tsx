@@ -1,6 +1,13 @@
+"use client";
+
 /**
  * Mono-rail directory — the home page's primary CTA grid. Rails is a
  * platform that produces mono-rails; each card here points at a live rail.
+ *
+ * When a wallet is active in the header, each card's link carries the wallet
+ * through: clicking "Aave V4" with 0xABC selected lands on /aave-v4/0xABC,
+ * not /aave-v4 discovery. Mirrors ProtocolMenu — wallet behaves like a
+ * session that follows you between rails.
  *
  * Wired rails get an internal `href`; rails not yet built render as static
  * placeholders to signal what's queued without making a promise we can't
@@ -8,6 +15,7 @@
  */
 
 import Link from "next/link";
+import { useWalletContext } from "@/components/nav/wallet-context";
 
 type MonoRail = {
   id: string;
@@ -55,17 +63,26 @@ export function MonoRailSection() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {MONO_RAILS.map((f) => (
-            <MonoRailCard key={f.id} rail={f} />
-          ))}
-        </div>
+        <MonoRailGrid />
       </div>
     </section>
   );
 }
 
-function MonoRailCard({ rail }: { rail: MonoRail }) {
+function MonoRailGrid() {
+  const { addresses } = useWalletContext();
+  const activeWallet = addresses[0]?.toLowerCase();
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      {MONO_RAILS.map((f) => (
+        <MonoRailCard key={f.id} rail={f} activeWallet={activeWallet} />
+      ))}
+    </div>
+  );
+}
+
+function MonoRailCard({ rail, activeWallet }: { rail: MonoRail; activeWallet?: string }) {
+  const href = rail.href && activeWallet ? `${rail.href}/${activeWallet}` : rail.href;
   const inner = (
     <div className="flex items-center gap-3">
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -98,10 +115,10 @@ function MonoRailCard({ rail }: { rail: MonoRail }) {
     </p>
   );
 
-  if (rail.href) {
+  if (href) {
     return (
       <Link
-        href={rail.href}
+        href={href}
         className="p-5 flex flex-col gap-3 border border-transparent hover:border-blue-500/40 hover:bg-rb-100/40 dark:hover:bg-rb-700/40 rounded-3xl transition-colors"
       >
         {inner}

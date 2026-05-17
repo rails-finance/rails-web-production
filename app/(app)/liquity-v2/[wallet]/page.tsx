@@ -161,10 +161,22 @@ export default function LiquityWalletPage() {
               exit={{ opacity: 0 }}
               className="text-center py-12"
             >
-              <div className="text-rb-500 text-lg">
-                <p className="mb-2">No Liquity V2 troves found</p>
-                <p className="text-sm">This wallet has never opened a trove on Liquity V2.</p>
-              </div>
+              <p className="text-foreground text-lg mb-3">
+                {isEns ? walletSlug : `${walletSlug.slice(0, 6)}…${walletSlug.slice(-4)}`}{" "}
+                has no Liquity V2 positions
+              </p>
+              <p className="text-sm text-rb-500">
+                <Link href="/liquity-v2" className="underline hover:text-foreground transition-colors">
+                  Browse the latest Liquity V2 events
+                </Link>
+                <span className="px-2 text-rb-400">·</span>
+                <Link
+                  href={`/wallet/${encodeURIComponent(walletSlug)}`}
+                  className="underline hover:text-foreground transition-colors"
+                >
+                  see this wallet across all rails →
+                </Link>
+              </p>
             </motion.div>
           )}
         </AnimatePresence>

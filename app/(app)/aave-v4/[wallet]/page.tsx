@@ -13,6 +13,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import { ArrowUpDown } from "lucide-react";
 import {
   fetchAaveV4Timeline,
@@ -336,6 +337,38 @@ function AaveV4WalletPageInner() {
     ? `${new Date(dateRange[0] * 1000).toLocaleDateString(undefined, { month: "short", day: "numeric" })} – ${new Date(dateRange[1] * 1000).toLocaleDateString(undefined, { month: "short", day: "numeric" })}`
     : "Date";
   const heatmapShown = heatmapOpen || dateRange !== null;
+
+  if (positions.length === 0) {
+    return (
+      <main className="min-h-screen">
+        <FeedbackButton />
+        <div className="max-w-7xl mx-auto py-8 space-y-6">
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-2xl font-bold text-foreground">Aave V4</h1>
+            <span className="text-rb-500">·</span>
+            <span className="font-mono text-sm text-rb-500">{shortAddr(wallet)}</span>
+          </div>
+          <div className="text-center py-12">
+            <p className="text-foreground text-lg mb-3">
+              {shortAddr(wallet)} has no Aave V4 positions
+            </p>
+            <p className="text-sm text-rb-500">
+              <Link href="/aave-v4" className="underline hover:text-foreground transition-colors">
+                Browse the latest Aave V4 events
+              </Link>
+              <span className="px-2 text-rb-400">·</span>
+              <Link
+                href={`/wallet/${encodeURIComponent(wallet)}`}
+                className="underline hover:text-foreground transition-colors"
+              >
+                see this wallet across all rails →
+              </Link>
+            </p>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen">

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FloatingPanel } from "@/components/shared/floating-panel";
+import { useWalletContext } from "@/components/nav/wallet-context";
 
 type ProtocolEntry = {
   id: string;
@@ -50,6 +51,13 @@ export interface ProtocolMenuProps {
 
 export function ProtocolMenu({ anchor, positionAnchor, onClose, onOpenPreferences }: ProtocolMenuProps) {
   const pathname = usePathname();
+  // When a wallet is selected in the header, the protocol switcher routes to
+  // that wallet's view of the target rail — clicking "Aave V4" with 0xABC
+  // active goes to /aave-v4/0xABC, not /aave-v4 (discovery). The wallet acts
+  // as a session: switching rails carries it through. Empty states on the
+  // destination page handle wallets with no positions on that rail.
+  const { addresses } = useWalletContext();
+  const activeWallet = addresses[0]?.toLowerCase();
 
   return (
     <FloatingPanel
@@ -67,6 +75,7 @@ export function ProtocolMenu({ anchor, positionAnchor, onClose, onOpenPreference
         <ul role="menu" className="space-y-1 px-2">
           {PROTOCOLS.map((p) => {
             const active = pathname?.startsWith(p.href);
+            const href = activeWallet ? `${p.href}/${activeWallet}` : p.href;
             return (
               <li key={p.id} role="none">
                 <div
@@ -78,7 +87,7 @@ export function ProtocolMenu({ anchor, positionAnchor, onClose, onOpenPreference
                 >
                   <Link
                     role="menuitem"
-                    href={p.href}
+                    href={href}
                     onClick={onClose}
                     className="flex items-center gap-3 p-2.5 flex-1 min-w-0 text-foreground"
                   >
