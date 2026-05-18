@@ -54,8 +54,10 @@ export interface AaveV4Context {
 
 /** Provenance of an Aave V4 historic price.
  *  - `chainlink` — Chainlink USD aggregator round at the event block. Used
- *    for the bluechip allowlist (WETH, WBTC, cbBTC, AAVE, EURC, LINK,
- *    USDC, USDT). No `≈` prefix on the chip.
+ *    for the bluechip USD-feed allowlist (WETH, WBTC, cbBTC, AAVE, EURC,
+ *    LINK, USDC, USDT, XAUt). No `≈` prefix on the chip.
+ *  - `chainlink-eth-derived` — ETH/USD × on-chain LST→ETH exchange rate.
+ *    Used for ETH-liquid-staking wrappers (wstETH, weETH). No `≈`.
  *  - `iaave-oracle` — protocol-faithful IAaveOracle read. No `≈`.
  *  - `stablecoin` — hard-pinned to $1.00 for the known stable set. `≈`.
  *  - `defillama` — DEPRECATED. The server-side transformer drops these
@@ -64,6 +66,7 @@ export interface AaveV4Context {
  *    parses. */
 export type AaveV4PriceSource =
   | "chainlink"
+  | "chainlink-eth-derived"
   | "iaave-oracle"
   | "stablecoin"
   | "defillama";

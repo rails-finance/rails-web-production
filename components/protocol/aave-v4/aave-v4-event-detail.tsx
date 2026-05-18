@@ -261,6 +261,7 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
             className="ml-auto inline-flex items-center gap-1.5 text-xs font-bold text-rb-500 bg-rb-200/60 dark:bg-rb-800/60 px-2 py-1 rounded-md"
             title={`${ctx.reserveSymbol} price at the time of this event (${
               ctx.price.source === "chainlink" ? "Chainlink feed"
+              : ctx.price.source === "chainlink-eth-derived" ? "Chainlink ETH/USD × on-chain exchange rate"
               : ctx.price.source === "iaave-oracle" ? "IAaveOracle"
               : ctx.price.source === "stablecoin" ? "stablecoin, pinned to $1"
               : "approximation"

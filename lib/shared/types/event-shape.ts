@@ -273,9 +273,13 @@ export interface AaveV4Context {
  *
  *  Categorical model (current):
  *    - `chainlink` — Chainlink USD aggregator round at the event block.
- *      Used for the bluechip allowlist (WETH, WBTC, cbBTC, AAVE, EURC,
- *      LINK, USDC, USDT). Same value Aave's oracle returned within
- *      nominal accuracy; no `≈` prefix on the chip.
+ *      Used for the bluechip USD-feed allowlist (WETH, WBTC, cbBTC, AAVE,
+ *      EURC, LINK, USDC, USDT, XAUt). Same value Aave's oracle returned
+ *      within nominal accuracy; no `≈` prefix on the chip.
+ *    - `chainlink-eth-derived` — ETH/USD × on-chain LST→ETH exchange rate.
+ *      Used for ETH-liquid-staking wrappers (wstETH, weETH) where Aave's
+ *      own oracle composes the same calculation internally. Block-aligned
+ *      via the LST contract's view method. No `≈` prefix.
  *    - `iaave-oracle` — protocol-faithful read from IAaveOracle. Reserved
  *      for if/when a working V4 forward writer lands; not currently
  *      producing rows. No `≈` prefix.
@@ -288,6 +292,7 @@ export interface AaveV4Context {
  *      directly. */
 export type AaveV4PriceSource =
   | "chainlink"
+  | "chainlink-eth-derived"
   | "iaave-oracle"
   | "stablecoin"
   | "defillama";
