@@ -34,6 +34,12 @@ const PROTOCOL_CONTEXTS: {
     iconSrc: "/icons/protocols/aave-v4.png",
     prefixes: ["/aave-v4"],
   },
+  {
+    id: "llamalend",
+    label: "LlamaLend",
+    iconSrc: "/icons/protocols/llamalend.png",
+    prefixes: ["/llamalend"],
+  },
 ];
 
 function activeProtocol(pathname: string | null) {
@@ -58,9 +64,10 @@ function isWalletScopedRoute(pathname: string | null): boolean {
   if (/^\/wallet\/[^/]+\/?$/.test(pathname)) return true;
   // /liquity-v2/trove/[collateralType]/[troveId]
   if (/^\/liquity-v2\/trove\/[^/]+\/[^/]+\/?$/.test(pathname)) return true;
-  // /liquity-v2/[wallet] and /aave-v4/[wallet] — but not the bare listing
-  // (zero further segments) and not the `trove` intermediate.
-  const m = pathname.match(/^\/(liquity-v2|aave-v4)\/([^/]+)\/?$/);
+  // /liquity-v2/[wallet], /aave-v4/[wallet], and /llamalend/[wallet] — but
+  // not the bare listing (zero further segments) and not the `trove`
+  // intermediate.
+  const m = pathname.match(/^\/(liquity-v2|aave-v4|llamalend)\/([^/]+)\/?$/);
   if (m) {
     const second = m[2];
     if (second === "trove") return false;

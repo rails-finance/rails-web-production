@@ -22,7 +22,7 @@
 import type { TrovesResponse } from "@/types/api/trove";
 import type { AaveV4SpokePositionsResponse } from "@/lib/api/fetch-aave-v4-spoke-positions";
 
-export type DispatchProtocol = "liquity-v2-troves" | "aave-v4";
+export type DispatchProtocol = "liquity-v2-troves" | "aave-v4" | "llamalend";
 
 export interface DispatchResult {
   /** Where to send the user. */
@@ -56,13 +56,21 @@ export async function dispatchWalletSearch(input: string): Promise<DispatchResul
     ? `wallet=${lowered}`
     : `ownerEns=${encodeURIComponent(trimmed)}`;
 
-  const [trovesSettled, aaveSettled] = await Promise.allSettled([
+  const [trovesSettled, aaveSettled, llamalendSettled] = await Promise.allSettled([
     fetch(`/api/troves?${trovesQuery}&limit=5`),
     fetch(`/api/aave-v4/spoke-positions?${aaveQuery}&limit=5`),
+    // LlamaLend probe accepts only 0x form — ENS resolution isn't wired into
+    // the sieve-side query. Skip the LlamaLend probe entirely when input is
+    // ENS; the umbrella page will pick up activity once we have the resolved
+    // address from the other two protocols.
+    isAddress
+      ? fetch(`/api/llamalend/probe?wallet=${lowered}`)
+      : Promise.reject(new Error("ENS not supported for llamalend probe")),
   ]);
 
   let trovesHit = false;
   let aaveHit = false;
+  let llamalendHit = false;
   let resolvedAddress: string | null = isAddress ? lowered : null;
 
   if (trovesSettled.status === "fulfilled" && trovesSettled.value.ok) {
@@ -92,9 +100,19 @@ export async function dispatchWalletSearch(input: string): Promise<DispatchResul
     }
   }
 
+  if (llamalendSettled.status === "fulfilled" && llamalendSettled.value.ok) {
+    try {
+      const data = (await llamalendSettled.value.json()) as { hasActivity?: boolean };
+      llamalendHit = !!data?.hasActivity;
+    } catch {
+      /* swallow */
+    }
+  }
+
   const protocols: DispatchProtocol[] = [];
   if (trovesHit) protocols.push("liquity-v2-troves");
   if (aaveHit) protocols.push("aave-v4");
+  if (llamalendHit) protocols.push("llamalend");
 
   const slug = resolvedAddress ?? trimmed;
   const ensName = isEns ? trimmed : null;
@@ -108,6 +126,11 @@ export async function dispatchWalletSearch(input: string): Promise<DispatchResul
     // accepts ENS slugs.
     url = resolvedAddress
       ? `/aave-v4/${resolvedAddress}`
+      : `/wallet/${encodeURIComponent(slug)}`;
+  } else if (protocols.length === 1 && protocols[0] === "llamalend") {
+    // Same constraint as Aave — LlamaLend wallet page wants 0x.
+    url = resolvedAddress
+      ? `/llamalend/${resolvedAddress}`
       : `/wallet/${encodeURIComponent(slug)}`;
   } else {
     // 0 or 2+ protocols both land on the umbrella. Empty state handled there.

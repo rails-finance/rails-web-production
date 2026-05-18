@@ -1,0 +1,32 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createAuthFetchOptions } from "@/lib/api/fetch-with-auth";
+
+const RAILS_API_URL = process.env.RAILS_API_URL;
+
+interface ProbeResponse {
+  wallet: string;
+  hasActivity: boolean;
+}
+
+export async function GET(request: NextRequest) {
+  if (!RAILS_API_URL) {
+    console.error("RAILS_API_URL environment variable is not set");
+    return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
+  }
+  try {
+    const search = request.nextUrl.searchParams.toString();
+    const url = `${RAILS_API_URL}/api/llamalend/probe${search ? `?${search}` : ""}`;
+    const response = await fetch(url, createAuthFetchOptions());
+    if (!response.ok) {
+      return NextResponse.json(
+        { error: `Backend error: ${response.statusText}` },
+        { status: response.status },
+      );
+    }
+    const data: ProbeResponse = await response.json();
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error("Error fetching llamalend probe from backend:", error);
+    return NextResponse.json({ error: "Failed to probe" }, { status: 500 });
+  }
+}

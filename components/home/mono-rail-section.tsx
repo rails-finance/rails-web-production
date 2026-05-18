@@ -41,6 +41,7 @@ const MONO_RAILS: MonoRail[] = [
     label: "LlamaLend V1",
     tags: ["Lend", "Borrow"],
     desc: "Curve CDP markets with band-based soft liquidation via LLAMMA",
+    href: "/llamalend",
   },
 ];
 

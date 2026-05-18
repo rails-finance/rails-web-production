@@ -51,6 +51,7 @@ export default function WalletUmbrellaPage() {
 
   const [troves, setTroves] = useState<TroveSummary[]>([]);
   const [aaveRows, setAaveRows] = useState<AaveV4SpokePositionRow[]>([]);
+  const [llamalendHit, setLlamalendHit] = useState(false);
   const [prices, setPrices] = useState<OraclePricesData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -77,9 +78,15 @@ export default function WalletUmbrellaPage() {
           ? `wallet=${lowered}`
           : `ownerEns=${encodeURIComponent(slug)}`;
 
-        const [trovesSettled, aaveSettled, pricesSettled] = await Promise.allSettled([
+        const [trovesSettled, aaveSettled, llamalendSettled, pricesSettled] = await Promise.allSettled([
           fetch(`/api/troves?${trovesQuery}&limit=100`),
           fetch(`/api/aave-v4/spoke-positions?${aaveQuery}&limit=100`),
+          // LlamaLend probe takes 0x form only; skip on ENS input (the
+          // umbrella's primary purpose is the multi-protocol view, and
+          // ENS users still see Liquity/Aave hits if any).
+          isAddress
+            ? fetch(`/api/llamalend/probe?wallet=${lowered}`)
+            : Promise.reject(new Error("ENS not supported for llamalend probe")),
           fetch("/api/oracle/liquity-v2"),
         ]);
 
@@ -92,6 +99,14 @@ export default function WalletUmbrellaPage() {
         if (aaveSettled.status === "fulfilled" && aaveSettled.value.ok) {
           const data = (await aaveSettled.value.json()) as AaveV4SpokePositionsResponse;
           setAaveRows(data.rows ?? []);
+        }
+        if (llamalendSettled.status === "fulfilled" && llamalendSettled.value.ok) {
+          try {
+            const data = (await llamalendSettled.value.json()) as { hasActivity?: boolean };
+            setLlamalendHit(!!data?.hasActivity);
+          } catch {
+            /* swallow */
+          }
         }
         if (pricesSettled.status === "fulfilled" && pricesSettled.value.ok) {
           const data = (await pricesSettled.value.json()) as OraclePricesResponse;
@@ -122,11 +137,15 @@ export default function WalletUmbrellaPage() {
       const w = aaveRows[0].wallet?.toLowerCase();
       if (w && LOWER_ADDRESS_RE.test(w)) resolved = w;
     }
+    // LlamaLend probe doesn't return the wallet — it just confirms activity.
+    // Resolution relies on the input being a 0x address (already handled) or
+    // one of the other two protocols having returned rows.
     if (!resolved) return;
 
     const protocols: string[] = [];
     if (troves.length > 0) protocols.push("liquity-v2-troves");
     if (aaveRows.length > 0) protocols.push("aave-v4");
+    if (llamalendHit) protocols.push("llamalend");
 
     const ensMap = { [resolved]: isEns ? slug : null };
     setWallets([resolved], ensMap);
@@ -148,8 +167,13 @@ export default function WalletUmbrellaPage() {
     );
   }
 
-  const totalPositions = troves.length + aaveRows.length;
-  const protocolsActive = (troves.length > 0 ? 1 : 0) + (aaveRows.length > 0 ? 1 : 0);
+  // LlamaLend contributes 1 to the protocol count when hit, but we don't yet
+  // have a positions endpoint that breaks out per-market position rows — so
+  // it adds 1 to totalPositions, not N. Refine this once we have a real
+  // positions endpoint.
+  const totalPositions = troves.length + aaveRows.length + (llamalendHit ? 1 : 0);
+  const protocolsActive =
+    (troves.length > 0 ? 1 : 0) + (aaveRows.length > 0 ? 1 : 0) + (llamalendHit ? 1 : 0);
 
   return (
     <main className="min-h-screen">
@@ -173,7 +197,7 @@ export default function WalletUmbrellaPage() {
             <div className="text-rb-500">
               <p className="mb-2 text-lg">No positions found</p>
               <p className="text-sm">
-                This wallet has no Liquity V2 troves or Aave V4 positions. Check the address, or try a wallet you know is active.
+                This wallet has no Liquity V2 troves, Aave V4 positions, or LlamaLend activity. Check the address, or try a wallet you know is active.
               </p>
             </div>
           </div>
@@ -241,6 +265,39 @@ export default function WalletUmbrellaPage() {
                   </motion.div>
                 ))}
               </div>
+            </motion.section>
+          )}
+
+          {llamalendHit && isAddress && (
+            <motion.section
+              key="llamalend"
+              initial="hidden"
+              animate="visible"
+              variants={containerVariants}
+              className="mb-10"
+            >
+              <div className="flex items-baseline justify-between mb-4">
+                <h2 className="text-lg font-semibold text-foreground">LlamaLend</h2>
+                <Link
+                  href={`/llamalend/${slug.toLowerCase()}`}
+                  className="text-sm text-blue-500 hover:text-blue-400"
+                >
+                  View timeline →
+                </Link>
+              </div>
+              <motion.div variants={itemVariants}>
+                <Link
+                  href={`/llamalend/${slug.toLowerCase()}`}
+                  className="group/card block w-full text-left rounded-lg transition-all cursor-pointer border border-transparent bg-rb-200/50 dark:bg-rb-900 hover:border-blue-500 px-5 py-4"
+                >
+                  <p className="text-sm text-foreground">
+                    Active Curve LlamaLend positions detected.
+                  </p>
+                  <p className="mt-1 text-xs text-rb-500">
+                    Per-market position cards aren't surfaced in the umbrella yet — open the timeline to inspect lifecycle, bands, and liquidations.
+                  </p>
+                </Link>
+              </motion.div>
             </motion.section>
           )}
         </AnimatePresence>
