@@ -1,43 +1,73 @@
 "use client";
 
-// LlamaLend wallet detail — v1 minimum slice.
+// LlamaLend wallet detail.
 //
-// Fetches /api/llamalend/timeline and renders a chronological list of cards.
-// Intentionally lean: no spoke selector, no positions endpoint, no filters,
-// no day grouping, no economics tower. The aim of this page is to validate
-// the wire shape end-to-end and surface the next pain points (visual chrome
-// fit, position-lifecycle grouping, soft-liq synthesis on the API side).
+// Two parallel fetches: /api/llamalend/positions for the currently-open
+// (controller, positionEpoch) lifecycles (rendered as cards at the top), and
+// /api/llamalend/timeline for the full event history (rendered below).
+// PricesProvider wraps both so the position-card health column can resolve
+// oracle prices via /api/prices.
+//
+// Intentionally deferred for v1: day grouping, type/date filters, transaction
+// heatmap, soft-liq synthesized events (B2), bands visualization (C2),
+// economics tower (C4). The page validates the full positions + timeline
+// pipeline end-to-end; richer chrome lands incrementally per
+// migration/llamalend-followups.md.
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { fetchLlamalendTimeline } from "@/lib/api/fetch-llamalend";
+import { fetchLlamalendTimeline, fetchLlamalendPositions } from "@/lib/api/fetch-llamalend";
+import type { LlamalendPosition } from "@/lib/api/fetch-llamalend";
 import type { BaseActivityEvent } from "@/lib/shared/types/event-shape";
 import { isLlamalendEvent } from "@/lib/shared/types/event-shape";
 import { LlamalendEventCard } from "@/components/protocol/llamalend/llamalend-event-card";
+import { LlamalendPositionCardSelector } from "@/components/shared/llamalend-position-card-selector";
+import { PricesProvider } from "@/lib/shared/prices-context";
 
 export default function LlamalendWalletPage() {
+  return (
+    <PricesProvider>
+      <LlamalendWalletPageInner />
+    </PricesProvider>
+  );
+}
+
+function LlamalendWalletPageInner() {
   const params = useParams<{ wallet: string }>();
   const wallet = (params?.wallet ?? "").toLowerCase();
 
   const [events, setEvents] = useState<BaseActivityEvent[] | null>(null);
+  const [positions, setPositions] = useState<LlamalendPosition[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [order, setOrder] = useState<"newest" | "oldest">("newest");
+  const [selectedPosition, setSelectedPosition] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (!wallet) return;
     let cancelled = false;
     setEvents(null);
+    setPositions(null);
     setError(null);
-    fetchLlamalendTimeline({ wallet })
-      .then((r) => {
-        if (cancelled) return;
-        setEvents(r.events);
-      })
-      .catch((e: unknown) => {
-        if (cancelled) return;
+    Promise.allSettled([
+      fetchLlamalendTimeline({ wallet }),
+      fetchLlamalendPositions({ wallet }),
+    ]).then((results) => {
+      if (cancelled) return;
+      const [timelineR, positionsR] = results;
+      if (timelineR.status === "fulfilled") {
+        setEvents(timelineR.value.events);
+      } else {
+        const e = timelineR.reason;
         setError(e instanceof Error ? e.message : String(e));
-      });
+      }
+      if (positionsR.status === "fulfilled") {
+        setPositions(positionsR.value.positions);
+      } else {
+        // Positions are non-fatal — the timeline still renders.
+        setPositions([]);
+      }
+    });
     return () => {
       cancelled = true;
     };
@@ -58,6 +88,21 @@ export default function LlamalendWalletPage() {
         <h1 className="mt-2 text-2xl font-semibold">Curve LlamaLend</h1>
         <p className="mt-1 break-all text-sm text-rb-text-500">{wallet}</p>
       </header>
+
+      {positions && positions.length > 0 && (
+        <section className="mb-8">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-rb-500">
+            Open positions
+          </h2>
+          <div className="rounded-lg bg-rb-200/50 dark:bg-rb-900">
+            <LlamalendPositionCardSelector
+              positions={positions}
+              selected={selectedPosition}
+              onSelect={setSelectedPosition}
+            />
+          </div>
+        </section>
+      )}
 
       <div className="mb-4 flex items-center justify-between gap-3">
         <p className="text-sm text-rb-text-500">
