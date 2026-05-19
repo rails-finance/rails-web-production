@@ -23,6 +23,8 @@ import type { BaseActivityEvent } from "@/lib/shared/types/event-shape";
 import { isLlamalendEvent } from "@/lib/shared/types/event-shape";
 import { LlamalendEventCard } from "@/components/protocol/llamalend/llamalend-event-card";
 import { LlamalendPositionCardSelector } from "@/components/shared/llamalend-position-card-selector";
+import { LlamalendTowerChart } from "@/components/protocol/llamalend/llamalend-tower-chart";
+import { buildLlamalendEconomics } from "@/lib/llamalend/economics";
 import { PricesProvider } from "@/lib/shared/prices-context";
 import {
   TimelineDisplayProvider,
@@ -237,6 +239,14 @@ function LlamalendWalletPageInner() {
     [dateFilteredEvents, sortDirection],
   );
 
+  // Economics tower is computed over position-scoped events when a position
+  // is selected, otherwise over every event for the wallet. Always uses
+  // asc-sorted events so the inflow/outflow accumulation order is stable.
+  const economics = useMemo(
+    () => (positionScopedEvents ? buildLlamalendEconomics(positionScopedEvents) : null),
+    [positionScopedEvents],
+  );
+
   const filtersActive = hiddenSet.size > 0 || dateRange !== null;
   const dateLabel = dateRange
     ? `${new Date(dateRange[0] * 1000).toLocaleDateString(undefined, { month: "short", day: "numeric" })} – ${new Date(dateRange[1] * 1000).toLocaleDateString(undefined, { month: "short", day: "numeric" })}`
@@ -279,6 +289,12 @@ function LlamalendWalletPageInner() {
               Show activity for all positions
             </button>
           )}
+        </section>
+      )}
+
+      {economics && (economics.collateral.length > 0 || economics.debt.length > 0) && (
+        <section className="mb-8 rounded-lg bg-rb-200/50 dark:bg-rb-900 px-4 py-4">
+          <LlamalendTowerChart economics={economics} />
         </section>
       )}
 
