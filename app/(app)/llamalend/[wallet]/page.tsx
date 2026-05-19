@@ -15,7 +15,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import Link from "next/link";
 import { ArrowUpDown } from "lucide-react";
 import { fetchLlamalendTimeline, fetchLlamalendPositions } from "@/lib/api/fetch-llamalend";
 import type { LlamalendPosition } from "@/lib/api/fetch-llamalend";
@@ -116,6 +115,7 @@ function LlamalendWalletPageInner() {
     dateRange,
     heatmapOpen,
     selectedPosition,
+    hasHydrated: hasUiHydrated,
     setSortDirection,
     setHiddenActions,
     toggleHiddenAction,
@@ -157,6 +157,26 @@ function LlamalendWalletPageInner() {
       cancelled = true;
     };
   }, [wallet, isValidWallet]);
+
+  // Auto-select the highest-debt open position once positions arrive (and
+  // skip if the user already has a stored selection, or if it matches a
+  // real position). Mirrors AaveV4's auto-select-most-active-spoke pattern
+  // — the open-position card otherwise feels ornamental on mount.
+  useEffect(() => {
+    if (!hasUiHydrated) return;
+    if (!positions || positions.length === 0) return;
+    if (
+      selectedPosition &&
+      positions.some((p) => `${p.controller}:${p.positionEpoch}` === selectedPosition)
+    ) {
+      return;
+    }
+    const ranked = [...positions].sort(
+      (a, b) => b.debt - a.debt || b.lastTimestamp - a.lastTimestamp,
+    );
+    const first = ranked[0];
+    setSelectedPosition(`${first.controller}:${first.positionEpoch}`);
+  }, [hasUiHydrated, positions, selectedPosition, setSelectedPosition]);
 
   // Always sort asc as the canonical order; display order is a render-time
   // reverse below. Matches the AaveV4 page convention.
@@ -254,144 +274,128 @@ function LlamalendWalletPageInner() {
   const heatmapShown = heatmapOpen || dateRange !== null;
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-8 text-foreground">
-      <header className="mb-6">
-        <Link href="/" className="text-xs text-rb-text-500 hover:text-foreground">
-          ← Home
-        </Link>
-        <div className="mt-2 flex items-center gap-3 flex-wrap">
-          <h1 className="text-2xl font-semibold">Curve LlamaLend</h1>
+    <main className="min-h-screen">
+      <div className="max-w-7xl mx-auto py-8 space-y-6">
+        <div className="flex items-center gap-3 flex-wrap">
+          <h1 className="text-2xl font-bold text-foreground">Curve LlamaLend</h1>
           <span className="text-rb-500">·</span>
           <span className="font-mono text-sm text-rb-500">{shortAddr(wallet)}</span>
         </div>
-      </header>
 
-      {positions && positions.length > 0 && (
-        <section className="mb-8">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-rb-500">
-            Open positions
-          </h2>
-          <div className="rounded-lg bg-rb-200/50 dark:bg-rb-900">
-            <LlamalendPositionCardSelector
-              positions={positions}
-              selected={selectedPosition ?? undefined}
-              onSelect={(key) =>
-                setSelectedPosition(key === selectedPosition ? null : key)
-              }
-            />
+        {positions && positions.length > 0 && (
+          <LlamalendPositionCardSelector
+            positions={positions}
+            selected={selectedPosition ?? undefined}
+            onSelect={(key) => setSelectedPosition(key)}
+          />
+        )}
+
+        {economics && (economics.collateral.length > 0 || economics.debt.length > 0) && (
+          // Full-bleed economics band — escapes the max-w-7xl gutter so the
+          // grey background extends edge-to-edge, mirroring the /aave-v4/[…]
+          // wallet page's economics band placement.
+          <div className="relative left-1/2 -translate-x-1/2 w-screen bg-rb-100 dark:bg-rb-900 py-6">
+            <div className="max-w-7xl mx-auto px-4 md:px-6">
+              <LlamalendTowerChart economics={economics} />
+            </div>
           </div>
-          {selectedPosition && (
+        )}
+
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <h2 className="text-sm font-semibold text-foreground">Activity</h2>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-rb-500 tabular-nums">
+              {displayedEvents === null
+                ? "Loading…"
+                : filtersActive
+                  ? `${dateFilteredEvents?.length ?? 0} of ${positionScopedEvents?.length ?? 0}`
+                  : `${positionScopedEvents?.length ?? 0}`}{" "}
+              event{(positionScopedEvents?.length ?? 0) === 1 ? "" : "s"}
+            </span>
+            <button
+              onClick={() => setSortDirection(sortDirection === "asc" ? "desc" : "asc")}
+              aria-label={sortDirection === "asc" ? "Currently oldest first" : "Currently newest first"}
+              title={sortDirection === "asc" ? "Oldest first" : "Newest first"}
+              className="cursor-pointer inline-flex items-center justify-center w-7 h-7 rounded-full text-rb-500 hover:text-foreground bg-rb-100 dark:bg-rb-900 hover:bg-rb-200 dark:hover:bg-rb-800 transition-colors"
+            >
+              <ArrowUpDown size={12} />
+            </button>
+            {eventOptions.length > 1 && (
+              <FilterDropdown
+                label="Types of event"
+                options={eventOptions}
+                selected={visibleActionKeys}
+                onSelect={() => setHiddenActions([])}
+                multi
+                variant="button"
+                align="right"
+                onToggle={(act) => toggleHiddenAction(act)}
+              />
+            )}
             <button
               type="button"
-              onClick={() => setSelectedPosition(null)}
-              className="mt-2 text-xs text-rb-500 underline hover:text-foreground"
+              onClick={() => setHeatmapOpen(!heatmapOpen)}
+              aria-pressed={heatmapShown}
+              className={`px-2.5 py-1 text-xs font-semibold rounded border transition-colors ${
+                dateRange
+                  ? "border-amber-500/60 bg-amber-500/15 text-amber-400 hover:text-amber-300"
+                  : heatmapShown
+                    ? "border-rb-400 dark:border-rb-600 bg-rb-200 dark:bg-rb-900 text-foreground"
+                    : "border-rb-300/60 dark:border-rb-700/60 text-rb-500 hover:text-foreground hover:bg-rb-200/60 dark:hover:bg-rb-900/60"
+              }`}
+              title={heatmapShown ? "Hide activity heatmap" : "Filter by date range"}
             >
-              Show activity for all positions
+              {dateLabel}
             </button>
-          )}
-        </section>
-      )}
-
-      {economics && (economics.collateral.length > 0 || economics.debt.length > 0) && (
-        <section className="mb-8 rounded-lg bg-rb-200/50 dark:bg-rb-900 px-4 py-4">
-          <LlamalendTowerChart economics={economics} />
-        </section>
-      )}
-
-      <div className="mb-4 flex items-center justify-between flex-wrap gap-2">
-        <h2 className="text-sm font-semibold text-foreground">Activity</h2>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-rb-500 tabular-nums">
-            {displayedEvents === null
-              ? "Loading…"
-              : filtersActive
-                ? `${dateFilteredEvents?.length ?? 0} of ${positionScopedEvents?.length ?? 0}`
-                : `${positionScopedEvents?.length ?? 0}`}{" "}
-            event{(positionScopedEvents?.length ?? 0) === 1 ? "" : "s"}
-          </span>
-          <button
-            onClick={() => setSortDirection(sortDirection === "asc" ? "desc" : "asc")}
-            aria-label={sortDirection === "asc" ? "Currently oldest first" : "Currently newest first"}
-            title={sortDirection === "asc" ? "Oldest first" : "Newest first"}
-            className="cursor-pointer inline-flex items-center justify-center w-7 h-7 rounded-full text-rb-500 hover:text-foreground bg-rb-100 dark:bg-rb-900 hover:bg-rb-200 dark:hover:bg-rb-800 transition-colors"
-          >
-            <ArrowUpDown size={12} />
-          </button>
-          {eventOptions.length > 1 && (
-            <FilterDropdown
-              label="Types of event"
-              options={eventOptions}
-              selected={visibleActionKeys}
-              onSelect={() => setHiddenActions([])}
-              multi
-              variant="button"
-              align="right"
-              onToggle={(act) => toggleHiddenAction(act)}
-            />
-          )}
-          <button
-            type="button"
-            onClick={() => setHeatmapOpen(!heatmapOpen)}
-            aria-pressed={heatmapShown}
-            className={`px-2.5 py-1 text-xs font-semibold rounded border transition-colors ${
-              dateRange
-                ? "border-amber-500/60 bg-amber-500/15 text-amber-400 hover:text-amber-300"
-                : heatmapShown
-                  ? "border-rb-400 dark:border-rb-600 bg-rb-200 dark:bg-rb-900 text-foreground"
-                  : "border-rb-300/60 dark:border-rb-700/60 text-rb-500 hover:text-foreground hover:bg-rb-200/60 dark:hover:bg-rb-900/60"
-            }`}
-            title={heatmapShown ? "Hide activity heatmap" : "Filter by date range"}
-          >
-            {dateLabel}
-          </button>
-          <LlamalendTimelineDisplayToggle />
+            <LlamalendTimelineDisplayToggle />
+          </div>
         </div>
+
+        {(heatmapOpen || dateRange !== null) && visibleEvents && visibleEvents.length > 0 && (
+          <div>
+            <TransactionHeatmap events={visibleEvents} value={dateRange} onChange={setDateRange} />
+          </div>
+        )}
+
+        {error ? (
+          <div className="rounded border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
+            Failed to load: {error}
+          </div>
+        ) : displayedEvents === null ? (
+          <div className="text-sm text-rb-text-500">Fetching timeline…</div>
+        ) : displayedEvents.length === 0 ? (
+          <div className="rounded border border-rb-text-100/10 bg-rb-bg-100/40 p-6 text-sm text-rb-text-500">
+            {filtersActive
+              ? "All events filtered out — adjust the type or date filter to show some."
+              : selectedPosition
+                ? "No events on this position — pick a different position card to switch."
+                : "No LlamaLend activity for this wallet."}
+          </div>
+        ) : (
+          <ol className="space-y-2">
+            {displayedEvents.map((event, idx) => {
+              if (!isLlamalendEvent(event)) return null;
+              const prevDisplayed = idx > 0 ? displayedEvents[idx - 1] : undefined;
+              const showDate =
+                !prevDisplayed || dayKey(event.timestamp) !== dayKey(prevDisplayed.timestamp);
+              const datePrefix = showDate
+                ? `${shortDate(event.timestamp)} ${shortDateYear(event.timestamp)}`
+                : null;
+              return (
+                <li key={event.id}>
+                  <EventDateContext.Provider value={datePrefix}>
+                    <LlamalendEventCard
+                      event={event}
+                      isFirst={idx === 0}
+                      isLast={idx === displayedEvents.length - 1}
+                    />
+                  </EventDateContext.Provider>
+                </li>
+              );
+            })}
+          </ol>
+        )}
       </div>
-
-      {(heatmapOpen || dateRange !== null) && visibleEvents && visibleEvents.length > 0 && (
-        <div className="mb-3">
-          <TransactionHeatmap events={visibleEvents} value={dateRange} onChange={setDateRange} />
-        </div>
-      )}
-
-      {error ? (
-        <div className="rounded border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
-          Failed to load: {error}
-        </div>
-      ) : displayedEvents === null ? (
-        <div className="text-sm text-rb-text-500">Fetching timeline…</div>
-      ) : displayedEvents.length === 0 ? (
-        <div className="rounded border border-rb-text-100/10 bg-rb-bg-100/40 p-6 text-sm text-rb-text-500">
-          {filtersActive
-            ? "All events filtered out — adjust the type or date filter to show some."
-            : selectedPosition
-              ? "No events on this position — pick a different one or clear the selection."
-              : "No LlamaLend activity for this wallet."}
-        </div>
-      ) : (
-        <ol className="space-y-2">
-          {displayedEvents.map((event, idx) => {
-            if (!isLlamalendEvent(event)) return null;
-            const prevDisplayed = idx > 0 ? displayedEvents[idx - 1] : undefined;
-            const showDate =
-              !prevDisplayed || dayKey(event.timestamp) !== dayKey(prevDisplayed.timestamp);
-            const datePrefix = showDate
-              ? `${shortDate(event.timestamp)} ${shortDateYear(event.timestamp)}`
-              : null;
-            return (
-              <li key={event.id}>
-                <EventDateContext.Provider value={datePrefix}>
-                  <LlamalendEventCard
-                    event={event}
-                    isFirst={idx === 0}
-                    isLast={idx === displayedEvents.length - 1}
-                  />
-                </EventDateContext.Provider>
-              </li>
-            );
-          })}
-        </ol>
-      )}
     </main>
   );
 }
