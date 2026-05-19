@@ -113,26 +113,6 @@ export function liquityOpenTroveContent(): LearnMoreContent {
   };
 }
 
-// ── LlamaLend — LLAMMA Bands ────────────────────────────────────────────────
-
-export function llamalendBandsContent(): LearnMoreContent {
-  return {
-    title: "How LLAMMA Bands Work",
-    intro: "LlamaLend positions don't have a single liquidation price. Your collateral is spread across a range of contiguous price \u201cbands\u201d, and LLAMMA (the protocol's AMM) gradually swaps that collateral into the debt token as the oracle price drops through the range \u2014 a continuous \u201csoft liquidation\u201d rather than a one-shot seizure.",
-    detailsHeading: "Key concepts:",
-    details: [
-      { bold: "Bands", text: "contiguous price ranges that hold your collateral. A position spans n1 (highest band) down to n2 (lowest). More bands = smoother soft-liquidation at the cost of less upside above the range." },
-      { bold: "Soft-liquidation", text: "as the oracle price moves through a band, LLAMMA market-sells collateral into the debt token. The position stays open and can \u201cde-liquidate\u201d if price recovers." },
-      { bold: "Hard liquidation", text: "if price falls below the bottom band, the position is fully converted and closed. Before that, you can add collateral, repay debt, or close manually at any time." },
-      { bold: "Soft-liq estimate", text: "the dashboard approximates the soft-liq onset price from your debt, collateral and the market's liquidation discount. It's a conservative proxy \u2014 exact band prices come from the on-chain amplification parameter A when available." },
-    ],
-    links: [
-      { label: "LlamaLend docs \u2014 LLAMMA", url: "https://docs.curve.fi/crvUSD/amm/" },
-      { label: "Risk model and amplification (A)", url: "https://docs.curve.fi/crvUSD/amm/#parameters" },
-    ],
-  };
-}
-
 // ── Curve ────────────────────────────────────────────────────────────────────
 
 export function curveSwapContent(): LearnMoreContent {

@@ -19,17 +19,12 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { TroveSummaryCard } from "@/components/trove/TroveSummaryCard";
 import { AaveV4PositionListingCard } from "@/components/aave-v4/AaveV4PositionListingCard";
-import { LlamalendPositionCardSelector } from "@/components/shared/llamalend-position-card-selector";
 import { FeedbackButton } from "@/components/FeedbackButton";
 import { TroveSummary, TrovesResponse } from "@/types/api/trove";
 import type {
   AaveV4SpokePositionRow,
   AaveV4SpokePositionsResponse,
 } from "@/lib/api/fetch-aave-v4-spoke-positions";
-import type {
-  LlamalendPosition,
-  FetchLlamalendPositionsResult,
-} from "@/lib/api/fetch-llamalend";
 import { OraclePricesData, OraclePricesResponse } from "@/types/api/oracle";
 import { useWalletContext } from "@/components/nav/wallet-context";
 import { upsertSession } from "@/lib/shared/sessions";
@@ -65,9 +60,6 @@ function WalletUmbrellaInner() {
 
   const [troves, setTroves] = useState<TroveSummary[]>([]);
   const [aaveRows, setAaveRows] = useState<AaveV4SpokePositionRow[]>([]);
-  const [llamalendHit, setLlamalendHit] = useState(false);
-  const [llamalendPositions, setLlamalendPositions] = useState<LlamalendPosition[]>([]);
-  const [llamalendSelected, setLlamalendSelected] = useState<string | undefined>(undefined);
   const [prices, setPrices] = useState<OraclePricesData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -94,24 +86,9 @@ function WalletUmbrellaInner() {
           ? `wallet=${lowered}`
           : `ownerEns=${encodeURIComponent(slug)}`;
 
-        const [
-          trovesSettled,
-          aaveSettled,
-          llamalendProbeSettled,
-          llamalendPositionsSettled,
-          pricesSettled,
-        ] = await Promise.allSettled([
+        const [trovesSettled, aaveSettled, pricesSettled] = await Promise.allSettled([
           fetch(`/api/troves?${trovesQuery}&limit=100`),
           fetch(`/api/aave-v4/spoke-positions?${aaveQuery}&limit=100`),
-          // LlamaLend probe + positions take 0x form only; skip on ENS input
-          // (the umbrella's primary purpose is the multi-protocol view, and
-          // ENS users still see Liquity/Aave hits if any).
-          isAddress
-            ? fetch(`/api/llamalend/probe?wallet=${lowered}`)
-            : Promise.reject(new Error("ENS not supported for llamalend probe")),
-          isAddress
-            ? fetch(`/api/llamalend/positions?wallet=${lowered}`)
-            : Promise.reject(new Error("ENS not supported for llamalend positions")),
           fetch("/api/oracle/liquity-v2"),
         ]);
 
@@ -124,28 +101,6 @@ function WalletUmbrellaInner() {
         if (aaveSettled.status === "fulfilled" && aaveSettled.value.ok) {
           const data = (await aaveSettled.value.json()) as AaveV4SpokePositionsResponse;
           setAaveRows(data.rows ?? []);
-        }
-        if (llamalendProbeSettled.status === "fulfilled" && llamalendProbeSettled.value.ok) {
-          try {
-            const data = (await llamalendProbeSettled.value.json()) as {
-              hasActivity?: boolean;
-            };
-            setLlamalendHit(!!data?.hasActivity);
-          } catch {
-            /* swallow */
-          }
-        }
-        if (
-          llamalendPositionsSettled.status === "fulfilled" &&
-          llamalendPositionsSettled.value.ok
-        ) {
-          try {
-            const data =
-              (await llamalendPositionsSettled.value.json()) as FetchLlamalendPositionsResult;
-            setLlamalendPositions(data.positions ?? []);
-          } catch {
-            /* swallow */
-          }
         }
         if (pricesSettled.status === "fulfilled" && pricesSettled.value.ok) {
           const data = (await pricesSettled.value.json()) as OraclePricesResponse;
@@ -176,15 +131,11 @@ function WalletUmbrellaInner() {
       const w = aaveRows[0].wallet?.toLowerCase();
       if (w && LOWER_ADDRESS_RE.test(w)) resolved = w;
     }
-    // LlamaLend probe doesn't return the wallet — it just confirms activity.
-    // Resolution relies on the input being a 0x address (already handled) or
-    // one of the other two protocols having returned rows.
     if (!resolved) return;
 
     const protocols: string[] = [];
     if (troves.length > 0) protocols.push("liquity-v2-troves");
     if (aaveRows.length > 0) protocols.push("aave-v4");
-    if (llamalendHit) protocols.push("llamalend");
 
     const ensMap = { [resolved]: isEns ? slug : null };
     setWallets([resolved], ensMap);
@@ -206,19 +157,9 @@ function WalletUmbrellaInner() {
     );
   }
 
-  // LlamaLend now contributes its per-(controller, positionEpoch) count to
-  // totalPositions. We still treat probe.hasActivity (without current open
-  // positions) as a "has history" signal worth a 1 in the protocol count, so
-  // wallets with only closed/liquidated lifecycles still surface a link to
-  // their timeline.
-  const llamalendOpenCount = llamalendPositions.length;
-  const llamalendHistoryOnly = llamalendHit && llamalendOpenCount === 0;
-  const totalPositions =
-    troves.length + aaveRows.length + llamalendOpenCount + (llamalendHistoryOnly ? 1 : 0);
+  const totalPositions = troves.length + aaveRows.length;
   const protocolsActive =
-    (troves.length > 0 ? 1 : 0) +
-    (aaveRows.length > 0 ? 1 : 0) +
-    (llamalendOpenCount > 0 || llamalendHistoryOnly ? 1 : 0);
+    (troves.length > 0 ? 1 : 0) + (aaveRows.length > 0 ? 1 : 0);
 
   return (
     <main className="min-h-screen">
@@ -242,7 +183,7 @@ function WalletUmbrellaInner() {
             <div className="text-rb-500">
               <p className="mb-2 text-lg">No positions found</p>
               <p className="text-sm">
-                This wallet has no Liquity V2 troves, Aave V4 positions, or LlamaLend activity. Check the address, or try a wallet you know is active.
+                This wallet has no Liquity V2 troves or Aave V4 positions. Check the address, or try a wallet you know is active.
               </p>
             </div>
           </div>
@@ -313,50 +254,6 @@ function WalletUmbrellaInner() {
             </motion.section>
           )}
 
-          {(llamalendOpenCount > 0 || llamalendHistoryOnly) && isAddress && (
-            <motion.section
-              key="llamalend"
-              initial="hidden"
-              animate="visible"
-              variants={containerVariants}
-              className="mb-10"
-            >
-              <div className="flex items-baseline justify-between mb-4">
-                <h2 className="text-lg font-semibold text-foreground">LlamaLend</h2>
-                <Link
-                  href={`/llamalend/${slug.toLowerCase()}`}
-                  className="text-sm text-blue-500 hover:text-blue-400"
-                >
-                  {llamalendOpenCount > 0
-                    ? `View ${llamalendOpenCount} position${llamalendOpenCount === 1 ? "" : "s"} →`
-                    : "View timeline →"}
-                </Link>
-              </div>
-              {llamalendOpenCount > 0 ? (
-                <motion.div variants={itemVariants} className="bg-rb-200/50 dark:bg-rb-900 rounded-lg">
-                  <LlamalendPositionCardSelector
-                    positions={llamalendPositions}
-                    selected={llamalendSelected}
-                    onSelect={setLlamalendSelected}
-                  />
-                </motion.div>
-              ) : (
-                <motion.div variants={itemVariants}>
-                  <Link
-                    href={`/llamalend/${slug.toLowerCase()}`}
-                    className="group/card block w-full text-left rounded-lg transition-all cursor-pointer border border-transparent bg-rb-200/50 dark:bg-rb-900 hover:border-blue-500 px-5 py-4"
-                  >
-                    <p className="text-sm text-foreground">
-                      LlamaLend history detected for this wallet.
-                    </p>
-                    <p className="mt-1 text-xs text-rb-500">
-                      No currently-open positions — open the timeline to inspect closed lifecycles, bands, and liquidations.
-                    </p>
-                  </Link>
-                </motion.div>
-              )}
-            </motion.section>
-          )}
         </AnimatePresence>
 
         {loading && totalPositions === 0 && (

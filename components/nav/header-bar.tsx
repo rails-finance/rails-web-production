@@ -34,16 +34,6 @@ const PROTOCOL_CONTEXTS: {
     iconSrc: "/icons/protocols/aave-v4.png",
     prefixes: ["/aave-v4"],
   },
-  {
-    id: "llamalend",
-    label: "LlamaLend",
-    // No dedicated llamalend.png yet — fall back to Curve's icon (LlamaLend
-    // is a Curve product). Matches the convention in rails-explorer's
-    // protocol-metadata. If we ship a dedicated mark later, drop it into
-    // public/icons/protocols/llamalend.png and swap this back.
-    iconSrc: "/icons/protocols/curve.png",
-    prefixes: ["/llamalend"],
-  },
 ];
 
 function activeProtocol(pathname: string | null) {
@@ -68,10 +58,9 @@ function isWalletScopedRoute(pathname: string | null): boolean {
   if (/^\/wallet\/[^/]+\/?$/.test(pathname)) return true;
   // /liquity-v2/trove/[collateralType]/[troveId]
   if (/^\/liquity-v2\/trove\/[^/]+\/[^/]+\/?$/.test(pathname)) return true;
-  // /liquity-v2/[wallet], /aave-v4/[wallet], and /llamalend/[wallet] — but
-  // not the bare listing (zero further segments) and not the `trove`
-  // intermediate.
-  const m = pathname.match(/^\/(liquity-v2|aave-v4|llamalend)\/([^/]+)\/?$/);
+  // /liquity-v2/[wallet] and /aave-v4/[wallet] — but not the bare listing
+  // (zero further segments) and not the `trove` intermediate.
+  const m = pathname.match(/^\/(liquity-v2|aave-v4)\/([^/]+)\/?$/);
   if (m) {
     const second = m[2];
     if (second === "trove") return false;

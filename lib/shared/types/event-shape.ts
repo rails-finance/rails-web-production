@@ -297,97 +297,6 @@ export type AaveV4PriceSource =
   | "stablecoin"
   | "defillama";
 
-// ───────────────────────── Curve LlamaLend V1 detail types ─────────────────────────
-//
-// Shared across both market families (LlamaLend lend markets + crvUSD mint
-// markets). Event tables are shared; rows resolve to a market via
-// controller → registry join. Numeric fields ship as formatted-decimal
-// strings (not raw wei) to preserve precision across the wire.
-
-export type LlamalendEventType =
-  | "open"             // first borrow that creates a position (debtBefore ≈ 0)
-  | "close"            // repay that fully clears a position (debtAfter ≈ 0)
-  | "borrow"
-  | "repay"
-  | "remove_collateral"
-  | "liquidate"        // liquidator-side
-  | "liquidated"       // borrower-side when someone else liquidates this wallet
-  | "soft_liquidated"; // synthetic event derived from state deltas between user actions
-
-export interface LlamalendContext {
-  eventType: LlamalendEventType;
-
-  // ── Market identity ────────────────────────────────────────
-  /** Controller contract address (business key across both families). */
-  controller: string;
-  /** Which registry resolved the market: "lend" or "mint". */
-  family?: "lend" | "mint";
-  /** Collateral token address (lowercase). */
-  collateralToken?: string;
-  collateralSymbol?: string;
-  collateralDecimals?: number;
-  /** Borrowed token address — crvUSD for most markets, reverse markets differ. */
-  borrowedToken?: string;
-  borrowedSymbol?: string;
-  borrowedDecimals?: number;
-
-  // ── Event payload (formatted-decimal strings, not raw wei) ──
-  /** Delta collateral (positive = added, negative = removed). */
-  deltaCollateral?: string;
-  /** Delta debt (positive = borrowed, negative = repaid). */
-  deltaDebt?: string;
-  /** Liquidation: collateral taken by liquidator. */
-  collateralReceived?: string;
-  /** Liquidation: stablecoin returned to borrower as residual. */
-  stablecoinReceived?: string;
-  /** Liquidation: debt that was cleared. */
-  debtCleared?: string;
-  /** Liquidator address (set when this wallet was liquidated). */
-  liquidator?: string;
-  /**
-   * 1-based cycle index per (wallet, controller). Increments after every close
-   * or liquidation so that re-opening the same market yields a separate
-   * position card instead of mixing lifecycles.
-   */
-  positionEpoch?: number;
-
-  // ── Before/after snapshots from llamalend_user_state ───────
-  collateralBefore?: string;
-  collateralAfter?: string;
-  debtBefore?: string;
-  debtAfter?: string;
-  /** LLAMMA band range after this event (signed int256). */
-  n1?: string;
-  n2?: string;
-  /** Bands before this event. */
-  n1Before?: string;
-  n2Before?: string;
-  /** Liquidation discount at snapshot time. */
-  liquidationDiscount?: string;
-
-  // ── LLAMMA market constants (resolved on-chain by the loader) ──
-  /** Amplification parameter of this market's LLAMMA (immutable per market). */
-  ammA?: number;
-  /** LLAMMA base_price, 18-decimal fixed point, used with A and a band index
-   *  to compute p_oracle_up(n) = base_price · ((A−1)/A)^n. Stringified to
-   *  survive JSON serialization without precision loss. */
-  ammBasePrice?: string;
-
-  // ── Grouped-liquidation fields ─────────────────────────────
-  // When >1 liquidations on the same controller hit on the same UTC day, the
-  // loader collapses them into a single representative event and surfaces
-  // the cascade totals here. The card uses these to render "Liquidated ×N"
-  // with summed collateral/debt instead of one tiny card per liquidator hit.
-  /** Number of liquidations collapsed into this card (≥1; only set when >1). */
-  liquidationCount?: number;
-  /** First liquidation timestamp in the burst (unix seconds). */
-  liquidationFirstTs?: number;
-  /** Last liquidation timestamp in the burst (unix seconds). */
-  liquidationLastTs?: number;
-  /** Distinct liquidator addresses in the burst (lowercase, deduped). */
-  liquidators?: string[];
-}
-
 // ───────────────────────── Generic / unknown ─────────────────────────
 
 export interface OtherContext {
@@ -405,13 +314,12 @@ export interface OtherContext {
 // its id to ProtocolId and a discriminant arm to ProtocolContext. The
 // frontend duplicate must mirror these additions.
 
-export type ProtocolId = "liquity-v2-troves" | "aave-v4" | "llamalend" | "other";
+export type ProtocolId = "liquity-v2-troves" | "aave-v4" | "other";
 
 /** Full protocol-specific detail, discriminated by `protocol`. */
 export type ProtocolContext =
   | { protocol: "liquity-v2-troves"; data: LiquityContext }
   | { protocol: "aave-v4"; data: AaveV4Context }
-  | { protocol: "llamalend"; data: LlamalendContext }
   | { protocol: "other"; data: OtherContext };
 
 // ───────────────────────── The unified event ─────────────────────────
@@ -484,10 +392,3 @@ export function isAaveV4Event(
   return e.context?.protocol === "aave-v4";
 }
 
-export function isLlamalendEvent(
-  e: BaseActivityEvent,
-): e is BaseActivityEvent & {
-  context: { protocol: "llamalend"; data: LlamalendContext };
-} {
-  return e.context?.protocol === "llamalend";
-}

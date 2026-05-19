@@ -36,13 +36,6 @@ const MONO_RAILS: MonoRail[] = [
     desc: "Multi-spoke lending with unified liquidity across asset classes",
     href: "/aave-v4",
   },
-  {
-    id: "llamalend",
-    label: "LlamaLend V1",
-    tags: ["Lend", "Borrow"],
-    desc: "Curve CDP markets with band-based soft liquidation via LLAMMA",
-    href: "/llamalend",
-  },
 ];
 
 export function MonoRailSection() {
@@ -60,7 +53,7 @@ export function MonoRailSection() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {MONO_RAILS.map((rail) => (
             <MonoRailCard key={rail.id} rail={rail} />
           ))}

@@ -9,7 +9,7 @@
 // default-hidden entries below.
 
 import type { BaseActivityEvent } from '@/lib/shared/types/event-shape';
-import { isLiquityEvent, isAaveV4Event, isLlamalendEvent } from '@/lib/shared/types/event-shape';
+import { isLiquityEvent, isAaveV4Event } from '@/lib/shared/types/event-shape';
 
 /** Get the canonical action key for an event (used for type-level filtering) */
 export function getEventActionKey(e: BaseActivityEvent): string {
@@ -23,9 +23,6 @@ export function getEventActionKey(e: BaseActivityEvent): string {
     if (e.context.data.eventType === 'supply' && e.context.data.alsoToggledCollateral) {
       return 'supply_with_collateral';
     }
-    return e.context.data.eventType ?? e.actionType ?? 'unknown';
-  }
-  if (isLlamalendEvent(e)) {
     return e.context.data.eventType ?? e.actionType ?? 'unknown';
   }
   return e.actionType ?? 'unknown';
@@ -62,24 +59,8 @@ const AAVE_V4_OP_LABELS: Record<string, string> = {
   collateral: 'Collateral toggle',
 };
 
-const LLAMALEND_OP_LABELS: Record<string, string> = {
-  open: 'Open',
-  close: 'Close',
-  borrow: 'Borrow',
-  repay: 'Repay',
-  remove_collateral: 'Remove collateral',
-  liquidate: 'Liquidated',
-  liquidated: 'Liquidated',
-  soft_liquidated: 'Soft liquidated',
-};
-
 export function actionLabel(actionKey: string): string {
-  return (
-    LIQUITY_OP_LABELS[actionKey] ??
-    AAVE_V4_OP_LABELS[actionKey] ??
-    LLAMALEND_OP_LABELS[actionKey] ??
-    actionKey
-  );
+  return LIQUITY_OP_LABELS[actionKey] ?? AAVE_V4_OP_LABELS[actionKey] ?? actionKey;
 }
 
 /** Actions that are demoted (shown last in the filter list, often noisy). */
@@ -89,15 +70,10 @@ export const DEMOTED_ACTIONS: Record<string, string[]> = {
   // mostly noise — surface but demoted. The merged "supply + collateral"
   // variant stays prominent because it represents a real state change.
   'aave-v4': ['collateral_toggle', 'collateral'],
-  // Bare remove_collateral and soft-liq ticks are the noisy long tail on
-  // LlamaLend timelines — surface them but demote so borrow/repay/open/close
-  // stay on top of the filter list.
-  'llamalend': ['remove_collateral', 'soft_liquidated'],
 };
 
 /** Actions hidden by default when entering a protocol (user can un-hide via filter) */
 export const DEFAULT_HIDDEN_ACTIONS: Record<string, string[]> = {
   'liquity-v2-troves': ['setBatchManagerAnnualInterestRate'],
   'aave-v4': [],
-  'llamalend': [],
 };
