@@ -67,3 +67,37 @@ export async function fetchLlamalendPositions(
   }
   return (await res.json()) as FetchLlamalendPositionsResult;
 }
+
+/** Discovery summary for a single (controller, family) market. Mirrors the
+ *  MarketSummary shape returned by GET /api/llamalend/markets on the server. */
+export interface LlamalendMarket {
+  controller: string;
+  family: "lend" | "mint";
+  collateralToken: string;
+  collateralSymbol: string;
+  collateralDecimals: number;
+  borrowedToken: string;
+  borrowedSymbol: string;
+  borrowedDecimals: number;
+  vault: string | null;
+  amm: string | null;
+  openPositions: number;
+  totalCollateral: number;
+  totalDebt: number;
+}
+
+export interface FetchLlamalendMarketsResult {
+  markets: LlamalendMarket[];
+  totalMarkets: number;
+}
+
+export async function fetchLlamalendMarkets(
+  { baseUrl = "" }: { baseUrl?: string } = {},
+): Promise<FetchLlamalendMarketsResult> {
+  const url = `${baseUrl}/api/llamalend/markets`;
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) {
+    throw new Error(`fetchLlamalendMarkets failed: ${res.status} ${res.statusText}`);
+  }
+  return (await res.json()) as FetchLlamalendMarketsResult;
+}
