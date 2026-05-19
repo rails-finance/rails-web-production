@@ -37,7 +37,11 @@ const PROTOCOL_CONTEXTS: {
   {
     id: "llamalend",
     label: "LlamaLend",
-    iconSrc: "/icons/protocols/llamalend.png",
+    // No dedicated llamalend.png yet — fall back to Curve's icon (LlamaLend
+    // is a Curve product). Matches the convention in rails-explorer's
+    // protocol-metadata. If we ship a dedicated mark later, drop it into
+    // public/icons/protocols/llamalend.png and swap this back.
+    iconSrc: "/icons/protocols/curve.png",
     prefixes: ["/llamalend"],
   },
 ];
