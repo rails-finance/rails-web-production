@@ -24,11 +24,17 @@ import { isLlamalendEvent } from "@/lib/shared/types/event-shape";
 import { LlamalendEventCard } from "@/components/protocol/llamalend/llamalend-event-card";
 import { LlamalendPositionCardSelector } from "@/components/shared/llamalend-position-card-selector";
 import { PricesProvider } from "@/lib/shared/prices-context";
+import { TimelineDisplayProvider } from "@/components/shared/timeline-display-context";
+import { SingleWalletProvider } from "@/components/shared/activity-timeline";
 
 export default function LlamalendWalletPage() {
   return (
     <PricesProvider>
-      <LlamalendWalletPageInner />
+      <SingleWalletProvider value={true}>
+        <TimelineDisplayProvider>
+          <LlamalendWalletPageInner />
+        </TimelineDisplayProvider>
+      </SingleWalletProvider>
     </PricesProvider>
   );
 }
@@ -131,11 +137,15 @@ function LlamalendWalletPageInner() {
         </div>
       ) : (
         <ol className="space-y-3">
-          {ordered.map((event) => {
+          {ordered.map((event, idx) => {
             if (!isLlamalendEvent(event)) return null;
             return (
               <li key={event.id}>
-                <LlamalendEventCard event={event} />
+                <LlamalendEventCard
+                  event={event}
+                  isFirst={idx === 0}
+                  isLast={idx === ordered.length - 1}
+                />
               </li>
             );
           })}
