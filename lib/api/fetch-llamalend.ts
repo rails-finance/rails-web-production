@@ -49,6 +49,10 @@ export interface LlamalendPosition {
   positionEpoch: number;
   lastBlock: number;
   lastTimestamp: number;
+  /** LLAMMA amplification — from server's llamalend_market_constants cache. */
+  ammA?: number;
+  /** LLAMMA base_price, 18-decimal fixed-point string. */
+  ammBasePrice?: string;
 }
 
 export interface FetchLlamalendPositionsResult {

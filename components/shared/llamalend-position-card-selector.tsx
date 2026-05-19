@@ -32,8 +32,10 @@ import { OpenPositionStats } from "@/components/shared/open-position-stats";
 import { StatValue, StatDash, StatFootnote } from "@/components/shared/stat-value";
 import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import { MarketPill } from "@/components/protocol/llamalend/llamalend-market-pill";
+import { BandsPriceAxis } from "@/components/protocol/llamalend/bands-price-axis";
 import { formatCompact } from "@/lib/shared/format-event";
 import { simulateLlamalendPosition } from "@/lib/llamalend/simulate";
+import { computeBandRange } from "@/lib/llamalend/bands";
 import { usePrices, useRequestPrices } from "@/lib/shared/prices-context";
 import type { LlamalendPosition } from "@/lib/api/fetch-llamalend";
 
@@ -124,6 +126,44 @@ function LlamalendPositionCard({
     </span>
   );
 
+  // Bands axis: render when LLAMMA constants resolved and oracle price known.
+  // pUp/pDown come from `lib/llamalend/bands` using on-chain A + base_price;
+  // falls back to the simulator's soft-liq-onset price when constants are
+  // missing (e.g. cold cache, very new market). Matches the explorer's
+  // `llamalend-economics` rendering policy.
+  const bandsAxisProps = (() => {
+    if (!collPrice || !(collPrice > 0)) return null;
+    if (!(position.collateral > 0) || !(position.debt > 0)) return null;
+    const exactRange = computeBandRange({
+      ammA: position.ammA,
+      ammBasePrice: position.ammBasePrice,
+      n1: position.n1,
+      n2: position.n2,
+    });
+    if (exactRange) {
+      return {
+        oraclePrice: collPrice,
+        pUp: exactRange.pUp,
+        pDown: exactRange.pDown,
+        bandWidth: exactRange.bandWidth,
+        exact: true,
+      };
+    }
+    if (health && health.softLiqPrice > 0) {
+      return {
+        oraclePrice: collPrice,
+        pUp: health.softLiqPrice,
+        pDown: undefined,
+        bandWidth:
+          position.n1 !== null && position.n2 !== null
+            ? Math.abs(position.n2 - position.n1) + 1
+            : null,
+        exact: false,
+      };
+    }
+    return null;
+  })();
+
   return (
     <div
       onClick={onClick}
@@ -203,6 +243,23 @@ function LlamalendPositionCard({
             },
           ]}
         />
+        {bandsAxisProps && (
+          <div
+            className="mt-4 pt-3 border-t border-rb-200/40 dark:border-rb-800/40"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <BandsPriceAxis
+              collateralSymbol={position.collateralSymbol}
+              collateralAddress={position.collateralToken}
+              debtSymbol={position.borrowedSymbol}
+              oraclePrice={bandsAxisProps.oraclePrice}
+              pUp={bandsAxisProps.pUp}
+              pDown={bandsAxisProps.pDown}
+              bandWidth={bandsAxisProps.bandWidth}
+              exact={bandsAxisProps.exact}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

@@ -13,6 +13,7 @@ import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import { shortAddr } from "@/lib/shared/format-event";
 import { TransitionArrow as SharedTransitionArrow } from "@/components/shared/state-transition";
 import { useTimelineDisplay } from "@/components/shared/timeline-display-context";
+import { BandsTransition } from "./bands-pill";
 
 function fmt(v: string | number | undefined): string {
   if (v == null || v === "") return "0";
@@ -151,21 +152,14 @@ export function LlamalendEventDetail({ ctx }: LlamalendEventDetailProps) {
             )}
           </div>
           {(ctx.n1 || ctx.n2) && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 mt-3 pt-3 border-t border-rb-200/40 dark:border-rb-800/40">
-              <div>
-                <div className="text-rb-500 text-xs font-semibold mb-1">Band Range</div>
-                <div className="text-sm font-bold tabular-nums">
-                  {ctx.n1 ?? "?"} → {ctx.n2 ?? "?"}
-                </div>
-              </div>
-              {ctx.n1Before && ctx.n2Before && (ctx.n1Before !== ctx.n1 || ctx.n2Before !== ctx.n2) && (
-                <div>
-                  <div className="text-rb-500 text-xs font-semibold mb-1">Bands Before</div>
-                  <div className="text-sm tabular-nums text-rb-500">
-                    {ctx.n1Before} → {ctx.n2Before}
-                  </div>
-                </div>
-              )}
+            <div className="mt-3 pt-3 border-t border-rb-200/40 dark:border-rb-800/40">
+              <div className="text-rb-500 text-xs font-semibold mb-1">Band Range</div>
+              <BandsTransition
+                n1Before={ctx.n1Before ?? null}
+                n2Before={ctx.n2Before ?? null}
+                n1={ctx.n1 ?? "?"}
+                n2={ctx.n2 ?? "?"}
+              />
             </div>
           )}
         </div>
