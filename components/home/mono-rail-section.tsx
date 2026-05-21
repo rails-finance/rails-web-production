@@ -19,6 +19,7 @@ type MonoRail = {
   tags: string[];
   desc: string;
   href?: string;
+  isNew?: boolean;
 };
 
 const MONO_RAILS: MonoRail[] = [
@@ -35,6 +36,7 @@ const MONO_RAILS: MonoRail[] = [
     tags: ["Lend", "Borrow"],
     desc: "Multi-spoke lending with unified liquidity across asset classes",
     href: "/aave-v4",
+    isNew: true,
   },
 ];
 
@@ -44,12 +46,11 @@ export function MonoRailSection() {
       <div className="max-w-7xl mx-auto px-4 py-16">
         <div className="text-center mb-10">
           <h2 className="font-sans font-semibold tracking-tight leading-tight mb-3 text-[clamp(24px,3.5vw,38px)]">
-            The <span className="text-blue-500">Rails</span>
+            Rails <span className="text-blue-500">Explorers</span>
           </h2>
           <p className="text-sm text-rb-500 max-w-xl mx-auto leading-relaxed">
-            Each rail is a dedicated explorer for one protocol — sponsor-anchored,
-            on-chain-verifiable, and built around the events and positions that
-            protocol's holders actually need to read.
+            Explore Liquity V2 and Aave V4 in granular detail with our dedicated
+            explorers.
           </p>
         </div>
 
@@ -75,7 +76,14 @@ function MonoRailCard({ rail }: { rail: MonoRail }) {
         style={{ borderRadius: "20%" }}
       />
       <div>
-        <span className="text-2xl font-semibold">{rail.label}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-2xl font-semibold">{rail.label}</span>
+          {rail.isNew && (
+            <span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-blue-500 text-white">
+              New
+            </span>
+          )}
+        </div>
         <div className="flex gap-1 mt-1">
           {rail.tags.map((t) => (
             <span

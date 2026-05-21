@@ -34,7 +34,7 @@ export function HomeHero() {
         className="relative font-sans font-light text-rb-500 tracking-tight mb-2 text-xl sm:text-2xl lg:text-3xl animate-hero-fade-up"
         style={{ animationDelay: "0.3s" }}
       >
-        A dedicated explorer for every protocol.
+        Explore DeFi on Ethereum.
       </p>
 
       {/* Track lines graphic — inline retro stripes (verbatim from rails-explorer) */}
