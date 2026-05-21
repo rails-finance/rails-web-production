@@ -67,43 +67,8 @@ export function SiteFooter() {
             </div>
           </div>
 
-          {/* The Rails */}
+          {/* Platform */}
           <div>
-            <h4 className="text-sm font-semibold text-foreground mb-3">The Rails</h4>
-            <ul className="space-y-2 mb-5">
-              <li>
-                <Link
-                  href="/liquity-v2"
-                  className="group flex items-center gap-2 text-rb-500 hover:text-green-600 dark:hover:text-green-600 text-sm transition-colors duration-150"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="/icons/protocols/liquity.png"
-                    alt=""
-                    width={16}
-                    height={16}
-                    className="rounded-[3px] shrink-0"
-                  />
-                  Liquity V2
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/aave-v4"
-                  className="group flex items-center gap-2 text-rb-500 hover:text-green-600 dark:hover:text-green-600 text-sm transition-colors duration-150"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="/icons/protocols/aave-v4.png"
-                    alt=""
-                    width={16}
-                    height={16}
-                    className="rounded-[3px] shrink-0"
-                  />
-                  Aave V4
-                </Link>
-              </li>
-            </ul>
             <h4 className="text-sm font-semibold text-foreground mb-3">Platform</h4>
             <ul className="space-y-2">
               <li>
