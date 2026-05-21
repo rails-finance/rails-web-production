@@ -343,11 +343,6 @@ function AaveV4WalletPageInner() {
       <main className="min-h-screen">
         <FeedbackButton />
         <div className="max-w-7xl mx-auto py-8 space-y-6">
-          <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl font-bold text-foreground">Aave V4</h1>
-            <span className="text-rb-500">·</span>
-            <span className="font-mono text-sm text-rb-500">{shortAddr(wallet)}</span>
-          </div>
           <div className="text-center py-12">
             <p className="text-foreground text-lg mb-3">
               {shortAddr(wallet)} has no Aave V4 positions
@@ -374,12 +369,6 @@ function AaveV4WalletPageInner() {
     <main className="min-h-screen">
       <FeedbackButton />
       <div className="max-w-7xl mx-auto py-8 space-y-6">
-        <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="text-2xl font-bold text-foreground">Aave V4</h1>
-          <span className="text-rb-500">·</span>
-          <span className="font-mono text-sm text-rb-500">{shortAddr(wallet)}</span>
-        </div>
-
         <AaveV4SpokeCardSelector
           spokes={spokeCards}
           selected={selectedSpoke ?? undefined}
