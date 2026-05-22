@@ -338,14 +338,19 @@ function AaveV4WalletPageInner() {
     : "Date";
   const heatmapShown = heatmapOpen || dateRange !== null;
 
-  if (positions.length === 0) {
+  // Only short-circuit when there's truly nothing to show — no current positions
+  // AND no historical events. A wallet that closed every position is still
+  // worth rendering: the spoke selector below already handles `isClosed`, the
+  // economics band reads from the event log (not positions), and the activity
+  // timeline is the whole point of landing on this page.
+  if (positions.length === 0 && events.length === 0) {
     return (
       <main className="min-h-screen">
         <FeedbackButton />
         <div className="max-w-7xl mx-auto py-8 space-y-6">
           <div className="text-center py-12">
             <p className="text-foreground text-lg mb-3">
-              {shortAddr(wallet)} has no Aave V4 positions
+              {shortAddr(wallet)} has no Aave V4 activity
             </p>
             <p className="text-sm text-rb-500">
               <Link href="/aave-v4" className="underline hover:text-foreground transition-colors">
