@@ -3,11 +3,19 @@
 // ============================================================================
 //
 // Resolves a free-text wallet search (0x address or ENS) into a target URL
-// across the mono-rails. Fires Liquity V2 troves + Aave V4 spoke-positions
+// across the mono-rails. Fires Liquity V2 troves + Aave V4 (spoke-positions
+// for open-position-or-ENS-resolution; timeline for any-activity coverage)
 // in parallel and routes by hit count:
 //   0 protocols → /wallet/[slug] (umbrella shows empty state)
 //   1 protocol  → that protocol's /[protocol]/[wallet] page
 //   2+ protocols → /wallet/[slug] (umbrella renders both)
+//
+// "Hit" semantics: a wallet counts as having an Aave V4 hit if it has either
+// a current open position OR any historical event. The protocol wallet page
+// handles closed-position history, so routing a closed-only wallet to
+// /aave-v4/[wallet] is the right behavior. Liquity V2's /api/troves response
+// already includes closed troves (the `status` filter is opt-in), so the
+// trove API call alone is sufficient for that protocol.
 //
 // ENS handling: ENS resolves server-side via each API's ownerEns/wallet
 // filters (both accept it). For protocols whose wallet route requires a 0x
@@ -21,6 +29,7 @@
 
 import type { TrovesResponse } from "@/types/api/trove";
 import type { AaveV4SpokePositionsResponse } from "@/lib/api/fetch-aave-v4-spoke-positions";
+import type { FetchAaveV4TimelineResult } from "@/lib/api/fetch-aave-v4";
 
 export type DispatchProtocol = "liquity-v2-troves" | "aave-v4";
 
@@ -56,9 +65,14 @@ export async function dispatchWalletSearch(input: string): Promise<DispatchResul
     ? `wallet=${lowered}`
     : `ownerEns=${encodeURIComponent(trimmed)}`;
 
-  const [trovesSettled, aaveSettled] = await Promise.allSettled([
+  const [trovesSettled, aaveSpokeSettled, aaveTimelineSettled] = await Promise.allSettled([
     fetch(`/api/troves?${trovesQuery}&limit=5`),
     fetch(`/api/aave-v4/spoke-positions?${aaveQuery}&limit=5`),
+    // Timeline carries closed/historical activity too — needed so wallets
+    // that fully exited a position still route to /aave-v4/[wallet] (which
+    // renders the closed-position history) instead of dropping to the
+    // umbrella's empty state. limit=1 is enough to answer "any events?".
+    fetch(`/api/aave-v4/timeline?${aaveQuery}&limit=1`),
   ]);
 
   let trovesHit = false;
@@ -79,13 +93,32 @@ export async function dispatchWalletSearch(input: string): Promise<DispatchResul
     }
   }
 
-  if (aaveSettled.status === "fulfilled" && aaveSettled.value.ok) {
+  if (aaveSpokeSettled.status === "fulfilled" && aaveSpokeSettled.value.ok) {
     try {
-      const data = (await aaveSettled.value.json()) as AaveV4SpokePositionsResponse;
-      aaveHit = !!data?.rows?.length;
-      if (!resolvedAddress && aaveHit) {
-        const w = data.rows[0].wallet?.toLowerCase();
-        if (w && LOWER_ADDRESS_RE.test(w)) resolvedAddress = w;
+      const data = (await aaveSpokeSettled.value.json()) as AaveV4SpokePositionsResponse;
+      if (data?.rows?.length) {
+        aaveHit = true;
+        if (!resolvedAddress) {
+          const w = data.rows[0].wallet?.toLowerCase();
+          if (w && LOWER_ADDRESS_RE.test(w)) resolvedAddress = w;
+        }
+      }
+    } catch {
+      /* swallow */
+    }
+  }
+
+  // Fallback: a wallet with only closed Aave V4 activity (no open positions)
+  // still has events in the timeline. The detail page handles this state.
+  if (!aaveHit && aaveTimelineSettled.status === "fulfilled" && aaveTimelineSettled.value.ok) {
+    try {
+      const data = (await aaveTimelineSettled.value.json()) as FetchAaveV4TimelineResult;
+      if (data?.events?.length) {
+        aaveHit = true;
+        if (!resolvedAddress) {
+          const w = data.wallet?.toLowerCase();
+          if (w && LOWER_ADDRESS_RE.test(w)) resolvedAddress = w;
+        }
       }
     } catch {
       /* swallow */

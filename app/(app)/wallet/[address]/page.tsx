@@ -25,6 +25,7 @@ import type {
   AaveV4SpokePositionRow,
   AaveV4SpokePositionsResponse,
 } from "@/lib/api/fetch-aave-v4-spoke-positions";
+import type { FetchAaveV4TimelineResult } from "@/lib/api/fetch-aave-v4";
 import { OraclePricesData, OraclePricesResponse } from "@/types/api/oracle";
 import { useWalletContext } from "@/components/nav/wallet-context";
 import { upsertSession } from "@/lib/shared/sessions";
@@ -60,6 +61,12 @@ function WalletUmbrellaInner() {
 
   const [troves, setTroves] = useState<TroveSummary[]>([]);
   const [aaveRows, setAaveRows] = useState<AaveV4SpokePositionRow[]>([]);
+  // `aaveHasHistory` covers wallets that fully exited their Aave V4 positions —
+  // spoke-positions returns nothing for them, but the timeline still has the
+  // event log and /aave-v4/[wallet] renders the closed-position card. Without
+  // this, the umbrella would dead-end on "no positions found" for any wallet
+  // that's closed out, which is a meaningful chunk of users we want to serve.
+  const [aaveHasHistory, setAaveHasHistory] = useState(false);
   const [prices, setPrices] = useState<OraclePricesData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -86,9 +93,12 @@ function WalletUmbrellaInner() {
           ? `wallet=${lowered}`
           : `ownerEns=${encodeURIComponent(slug)}`;
 
-        const [trovesSettled, aaveSettled, pricesSettled] = await Promise.allSettled([
+        const [trovesSettled, aaveSettled, aaveTimelineSettled, pricesSettled] = await Promise.allSettled([
           fetch(`/api/troves?${trovesQuery}&limit=100`),
           fetch(`/api/aave-v4/spoke-positions?${aaveQuery}&limit=100`),
+          // Probe for any historical Aave V4 activity (incl. closed). limit=1
+          // is enough — we only care whether events exist, not what they are.
+          fetch(`/api/aave-v4/timeline?${aaveQuery}&limit=1`),
           fetch("/api/oracle/liquity-v2"),
         ]);
 
@@ -101,6 +111,10 @@ function WalletUmbrellaInner() {
         if (aaveSettled.status === "fulfilled" && aaveSettled.value.ok) {
           const data = (await aaveSettled.value.json()) as AaveV4SpokePositionsResponse;
           setAaveRows(data.rows ?? []);
+        }
+        if (aaveTimelineSettled.status === "fulfilled" && aaveTimelineSettled.value.ok) {
+          const data = (await aaveTimelineSettled.value.json()) as FetchAaveV4TimelineResult;
+          setAaveHasHistory(!!data?.events?.length);
         }
         if (pricesSettled.status === "fulfilled" && pricesSettled.value.ok) {
           const data = (await pricesSettled.value.json()) as OraclePricesResponse;
@@ -160,6 +174,11 @@ function WalletUmbrellaInner() {
   const totalPositions = troves.length + aaveRows.length;
   const protocolsActive =
     (troves.length > 0 ? 1 : 0) + (aaveRows.length > 0 ? 1 : 0);
+  // Historical-only state: zero current positions, but the wallet has Aave V4
+  // events. The protocol detail page handles this — link directly so the user
+  // doesn't dead-end on "no positions found".
+  const hasHistoricalOnly = totalPositions === 0 && aaveHasHistory;
+  const aaveHref = `/aave-v4/${isAddress ? slug.toLowerCase() : encodeURIComponent(slug)}`;
 
   return (
     <main className="min-h-screen">
@@ -173,12 +192,31 @@ function WalletUmbrellaInner() {
             {loading
               ? "Searching across protocols…"
               : totalPositions === 0
-                ? "No positions found across covered protocols."
+                ? hasHistoricalOnly
+                  ? "No open positions — historical Aave V4 activity available."
+                  : "No positions found across covered protocols."
                 : `${totalPositions} position${totalPositions === 1 ? "" : "s"} across ${protocolsActive} protocol${protocolsActive === 1 ? "" : "s"}`}
           </p>
         </div>
 
-        {!loading && totalPositions === 0 && (
+        {!loading && totalPositions === 0 && hasHistoricalOnly && (
+          <div className="text-center py-12">
+            <div className="text-rb-500">
+              <p className="mb-2 text-lg text-foreground">This wallet has closed-out Aave V4 activity.</p>
+              <p className="text-sm mb-5">
+                The position is no longer open, but the event history is preserved with on-chain oracle prices.
+              </p>
+              <Link
+                href={aaveHref}
+                className="inline-block rounded-md border border-blue-500/60 bg-blue-500/10 px-4 py-2 text-sm font-medium text-blue-400 hover:bg-blue-500/20 transition-colors"
+              >
+                View Aave V4 history →
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {!loading && totalPositions === 0 && !hasHistoricalOnly && (
           <div className="text-center py-12">
             <div className="text-rb-500">
               <p className="mb-2 text-lg">No positions found</p>
