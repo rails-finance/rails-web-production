@@ -1,23 +1,25 @@
 "use client";
 
-// Token chip with a three-tier resolution:
+// Token chip with a four-tier resolution:
 //   1. Local SVG sprite — covers Liquity V2's universe (ETH/WETH/wstETH/
 //      stETH/rETH/BOLD), already in the icons sprite.
 //   2. Trust Wallet CDN — looked up by address (caller-passed or resolved
-//      from TOKEN_ADDRESSES via the symbol). This covers the Aave V4
-//      universe and most ERC-20s without needing to ship sprites for them.
-//   3. UnknownTokenSvg placeholder — same visual vocabulary as Etherscan's
+//      from TOKEN_ADDRESSES via the symbol). Covers most established assets.
+//   3. DeFiLlama icons CDN — fallback for DeFi-native assets Trust Wallet
+//      hasn't indexed (cbBTC, rsETH, LBTC at time of writing).
+//   4. UnknownTokenSvg placeholder — same visual vocabulary as Etherscan's
 //      empty-token glyph; reads as "unknown" rather than a brand mark.
 //
 // Plain <img> with onError fallback (vs next/image) avoids needing a
-// next.config remotePatterns entry for raw.githubusercontent.com. Icons
-// are 16-20px so optimization isn't load-bearing.
+// next.config remotePatterns entry for raw.githubusercontent.com or
+// token-icons.llamao.fi. Icons are 16-20px so optimization isn't
+// load-bearing.
 
 import { createContext, useContext, useState } from "react";
 import { TokenIcon as SpriteTokenIcon } from "@/components/icons/tokenIcon";
 import { UnknownTokenSvg } from "@/components/shared/unknown-token-svg";
 import { getTokenAddress } from "@/lib/shared/token-addresses";
-import { getTokenLogoUrl } from "@/lib/shared/token-logo";
+import { getDefiLlamaLogoUrl, getTokenLogoUrl } from "@/lib/shared/token-logo";
 
 const TokenFilterCtx = createContext<((symbol: string) => void) | null>(null);
 export const TokenFilterProvider = TokenFilterCtx.Provider;
@@ -42,6 +44,10 @@ const LOGO_ADDRESS_OVERRIDES: Record<string, string> = {
   // frxUSD/sfrxUSD share the FRAX brand mark (logo.png exists for v1 FRAX).
   frxUSD: "0x853d955aCEf822Db058eb8505911ED77F175b99e",
   sfrxUSD: "0x853d955aCEf822Db058eb8505911ED77F175b99e",
+  // Pendle PTs have no canonical brand mark on the CDNs; reuse the underlying
+  // asset's logo. Aave's UI does the same conceptually but renders a "PT"
+  // badge on top — left out here pending a dedicated PT chip treatment.
+  "PT-sUSDE": "0x9D39A5DE30e57443BfF2A8307A4256c8797A3497", // sUSDe address
 };
 
 export interface TokenChipIconProps {
@@ -109,7 +115,8 @@ export function TokenChipIcon({ symbol, address, size = 16, onClick, filterable 
   return <UnknownTokenSvg size={size} symbol={symbol} clickProps={clickProps} clickClass={clickClass} />;
 }
 
-/** Tiny inner component so we can localise the onError state per-image. */
+/** Tiny inner component so we can localise the onError state per-image.
+ *  Walks Trust Wallet → DeFiLlama → UnknownTokenSvg as each tier 404s. */
 function CdnTokenIcon({
   symbol,
   address,
@@ -123,19 +130,21 @@ function CdnTokenIcon({
   clickClass: string;
   clickProps: Record<string, unknown>;
 }) {
-  const [failed, setFailed] = useState(false);
-  if (failed) {
+  const [tier, setTier] = useState<0 | 1 | 2>(0);
+  if (tier === 2) {
     return <UnknownTokenSvg size={size} symbol={symbol} clickProps={clickProps} clickClass={clickClass} />;
   }
+  const src = tier === 0 ? getTokenLogoUrl(address) : getDefiLlamaLogoUrl(address);
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={getTokenLogoUrl(address)}
+      key={tier}
+      src={src}
       alt={symbol}
       width={size}
       height={size}
       className={`shrink-0 rounded-full ${clickClass}`}
-      onError={() => setFailed(true)}
+      onError={() => setTier((t) => (t === 0 ? 1 : 2))}
       {...(clickProps as React.HTMLAttributes<HTMLImageElement>)}
     />
   );

@@ -26,6 +26,7 @@ import {
 } from "@/components/shared/filter-dropdown";
 import { resolvePrice, type PriceEntry } from "@/lib/aave/prices";
 import type { ReserveStats } from "@/lib/aave-v4/spoke-cards";
+import { aaveV4DisplaySymbol } from "@/lib/aave-v4/pt-tokens";
 
 const CHART_HEIGHT = 180;
 
@@ -190,14 +191,14 @@ export function AaveV4TowerChart({
   const collSegments: TowerSegment[] = [
     ...supplyAssets.map((r) => ({
       key: `coll-${r.symbol}`,
-      label: r.symbol,
+      label: aaveV4DisplaySymbol(r.symbol),
       value: r.netSupplyUsd,
       colorClass: isSurplus(r.symbol) ? "bg-blue-500/60" : "bg-blue-500",
     })),
     ...(!isLiveView
       ? [...withdrawnAssets].reverse().map((w) => ({
           key: `coll-withdrawn-${w.symbol}`,
-          label: `${w.symbol} withdrawn`,
+          label: `${aaveV4DisplaySymbol(w.symbol)} withdrawn`,
           value: w.usd,
           colorClass: "",
           patternStyle: WITHDRAWN_PATTERN,
@@ -208,14 +209,14 @@ export function AaveV4TowerChart({
   const debtSegments: TowerSegment[] = [
     ...debtAssets.map((r) => ({
       key: `debt-${r.symbol}`,
-      label: r.symbol,
+      label: aaveV4DisplaySymbol(r.symbol),
       value: r.netDebtUsd,
       colorClass: "bg-emerald-400",
     })),
     ...(!isLiveView
       ? [...repaidAssets].reverse().map((rA) => ({
           key: `debt-repaid-${rA.symbol}`,
-          label: `${rA.symbol} repaid`,
+          label: `${aaveV4DisplaySymbol(rA.symbol)} repaid`,
           value: rA.usd,
           colorClass: "",
           patternStyle: REPAID_PATTERN,
@@ -250,7 +251,7 @@ export function AaveV4TowerChart({
     ...(!isLiveView
       ? withdrawnAssets.map((w) => ({
           sign: "−",
-          label: w.symbol,
+          label: aaveV4DisplaySymbol(w.symbol),
           amount: fmt(w.amount),
           usdHint: hideUsd ? undefined : fmtUsdCompact(w.usd),
           swatchStyle: WITHDRAWN_PATTERN,
@@ -261,7 +262,7 @@ export function AaveV4TowerChart({
       (r) =>
         ({
           sign: "",
-          label: r.symbol,
+          label: aaveV4DisplaySymbol(r.symbol),
           amount: fmt(r.netSupply),
           usdHint: hideUsd ? undefined : fmtUsdCompact(r.netSupplyUsd),
           swatchClass: "bg-blue-500",
@@ -290,7 +291,7 @@ export function AaveV4TowerChart({
     ...(!isLiveView
       ? repaidAssets.map((rA) => ({
           sign: "−",
-          label: rA.symbol,
+          label: aaveV4DisplaySymbol(rA.symbol),
           amount: fmt(rA.amount),
           usdHint: hideUsd ? undefined : fmtUsdCompact(rA.usd),
           swatchStyle: REPAID_PATTERN,
@@ -301,7 +302,7 @@ export function AaveV4TowerChart({
       (r) =>
         ({
           sign: "",
-          label: r.symbol,
+          label: aaveV4DisplaySymbol(r.symbol),
           amount: fmt(r.netDebt),
           usdHint: hideUsd ? undefined : fmtUsdCompact(r.netDebtUsd),
           swatchClass: "bg-emerald-400",

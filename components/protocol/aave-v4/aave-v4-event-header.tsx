@@ -4,6 +4,7 @@ import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import { formatNum } from "@/lib/shared/format-event";
 import { useHeaderValueHideClass } from "@/lib/shared/header-values";
 import { EventTime } from "@/components/shared/event-time";
+import { aaveV4DisplaySymbol } from "@/lib/aave-v4/pt-tokens";
 import type { AaveV4Context } from "@/lib/shared/types/protocols/aave-v4";
 
 // USD value lives in the expanded detail (next to the after-balance and as
@@ -62,7 +63,7 @@ export function AaveV4EventHeader({ ctx, timestamp }: AaveV4EventHeaderProps) {
         {ctx.eventType === "collateral_toggle" && ctx.reserveSymbol && (
           <span className="inline-flex items-center gap-1.5 text-sm">
             <TokenChipIcon symbol={ctx.reserveSymbol} size={16} />
-            <span className="">{ctx.reserveSymbol}</span>
+            <span className="">{aaveV4DisplaySymbol(ctx.reserveSymbol)}</span>
           </span>
         )}
         {(ctx.supplyAPR || ctx.borrowAPR) && (
@@ -72,7 +73,7 @@ export function AaveV4EventHeader({ ctx, timestamp }: AaveV4EventHeaderProps) {
         )}
         {ctx.eventType === "liquidation" && ctx.debtToCover && (
           <span className="inline-flex items-center gap-1.5 text-xs text-red-400">
-            <span>Debt covered: {formatNum(ctx.debtToCover)} {ctx.reserveSymbol}</span>
+            <span>Debt covered: {formatNum(ctx.debtToCover)} {aaveV4DisplaySymbol(ctx.reserveSymbol)}</span>
           </span>
         )}
         {ctx.eventType === "liquidation" && ctx.liquidatedCollateralAmount && ctx.collateralSymbol && (

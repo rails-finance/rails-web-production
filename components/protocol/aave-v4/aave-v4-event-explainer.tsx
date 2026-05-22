@@ -3,6 +3,7 @@
 import type { AaveV4Context } from "@/lib/shared/types/protocols/aave-v4";
 import { ExplainerList } from "@/components/shared/explainer-list";
 import { shortAddr } from "@/lib/shared/format-event";
+import { aaveV4DisplaySymbol } from "@/lib/aave-v4/pt-tokens";
 
 function fmt(v: string | number): string {
   const n = typeof v === "string" ? parseFloat(v) : v;
@@ -17,7 +18,7 @@ export interface AaveV4EventExplainerProps {
 
 export function AaveV4EventExplainer({ ctx }: AaveV4EventExplainerProps) {
   const amount = ctx.amount ? fmt(ctx.amount) : "0";
-  const token = ctx.reserveSymbol ?? "???";
+  const token = aaveV4DisplaySymbol(ctx.reserveSymbol) || "???";
   const market = ctx.spokeName ?? "unknown";
   const supplyAfter = ctx.supplyAfter ? parseFloat(ctx.supplyAfter) : 0;
   const debtAfter = ctx.debtAfter ? parseFloat(ctx.debtAfter) : 0;

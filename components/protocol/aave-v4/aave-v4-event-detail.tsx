@@ -9,6 +9,7 @@ import { TransitionArrow as SharedTransitionArrow } from "@/components/shared/st
 import { resolvePrice } from "@/lib/aave/prices";
 import { usePrices } from "@/lib/shared/prices-context";
 import { useTimelineDisplay } from "@/components/shared/timeline-display-context";
+import { aaveV4DisplaySymbol } from "@/lib/aave-v4/pt-tokens";
 
 function fmt(v: string | number | undefined): string {
   if (!v) return "0";
@@ -73,7 +74,7 @@ function PositionRow({
         </span>
       )}
       <TokenChipIcon symbol={symbol} size={16} />
-      {showTickerLabels && <span className="text-xs">{symbol}</span>}
+      {showTickerLabels && <span className="text-xs">{aaveV4DisplaySymbol(symbol)}</span>}
     </span>
   );
 }
@@ -82,7 +83,11 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
   const { prefs } = usePreferences();
   const ratioMode = prefs.ratioMode;
   const prices = usePrices();
+  // `token` stays the raw on-chain symbol — it threads through `allSupplies`
+  // / `allDebts` rows whose `symbol` field is the chip's icon-lookup key.
+  // Narrative copy uses the augmented display form via `tokenLabel`.
   const token = ctx.reserveSymbol ?? "???";
+  const tokenLabel = aaveV4DisplaySymbol(ctx.reserveSymbol) || "???";
   const isLiq = ctx.eventType === "liquidation";
   const isToggle = ctx.eventType === "collateral_toggle";
 
@@ -149,7 +154,7 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
           {ctx.debtToCover && (
             <div className="flex flex-col">
               <span className="text-rb-500 text-xs font-semibold">Debt Covered</span>
-              <span className="font-bold text-red-400">{fmt(ctx.debtToCover)} {token}</span>
+              <span className="font-bold text-red-400">{fmt(ctx.debtToCover)} {tokenLabel}</span>
             </div>
           )}
           {ctx.liquidatedCollateralAmount && ctx.collateralSymbol && (
@@ -259,7 +264,7 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
         <div className="flex items-center gap-2 px-5 py-2">
           <span
             className="ml-auto inline-flex items-center gap-1.5 text-xs font-bold text-rb-500 bg-rb-200/60 dark:bg-rb-800/60 px-2 py-1 rounded-md"
-            title={`${ctx.reserveSymbol} price at the time of this event (${
+            title={`${aaveV4DisplaySymbol(ctx.reserveSymbol)} price at the time of this event (${
               ctx.price.source === "chainlink" ? "Chainlink feed"
               : ctx.price.source === "chainlink-eth-derived" ? "Chainlink ETH/USD × on-chain exchange rate"
               : ctx.price.source === "iaave-oracle" ? "IAaveOracle"

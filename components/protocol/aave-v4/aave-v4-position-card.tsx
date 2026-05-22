@@ -19,6 +19,7 @@ import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import type { AaveV4Position } from "@/lib/api/fetch-aave-v4";
 import { usePrices } from "@/lib/shared/prices-context";
 import { resolvePrice } from "@/lib/aave/prices";
+import { aaveV4DisplaySymbol } from "@/lib/aave-v4/pt-tokens";
 
 const ACTIVITY_FORMAT = new Intl.DateTimeFormat(undefined, {
   month: "short",
@@ -104,7 +105,7 @@ function ReserveLine({
     <div className="flex items-center gap-2 py-1.5">
       <TokenChipIcon symbol={symbol} address={address} size={20} />
       <span className="font-bold text-sm text-foreground tabular-nums">{fmtNum(amount)}</span>
-      <span className="text-xs text-rb-500">{symbol}</span>
+      <span className="text-xs text-rb-500">{aaveV4DisplaySymbol(symbol)}</span>
       {usd != null && usd > 0 && (
         <span className="ml-auto text-xs text-rb-500 tabular-nums">{fmtUsd(usd)}</span>
       )}
