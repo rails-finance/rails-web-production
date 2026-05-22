@@ -1,25 +1,19 @@
-/** Shared session types and localStorage helpers.
- *  Ported from rails-explorer's `packages/shared/src/sessions.ts` —
- *  single-protocol focused, but the type still carries an optional
- *  `protocols` list so the same WalletSession storage shape works
- *  if the umbrella ever shares with sub-apps. */
+/** Per-protocol session helpers.
+ *
+ *  Each mono-rail (Liquity V2, Aave V4, …) keeps its own recent/pinned
+ *  wallet list in its own localStorage key. There is no cross-protocol
+ *  list — that's the whole point of the silo: visiting a wallet on one
+ *  rail doesn't surface it as "recent" on another. The protocol arg on
+ *  every function makes the scope explicit at the call site rather than
+ *  hidden behind a deployment env var. */
 
-/** Per-deployment storage scope. Each mono-rail (liquity-v2, future aave-v4,
- *  …) sets `NEXT_PUBLIC_SESSION_SCOPE` so its pinned/recent list lives in its
- *  own localStorage keyspace, leaving room for a separate "mingled" explorer
- *  with a tagged session shape later. The env var is inlined at build time
- *  (NEXT_PUBLIC_*), so the value is identical on server and client. */
-const SESSION_SCOPE =
-  process.env.NEXT_PUBLIC_SESSION_SCOPE ?? "liquity-v2";
-
-export const SESSIONS_KEY = `${SESSION_SCOPE}-sessions`;
+export type SessionProtocol = "liquity-v2" | "aave-v4";
 
 export interface WalletSession {
   key: string;
   addresses: string[];
   ensNames: Record<string, string | null>;
   lastVisited: number;
-  protocols?: string[];
   pinned?: boolean;
   preset?: boolean;
   /** User-provided display name, overrides ENS / short address. */
@@ -31,10 +25,14 @@ export interface WalletSession {
  *  tabs. */
 export const SESSIONS_CHANGED_EVENT = "rails-sessions-changed";
 
-export function loadSessions(storageKey = SESSIONS_KEY): WalletSession[] {
+function storageKey(protocol: SessionProtocol): string {
+  return `${protocol}-sessions`;
+}
+
+export function loadSessions(protocol: SessionProtocol): WalletSession[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(storageKey);
+    const raw = localStorage.getItem(storageKey(protocol));
     if (!raw) return [];
     return JSON.parse(raw) as WalletSession[];
   } catch {
@@ -42,51 +40,53 @@ export function loadSessions(storageKey = SESSIONS_KEY): WalletSession[] {
   }
 }
 
-export function saveSessions(sessions: WalletSession[], storageKey = SESSIONS_KEY): void {
+export function saveSessions(sessions: WalletSession[], protocol: SessionProtocol): void {
   if (typeof window === "undefined") return;
   try {
-    if (sessions.length === 0) localStorage.removeItem(storageKey);
-    else localStorage.setItem(storageKey, JSON.stringify(sessions));
-    window.dispatchEvent(new Event(SESSIONS_CHANGED_EVENT));
+    const key = storageKey(protocol);
+    if (sessions.length === 0) localStorage.removeItem(key);
+    else localStorage.setItem(key, JSON.stringify(sessions));
+    // Defer dispatch to a microtask so callers that accidentally run from
+    // inside a React render phase (e.g. a setState updater) don't trip
+    // subscribers' setStates synchronously and produce a "cannot update X
+    // while rendering Y" warning. localStorage is still written immediately.
+    queueMicrotask(() => window.dispatchEvent(new Event(SESSIONS_CHANGED_EVENT)));
   } catch {
     /* ignore */
   }
 }
 
-export function renameSession(key: string, customName: string, storageKey = SESSIONS_KEY): void {
-  const sessions = loadSessions(storageKey);
+export function renameSession(key: string, customName: string, protocol: SessionProtocol): void {
+  const sessions = loadSessions(protocol);
   const target = sessions.find((s) => s.key === key);
   if (!target) return;
   const trimmed = customName.trim();
   if (trimmed) target.customName = trimmed;
   else delete target.customName;
-  saveSessions(sessions, storageKey);
+  saveSessions(sessions, protocol);
 }
 
 export function upsertSession(
   addresses: string[],
   ensNames: Record<string, string | null>,
-  protocols?: string[],
-  storageKey = SESSIONS_KEY,
+  protocol: SessionProtocol,
 ): void {
-  const sessions = loadSessions(storageKey);
+  const sessions = loadSessions(protocol);
   const key = addresses.join("+");
   const existing = sessions.find((s) => s.key === key);
   if (existing) {
     existing.lastVisited = Date.now();
     existing.ensNames = { ...existing.ensNames, ...ensNames };
-    if (protocols) existing.protocols = protocols;
   } else {
     sessions.unshift({
       key,
       addresses,
       ensNames,
       lastVisited: Date.now(),
-      protocols,
     });
   }
-  // Keep max 20 sessions
-  saveSessions(sessions.slice(0, 20), storageKey);
+  // Keep max 20 sessions per protocol.
+  saveSessions(sessions.slice(0, 20), protocol);
 }
 
 export function timeAgo(epoch: number): string {

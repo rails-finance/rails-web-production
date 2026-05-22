@@ -58,6 +58,14 @@ const nextConfig: NextConfig = {
         destination: "/aave-v4/:ens",
         permanent: true,
       },
+      // The cross-protocol /wallet/[address] umbrella is gone — each rail
+      // stands alone. Preserve inbound bookmarks by sending stale links to
+      // the platform home, which surfaces the protocol cards.
+      {
+        source: "/wallet/:slug*",
+        destination: "/",
+        permanent: true,
+      },
     ];
   },
 };

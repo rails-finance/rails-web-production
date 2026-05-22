@@ -8,6 +8,7 @@ import { Facehash } from "@/components/shared/facehash";
 import {
   loadSessions,
   SESSIONS_CHANGED_EVENT,
+  type SessionProtocol,
   type WalletSession,
 } from "@/lib/shared/sessions";
 import { useWalletContext } from "@/components/nav/wallet-context";
@@ -17,7 +18,7 @@ import { useWalletContext } from "@/components/nav/wallet-context";
  *  routes (home, about, blog, …) match nothing here, which keeps the chrome
  *  on those pages a single Rails wordmark — no protocol, no wallet, no cog. */
 const PROTOCOL_CONTEXTS: {
-  id: string;
+  id: SessionProtocol;
   label: string;
   iconSrc: string;
   prefixes: string[];
@@ -26,7 +27,7 @@ const PROTOCOL_CONTEXTS: {
     id: "liquity-v2",
     label: "Liquity V2",
     iconSrc: "/icons/protocols/liquity.png",
-    prefixes: ["/liquity-v2", "/trove", "/address"],
+    prefixes: ["/liquity-v2", "/trove"],
   },
   {
     id: "aave-v4",
@@ -46,16 +47,15 @@ function activeProtocol(pathname: string | null) {
   return null;
 }
 
-/** True when the current URL is bound to a specific wallet — wallet umbrella,
- *  a per-protocol wallet view, or a trove detail page. The bare protocol
- *  listing (`/liquity-v2`, `/aave-v4`) is browsing the universe, not viewing
- *  a wallet, so the pill stays hidden there even when a wallet is "logged in"
- *  in localStorage. The user explicitly asked for this scoping: pill only
- *  surfaces when the page below it is about the wallet. */
+/** True when the current URL is bound to a specific wallet — a per-protocol
+ *  wallet view or a trove detail page. The bare protocol listing
+ *  (`/liquity-v2`, `/aave-v4`) is browsing the universe, not viewing a
+ *  wallet, so the pill stays hidden there even when a wallet is "logged in"
+ *  in localStorage. The pill reflects "you're viewing this wallet's
+ *  positions on this rail," not "this wallet is remembered in localStorage."
+ *  The cross-protocol umbrella was removed — each rail now stands alone. */
 function isWalletScopedRoute(pathname: string | null): boolean {
   if (!pathname) return false;
-  // /wallet/[address]
-  if (/^\/wallet\/[^/]+\/?$/.test(pathname)) return true;
   // /liquity-v2/trove/[collateralType]/[troveId]
   if (/^\/liquity-v2\/trove\/[^/]+\/[^/]+\/?$/.test(pathname)) return true;
   // /liquity-v2/[wallet] and /aave-v4/[wallet] — but not the bare listing
@@ -130,18 +130,24 @@ function ProtocolLabel({
 }
 
 /** Look up the active session in localStorage so the wallet pill can show
- *  the user-set custom name without an API roundtrip. */
-function useActiveSession(addresses: string[]): WalletSession | null {
+ *  the user-set custom name without an API roundtrip. Reads only the active
+ *  protocol's list — a rename done on /liquity-v2 doesn't surface on
+ *  /aave-v4, and vice versa. Returns null when there's no active protocol
+ *  (e.g. on marketing pages). */
+function useActiveSession(
+  addresses: string[],
+  protocol: SessionProtocol | null,
+): WalletSession | null {
   const key = useMemo(() => [...addresses].sort().join("+"), [addresses]);
   const [session, setSession] = useState<WalletSession | null>(null);
 
   useEffect(() => {
-    if (!key) {
+    if (!key || !protocol) {
       setSession(null);
       return;
     }
     const sync = () => {
-      const found = loadSessions().find((s) => s.key === key) ?? null;
+      const found = loadSessions(protocol).find((s) => s.key === key) ?? null;
       setSession(found);
     };
     sync();
@@ -151,7 +157,7 @@ function useActiveSession(addresses: string[]): WalletSession | null {
       window.removeEventListener("storage", sync);
       window.removeEventListener(SESSIONS_CHANGED_EVENT, sync);
     };
-  }, [key]);
+  }, [key, protocol]);
 
   return session;
 }
@@ -159,9 +165,10 @@ function useActiveSession(addresses: string[]): WalletSession | null {
 export function HeaderBar() {
   const { addresses, ensNames } = useWalletContext();
   const pathname = usePathname();
+  const active = activeProtocol(pathname);
 
   const activeAddr = addresses[0];
-  const activeSession = useActiveSession(addresses);
+  const activeSession = useActiveSession(addresses, active?.id ?? null);
   const triggerLabel =
     activeSession?.customName ||
     (activeAddr
@@ -169,13 +176,12 @@ export function HeaderBar() {
       : "");
 
   // Wallet pill renders only when there's an active address AND the current
-  // URL is bound to a wallet (umbrella, per-protocol wallet view, trove
-  // detail). Bare protocol listings, marketing pages, and the platform home
-  // stay pill-less — the pill reflects "you're viewing this wallet's
-  // positions," not "this wallet is remembered in localStorage." Recent/
-  // pinned history lives in the search bar dropdown on each protocol page.
-  const active = activeProtocol(pathname);
-  const showWalletPill = Boolean(activeAddr) && isWalletScopedRoute(pathname);
+  // URL is bound to a wallet on a specific rail (per-protocol wallet view
+  // or trove detail). Bare protocol listings and marketing pages stay
+  // pill-less. The cross-protocol umbrella is gone, so the pill always
+  // points back at the *active rail's* view of this wallet.
+  const showWalletPill =
+    Boolean(activeAddr) && Boolean(active) && isWalletScopedRoute(pathname);
 
   return (
     <header className="relative z-40 mb-2">
@@ -187,10 +193,11 @@ export function HeaderBar() {
 
         <div className="flex-1" />
 
-        {showWalletPill && activeAddr && (
+        {showWalletPill && activeAddr && active && (
           <WalletPillLink
             activeAddr={activeAddr}
             triggerLabel={triggerLabel}
+            protocol={active}
           />
         )}
       </div>
@@ -198,20 +205,23 @@ export function HeaderBar() {
   );
 }
 
-/** The active-wallet identity pill. Clicking navigates to the umbrella view
- *  (/wallet/[address]) — the wallet's cross-rail summary. */
+/** The active-wallet identity pill. Clicking navigates back to the active
+ *  rail's wallet view — there's no cross-rail summary anymore, the pill is
+ *  scoped to whichever protocol you're currently inside. */
 function WalletPillLink({
   activeAddr,
   triggerLabel,
+  protocol,
 }: {
   activeAddr: string;
   triggerLabel: string;
+  protocol: { id: SessionProtocol; label: string };
 }) {
   return (
     <Link
-      href={`/wallet/${activeAddr}`}
+      href={`/${protocol.id}/${activeAddr}`}
       className="group flex items-center gap-2 rounded-full px-3 py-2 hover:bg-rb-200/60 dark:hover:bg-rb-800/60 transition-colors cursor-pointer text-rb-text-500 shrink-0"
-      title="View this wallet across all rails"
+      title={`View this wallet on ${protocol.label}`}
     >
       <div className="rounded-md relative z-10">
         <Facehash address={activeAddr} size={16} />

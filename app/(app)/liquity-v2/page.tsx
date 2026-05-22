@@ -144,7 +144,7 @@ function TrovesPageContent() {
     const lower = filters.ownerAddress.toLowerCase();
     if (!/^0x[a-f0-9]{40}$/.test(lower)) return;
     setWallets([lower], { [lower]: null });
-    upsertSession([lower], { [lower]: null }, ["liquity-v2-troves"]);
+    upsertSession([lower], { [lower]: null }, "liquity-v2");
   }, [filters.ownerAddress, setWallets]);
 
   // Helper to build URL search params from filters

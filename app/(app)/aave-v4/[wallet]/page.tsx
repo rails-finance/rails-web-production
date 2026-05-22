@@ -144,14 +144,13 @@ function AaveV4WalletPageInner() {
 
   const hiddenSet = useMemo(() => new Set(hiddenActions), [hiddenActions]);
 
-  // Surface the wallet in the global header pill / WalletMenu sessions, same
-  // as the trove detail page does. Tagged with the canonical aave-v4 protocol
-  // id so the recent-wallets list groups under the right protocol icon.
+  // Surface the wallet in the header pill + Aave V4's own recents list.
+  // Each rail keeps its own session list — nothing leaks to Liquity V2.
   const { setWallets } = useWalletContext();
   useEffect(() => {
     if (!isValidWallet) return;
     setWallets([wallet], { [wallet]: null });
-    upsertSession([wallet], { [wallet]: null }, ["aave-v4"]);
+    upsertSession([wallet], { [wallet]: null }, "aave-v4");
   }, [wallet, isValidWallet, setWallets]);
 
   useEffect(() => {
@@ -354,14 +353,7 @@ function AaveV4WalletPageInner() {
             </p>
             <p className="text-sm text-rb-500">
               <Link href="/aave-v4" className="underline hover:text-foreground transition-colors">
-                Browse the latest Aave V4 events
-              </Link>
-              <span className="px-2 text-rb-400">·</span>
-              <Link
-                href={`/wallet/${encodeURIComponent(wallet)}`}
-                className="underline hover:text-foreground transition-colors"
-              >
-                see this wallet across all rails →
+                Browse the latest Aave V4 events →
               </Link>
             </p>
           </div>

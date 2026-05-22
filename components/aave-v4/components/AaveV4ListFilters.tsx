@@ -93,12 +93,12 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
       wallet: isAddress ? lowered : undefined,
       ownerEns: isEns ? lowered : undefined,
     });
-    // Record cross-rail history on address typing so the wallet appears in
-    // the dropdown next time — same recents list used on every protocol.
-    // ENS-typed entries aren't recorded here (no resolution yet); they'll
-    // get picked up when the user drills into a wallet's detail page.
+    // Record this wallet in the Aave V4 recents list so it appears in the
+    // dropdown next time. Each rail keeps its own list — no cross-rail
+    // bleed. ENS-typed entries aren't recorded here (no resolution yet);
+    // they'll get picked up when the user drills into a wallet's detail page.
     if (isAddress) {
-      upsertSession([lowered], { [lowered]: null }, ["aave-v4"]);
+      upsertSession([lowered], { [lowered]: null }, "aave-v4");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearch]);
@@ -292,6 +292,7 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
           <WalletHistoryDropdown
             show={searchFocused && searchInput.trim() === ""}
             containerRef={searchRef}
+            protocol="aave-v4"
             onClose={() => setSearchFocused(false)}
             onPick={(address) => {
               setSearchInput(address);

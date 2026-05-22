@@ -190,10 +190,10 @@ export default function TrovePage() {
     const lower = effectiveOwner.toLowerCase();
     const ens = troveData?.ownerEns ?? null;
     setWallets([lower], { [lower]: ens });
-    // Record the wallet in the recent/pinned list so it surfaces in the
-    // header WalletMenu on subsequent visits. Tagged with the canonical
-    // protocol id used across rails-explorer.
-    upsertSession([lower], { [lower]: ens }, ["liquity-v2-troves"]);
+    // Record the wallet in Liquity V2's recents list so it surfaces in the
+    // protocol search dropdown on subsequent visits. Each rail keeps its
+    // own list — nothing leaks to Aave V4.
+    upsertSession([lower], { [lower]: ens }, "liquity-v2");
   }, [effectiveOwner, troveData?.ownerEns, setWallets]);
 
   // Fetch sibling troves the same wallet holds across all collateral branches,

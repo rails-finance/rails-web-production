@@ -104,14 +104,14 @@ export default function LiquityWalletPage() {
     if (isAddress) {
       const lower = walletSlug.toLowerCase();
       setWallets([lower], { [lower]: null });
-      upsertSession([lower], { [lower]: null }, ["liquity-v2-troves"]);
+      upsertSession([lower], { [lower]: null }, "liquity-v2");
       return;
     }
     if (isEns && troves.length > 0) {
       const resolved = (troves[0].owner ?? troves[0].lastOwner)?.toLowerCase();
       if (resolved && /^0x[a-f0-9]{40}$/.test(resolved)) {
         setWallets([resolved], { [resolved]: walletSlug });
-        upsertSession([resolved], { [resolved]: walletSlug }, ["liquity-v2-troves"]);
+        upsertSession([resolved], { [resolved]: walletSlug }, "liquity-v2");
       }
     }
   }, [isAddress, isEns, walletSlug, troves, setWallets]);
@@ -167,14 +167,7 @@ export default function LiquityWalletPage() {
               </p>
               <p className="text-sm text-rb-500">
                 <Link href="/liquity-v2" className="underline hover:text-foreground transition-colors">
-                  Browse the latest Liquity V2 events
-                </Link>
-                <span className="px-2 text-rb-400">·</span>
-                <Link
-                  href={`/wallet/${encodeURIComponent(walletSlug)}`}
-                  className="underline hover:text-foreground transition-colors"
-                >
-                  see this wallet across all rails →
+                  Browse the latest Liquity V2 events →
                 </Link>
               </p>
             </motion.div>

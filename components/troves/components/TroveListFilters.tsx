@@ -114,13 +114,13 @@ export function TroveListFilters({
       ownerAddress: isAddress ? trimmedValue : undefined,
       ownerEns: isEns ? trimmedValue : undefined,
     });
-    // Record cross-rail history on address typing so the wallet appears in
-    // the dropdown next time — same recents list used on every protocol.
-    // ENS-typed entries aren't recorded here (no resolution yet); they'll
-    // get picked up when the user drills into a wallet's detail page.
+    // Record this wallet in the Liquity V2 recents list so it appears in
+    // the dropdown next time. Each rail keeps its own list — no cross-rail
+    // bleed. ENS-typed entries aren't recorded here (no resolution yet);
+    // they'll get picked up when the user drills into a wallet's detail page.
     if (isAddress) {
       const lowered = trimmedValue.toLowerCase();
-      upsertSession([lowered], { [lowered]: null }, ["liquity-v2-troves"]);
+      upsertSession([lowered], { [lowered]: null }, "liquity-v2");
     }
   };
 
@@ -448,6 +448,7 @@ export function TroveListFilters({
           <WalletHistoryDropdown
             show={searchFocused && searchInput.trim() === ""}
             containerRef={searchRef}
+            protocol="liquity-v2"
             onClose={() => setSearchFocused(false)}
             onPick={(address) => {
               setSearchInput(address);

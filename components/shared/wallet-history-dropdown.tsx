@@ -8,6 +8,7 @@ import {
   renameSession,
   saveSessions,
   SESSIONS_CHANGED_EVENT,
+  type SessionProtocol,
   type WalletSession,
 } from "@/lib/shared/sessions";
 
@@ -19,18 +20,21 @@ interface Props {
   onClose: () => void;
   /** Called with the session's primary lowercase 0x address. */
   onPick: (address: string) => void;
+  /** Which protocol's session list to render. Each rail keeps its own — no
+   *  shared cross-protocol history. */
+  protocol: SessionProtocol;
 }
 
 /** Floating panel of recent/pinned wallets, anchored beneath the wallet
- *  search input on each protocol page. Sessions are shared across protocols
- *  (one localStorage list); the dropdown is the cross-rail memory affordance
- *  the user asked for — search anywhere, see your history everywhere. */
-export function WalletHistoryDropdown({ show, containerRef, onClose, onPick }: Props) {
+ *  search input on a protocol page. Each protocol has its own session list:
+ *  visiting a wallet on /liquity-v2 does not surface it on /aave-v4 and
+ *  vice versa. */
+export function WalletHistoryDropdown({ show, containerRef, onClose, onPick, protocol }: Props) {
   const [sessions, setSessions] = useState<WalletSession[]>([]);
   const [tab, setTab] = useState<"pinned" | "recent">("recent");
 
   useEffect(() => {
-    const sync = () => setSessions(loadSessions());
+    const sync = () => setSessions(loadSessions(protocol));
     sync();
     window.addEventListener("storage", sync);
     window.addEventListener(SESSIONS_CHANGED_EVENT, sync);
@@ -38,7 +42,7 @@ export function WalletHistoryDropdown({ show, containerRef, onClose, onPick }: P
       window.removeEventListener("storage", sync);
       window.removeEventListener(SESSIONS_CHANGED_EVENT, sync);
     };
-  }, []);
+  }, [protocol]);
 
   const { pinnedList, recentList } = useMemo(() => {
     const byVisitedDesc = (a: WalletSession, b: WalletSession) =>
@@ -72,30 +76,30 @@ export function WalletHistoryDropdown({ show, containerRef, onClose, onPick }: P
     };
   }, [show, containerRef, onClose]);
 
+  // saveSessions runs *after* setSessions returns — calling it inside the
+  // updater would put a side-effecting dispatchEvent in React's render path
+  // (and double-fire it in strict mode), which is what produces the "cannot
+  // update HeaderBar while rendering WalletHistoryDropdown" warning.
   const togglePin = useCallback((key: string) => {
-    setSessions((prev) => {
-      const target = prev.find((s) => s.key === key);
-      if (!target) return prev;
-      const toggled = { ...target, pinned: !target.pinned };
-      const rest = prev.filter((s) => s.key !== key);
-      const next = [...rest.filter((s) => s.pinned), toggled, ...rest.filter((s) => !s.pinned)];
-      saveSessions(next);
-      return next;
-    });
-  }, []);
+    const target = sessions.find((s) => s.key === key);
+    if (!target) return;
+    const toggled = { ...target, pinned: !target.pinned };
+    const rest = sessions.filter((s) => s.key !== key);
+    const next = [...rest.filter((s) => s.pinned), toggled, ...rest.filter((s) => !s.pinned)];
+    setSessions(next);
+    saveSessions(next, protocol);
+  }, [sessions, protocol]);
 
   const removeSessionLocal = useCallback((key: string) => {
-    setSessions((prev) => {
-      const next = prev.filter((s) => s.key !== key);
-      saveSessions(next);
-      return next;
-    });
-  }, []);
+    const next = sessions.filter((s) => s.key !== key);
+    setSessions(next);
+    saveSessions(next, protocol);
+  }, [sessions, protocol]);
 
   const renameSessionLocal = useCallback((key: string, customName: string) => {
-    renameSession(key, customName);
-    setSessions(loadSessions());
-  }, []);
+    renameSession(key, customName, protocol);
+    setSessions(loadSessions(protocol));
+  }, [protocol]);
 
   if (!show) return null;
 
