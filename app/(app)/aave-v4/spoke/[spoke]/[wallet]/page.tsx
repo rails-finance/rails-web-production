@@ -319,7 +319,7 @@ function AaveV4SpokePageInner() {
       <main className="min-h-screen">
         <FeedbackButton />
         <div className="max-w-7xl mx-auto py-8 space-y-6">
-          <SpokeBreadcrumb walletFilterHref={walletFilterHref} wallet={wallet} spokeName={spokeName} />
+          <SpokeBreadcrumb walletFilterHref={walletFilterHref} wallet={wallet} />
           <div className="text-center py-12">
             <p className="text-foreground text-lg mb-3">
               {shortAddr(wallet)} has no activity on the {spokeName} spoke
@@ -339,7 +339,7 @@ function AaveV4SpokePageInner() {
     <main className="min-h-screen">
       <FeedbackButton />
       <div className="max-w-7xl mx-auto py-8 space-y-6">
-        <SpokeBreadcrumb walletFilterHref={walletFilterHref} wallet={wallet} spokeName={spokeName} />
+        <SpokeBreadcrumb walletFilterHref={walletFilterHref} wallet={wallet} />
 
         {/* Single spoke card — keeps visual parity with the multi-spoke
             selector on the listing page while making it clear this is the
@@ -462,11 +462,9 @@ function AaveV4SpokePageInner() {
 function SpokeBreadcrumb({
   walletFilterHref,
   wallet,
-  spokeName,
 }: {
   walletFilterHref: string;
   wallet: string;
-  spokeName: string;
 }) {
   return (
     <div className="flex items-center gap-2 text-sm">
@@ -477,8 +475,6 @@ function SpokeBreadcrumb({
         <ArrowLeft size={14} />
         <span className="font-mono">{shortAddr(wallet)}</span>
       </Link>
-      <span className="text-rb-400">/</span>
-      <span className="text-foreground font-semibold">{spokeName}</span>
     </div>
   );
 }

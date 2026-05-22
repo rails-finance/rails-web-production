@@ -1,44 +1,31 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 
-import { Facehash } from "@/components/shared/facehash";
-import {
-  loadSessions,
-  SESSIONS_CHANGED_EVENT,
-  type SessionProtocol,
-  type WalletSession,
-} from "@/lib/shared/sessions";
-import { useWalletContext } from "@/components/nav/wallet-context";
+import type { SessionProtocol } from "@/lib/shared/sessions";
 
 /** Routes that count as "inside the protocol" — keyed by the active protocol
- *  so the header can render the protocol label and the wallet pill. Marketing
- *  routes (home, about, blog, …) match nothing here, which keeps the chrome
- *  on those pages a single Rails wordmark — no protocol, no wallet, no cog. */
+ *  so the header can render the protocol label. Marketing routes (home,
+ *  about, blog, …) match nothing here, which keeps the chrome on those pages
+ *  a single Rails wordmark — no protocol label. */
 const PROTOCOL_CONTEXTS: {
   id: SessionProtocol;
   label: string;
   iconSrc: string;
   prefixes: string[];
-  /** Where the wallet pill jumps to on this rail. The wallet view is the
-   *  filtered listing, not a dedicated route. */
-  walletHref: (addr: string) => string;
 }[] = [
   {
     id: "liquity-v2",
     label: "Liquity V2",
     iconSrc: "/icons/protocols/liquity.png",
     prefixes: ["/liquity-v2"],
-    walletHref: (addr) => `/liquity-v2?ownerAddress=${addr}`,
   },
   {
     id: "aave-v4",
     label: "Aave V4",
     iconSrc: "/icons/protocols/aave-v4.png",
     prefixes: ["/aave-v4"],
-    walletHref: (addr) => `/aave-v4?wallet=${addr}`,
   },
 ];
 
@@ -50,20 +37,6 @@ function activeProtocol(pathname: string | null) {
     }
   }
   return null;
-}
-
-/** True when the current URL is a deep view bound to a specific position —
- *  a trove detail on Liquity or a spoke detail on Aave. Listings (including
- *  wallet-filtered listings) are NOT pill-scoped: the user is already on
- *  the wallet's view there, so a pill linking back to it would be a no-op.
- *  Marketing pages and the bare protocol listings stay pill-less. */
-function isWalletScopedRoute(pathname: string | null): boolean {
-  if (!pathname) return false;
-  // /liquity-v2/trove/[collateralType]/[troveId]
-  if (/^\/liquity-v2\/trove\/[^/]+\/[^/]+\/?$/.test(pathname)) return true;
-  // /aave-v4/spoke/[spoke]/[wallet]
-  if (/^\/aave-v4\/spoke\/[^/]+\/[^/]+\/?$/.test(pathname)) return true;
-  return false;
 }
 
 /** Always-on Rails wordmark on the left. Rails is the platform; the protocol
@@ -102,83 +75,36 @@ function RailsLogo() {
   );
 }
 
-/** Non-interactive protocol identity that sits inline to the right of the
- *  Rails wordmark when the user is inside a rail. Reads as "you're here",
- *  not "switch from here". Smaller, dimmed uppercase keeps the visual
- *  subordination — Rails is the brand, the protocol label names the rail.
- *  Protocol switching happens via the footer. */
+/** Protocol identity inline to the right of the Rails wordmark when the user
+ *  is inside a rail. Links back to the rail's listing page — useful from a
+ *  deep view (trove or spoke detail) where it's the fastest jump back to the
+ *  full set. Smaller, dimmed uppercase keeps the visual subordination —
+ *  Rails is the brand, the protocol label names the rail. */
 function ProtocolLabel({
   protocol,
 }: {
-  protocol: { id: string; label: string; iconSrc: string };
+  protocol: { id: string; label: string; iconSrc: string; prefixes: string[] };
 }) {
   return (
-    <div className="ml-3 flex items-center gap-1.5">
+    <Link
+      href={protocol.prefixes[0]}
+      className="group ml-3 flex items-center gap-1.5"
+    >
       <img
         src={protocol.iconSrc}
         alt=""
         className="w-4 h-4 shrink-0 rounded-[3px]"
       />
-      <span className="text-[11px] uppercase tracking-[0.14em] font-semibold text-rb-500">
+      <span className="text-[11px] uppercase tracking-[0.14em] font-semibold text-rb-500 group-hover:text-foreground transition-colors">
         {protocol.label}
       </span>
-    </div>
+    </Link>
   );
 }
 
-/** Look up the active session in localStorage so the wallet pill can show
- *  the user-set custom name without an API roundtrip. Reads only the active
- *  protocol's list — a rename done on /liquity-v2 doesn't surface on
- *  /aave-v4, and vice versa. Returns null when there's no active protocol
- *  (e.g. on marketing pages). */
-function useActiveSession(
-  addresses: string[],
-  protocol: SessionProtocol | null,
-): WalletSession | null {
-  const key = useMemo(() => [...addresses].sort().join("+"), [addresses]);
-  const [session, setSession] = useState<WalletSession | null>(null);
-
-  useEffect(() => {
-    if (!key || !protocol) {
-      setSession(null);
-      return;
-    }
-    const sync = () => {
-      const found = loadSessions(protocol).find((s) => s.key === key) ?? null;
-      setSession(found);
-    };
-    sync();
-    window.addEventListener("storage", sync);
-    window.addEventListener(SESSIONS_CHANGED_EVENT, sync);
-    return () => {
-      window.removeEventListener("storage", sync);
-      window.removeEventListener(SESSIONS_CHANGED_EVENT, sync);
-    };
-  }, [key, protocol]);
-
-  return session;
-}
-
 export function HeaderBar() {
-  const { addresses, ensNames } = useWalletContext();
   const pathname = usePathname();
   const active = activeProtocol(pathname);
-
-  const activeAddr = addresses[0];
-  const activeSession = useActiveSession(addresses, active?.id ?? null);
-  const triggerLabel =
-    activeSession?.customName ||
-    (activeAddr
-      ? ensNames[activeAddr] || `${activeAddr.slice(0, 6)}…${activeAddr.slice(-4)}`
-      : "");
-
-  // Wallet pill renders only when there's an active address AND the current
-  // URL is bound to a wallet on a specific rail (per-protocol wallet view
-  // or trove detail). Bare protocol listings and marketing pages stay
-  // pill-less. The cross-protocol umbrella is gone, so the pill always
-  // points back at the *active rail's* view of this wallet.
-  const showWalletPill =
-    Boolean(activeAddr) && Boolean(active) && isWalletScopedRoute(pathname);
 
   return (
     <header className="relative z-40 mb-2">
@@ -189,44 +115,7 @@ export function HeaderBar() {
         </div>
 
         <div className="flex-1" />
-
-        {showWalletPill && activeAddr && active && (
-          <WalletPillLink
-            activeAddr={activeAddr}
-            triggerLabel={triggerLabel}
-            protocol={active}
-          />
-        )}
       </div>
     </header>
-  );
-}
-
-/** The active-wallet identity pill. Clicking navigates back to the active
- *  rail's wallet view — which is the listing page filtered to this wallet
- *  (e.g. /liquity-v2?ownerAddress=…). Each rail builds its own href via
- *  `walletHref` on its PROTOCOL_CONTEXTS entry. */
-function WalletPillLink({
-  activeAddr,
-  triggerLabel,
-  protocol,
-}: {
-  activeAddr: string;
-  triggerLabel: string;
-  protocol: { id: SessionProtocol; label: string; walletHref: (addr: string) => string };
-}) {
-  return (
-    <Link
-      href={protocol.walletHref(activeAddr)}
-      className="group flex items-center gap-2 rounded-full px-3 py-2 hover:bg-rb-200/60 dark:hover:bg-rb-800/60 transition-colors cursor-pointer text-rb-text-500 shrink-0"
-      title={`View this wallet on ${protocol.label}`}
-    >
-      <div className="rounded-md relative z-10">
-        <Facehash address={activeAddr} size={16} />
-      </div>
-      <span className="text-xs font-semibold truncate max-w-[140px] hidden sm:inline text-rb-500 group-hover:text-foreground transition-colors">
-        {triggerLabel}
-      </span>
-    </Link>
   );
 }

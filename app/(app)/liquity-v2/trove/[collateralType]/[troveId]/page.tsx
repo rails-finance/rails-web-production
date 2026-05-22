@@ -95,11 +95,9 @@ function TimelineDisplayToggle() {
 function TroveBreadcrumb({
   walletFilterHref,
   ownerLabel,
-  troveLabel,
 }: {
   walletFilterHref: string;
   ownerLabel: string;
-  troveLabel: string;
 }) {
   return (
     <div className="flex items-center gap-2 text-sm">
@@ -110,8 +108,6 @@ function TroveBreadcrumb({
         <ArrowLeft size={14} />
         <span className="font-mono">{ownerLabel}</span>
       </Link>
-      <span className="text-rb-400">/</span>
-      <span className="text-foreground font-semibold">{troveLabel}</span>
     </div>
   );
 }
@@ -437,7 +433,6 @@ export default function TrovePage() {
     );
   }
 
-  const troveIdShort = `${troveId.slice(0, 6)}…${troveId.slice(-4)}`;
   const ownerLabel = troveData.ownerEns ?? (effectiveOwner ? shortAddr(effectiveOwner) : "");
   const walletFilterHref = effectiveOwner
     ? `/liquity-v2?ownerAddress=${effectiveOwner.toLowerCase()}`
@@ -448,11 +443,7 @@ export default function TrovePage() {
       <FeedbackButton />
       <div className="space-y-6 py-8">
         {walletFilterHref && (
-          <TroveBreadcrumb
-            walletFilterHref={walletFilterHref}
-            ownerLabel={ownerLabel}
-            troveLabel={`Trove ${troveIdShort}`}
-          />
+          <TroveBreadcrumb walletFilterHref={walletFilterHref} ownerLabel={ownerLabel} />
         )}
         {/* Single HoverProvider wraps the whole summary stack so
             HighlightableValues in the expanded explanation can highlight
