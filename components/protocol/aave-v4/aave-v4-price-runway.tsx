@@ -143,13 +143,6 @@ export function AaveV4PriceRunway({
   return (
     <div>
       <div className="flex items-start gap-3">
-        <div style={{ marginTop: BAR_MID - 16 }}>
-          <PricePill
-            symbol={collateralSymbol}
-            address={collateralAddress}
-            price={currentPrice}
-          />
-        </div>
         <div
           className="relative flex-1 min-w-[220px]"
           style={{ height: H_TOTAL }}
@@ -227,6 +220,13 @@ export function AaveV4PriceRunway({
           )}
         </div>
 
+        <div style={{ marginTop: BAR_MID - 16 }}>
+          <PricePill
+            symbol={collateralSymbol}
+            address={collateralAddress}
+            price={currentPrice}
+          />
+        </div>
         <div style={{ marginTop: BAR_MID - 10 }}>
           <InfoIconButton
             open={infoOpen}

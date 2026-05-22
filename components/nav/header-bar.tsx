@@ -108,13 +108,9 @@ export function HeaderBar() {
 
   return (
     <header className="relative z-40 mb-2">
-      <div className="max-w-7xl mx-auto py-5 px-4 md:px-6 flex items-center gap-4">
-        <div className="flex items-center shrink-0">
-          <RailsLogo />
-          {active && <ProtocolLabel protocol={active} />}
-        </div>
-
-        <div className="flex-1" />
+      <div className="max-w-7xl mx-auto py-5 px-4 md:px-6 flex items-center">
+        <RailsLogo />
+        {active && <ProtocolLabel protocol={active} />}
       </div>
     </header>
   );

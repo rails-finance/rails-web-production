@@ -467,15 +467,13 @@ function SpokeBreadcrumb({
   wallet: string;
 }) {
   return (
-    <div className="flex items-center gap-2 text-sm">
-      <Link
-        href={walletFilterHref}
-        className="inline-flex items-center gap-1.5 text-rb-500 hover:text-foreground transition-colors"
-      >
-        <ArrowLeft size={14} />
-        <span className="font-mono">{shortAddr(wallet)}</span>
-      </Link>
-    </div>
+    <Link
+      href={walletFilterHref}
+      className="inline-flex items-center gap-1.5 text-sm text-rb-500 hover:text-foreground transition-colors"
+    >
+      <ArrowLeft size={14} />
+      <span className="font-mono">{shortAddr(wallet)}</span>
+    </Link>
   );
 }
 
