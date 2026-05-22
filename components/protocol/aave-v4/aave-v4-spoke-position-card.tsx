@@ -72,7 +72,7 @@ export function AaveV4SpokePositionCard({ row }: { row: AaveV4SpokePositionRow }
 
   return (
     <Link
-      href={`/aave-v4/${row.wallet}`}
+      href={`/aave-v4/spoke/${encodeURIComponent(row.spokeName)}/${row.wallet}`}
       className="group flex items-center gap-3 sm:gap-4 px-3 sm:px-4 py-3 rounded-lg border border-rb-200 dark:border-rb-800 bg-rb-50 dark:bg-rb-950 hover:border-blue-500/40 hover:bg-rb-100/40 dark:hover:bg-rb-900/40 transition-colors"
     >
       {/* Wallet identity */}

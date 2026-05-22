@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
-import { ArrowUpDown } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, ArrowUpDown } from "lucide-react";
 import { TroveSummary, TrovesResponse } from "@/types/api/trove";
+import { shortAddr } from "@/lib/shared/format-event";
 import { TroveSummaryCardSelector } from "@/components/trove/TroveSummaryCardSelector";
 import { TroveDetailsBand } from "@/components/trove/TroveDetailsBand";
 import { TroveContextRow } from "@/components/trove/TroveContextRow";
@@ -85,9 +87,37 @@ function TimelineDisplayToggle() {
  * the expanded explanation can highlight their counterparts in the cards
  * above. The hook itself is hover-context-agnostic — it just builds JSX
  * which subscribes when rendered. */
+/** Back-link to the wallet's filtered listing. Replaces the old in-page
+ *  position selector: the listing IS the switcher now, and the breadcrumb
+ *  is the way back. Production today has a `history.back()` button instead —
+ *  we use a real URL so the click is deterministic regardless of how the
+ *  user arrived at the page. */
+function TroveBreadcrumb({
+  walletFilterHref,
+  ownerLabel,
+  troveLabel,
+}: {
+  walletFilterHref: string;
+  ownerLabel: string;
+  troveLabel: string;
+}) {
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      <Link
+        href={walletFilterHref}
+        className="inline-flex items-center gap-1.5 text-rb-500 hover:text-foreground transition-colors"
+      >
+        <ArrowLeft size={14} />
+        <span className="font-mono">{ownerLabel}</span>
+      </Link>
+      <span className="text-rb-400">/</span>
+      <span className="text-foreground font-semibold">{troveLabel}</span>
+    </div>
+  );
+}
+
 function TroveSummaryStack({
   trove,
-  ownerTroves,
   liveState,
   prices,
   debtInFront,
@@ -98,7 +128,6 @@ function TroveSummaryStack({
   loadingStatus,
 }: {
   trove: TroveSummary;
-  ownerTroves?: TroveSummary[];
   liveState?: TroveStateData;
   prices?: OraclePricesData;
   debtInFront: number | null;
@@ -111,9 +140,11 @@ function TroveSummaryStack({
   const items = useTroveExplanationItems({ trove, liveState, prices, debtInFront, trovesAhead });
   return (
     <div className="space-y-6">
+      {/* No ownerTroves passed — the position switcher lives on the wallet-
+          filtered listing now (the breadcrumb above links there). The
+          selector falls through to single-card mode. */}
       <TroveSummaryCardSelector
         trove={trove}
-        ownerTroves={ownerTroves}
         liveState={liveState}
         prices={prices}
         loadingStatus={loadingStatus}
@@ -151,7 +182,6 @@ export default function TrovePage() {
   const troveKey = `${collateralType}:${troveId}`;
 
   const [troveData, setTroveData] = useState<TroveSummary | null>(null);
-  const [ownerTroves, setOwnerTroves] = useState<TroveSummary[] | undefined>(undefined);
   const [events, setEvents] = useState<BaseActivityEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -195,23 +225,6 @@ export default function TrovePage() {
     // own list — nothing leaks to Aave V4.
     upsertSession([lower], { [lower]: ens }, "liquity-v2");
   }, [effectiveOwner, troveData?.ownerEns, setWallets]);
-
-  // Fetch sibling troves the same wallet holds across all collateral branches,
-  // so the summary card can act as a position selector. Lazy after the primary
-  // load — keeps the page TTI snappy and the chooser populates while the user
-  // reads the active trove. `ownerAddress` filter is honored by /api/troves.
-  useEffect(() => {
-    if (!effectiveOwner) return;
-    let cancelled = false;
-    fetch(`/api/troves?ownerAddress=${effectiveOwner}`)
-      .then(r => r.ok ? r.json() as Promise<TrovesResponse> : null)
-      .then(resp => {
-        if (cancelled || !resp?.data) return;
-        setOwnerTroves(resp.data);
-      })
-      .catch(() => { /* silent — selector just stays in single-card mode */ });
-    return () => { cancelled = true; };
-  }, [effectiveOwner]);
 
   // Debt in front calculation
   const debtInFrontRate = liveState?.rates.annualInterestRate ?? troveData?.metrics.interestRate;
@@ -424,17 +437,29 @@ export default function TrovePage() {
     );
   }
 
+  const troveIdShort = `${troveId.slice(0, 6)}…${troveId.slice(-4)}`;
+  const ownerLabel = troveData.ownerEns ?? (effectiveOwner ? shortAddr(effectiveOwner) : "");
+  const walletFilterHref = effectiveOwner
+    ? `/liquity-v2?ownerAddress=${effectiveOwner.toLowerCase()}`
+    : null;
+
   return (
     <>
       <FeedbackButton />
       <div className="space-y-6 py-8">
+        {walletFilterHref && (
+          <TroveBreadcrumb
+            walletFilterHref={walletFilterHref}
+            ownerLabel={ownerLabel}
+            troveLabel={`Trove ${troveIdShort}`}
+          />
+        )}
         {/* Single HoverProvider wraps the whole summary stack so
             HighlightableValues in the expanded explanation can highlight
             their counterparts up in the summary card and details band. */}
         <HoverProvider>
           <TroveSummaryStack
             trove={troveData}
-            ownerTroves={ownerTroves}
             liveState={liveState}
             prices={prices}
             debtInFront={debtInFront}

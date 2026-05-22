@@ -171,7 +171,7 @@ function AaveV4ListPageContent() {
               {rows.map((row) => (
                 <motion.div key={`${row.wallet}:${row.spoke}`} variants={itemVariants}>
                   <Link
-                    href={`/aave-v4/${row.wallet}`}
+                    href={`/aave-v4/spoke/${encodeURIComponent(row.spokeName)}/${row.wallet}`}
                     onClick={() => {
                       if (typeof window !== "undefined") {
                         sessionStorage.setItem(

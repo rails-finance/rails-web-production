@@ -22,18 +22,23 @@ const PROTOCOL_CONTEXTS: {
   label: string;
   iconSrc: string;
   prefixes: string[];
+  /** Where the wallet pill jumps to on this rail. The wallet view is the
+   *  filtered listing, not a dedicated route. */
+  walletHref: (addr: string) => string;
 }[] = [
   {
     id: "liquity-v2",
     label: "Liquity V2",
     iconSrc: "/icons/protocols/liquity.png",
-    prefixes: ["/liquity-v2", "/trove"],
+    prefixes: ["/liquity-v2"],
+    walletHref: (addr) => `/liquity-v2?ownerAddress=${addr}`,
   },
   {
     id: "aave-v4",
     label: "Aave V4",
     iconSrc: "/icons/protocols/aave-v4.png",
     prefixes: ["/aave-v4"],
+    walletHref: (addr) => `/aave-v4?wallet=${addr}`,
   },
 ];
 
@@ -47,25 +52,17 @@ function activeProtocol(pathname: string | null) {
   return null;
 }
 
-/** True when the current URL is bound to a specific wallet — a per-protocol
- *  wallet view or a trove detail page. The bare protocol listing
- *  (`/liquity-v2`, `/aave-v4`) is browsing the universe, not viewing a
- *  wallet, so the pill stays hidden there even when a wallet is "logged in"
- *  in localStorage. The pill reflects "you're viewing this wallet's
- *  positions on this rail," not "this wallet is remembered in localStorage."
- *  The cross-protocol umbrella was removed — each rail now stands alone. */
+/** True when the current URL is a deep view bound to a specific position —
+ *  a trove detail on Liquity or a spoke detail on Aave. Listings (including
+ *  wallet-filtered listings) are NOT pill-scoped: the user is already on
+ *  the wallet's view there, so a pill linking back to it would be a no-op.
+ *  Marketing pages and the bare protocol listings stay pill-less. */
 function isWalletScopedRoute(pathname: string | null): boolean {
   if (!pathname) return false;
   // /liquity-v2/trove/[collateralType]/[troveId]
   if (/^\/liquity-v2\/trove\/[^/]+\/[^/]+\/?$/.test(pathname)) return true;
-  // /liquity-v2/[wallet] and /aave-v4/[wallet] — but not the bare listing
-  // (zero further segments) and not the `trove` intermediate.
-  const m = pathname.match(/^\/(liquity-v2|aave-v4)\/([^/]+)\/?$/);
-  if (m) {
-    const second = m[2];
-    if (second === "trove") return false;
-    return true;
-  }
+  // /aave-v4/spoke/[spoke]/[wallet]
+  if (/^\/aave-v4\/spoke\/[^/]+\/[^/]+\/?$/.test(pathname)) return true;
   return false;
 }
 
@@ -206,8 +203,9 @@ export function HeaderBar() {
 }
 
 /** The active-wallet identity pill. Clicking navigates back to the active
- *  rail's wallet view — there's no cross-rail summary anymore, the pill is
- *  scoped to whichever protocol you're currently inside. */
+ *  rail's wallet view — which is the listing page filtered to this wallet
+ *  (e.g. /liquity-v2?ownerAddress=…). Each rail builds its own href via
+ *  `walletHref` on its PROTOCOL_CONTEXTS entry. */
 function WalletPillLink({
   activeAddr,
   triggerLabel,
@@ -215,11 +213,11 @@ function WalletPillLink({
 }: {
   activeAddr: string;
   triggerLabel: string;
-  protocol: { id: SessionProtocol; label: string };
+  protocol: { id: SessionProtocol; label: string; walletHref: (addr: string) => string };
 }) {
   return (
     <Link
-      href={`/${protocol.id}/${activeAddr}`}
+      href={protocol.walletHref(activeAddr)}
       className="group flex items-center gap-2 rounded-full px-3 py-2 hover:bg-rb-200/60 dark:hover:bg-rb-800/60 transition-colors cursor-pointer text-rb-text-500 shrink-0"
       title={`View this wallet on ${protocol.label}`}
     >

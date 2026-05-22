@@ -27,35 +27,35 @@ const nextConfig: NextConfig = {
         destination: "/liquity-v2/trove/:collateralType/:troveId",
         permanent: true,
       },
-      // Wallet-as-entry-point: /liquity-v2?ownerAddress=X and ?ownerEns=X
-      // now route to the canonical /liquity-v2/[wallet] page. Other listing
-      // query params (status, sortBy, etc.) are unaffected.
+      // Wallet view is the filtered listing, not a dedicated route. Anyone
+      // landing on /liquity-v2/[wallet] (legacy bookmarks, the wallet pill
+      // before this change) gets sent to /liquity-v2 with the appropriate
+      // filter query param. We match two shapes — 0x address or .eth ENS —
+      // so the trove subtree (/liquity-v2/trove/...) and other future
+      // children aren't caught by the redirect. Anything else 404s, which
+      // is fine: only addresses and ENS names ever lived at this depth.
       {
-        source: "/liquity-v2",
-        has: [{ type: "query", key: "ownerAddress", value: "(?<addr>.+)" }],
-        destination: "/liquity-v2/:addr",
+        source: "/liquity-v2/:slug(0x[0-9a-fA-F]{40})",
+        destination: "/liquity-v2?ownerAddress=:slug",
         permanent: true,
       },
       {
-        source: "/liquity-v2",
-        has: [{ type: "query", key: "ownerEns", value: "(?<ens>.+)" }],
-        destination: "/liquity-v2/:ens",
+        source: "/liquity-v2/:slug([^/]+\\.eth)",
+        destination: "/liquity-v2?ownerEns=:slug",
         permanent: true,
       },
-      // Same wallet-as-entry-point pattern for Aave V4. The /aave-v4 listing
-      // is open-position-only (backed by mv_aave_v4_spoke_positions); when a
-      // wallet is supplied, we want the per-wallet view which surfaces both
-      // current and historical activity (incl. closed positions).
+      // Aave V4: same pattern, but the listing's wallet param is `wallet`.
+      // The /aave-v4/spoke/[spoke]/[wallet] detail tree is deeper (three
+      // extra segments) so it doesn't collide with these single-segment
+      // matchers.
       {
-        source: "/aave-v4",
-        has: [{ type: "query", key: "wallet", value: "(?<addr>.+)" }],
-        destination: "/aave-v4/:addr",
+        source: "/aave-v4/:slug(0x[0-9a-fA-F]{40})",
+        destination: "/aave-v4?wallet=:slug",
         permanent: true,
       },
       {
-        source: "/aave-v4",
-        has: [{ type: "query", key: "ownerEns", value: "(?<ens>.+)" }],
-        destination: "/aave-v4/:ens",
+        source: "/aave-v4/:slug([^/]+\\.eth)",
+        destination: "/aave-v4?ownerEns=:slug",
         permanent: true,
       },
       // The cross-protocol /wallet/[address] umbrella is gone — each rail

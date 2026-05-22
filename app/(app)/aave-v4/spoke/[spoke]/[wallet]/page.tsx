@@ -1,20 +1,24 @@
 "use client";
 
-// Aave V4 wallet detail. Calls the two API endpoints (timeline + positions),
-// renders a spoke-card selector (one card per active spoke, ACTIVE/CLOSED
-// outcome pill, full HF / Liq Price / borrowing power tier) and a timeline
-// of events scoped to the selected spoke, with type + date filters, day
-// grouping, and a display toggle.
+// Aave V4 spoke detail — the addressable per-spoke deep view for a wallet.
+// The spoke is the unit of risk isolation (one shared health factor inside,
+// fully independent between spokes), so it's the right URL-addressable unit
+// for "this position." The wallet's other spokes live on the listing-filtered
+// view at /aave-v4?wallet=… — that page is the spoke chooser.
+//
+// Ported almost verbatim from the now-removed /aave-v4/[wallet] page; the
+// only structural change is that the spoke comes from the URL instead of
+// `useAaveV4UiState`'s selectedSpoke. The SpokeCardSelector becomes a
+// single-card breadcrumb and the auto-select effect is gone.
 //
 // Health factor, liq price, borrowing power, and net APY are computed
 // client-side via lib/aave-v4/spoke-cards.ts → simulateAaveV4Position over a
-// hard-coded LT table. No on-chain reads needed — deferred per v1's locked
-// product decisions.
+// hard-coded LT table. No on-chain reads.
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, ArrowLeft } from "lucide-react";
 import {
   fetchAaveV4Timeline,
   fetchAaveV4Positions,
@@ -57,10 +61,6 @@ import { PricesProvider, usePrices, useRequestPrices } from "@/lib/shared/prices
 import { AaveV4BarsProvider } from "@/lib/aave-v4/use-position-bars";
 import { TOKEN_ADDR } from "@/lib/aave/prices";
 
-/** DISPLAY toggle dropdown — Aave V4 variant. Bars + USD values are wired to
- *  the price-aware infra (Phase 9): change bars and balance bars read off
- *  AaveV4BarsContext, USD values render inside the event detail. Timeline
- *  values + timestamps + event numbers stay protocol-agnostic. */
 function AaveV4TimelineDisplayToggle() {
   const {
     showTimestamps,
@@ -109,18 +109,20 @@ function AaveV4TimelineDisplayToggle() {
   );
 }
 
-export default function AaveV4WalletPage() {
+export default function AaveV4SpokePage() {
   return (
     <PricesProvider>
-      <AaveV4WalletPageInner />
+      <AaveV4SpokePageInner />
     </PricesProvider>
   );
 }
 
-function AaveV4WalletPageInner() {
+function AaveV4SpokePageInner() {
   const params = useParams();
   const wallet = String(params.wallet ?? "").toLowerCase();
+  const spokeName = decodeURIComponent(String(params.spoke ?? ""));
   const isValidWallet = /^0x[a-f0-9]{40}$/.test(wallet);
+  const walletFilterHref = `/aave-v4?wallet=${wallet}`;
 
   const [events, setEvents] = useState<BaseActivityEvent[]>([]);
   const [positions, setPositions] = useState<AaveV4Position[]>([]);
@@ -132,20 +134,16 @@ function AaveV4WalletPageInner() {
     sortDirection,
     dateRange,
     heatmapOpen,
-    selectedSpoke,
     hasHydrated: hasUiHydrated,
     setSortDirection,
     setHiddenActions,
     toggleHiddenAction,
     setDateRange,
     setHeatmapOpen,
-    setSelectedSpoke,
   } = useAaveV4UiState(isValidWallet ? wallet : undefined);
 
   const hiddenSet = useMemo(() => new Set(hiddenActions), [hiddenActions]);
 
-  // Surface the wallet in the header pill + Aave V4's own recents list.
-  // Each rail keeps its own session list — nothing leaks to Liquity V2.
   const { setWallets } = useWalletContext();
   useEffect(() => {
     if (!isValidWallet) return;
@@ -174,24 +172,18 @@ function AaveV4WalletPageInner() {
         setLoading(false);
       } catch (err) {
         if (cancelled) return;
-        setError(err instanceof Error ? err.message : "Failed to load wallet data");
+        setError(err instanceof Error ? err.message : "Failed to load spoke data");
         setLoading(false);
       }
     })();
     return () => { cancelled = true; };
   }, [wallet, isValidWallet]);
 
-  // Always sort ASC for the running pass — bars / spoke-card math walk the asc
-  // list to compute deltas. Display order (asc/desc) is a render-time reverse
-  // below.
   const sortedEvents = useMemo(
     () => [...events].sort((a, b) => a.blockNumber - b.blockNumber || a.timestamp - b.timestamp),
     [events],
   );
 
-  // Spoke cards (HF / Liq Price / borrowing power / net APY). Built from the
-  // entire wallet event log so closed spokes are still listed in the chooser
-  // — selecting one scopes the activity timeline below to that spoke.
   const prices = usePrices();
   const spokeGroups = useMemo(
     () => groupBySpoke(sortedEvents, undefined, prices),
@@ -201,35 +193,24 @@ function AaveV4WalletPageInner() {
     () => buildAaveV4SpokeCards(sortedEvents, undefined, prices),
     [sortedEvents, prices],
   );
+  // The one card we render (single-spoke breadcrumb). If the URL spoke doesn't
+  // exist for this wallet we fall back to "no activity on this spoke" below.
+  const activeCard = useMemo(
+    () => spokeCards.find((c) => c.name === spokeName),
+    [spokeCards, spokeName],
+  );
+  const activeGroup = useMemo(
+    () => spokeGroups.find((g) => g.name === spokeName),
+    [spokeGroups, spokeName],
+  );
 
-  // Auto-select the most-active open spoke once events arrive (or fall back to
-  // the highest-event-count spoke if everything is closed). Won't fire if the
-  // user has already chosen one (state hydrates first; spoke matches a real
-  // spoke name in the cards).
-  useEffect(() => {
-    if (!hasUiHydrated) return;
-    if (spokeCards.length === 0) return;
-    if (selectedSpoke && spokeCards.some((c) => c.name === selectedSpoke)) return;
-    const ranked = [...spokeCards].sort((a, b) => {
-      if (a.isClosed !== b.isClosed) return a.isClosed ? 1 : -1;
-      return b.totalSupplyUsd - a.totalSupplyUsd || b.eventCount - a.eventCount;
-    });
-    setSelectedSpoke(ranked[0].name);
-  }, [hasUiHydrated, spokeCards, selectedSpoke, setSelectedSpoke]);
-
-  // Spoke-scoped events drive everything below the position card — type
-  // counts, heatmap, timeline list. Picking a different spoke from the
-  // selector reshapes all three at once, mirroring rails-explorer.
   const spokeScopedEvents = useMemo(() => {
-    if (!selectedSpoke) return sortedEvents;
     return sortedEvents.filter((e) => {
       if (!isAaveV4Event(e)) return false;
-      return (e.context.data.spokeName ?? "Main") === selectedSpoke;
+      return (e.context.data.spokeName ?? "Main") === spokeName;
     });
-  }, [sortedEvents, selectedSpoke]);
+  }, [sortedEvents, spokeName]);
 
-  // Action-type buckets for the FilterDropdown. Demoted (noisy) actions are
-  // sorted to the bottom so the more meaningful ones are always at the top.
   const eventOptions = useMemo<FilterOption[]>(() => {
     const counts = new Map<string, number>();
     for (const e of spokeScopedEvents) {
@@ -262,8 +243,6 @@ function AaveV4WalletPageInner() {
     [spokeScopedEvents, hiddenSet],
   );
 
-  // Heatmap reflects the type-filtered set, so adjusting type filters reshapes
-  // the heatmap; the date range narrows on top of that into the rendered list.
   const dateFilteredEvents = useMemo(() => {
     if (!dateRange) return visibleEvents;
     const [start, end] = dateRange;
@@ -275,10 +254,6 @@ function AaveV4WalletPageInner() {
     [dateFilteredEvents, sortDirection],
   );
 
-  // Reserve addresses to enrol with PricesProvider. Pull from positions
-  // (which carry reserveAddress) plus every symbol referenced anywhere on the
-  // timeline (looked up via TOKEN_ADDR). The provider dedupes and only
-  // refetches stale entries, so over-collecting here is cheap.
   const reserveAddresses = useMemo(() => {
     const out = new Set<string>();
     for (const p of positions) {
@@ -337,23 +312,21 @@ function AaveV4WalletPageInner() {
     : "Date";
   const heatmapShown = heatmapOpen || dateRange !== null;
 
-  // Only short-circuit when there's truly nothing to show — no current positions
-  // AND no historical events. A wallet that closed every position is still
-  // worth rendering: the spoke selector below already handles `isClosed`, the
-  // economics band reads from the event log (not positions), and the activity
-  // timeline is the whole point of landing on this page.
-  if (positions.length === 0 && events.length === 0) {
+  // If the URL points at a spoke that doesn't exist for this wallet (typo,
+  // stale link), bail with a path back to the wallet's other spokes.
+  if (!activeCard && !loading) {
     return (
       <main className="min-h-screen">
         <FeedbackButton />
         <div className="max-w-7xl mx-auto py-8 space-y-6">
+          <SpokeBreadcrumb walletFilterHref={walletFilterHref} wallet={wallet} spokeName={spokeName} />
           <div className="text-center py-12">
             <p className="text-foreground text-lg mb-3">
-              {shortAddr(wallet)} has no Aave V4 activity
+              {shortAddr(wallet)} has no activity on the {spokeName} spoke
             </p>
             <p className="text-sm text-rb-500">
-              <Link href="/aave-v4" className="underline hover:text-foreground transition-colors">
-                Browse the latest Aave V4 events →
+              <Link href={walletFilterHref} className="underline hover:text-foreground transition-colors">
+                See this wallet&rsquo;s other spokes →
               </Link>
             </p>
           </div>
@@ -366,31 +339,31 @@ function AaveV4WalletPageInner() {
     <main className="min-h-screen">
       <FeedbackButton />
       <div className="max-w-7xl mx-auto py-8 space-y-6">
-        <AaveV4SpokeCardSelector
-          spokes={spokeCards}
-          selected={selectedSpoke ?? undefined}
-          onSelect={(name) => setSelectedSpoke(name)}
-        />
+        <SpokeBreadcrumb walletFilterHref={walletFilterHref} wallet={wallet} spokeName={spokeName} />
 
-        {(() => {
-          const activeGroup = selectedSpoke ? spokeGroups.find((g) => g.name === selectedSpoke) : undefined;
-          const activeCard = selectedSpoke ? spokeCards.find((c) => c.name === selectedSpoke) : undefined;
-          return activeGroup ? (
-            // Full-bleed economics band — escapes the max-w-7xl gutter so
-            // the gray background extends edge-to-edge, matching the
-            // /trove/[…] page on Liquity V2.
-            <div className="relative left-1/2 -translate-x-1/2 w-screen bg-rb-100 dark:bg-rb-900 py-6">
-              <div className="max-w-7xl mx-auto px-4 md:px-6">
-                <AaveV4SpokeEconomicsBand
-                  activeName={activeGroup.name}
-                  reserves={activeGroup.result.reserves}
-                  prices={prices}
-                  runwayCard={activeCard}
-                />
-              </div>
+        {/* Single spoke card — keeps visual parity with the multi-spoke
+            selector on the listing page while making it clear this is the
+            *one* spoke being viewed. */}
+        {activeCard && (
+          <AaveV4SpokeCardSelector
+            spokes={[activeCard]}
+            selected={spokeName}
+            onSelect={() => {}}
+          />
+        )}
+
+        {activeGroup && hasUiHydrated ? (
+          <div className="relative left-1/2 -translate-x-1/2 w-screen bg-rb-100 dark:bg-rb-900 py-6">
+            <div className="max-w-7xl mx-auto px-4 md:px-6">
+              <AaveV4SpokeEconomicsBand
+                activeName={activeGroup.name}
+                reserves={activeGroup.result.reserves}
+                prices={prices}
+                runwayCard={activeCard}
+              />
             </div>
-          ) : null;
-        })()}
+          </div>
+        ) : null}
 
         <TimelineDisplayProvider>
           <div className="flex items-center justify-between flex-wrap gap-2">
@@ -455,9 +428,6 @@ function AaveV4WalletPageInner() {
             <div className="space-y-2">
               {displayedEvents.map((event, idx) => {
                 if (!isAaveV4Event(event)) return null;
-                // Day grouping in display order: only show the date prefix on
-                // the first event of each calendar day. Works for both asc
-                // and desc — compares against the previous DISPLAYED event.
                 const prevDisplayed = idx > 0 ? displayedEvents[idx - 1] : undefined;
                 const showDate =
                   !prevDisplayed || dayKey(event.timestamp) !== dayKey(prevDisplayed.timestamp);
@@ -478,11 +448,9 @@ function AaveV4WalletPageInner() {
             </AaveV4BarsProvider>
           ) : (
             <div className="text-center py-8 text-rb-500">
-              {filtersActive && spokeScopedEvents.length > 0
+              {filtersActive
                 ? "All events filtered out — adjust the type or date filter to show some."
-                : selectedSpoke && sortedEvents.length > 0
-                  ? `No activity on the ${selectedSpoke} spoke — pick a different spoke from the card above.`
-                  : "No Aave V4 activity for this wallet."}
+                : `No activity on the ${spokeName} spoke for this wallet.`}
             </div>
           )}
         </TimelineDisplayProvider>
@@ -491,10 +459,31 @@ function AaveV4WalletPageInner() {
   );
 }
 
+function SpokeBreadcrumb({
+  walletFilterHref,
+  wallet,
+  spokeName,
+}: {
+  walletFilterHref: string;
+  wallet: string;
+  spokeName: string;
+}) {
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      <Link
+        href={walletFilterHref}
+        className="inline-flex items-center gap-1.5 text-rb-500 hover:text-foreground transition-colors"
+      >
+        <ArrowLeft size={14} />
+        <span className="font-mono">{shortAddr(wallet)}</span>
+      </Link>
+      <span className="text-rb-400">/</span>
+      <span className="text-foreground font-semibold">{spokeName}</span>
+    </div>
+  );
+}
+
 // ── Spoke economics band ─────────────────────────────────────────────────────
-// Tower chart + runway stack for the active spoke. Read-only — hypothetical
-// position simulator deferred per the truth principle
-// (see migration/phase-2-mono-explorers.md).
 function AaveV4SpokeEconomicsBand({
   activeName,
   reserves,
@@ -506,9 +495,6 @@ function AaveV4SpokeEconomicsBand({
   prices: Record<string, PriceEntry | number>;
   runwayCard: import("@/lib/aave-v4/spoke-cards").AaveSpokeCardInfo | undefined;
 }) {
-  // Current-state snapshot of the active spoke's reserves in SimPositionInputs
-  // shape. Used purely to compute surplus collateral (assets whose individual
-  // liquidation can't trigger a basket liq) — no hypothetical math.
   const simBase: SimPositionInputs = useMemo(() => ({
     supplies: reserves
       .map((r) => {
@@ -547,11 +533,6 @@ function AaveV4SpokeEconomicsBand({
   );
 }
 
-// Surplus-collateral state — recomputed from current state whenever the spoke
-// changes. Math identical to rails-explorer's inline computation in
-// aave-economics.tsx. Note: simulateAaveV4Position is a pure current-state math
-// function (not a simulator in the truth-principle sense) — it derives HF /
-// per-asset liq prices from current supplies + debts.
 function useSurplusState(simBase: SimPositionInputs): [Set<string>, boolean, React.Dispatch<React.SetStateAction<boolean>>] {
   const [hideSurplus, setHideSurplus] = useState(false);
   const surplusSymbols = useMemo(() => {
