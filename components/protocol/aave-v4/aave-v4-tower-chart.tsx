@@ -182,7 +182,6 @@ export function AaveV4TowerChart({
     .sort((a, b) => b.usd - a.usd);
 
   const supplyOnly = totalBorrowedUsd < 1 && totalRepaidUsd < 1 && totalDebtUsd < 1;
-  if (supplyOnly && allRows.length <= 1) return null;
 
   const hasLive = supplyAssets.length > 0 || debtAssets.length > 0;
   const hasHistory = totalWithdrawnUsd > 1 || totalRepaidUsd > 1 || closedRows.length > 0;
