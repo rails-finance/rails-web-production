@@ -34,6 +34,16 @@ const SPRITE_SYMBOLS = new Set([
   "BOLD",
 ]);
 
+// Trust Wallet doesn't host a logo for some assets, but the brand is shared
+// with another asset that IS hosted. For those, look up the icon under the
+// brand-mark address instead of the canonical token address. The canonical
+// address used everywhere else stays correct.
+const LOGO_ADDRESS_OVERRIDES: Record<string, string> = {
+  // frxUSD/sfrxUSD share the FRAX brand mark (logo.png exists for v1 FRAX).
+  frxUSD: "0x853d955aCEf822Db058eb8505911ED77F175b99e",
+  sfrxUSD: "0x853d955aCEf822Db058eb8505911ED77F175b99e",
+};
+
 export interface TokenChipIconProps {
   symbol: string;
   address?: string;
@@ -80,9 +90,11 @@ export function TokenChipIcon({ symbol, address, size = 16, onClick, filterable 
   }
 
   // Tier 2 — Trust Wallet CDN, from caller-passed address or symbol lookup.
+  // Symbol-level overrides win so brand-shared assets (frxUSD → FRAX) can
+  // share an icon without polluting the canonical TOKEN_ADDRESSES map.
   // Tier 3 — UnknownTokenSvg placeholder when no address to look up (or, in
   // CdnTokenIcon below, when the CDN load fails).
-  const resolvedAddress = address ?? getTokenAddress(symbol);
+  const resolvedAddress = LOGO_ADDRESS_OVERRIDES[symbol] ?? address ?? getTokenAddress(symbol);
   if (resolvedAddress) {
     return (
       <CdnTokenIcon
