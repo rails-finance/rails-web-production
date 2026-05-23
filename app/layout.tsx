@@ -105,11 +105,13 @@ export default function RootLayout({
         <ThemeScript />
         {/* Hero "already-seen" flag — flipped before first paint so CSS in
             globals.css can disable the home-hero animation on subsequent
-            visits in the same session without a hydration flicker. */}
+            visits without a hydration flicker. Persists across tabs/sessions
+            via localStorage so the animation plays once per browser, not
+            once per tab. */}
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "(function(){try{if(sessionStorage.getItem('rails-hero-seen'))document.documentElement.dataset.heroSeen='1'}catch(e){}})()",
+              "(function(){try{if(localStorage.getItem('rails-hero-seen'))document.documentElement.dataset.heroSeen='1'}catch(e){}})()",
           }}
         />
         <StructuredData />

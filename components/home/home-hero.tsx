@@ -7,15 +7,18 @@ import { useEffect } from "react";
  * platform, so the hero doesn't pick a protocol. Entry to a rail goes through
  * the mono-rail cards directly below the hero, or the header app-switcher.
  *
- * Animation runs once per session via the `data-hero-seen` flag set on <html>
+ * Animation runs once per browser via the `data-hero-seen` flag set on <html>
  * by the inline blocking script in app/layout.tsx (matching CSS in
- * globals.css disables the keyframes once flipped). Doing the gate purely in
- * CSS keeps SSR markup identical to post-hydration markup so there's no flicker.
+ * globals.css disables the keyframes once flipped). Stored in localStorage so
+ * the flag persists across tabs and sessions — the hero plays the very first
+ * time a user lands on the site, then stays static on every subsequent visit.
+ * Doing the gate purely in CSS keeps SSR markup identical to post-hydration
+ * markup so there's no flicker.
  */
 export function HomeHero() {
   useEffect(() => {
     try {
-      sessionStorage.setItem("rails-hero-seen", "1");
+      localStorage.setItem("rails-hero-seen", "1");
     } catch {
       /* ignore */
     }
