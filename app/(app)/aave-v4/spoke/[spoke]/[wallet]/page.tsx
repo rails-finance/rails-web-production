@@ -24,6 +24,33 @@ import {
   fetchAaveV4Positions,
   type AaveV4Position,
 } from "@/lib/api/fetch-aave-v4";
+import {
+  fetchAaveV4SpokePosition,
+  type AaveV4SpokePositionChainResponse,
+} from "@/lib/api/fetch-aave-v4-spoke-position";
+import {
+  patchReservesWithChain,
+  patchSpokeCardWithChain,
+} from "@/lib/aave-v4/apply-chain-truth";
+
+// Display-name → server spoke-key map. Mirrors SPOKE_BY_KEY in
+// rails-server-mig/api/src/config/aave-v4-spokes.ts. Used to translate the
+// `/aave-v4/spoke/[spoke]/[wallet]` URL segment (display name) into the
+// lowercase chain key the `/api/aave-v4/spoke-position` endpoint expects.
+const SPOKE_NAME_TO_KEY: Record<string, string> = {
+  "Main": "main",
+  "Bluechip": "bluechip",
+  "Forex": "forex",
+  "Gold": "gold",
+  "Ethena Correlated": "ethena_corr",
+  "Ethena Ecosystem": "ethena_eco",
+  "EtherFi": "etherfi",
+  "Kelp": "kelp",
+  "Lido": "lido",
+  "Lombard BTC": "lombard",
+  "Lombard": "lombard",
+  "Treasury": "treasury",
+};
 import type { BaseActivityEvent } from "@/lib/shared/types/event-shape";
 import { isAaveV4Event } from "@/lib/shared/types/event-shape";
 import { AaveV4EventCard } from "@/components/protocol/aave-v4/aave-v4-event-card";
@@ -126,6 +153,7 @@ function AaveV4SpokePageInner() {
 
   const [events, setEvents] = useState<BaseActivityEvent[]>([]);
   const [positions, setPositions] = useState<AaveV4Position[]>([]);
+  const [chainPosition, setChainPosition] = useState<AaveV4SpokePositionChainResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -162,13 +190,24 @@ function AaveV4SpokePageInner() {
       try {
         setLoading(true);
         setError(null);
-        const [timeline, posResult] = await Promise.all([
+        const spokeKey = SPOKE_NAME_TO_KEY[spokeName];
+        const [timeline, posResult, chainResult] = await Promise.all([
           fetchAaveV4Timeline({ wallet }),
           fetchAaveV4Positions({ wallet }),
+          // Best-effort: when the URL spoke name doesn't map to a known
+          // server key, skip the chain fetch and fall back to event-derived
+          // numbers (the "no activity on this spoke" path below will catch it).
+          spokeKey
+            ? fetchAaveV4SpokePosition({ wallet, spoke: spokeKey }).catch((err) => {
+                console.warn("Chain-truth fetch failed; falling back to indexed", err);
+                return null;
+              })
+            : Promise.resolve(null),
         ]);
         if (cancelled) return;
         setEvents(timeline.events);
         setPositions(posResult.positions);
+        setChainPosition(chainResult);
         setLoading(false);
       } catch (err) {
         if (cancelled) return;
@@ -177,7 +216,7 @@ function AaveV4SpokePageInner() {
       }
     })();
     return () => { cancelled = true; };
-  }, [wallet, isValidWallet]);
+  }, [wallet, isValidWallet, spokeName]);
 
   const sortedEvents = useMemo(
     () => [...events].sort((a, b) => a.blockNumber - b.blockNumber || a.timestamp - b.timestamp),
@@ -195,14 +234,33 @@ function AaveV4SpokePageInner() {
   );
   // The one card we render (single-spoke breadcrumb). If the URL spoke doesn't
   // exist for this wallet we fall back to "no activity on this spoke" below.
-  const activeCard = useMemo(
+  // When chain-truth data is available it overrides the event-derived headline
+  // numbers (HF, total supply/debt USD, liq prices, per-asset balances).
+  // History fields (peak debt, debt series, event count) stay event-derived.
+  const eventActiveCard = useMemo(
     () => spokeCards.find((c) => c.name === spokeName),
     [spokeCards, spokeName],
   );
-  const activeGroup = useMemo(
+  const eventActiveGroup = useMemo(
     () => spokeGroups.find((g) => g.name === spokeName),
     [spokeGroups, spokeName],
   );
+  const activeCard = useMemo(() => {
+    if (!eventActiveCard) return undefined;
+    if (!chainPosition || chainPosition.chainStale) return eventActiveCard;
+    return patchSpokeCardWithChain(eventActiveCard, chainPosition, prices);
+  }, [eventActiveCard, chainPosition, prices]);
+  const activeGroup = useMemo(() => {
+    if (!eventActiveGroup) return undefined;
+    if (!chainPosition || chainPosition.chainStale) return eventActiveGroup;
+    return {
+      ...eventActiveGroup,
+      result: {
+        ...eventActiveGroup.result,
+        reserves: patchReservesWithChain(eventActiveGroup.result.reserves, chainPosition),
+      },
+    };
+  }, [eventActiveGroup, chainPosition]);
 
   const spokeScopedEvents = useMemo(() => {
     return sortedEvents.filter((e) => {
@@ -276,8 +334,15 @@ function AaveV4SpokePageInner() {
         if (addr) out.add(addr);
       }
     }
+    // Chain reserves win for the position card; make sure their prices are
+    // requested even if the indexer hasn't seen the asset yet.
+    if (chainPosition) {
+      for (const r of chainPosition.reserves) {
+        if (r.address) out.add(r.address.toLowerCase());
+      }
+    }
     return [...out];
-  }, [positions, sortedEvents]);
+  }, [positions, sortedEvents, chainPosition]);
 
   useRequestPrices(reserveAddresses);
 

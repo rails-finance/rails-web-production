@@ -3,8 +3,14 @@
 // ============================================================================
 //
 // Discovery list for the /aave-v4 page — the analog of Liquity's /api/troves.
-// One row per (wallet, spoke) with aggregated USD totals and a server-side
-// health factor. Backed by mv_aave_v4_spoke_positions in rails-server-mig.
+// One row per (wallet, spoke), backed by mv_aave_v4_spoke_positions in
+// rails-server-mig.
+//
+// As of rails-server-mig migration 022 the MV holds only structural data
+// (per-reserve balances + LTs). USD totals and the health factor are
+// computed at read time in the Express handler against live DefiLlama
+// prices — this matches the Liquity V2 pattern where price freshness is a
+// read-time concern, not an MV-refresh concern.
 //
 // Wire shape mirrors rails-server-mig/api/src/routes/aaveV4.ts. Keep this
 // file in sync with the SpokePositionRow / SpokePositionsResponse types
@@ -16,9 +22,19 @@ export interface AaveV4SpokePositionRow {
   spokeName: string;
   totalSupplyUsd: number | null;
   totalDebtUsd: number | null;
-  weightedCollUsd: number | null;
-  /** Aave-native HF = weightedCollUsd / totalDebtUsd. null when no debt. */
+  /** 1.0-scaled health factor. Sourced from the spoke contract's
+   *  `getUserAccountData` (matches Aave UI exactly) when the chain overlay
+   *  succeeded; falls back to derived `weightedColl/debt` when it didn't.
+   *  Null when the position carries no debt. */
   healthFactor: number | null;
+  /** 1.0-scaled position-wide collateral factor from the spoke contract.
+   *  Matches Aave UI's per-position CF %. Null when chain data was
+   *  unavailable on this request. */
+  avgCollateralFactor: number | null;
+  /** True when `healthFactor` / `avgCollateralFactor` came from the
+   *  fallback derived-math path (chain RPC overlay failed). UI can render
+   *  a "stale" badge when set. */
+  chainHfStale: boolean;
   supplyAssetCount: number;
   debtAssetCount: number;
   dominantSupplySymbol: string | null;
@@ -28,9 +44,13 @@ export interface AaveV4SpokePositionRow {
   lastActivityAt: number;
   lastBlockNumber: number;
   lastTxHash: string | null;
-  /** Oldest price snapshot timestamp across all the position's assets. */
+  /** Freshest DefiLlama fetch among the assets in this position (epoch ms).
+   *  Within ~5min of "now" on warm caches; older if the row's assets all
+   *  came from a cold-fetch DefiLlama call that's now aged out. */
   oldestPriceFetchedAt: number | null;
-  /** True if any non-zero balance reserve in this position lacks a price. */
+  /** True if any non-zero balance reserve in this position lacks a price
+   *  (DefiLlama returned nothing for it). USD/HF still computed from the
+   *  priced reserves, but the totals understate reality. */
   hasMissingPrice: boolean;
   ensName: string | null;
 }

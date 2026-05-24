@@ -114,6 +114,10 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
   const bucket = bucketForHealth(row.healthFactor);
   const buffer = liqBuffer(row.healthFactor);
   const hasDebt = row.healthFactor != null;
+  // Chain overlay failed for this row → HF/buffer are approximations derived
+  // from indexed balances × DefiLlama prices instead of the spoke's own math.
+  // Only flag when there's debt: HF=null rows have nothing to be stale about.
+  const hfStale = hasDebt && row.chainHfStale;
 
   return (
     <div className="text-foreground">
@@ -191,16 +195,32 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
 
         {/* Health Factor */}
         <div>
-          <div className="text-xs text-rb-500 font-semibold mb-1">Health Factor</div>
+          <div className="text-xs text-rb-500 font-semibold mb-1 inline-flex items-center gap-1">
+            Health Factor
+            {hfStale && (
+              <span
+                className="text-amber-500"
+                title="Approximate — live on-chain source unavailable. Shown value derived from indexed balances × off-chain prices."
+                aria-label="Health factor is approximate; live on-chain source unavailable"
+              >
+                <Icon name="triangle" size={10} />
+              </span>
+            )}
+          </div>
           {hasDebt && row.healthFactor != null ? (
             <div className={`text-3xl font-bold ${bucket.valueColor}`}>
-              {row.healthFactor < 0.01 ? "0" : row.healthFactor.toFixed(2)}
+              {hfStale ? "~" : ""}
+              {row.healthFactor < 0.01
+                ? "0"
+                : row.healthFactor < 1.1
+                  ? row.healthFactor.toFixed(4)
+                  : row.healthFactor.toFixed(2)}
             </div>
           ) : (
             <div className="text-3xl font-bold text-rb-500">—</div>
           )}
           <div className="text-xs mt-0.5 text-rb-500">
-            {hasDebt ? "Min 1.00 threshold" : ""}
+            {hasDebt ? (hfStale ? "Approx — live source unavailable" : "Min 1.00 threshold") : ""}
           </div>
         </div>
 
@@ -209,7 +229,7 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
           <div className="text-xs text-rb-500 font-semibold mb-1">Liq Buffer</div>
           {hasDebt && buffer != null ? (
             <div className={`text-3xl font-bold ${bucket.valueColor}`}>
-              {buffer.toFixed(0)}%
+              {hfStale ? "~" : ""}{buffer.toFixed(0)}%
             </div>
           ) : (
             <div className="text-3xl font-bold text-rb-500">—</div>
