@@ -21,22 +21,23 @@ import { scaleChainBalance } from "@/lib/api/fetch-aave-v4-spoke-position";
 import { simulateAaveV4Position, type SimPositionInputs } from "./utils/simulate";
 import { resolvePrice, type PriceEntry } from "@/lib/aave/prices";
 
-/** Patch a ReserveStats[] so each row's *current* supply/debt/collateral
- *  fields reflect the chain rather than event-derived running balances.
- *  Sets withdrawn/repaid to 0 so consumers using `supplied - withdrawn`
- *  read the chain value directly. History fields are untouched.
+/** Patch a ReserveStats[] so each row carries the chain-truth current
+ *  balance alongside the event-derived lifetime fields. Lifetime
+ *  `supplied`/`withdrawn`/`borrowed`/`repaid` are preserved — the historical
+ *  tower chart needs them to render the Deposited/Borrowed side-bars and
+ *  the lifetime breakdown rows. Current state is exposed as `currentSupplied`
+ *  / `currentBorrowed`, which consumers should prefer when computing
+ *  what's-active-now.
  *
  *  Reserves that exist on chain but not in the event history (e.g. a new
  *  asset the wallet never moved in our indexer) are appended as minimal
  *  rows. Reserves in event history with no chain presence are kept (so
- *  history-only displays still see them) but their balances are zeroed. */
+ *  history-only displays still see them) and their current balances are
+ *  pinned to 0. */
 export function patchReservesWithChain(
   reserves: ReserveStats[],
   chain: AaveV4SpokePositionChainResponse,
 ): ReserveStats[] {
-  const byAddress = new Map<string, (typeof chain.reserves)[number]>();
-  for (const r of chain.reserves) byAddress.set(r.address.toLowerCase(), r);
-
   // Address lookup for ReserveStats by symbol. ReserveStats doesn't carry
   // address, so we resolve via the chain map (symbol → address). When a
   // symbol appears once in chain that's the only candidate; if it doesn't
@@ -52,32 +53,32 @@ export function patchReservesWithChain(
     const c = chainBySymbol.get(r.symbol);
     if (!c) {
       // No chain row for this symbol → wallet has no current position in it
-      // (or the symbol just doesn't exist on this spoke). Zero out current
-      // state; keep history.
-      return { ...r, supplied: 0, withdrawn: 0, borrowed: 0, repaid: 0 };
+      // (or the symbol just doesn't exist on this spoke). Pin current state
+      // to 0; keep lifetime history intact.
+      return { ...r, currentSupplied: 0, currentBorrowed: 0 };
     }
     seenChainAddrs.add(c.address);
-    const supplied = scaleChainBalance(c.supplyBalanceRaw, c.decimals);
-    const borrowed = scaleChainBalance(c.debtBalanceRaw, c.decimals);
     return {
       ...r,
-      supplied,
-      withdrawn: 0,
-      borrowed,
-      repaid: 0,
+      currentSupplied: scaleChainBalance(c.supplyBalanceRaw, c.decimals),
+      currentBorrowed: scaleChainBalance(c.debtBalanceRaw, c.decimals),
       collateralEnabled: c.isCollateral,
     };
   });
 
   // Append chain rows that the event history didn't know about. Common when
-  // the indexer is behind on a brand-new reserve.
+  // the indexer is behind on a brand-new reserve. Lifetime fields stay 0
+  // since we never saw the supply/borrow events.
   for (const c of chain.reserves) {
     if (seenChainAddrs.has(c.address)) continue;
+    const live = scaleChainBalance(c.supplyBalanceRaw, c.decimals);
+    const debt = scaleChainBalance(c.debtBalanceRaw, c.decimals);
+    if (live <= 0 && debt <= 0) continue;
     patched.push({
       symbol: c.symbol,
-      supplied: scaleChainBalance(c.supplyBalanceRaw, c.decimals),
+      supplied: 0,
       withdrawn: 0,
-      borrowed: scaleChainBalance(c.debtBalanceRaw, c.decimals),
+      borrowed: 0,
       repaid: 0,
       liquidatedDebt: 0,
       liquidatedCollateral: 0,
@@ -87,8 +88,10 @@ export function patchReservesWithChain(
       debtSeries: [],
       peakDebt: 0,
       peakDebtTimestamp: 0,
-      peakSupply: scaleChainBalance(c.supplyBalanceRaw, c.decimals),
+      peakSupply: 0,
       flowEvents: [],
+      currentSupplied: live,
+      currentBorrowed: debt,
     });
   }
 

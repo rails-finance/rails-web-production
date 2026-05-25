@@ -43,6 +43,14 @@ export interface ReserveStats {
   peakDebtTimestamp: number;
   peakSupply: number;
   flowEvents: FlowEvent[];
+  /** Chain-truth current balance for this reserve, when an on-chain read has
+   *  been applied (see `patchReservesWithChain`). When absent, consumers
+   *  derive current state from `supplied − withdrawn − liquidatedCollateral`.
+   *  Keeping this separate from `supplied`/`withdrawn` preserves the lifetime
+   *  totals the historical tower chart needs. */
+  currentSupplied?: number;
+  /** Chain-truth current debt balance for this reserve. See `currentSupplied`. */
+  currentBorrowed?: number;
 }
 
 export interface AaveEconomicsResult {
@@ -174,13 +182,44 @@ export function calculateAaveEconomics(
         if (amount > 0) stats.flowEvents.push({ timestamp: event.timestamp, amount, side: "borrow", direction: "out", label: "Repay", eventIndex: eventSeq });
         break;
       case "liquidation": {
+        // V4 liquidation events carry two assets:
+        //   reserveSymbol  → the debt that was covered     (debtToCover)
+        //   collateralSymbol → the collateral that was seized (liquidatedCollateralAmount)
+        // The two amounts are denominated in different tokens, so they must
+        // land on different ReserveStats records.
         const debtCovered = parseFloat(ctx.debtToCover ?? "0");
         const collSeized = parseFloat(ctx.liquidatedCollateralAmount ?? "0");
+        const collSym = ctx.collateralSymbol;
+
         stats.liquidatedDebt += debtCovered;
-        stats.liquidatedCollateral += collSeized;
         stats.liquidationCount++;
         runningDebt.set(symbol, (runningDebt.get(symbol) ?? 0) - debtCovered);
         if (debtCovered > 0) stats.flowEvents.push({ timestamp: event.timestamp, amount: debtCovered, side: "borrow", direction: "out", label: "Liquidate", eventIndex: eventSeq });
+
+        if (collSeized > 0) {
+          // Collateral side lands on the seized asset's stats. When the
+          // event omits collateralSymbol (older data), fall back to the
+          // debt-side stats so the seizure isn't lost.
+          let collStats = stats;
+          if (collSym && collSym !== symbol) {
+            let cs = reserveMap.get(collSym);
+            if (!cs) {
+              cs = {
+                symbol: collSym, supplied: 0, withdrawn: 0, borrowed: 0, repaid: 0,
+                liquidatedDebt: 0, liquidatedCollateral: 0, liquidationCount: 0,
+                eventCount: 0,
+                debtSeries: [], peakDebt: 0, peakDebtTimestamp: 0, peakSupply: 0, flowEvents: [],
+              };
+              reserveMap.set(collSym, cs);
+              runningDebt.set(collSym, 0);
+              runningSupply.set(collSym, 0);
+            }
+            collStats = cs;
+          }
+          collStats.liquidatedCollateral += collSeized;
+          runningSupply.set(collStats.symbol, Math.max(0, (runningSupply.get(collStats.symbol) ?? 0) - collSeized));
+          collStats.flowEvents.push({ timestamp: event.timestamp, amount: collSeized, side: "supply", direction: "out", label: "Liquidate", eventIndex: eventSeq });
+        }
         break;
       }
       default:

@@ -557,7 +557,7 @@ function AaveV4SpokeEconomicsBand({
   const simBase: SimPositionInputs = useMemo(() => ({
     supplies: reserves
       .map((r) => {
-        const netSupply = Math.max(0, r.supplied - r.withdrawn);
+        const netSupply = r.currentSupplied ?? Math.max(0, r.supplied - r.withdrawn - r.liquidatedCollateral);
         if (netSupply <= 0.0001) return null;
         const price = resolvePrice(r.symbol, prices) ?? 1;
         const lt = getLiquidationThreshold(activeName, r.symbol);
@@ -567,7 +567,7 @@ function AaveV4SpokeEconomicsBand({
       .filter(Boolean) as SimPositionInputs["supplies"],
     debts: reserves
       .map((r) => {
-        const netDebt = Math.max(0, r.borrowed - r.repaid);
+        const netDebt = r.currentBorrowed ?? Math.max(0, r.borrowed - r.repaid - r.liquidatedDebt);
         if (netDebt <= 0.0001) return null;
         const price = resolvePrice(r.symbol, prices) ?? 1;
         return { symbol: r.symbol, amount: netDebt, price };

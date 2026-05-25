@@ -16,6 +16,7 @@ import {
   type BreakdownRow,
   DualTowerChart,
   fmt,
+  LIQUIDATION_PATTERN,
   REPAID_PATTERN,
   WITHDRAWN_PATTERN,
 } from "@/components/shared/economics-chart-primitives";
@@ -47,16 +48,23 @@ function fmtUsdCompact(n: number): string {
 
 interface AssetRow {
   symbol: string;
+  // Lifetime totals — drive the historical-view side bars and breakdown rows.
   supplied: number;
   withdrawn: number;
-  netSupply: number;
   borrowed: number;
   repaid: number;
+  liquidatedDebt: number;
+  liquidatedCollateral: number;
+  // Current state — drives the solid tower segments and the "In Protocol" /
+  // "Outstanding" totals. Sourced from chain-truth when present, otherwise
+  // derived from lifetime fields.
+  netSupply: number;
   netDebt: number;
   price: number;
   netSupplyUsd: number;
   netDebtUsd: number;
   isClosed: boolean;
+  hasHistoricActivity: boolean;
 }
 
 function AaveChartDisplayMenu({
@@ -129,30 +137,51 @@ export function AaveV4TowerChart({
   const [hideUsd, setHideUsd] = useState(true);
 
   const allRows: AssetRow[] = reserves
-    .filter((r) => r.supplied > 0 || r.borrowed > 0)
+    .filter(
+      (r) =>
+        r.supplied > 0 ||
+        r.borrowed > 0 ||
+        r.liquidatedDebt > 0 ||
+        r.liquidatedCollateral > 0 ||
+        (r.currentSupplied ?? 0) > 0 ||
+        (r.currentBorrowed ?? 0) > 0,
+    )
     .map((r) => {
-      const netSupply = Math.max(0, r.supplied - r.withdrawn);
-      const netDebt = Math.max(0, r.borrowed - r.repaid);
+      // Current state from chain truth when available; otherwise reconcile
+      // lifetime flows including liquidation seizures / debt clears.
+      const netSupply =
+        r.currentSupplied ?? Math.max(0, r.supplied - r.withdrawn - r.liquidatedCollateral);
+      const netDebt =
+        r.currentBorrowed ?? Math.max(0, r.borrowed - r.repaid - r.liquidatedDebt);
       const price = resolvePrice(r.symbol, prices) ?? 1;
+      const hasHistoricActivity =
+        r.supplied > 0 ||
+        r.borrowed > 0 ||
+        r.withdrawn > 0 ||
+        r.repaid > 0 ||
+        r.liquidatedDebt > 0 ||
+        r.liquidatedCollateral > 0;
       return {
         symbol: r.symbol,
         supplied: r.supplied,
         withdrawn: r.withdrawn,
-        netSupply,
         borrowed: r.borrowed,
         repaid: r.repaid,
+        liquidatedDebt: r.liquidatedDebt,
+        liquidatedCollateral: r.liquidatedCollateral,
+        netSupply,
         netDebt,
         price,
         netSupplyUsd: netSupply * price,
         netDebtUsd: netDebt * price,
         isClosed: netSupply * price < 1 && netDebt * price < 1,
+        hasHistoricActivity,
       };
     });
 
   if (allRows.length === 0) return null;
 
   const activeRows = allRows.filter((r) => !r.isClosed);
-  const closedRows = allRows.filter((r) => r.isClosed);
 
   const supplyAssetsAll = activeRows
     .filter((r) => r.netSupplyUsd > 0.01)
@@ -170,8 +199,32 @@ export function AaveV4TowerChart({
   const totalDebtUsd = debtAssets.reduce((s, r) => s + r.netDebtUsd, 0);
   const totalWithdrawnUsd = allRows.reduce((s, r) => s + r.withdrawn * r.price, 0);
   const totalRepaidUsd = allRows.reduce((s, r) => s + r.repaid * r.price, 0);
-  const totalDepositedUsd = allRows.reduce((s, r) => s + r.supplied * r.price, 0);
-  const totalBorrowedUsd = allRows.reduce((s, r) => s + r.borrowed * r.price, 0);
+  const totalLiquidatedCollUsd = allRows.reduce(
+    (s, r) => s + r.liquidatedCollateral * r.price,
+    0,
+  );
+  const totalLiquidatedDebtUsd = allRows.reduce(
+    (s, r) => s + r.liquidatedDebt * r.price,
+    0,
+  );
+  // Lifetime side-bar totals — the chain-truth path zeros out r.supplied /
+  // r.borrowed for rows whose live balance is non-zero, so reconstruct the
+  // lifetime peak from the available flows so the side bar is visible even
+  // when chain truth replaced the event-derived totals.
+  const totalDepositedUsd = allRows.reduce((s, r) => {
+    const lifetime = Math.max(
+      r.supplied,
+      r.netSupply + r.withdrawn + r.liquidatedCollateral,
+    );
+    return s + lifetime * r.price;
+  }, 0);
+  const totalBorrowedUsd = allRows.reduce((s, r) => {
+    const lifetime = Math.max(
+      r.borrowed,
+      r.netDebt + r.repaid + r.liquidatedDebt,
+    );
+    return s + lifetime * r.price;
+  }, 0);
 
   const withdrawnAssets = allRows
     .map((r) => ({ symbol: r.symbol, amount: r.withdrawn, usd: r.withdrawn * r.price }))
@@ -181,12 +234,33 @@ export function AaveV4TowerChart({
     .map((r) => ({ symbol: r.symbol, amount: r.repaid, usd: r.repaid * r.price }))
     .filter((r) => r.usd > 1)
     .sort((a, b) => b.usd - a.usd);
-
-  const supplyOnly = totalBorrowedUsd < 1 && totalRepaidUsd < 1 && totalDebtUsd < 1;
+  const liquidatedCollAssets = allRows
+    .map((r) => ({ symbol: r.symbol, amount: r.liquidatedCollateral, usd: r.liquidatedCollateral * r.price }))
+    .filter((r) => r.usd > 1)
+    .sort((a, b) => b.usd - a.usd);
+  const liquidatedDebtAssets = allRows
+    .map((r) => ({ symbol: r.symbol, amount: r.liquidatedDebt, usd: r.liquidatedDebt * r.price }))
+    .filter((r) => r.usd > 1)
+    .sort((a, b) => b.usd - a.usd);
 
   const hasLive = supplyAssets.length > 0 || debtAssets.length > 0;
-  const hasHistory = totalWithdrawnUsd > 1 || totalRepaidUsd > 1 || closedRows.length > 0;
+  const hasHistory =
+    totalWithdrawnUsd > 1 ||
+    totalRepaidUsd > 1 ||
+    totalLiquidatedCollUsd > 1 ||
+    totalLiquidatedDebtUsd > 1;
   const isLiveView = hideHistorical && (hasLive || !hasHistory);
+
+  // Suppress the debt tower for pure supply-side wallets. In live view that
+  // means no current debt; in historical view it means no debt-side activity
+  // ever (raw token amounts, so an unresolved price for the borrow asset
+  // doesn't collapse a liquidated position back to a "supply only" chart).
+  const hasHistoricDebt = allRows.some(
+    (r) => r.borrowed > 0 || r.repaid > 0 || r.liquidatedDebt > 0,
+  );
+  const supplyOnly = isLiveView
+    ? debtAssets.length === 0
+    : !hasHistoricDebt && debtAssets.length === 0;
 
   const collSegments: TowerSegment[] = [
     ...supplyAssets.map((r) => ({
@@ -195,6 +269,15 @@ export function AaveV4TowerChart({
       value: r.netSupplyUsd,
       colorClass: isSurplus(r.symbol) ? "bg-blue-500/60" : "bg-blue-500",
     })),
+    ...(!isLiveView
+      ? [...liquidatedCollAssets].reverse().map((l) => ({
+          key: `coll-liquidated-${l.symbol}`,
+          label: `${aaveV4DisplaySymbol(l.symbol)} liquidated`,
+          value: l.usd,
+          colorClass: "",
+          patternStyle: LIQUIDATION_PATTERN,
+        }))
+      : []),
     ...(!isLiveView
       ? [...withdrawnAssets].reverse().map((w) => ({
           key: `coll-withdrawn-${w.symbol}`,
@@ -213,6 +296,15 @@ export function AaveV4TowerChart({
       value: r.netDebtUsd,
       colorClass: "bg-emerald-400",
     })),
+    ...(!isLiveView
+      ? [...liquidatedDebtAssets].reverse().map((l) => ({
+          key: `debt-liquidated-${l.symbol}`,
+          label: `${aaveV4DisplaySymbol(l.symbol)} liquidated`,
+          value: l.usd,
+          colorClass: "",
+          patternStyle: LIQUIDATION_PATTERN,
+        }))
+      : []),
     ...(!isLiveView
       ? [...repaidAssets].reverse().map((rA) => ({
           key: `debt-repaid-${rA.symbol}`,
@@ -258,6 +350,16 @@ export function AaveV4TowerChart({
           icon: <TokenChipIcon symbol={w.symbol} size={14} filterable={false} />,
         })) as BreakdownRow[]
       : []),
+    ...(!isLiveView
+      ? liquidatedCollAssets.map((l) => ({
+          sign: "−",
+          label: `${aaveV4DisplaySymbol(l.symbol)} liquidated`,
+          amount: fmt(l.amount),
+          usdHint: hideUsd ? undefined : fmtUsdCompact(l.usd),
+          swatchStyle: LIQUIDATION_PATTERN,
+          icon: <TokenChipIcon symbol={l.symbol} size={14} filterable={false} />,
+        })) as BreakdownRow[]
+      : []),
     ...[...supplyAssets].reverse().map(
       (r) =>
         ({
@@ -296,6 +398,16 @@ export function AaveV4TowerChart({
           usdHint: hideUsd ? undefined : fmtUsdCompact(rA.usd),
           swatchStyle: REPAID_PATTERN,
           icon: <TokenChipIcon symbol={rA.symbol} size={14} filterable={false} />,
+        })) as BreakdownRow[]
+      : []),
+    ...(!isLiveView
+      ? liquidatedDebtAssets.map((l) => ({
+          sign: "−",
+          label: `${aaveV4DisplaySymbol(l.symbol)} liquidated`,
+          amount: fmt(l.amount),
+          usdHint: hideUsd ? undefined : fmtUsdCompact(l.usd),
+          swatchStyle: LIQUIDATION_PATTERN,
+          icon: <TokenChipIcon symbol={l.symbol} size={14} filterable={false} />,
         })) as BreakdownRow[]
       : []),
     ...[...debtAssets].reverse().map(
