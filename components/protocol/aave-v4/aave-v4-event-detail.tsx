@@ -14,10 +14,14 @@ import { aaveV4DisplaySymbol } from "@/lib/aave-v4/pt-tokens";
 function fmt(v: string | number | undefined): string {
   if (!v) return "0";
   const n = typeof v === "string" ? parseFloat(v) : v;
-  if (isNaN(n)) return "0";
-  if (Math.abs(n) < 0.0001) return "0";
-  if (Math.abs(n) >= 1_000) return n.toLocaleString(undefined, { maximumFractionDigits: 0 });
-  return n.toLocaleString(undefined, { maximumFractionDigits: 4 });
+  if (!isFinite(n)) return "0";
+  if (n === 0) return "0";
+  const abs = Math.abs(n);
+  if (abs >= 1_000) return n.toLocaleString(undefined, { maximumFractionDigits: 0 });
+  if (abs >= 1) return n.toLocaleString(undefined, { maximumFractionDigits: 4 });
+  // Sub-unit: scale decimals so BTC-family / wei-fractional amounts don't underflow to "0".
+  const decimals = Math.min(8, Math.ceil(-Math.log10(abs)) + 2);
+  return n.toLocaleString(undefined, { maximumFractionDigits: decimals });
 }
 
 /** USD value formatter matching Liquity V2's detail-row style:

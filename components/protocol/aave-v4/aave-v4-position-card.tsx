@@ -30,9 +30,12 @@ const ACTIVITY_FORMAT = new Intl.DateTimeFormat(undefined, {
 function fmtNum(v: string): string {
   const n = parseFloat(v);
   if (!isFinite(n) || n === 0) return "0";
-  if (Math.abs(n) >= 1_000) return n.toLocaleString(undefined, { maximumFractionDigits: 0 });
-  if (Math.abs(n) < 0.0001) return n.toExponential(2);
-  return n.toLocaleString(undefined, { maximumFractionDigits: 4 });
+  const abs = Math.abs(n);
+  if (abs >= 1_000) return n.toLocaleString(undefined, { maximumFractionDigits: 0 });
+  if (abs >= 1) return n.toLocaleString(undefined, { maximumFractionDigits: 4 });
+  // Sub-unit: scale decimals so BTC-family / wei-fractional amounts don't underflow to "0".
+  const decimals = Math.min(8, Math.ceil(-Math.log10(abs)) + 2);
+  return n.toLocaleString(undefined, { maximumFractionDigits: decimals });
 }
 
 function fmtUsd(n: number): string {

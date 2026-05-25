@@ -14,9 +14,14 @@ import {
 // ── Formatters ──────────────────────────────────────────────────────
 
 function fmt(n: number): string {
-  if (Math.abs(n) < 0.01) return "0";
-  if (Math.abs(n) >= 1000) return n.toLocaleString(undefined, { maximumFractionDigits: 0 });
-  return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  if (!isFinite(n)) return "0";
+  if (n === 0) return "0";
+  const abs = Math.abs(n);
+  if (abs >= 1000) return n.toLocaleString(undefined, { maximumFractionDigits: 0 });
+  if (abs >= 1) return n.toLocaleString(undefined, { maximumFractionDigits: 4 });
+  // Sub-unit: scale decimals so small fractional amounts don't underflow to "0".
+  const decimals = Math.min(8, Math.ceil(-Math.log10(abs)) + 2);
+  return n.toLocaleString(undefined, { maximumFractionDigits: decimals });
 }
 
 function fmtColl(n: number): string {
