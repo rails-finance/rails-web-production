@@ -20,6 +20,7 @@ import { type HubTier } from "@/components/protocol/aave-v4/aave-v4-spoke-consta
 import type { AaveSpokeCardInfo } from "@/lib/aave-v4/spoke-cards";
 import { bucketForHealth } from "@/lib/aave-v4/health-bucket";
 import { LiquidatedBadge } from "@/components/aave-v4/LiquidatedBadge";
+import { WalletPill } from "@/components/aave-v4/wallet-pill";
 import { fmtUsd, hfLabel, hfColorClass, fmtLiqPrice } from "@/lib/aave-v4/format";
 
 export type { AaveSpokeCardInfo };
@@ -104,12 +105,20 @@ function AaveV4SpokeCard({
   noHover,
   staticCard,
   onClick,
+  wallet,
+  ensName,
 }: {
   spoke: AaveSpokeCardInfo;
   isSelected: boolean;
   noHover?: boolean;
   staticCard?: boolean;
   onClick: () => void;
+  /** When set, a wallet pill (facehash + addr/ENS + copy) renders alongside
+   *  the spoke identity. The detail page passes this; multi-spoke selectors
+   *  inside a wallet-scoped view omit it (the page header already names the
+   *  wallet). */
+  wallet?: string;
+  ensName?: string | null;
 }) {
   const { isClosed } = spoke;
   const showInfo = !isClosed && getSpokeMeta(spoke.name) != null && (
@@ -118,6 +127,9 @@ function AaveV4SpokeCard({
   const [infoOpen, setInfoOpen] = useState(false);
   const supplyOnly = spoke.peakDebtUsd < 1 && spoke.totalDebtUsd < 1;
   const bucket = bucketForHealth(spoke.healthFactor);
+  const walletPill = wallet ? (
+    <WalletPill wallet={wallet} ensName={ensName ?? null} />
+  ) : null;
   return (
     <div
       onClick={onClick}
@@ -133,7 +145,12 @@ function AaveV4SpokeCard({
             debtAssetIcons={!supplyOnly && spoke.borrowingSymbols.length > 0 ? (
               <InlineAssetCluster symbols={spoke.borrowingSymbols} />
             ) : undefined}
-            leadingIdentity={<SpokeIdentity name={spoke.name} hub={spoke.hub} />}
+            leadingIdentity={
+              <>
+                <SpokeIdentity name={spoke.name} hub={spoke.hub} />
+                {walletPill}
+              </>
+            }
             collateralLabel={supplyOnly ? "Peak Supplied" : "Peak Collateral"}
             collateral={(() => {
               const v = fmtUsd(spoke.peakSupplyUsd);
@@ -155,6 +172,7 @@ function AaveV4SpokeCard({
               <>
                 {spoke.wasLiquidated && <LiquidatedBadge />}
                 <SpokeIdentity name={spoke.name} hub={spoke.hub} />
+                {walletPill}
               </>
             }
             identity={showInfo ? (
@@ -254,9 +272,21 @@ export interface AaveV4SpokeCardSelectorProps {
   spokes: AaveSpokeCardInfo[];
   selected: string | undefined;
   onSelect: (spokeName: string) => void;
+  /** When set, every rendered card carries a wallet pill alongside the spoke
+   *  identity (facehash + ENS-or-short-addr + copy). Detail page passes this
+   *  so the card matches the listing-card identity row; multi-spoke selectors
+   *  inside a wallet-scoped page omit it. */
+  wallet?: string;
+  ensName?: string | null;
 }
 
-export function AaveV4SpokeCardSelector({ spokes, selected, onSelect }: AaveV4SpokeCardSelectorProps) {
+export function AaveV4SpokeCardSelector({
+  spokes,
+  selected,
+  onSelect,
+  wallet,
+  ensName,
+}: AaveV4SpokeCardSelectorProps) {
   const items = spokes.map((s) => {
     const status: "open" | "closed" = s.isClosed ? "closed" : "open";
     return { ...s, id: s.name, status };
@@ -277,6 +307,8 @@ export function AaveV4SpokeCardSelector({ spokes, selected, onSelect }: AaveV4Sp
           noHover={props.noHover}
           staticCard={props.staticCard}
           onClick={props.onClick}
+          wallet={wallet}
+          ensName={ensName}
         />
       )}
     />

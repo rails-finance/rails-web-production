@@ -414,6 +414,7 @@ function AaveV4SpokePageInner() {
             spokes={[activeCard]}
             selected={spokeName}
             onSelect={() => {}}
+            wallet={wallet}
           />
         )}
 
