@@ -19,6 +19,8 @@ import { formatCompact } from "@/lib/shared/format-event";
 import { getSpokeMeta, ARCHETYPE_LABEL, ARCHETYPE_ACCENT } from "@/lib/aave-v4/spoke-meta";
 import { type HubTier } from "@/components/protocol/aave-v4/aave-v4-spoke-constants";
 import type { AaveSpokeCardInfo } from "@/lib/aave-v4/spoke-cards";
+import { bucketForHealth } from "@/lib/aave-v4/health-bucket";
+import { LiquidatedBadge } from "@/components/aave-v4/LiquidatedBadge";
 
 export type { AaveSpokeCardInfo };
 
@@ -146,6 +148,7 @@ function AaveV4SpokeCard({
   );
   const [infoOpen, setInfoOpen] = useState(false);
   const supplyOnly = spoke.peakDebtUsd < 1 && spoke.totalDebtUsd < 1;
+  const bucket = bucketForHealth(spoke.healthFactor);
   return (
     <div
       onClick={onClick}
@@ -154,7 +157,7 @@ function AaveV4SpokeCard({
       <div className="px-5 py-4">
         {isClosed ? (
           <ClosedPositionStats
-            outcome="closed"
+            outcome={spoke.wasLiquidated ? "liquidated" : "closed"}
             collateralAssetIcons={spoke.supplyingSymbols.length > 0 ? (
               <InlineAssetCluster symbols={spoke.supplyingSymbols} />
             ) : undefined}
@@ -174,7 +177,17 @@ function AaveV4SpokeCard({
           />
         ) : (
           <OpenPositionStats
-            leadingIdentity={<SpokeIdentity name={spoke.name} hub={spoke.hub} />}
+            statusPill={
+              <span className={`font-bold tracking-wider px-2 py-0.5 rounded-xs text-xs ${bucket.pillClass}`}>
+                {bucket.pillLabel}
+              </span>
+            }
+            leadingIdentity={
+              <>
+                {spoke.wasLiquidated && <LiquidatedBadge />}
+                <SpokeIdentity name={spoke.name} hub={spoke.hub} />
+              </>
+            }
             identity={showInfo ? (
               <SpokeInfoButton isOpen={infoOpen} onClick={() => setInfoOpen((o) => !o)} />
             ) : undefined}

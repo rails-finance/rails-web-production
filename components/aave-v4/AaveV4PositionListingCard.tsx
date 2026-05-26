@@ -11,6 +11,9 @@ import { Icon } from "@/components/icons/icon";
 import { formatDuration } from "@/lib/date";
 import { useState } from "react";
 import type { AaveV4SpokePositionRow } from "@/lib/api/fetch-aave-v4-spoke-positions";
+import { bucketForHealth } from "@/lib/aave-v4/health-bucket";
+import { SPOKE_HUB } from "@/components/protocol/aave-v4/aave-v4-spoke-constants";
+import { LiquidatedBadge } from "@/components/aave-v4/LiquidatedBadge";
 
 function formatUsd(v: number | null): string {
   if (v == null) return "—";
@@ -23,48 +26,6 @@ function formatUsd(v: number | null): string {
 
 function shortAddr(addr: string): string {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
-}
-
-interface HealthBucket {
-  pillLabel: string;
-  pillClass: string;
-  valueColor: string;
-}
-
-function bucketForHealth(hf: number | null): HealthBucket {
-  if (hf == null) {
-    return {
-      pillLabel: "NO DEBT",
-      pillClass: "bg-rb-300 dark:bg-rb-700 text-foreground/80 dark:text-foreground/60",
-      valueColor: "text-rb-500",
-    };
-  }
-  if (hf >= 1.5) {
-    return {
-      pillLabel: "OPEN",
-      pillClass: "text-white bg-green-500 dark:bg-green-950 dark:text-green-500/70",
-      valueColor: "text-foreground",
-    };
-  }
-  if (hf >= 1.1) {
-    return {
-      pillLabel: "CAUTIOUS",
-      pillClass: "text-white bg-amber-500 dark:bg-amber-950 dark:text-amber-500/70",
-      valueColor: "text-amber-400",
-    };
-  }
-  if (hf >= 1.0) {
-    return {
-      pillLabel: "AT RISK",
-      pillClass: "text-white bg-orange-500 dark:bg-orange-950 dark:text-orange-500/70",
-      valueColor: "text-orange-400",
-    };
-  }
-  return {
-    pillLabel: "UNDERWATER",
-    pillClass: "text-white bg-red-500 dark:bg-red-950 dark:text-red-500/70",
-    valueColor: "text-red-400",
-  };
 }
 
 // Liquidation buffer = the fraction of weighted collateral that could vanish
@@ -128,8 +89,12 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
           >
             {bucket.pillLabel}
           </span>
-          <span className="text-xs font-bold uppercase tracking-wide text-foreground/80">
-            {row.spokeName}
+          {row.liquidationCount > 0 && <LiquidatedBadge />}
+          <span className="flex items-center gap-1.5 leading-none text-foreground">
+            <span className="text-xs font-semibold">{row.spokeName}</span>
+            <span className="text-xs font-bold uppercase tracking-wide">
+              {SPOKE_HUB[row.spokeName] ?? "Core"}
+            </span>
           </span>
           <span className="inline-flex items-center gap-1.5">
             <Facehash address={row.wallet} size={16} />

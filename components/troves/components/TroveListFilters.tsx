@@ -241,6 +241,45 @@ export function TroveListFilters({
                   </div>
                 </div>
 
+                {/* Liquidations — thin shortcut over `status`. Liquity troves
+                    are terminal entities (a liquidated trove can't be reopened
+                    with the same ID), so "with liquidations" is just
+                    status=liquidated. Picking this overrides the Status group;
+                    picking a Status option resets this back to Any. */}
+                <div className="p-3">
+                  <div className="text-xs text-rb-500 uppercase tracking-wider mb-2">
+                    Liquidations
+                  </div>
+                  <div className="flex bg-rb-200 dark:bg-rb-900 rounded-lg p-1" role="group" aria-label="Filter by liquidation history">
+                    <button
+                      onClick={() =>
+                        handleFilterChange({
+                          status: filters.status === "liquidated" ? undefined : filters.status,
+                        })
+                      }
+                      className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        filters.status !== "liquidated"
+                          ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-400 font-semibold"
+                          : "text-rb-500 hover:text-foreground"
+                      }`}
+                      aria-pressed={filters.status !== "liquidated"}
+                    >
+                      Any
+                    </button>
+                    <button
+                      onClick={() => handleFilterChange({ status: "liquidated" })}
+                      className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        filters.status === "liquidated"
+                          ? "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-400 font-semibold"
+                          : "text-rb-500 hover:text-foreground"
+                      }`}
+                      aria-pressed={filters.status === "liquidated"}
+                    >
+                      Liquidated
+                    </button>
+                  </div>
+                </div>
+
                 {/* Advanced Filters */}
                 <div className="p-3 space-y-3">
                   {/* Redemptions Filter */}

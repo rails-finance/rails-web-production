@@ -15,6 +15,9 @@ import { upsertSession } from "@/lib/shared/sessions";
 
 export type AaveV4Debt = "all" | "withDebt" | "noDebt";
 export type AaveV4Health = "all" | "atRisk" | "underwater";
+/** Tri-state liquidation filter. "with" → positions liquidated at least
+ *  once, "without" → positions never liquidated, "all" → no restriction. */
+export type AaveV4Liquidations = "all" | "with" | "without";
 
 export interface AaveV4ListFilterParams {
   wallet?: string;
@@ -25,6 +28,7 @@ export interface AaveV4ListFilterParams {
   hubs: string[];
   debt: AaveV4Debt;
   health: AaveV4Health;
+  liquidations: AaveV4Liquidations;
   sortBy: string;
   sortOrder: "asc" | "desc";
 }
@@ -132,15 +136,19 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
   };
 
   const activeFilterCount =
-    (filters.debt !== "all" ? 1 : 0) + (filters.health !== "all" ? 1 : 0);
+    (filters.debt !== "all" ? 1 : 0) +
+    (filters.health !== "all" ? 1 : 0) +
+    (filters.liquidations !== "all" ? 1 : 0);
 
   const setDebt = (debt: AaveV4Debt) => onFiltersChange({ ...filters, debt });
   const setHealth = (health: AaveV4Health) => onFiltersChange({ ...filters, health });
+  const setLiquidations = (liquidations: AaveV4Liquidations) =>
+    onFiltersChange({ ...filters, liquidations });
   const setSpokes = (spokes: string[]) => onFiltersChange({ ...filters, spokes });
   const setHubs = (hubs: string[]) => onFiltersChange({ ...filters, hubs });
 
   const resetFilters = () =>
-    onFiltersChange({ ...filters, debt: "all", health: "all" });
+    onFiltersChange({ ...filters, debt: "all", health: "all", liquidations: "all" });
 
   return (
     <div className="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 xl:gap-4">
@@ -224,6 +232,36 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
                             : "text-rb-500 hover:text-foreground"
                         }`}
                         aria-pressed={filters.health === v}
+                      >
+                        {l}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="p-3">
+                  <div className="text-xs text-rb-500 uppercase tracking-wider mb-2">Liquidations</div>
+                  <div className="flex bg-rb-200 dark:bg-rb-900 rounded-lg p-1" role="group">
+                    {(
+                      [
+                        { v: "all", l: "Any" },
+                        { v: "with", l: "Liquidated" },
+                        { v: "without", l: "Never" },
+                      ] as { v: AaveV4Liquidations; l: string }[]
+                    ).map(({ v, l }) => (
+                      <button
+                        key={v}
+                        onClick={() => setLiquidations(v)}
+                        className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          filters.liquidations === v
+                            ? v === "all"
+                              ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-400 font-semibold"
+                              : v === "with"
+                              ? "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-400 font-semibold"
+                              : "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
+                            : "text-rb-500 hover:text-foreground"
+                        }`}
+                        aria-pressed={filters.liquidations === v}
                       >
                         {l}
                       </button>

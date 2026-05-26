@@ -52,6 +52,12 @@ export interface AaveV4SpokePositionRow {
    *  (DefiLlama returned nothing for it). USD/HF still computed from the
    *  priced reserves, but the totals understate reality. */
   hasMissingPrice: boolean;
+  /** Lifetime liquidation event count for this (wallet, spoke). The listing
+   *  card renders a LIQUIDATED badge whenever this is > 0. Computed from
+   *  aave_v4_liquidation at MV refresh time. */
+  liquidationCount: number;
+  /** Epoch seconds of the most recent liquidation; null when never liquidated. */
+  lastLiquidationAt: number | null;
   ensName: string | null;
 }
 
@@ -79,6 +85,9 @@ export interface FetchAaveV4SpokePositionsParams {
   ownerEns?: string;
   hasDebt?: boolean;
   noDebt?: boolean;
+  /** Tri-state filter on liquidation history. true → only liquidated
+   *  positions, false → only non-liquidated, undefined → no restriction. */
+  hasLiquidations?: boolean;
   healthBelow?: number;
   activeWithin?: number;
   sortBy?: AaveV4SpokePositionSort;
@@ -98,6 +107,8 @@ export async function fetchAaveV4SpokePositions(
   if (p.ownerEns) qs.set("ownerEns", p.ownerEns);
   if (p.hasDebt) qs.set("hasDebt", "true");
   if (p.noDebt) qs.set("noDebt", "true");
+  if (p.hasLiquidations === true) qs.set("hasLiquidations", "true");
+  if (p.hasLiquidations === false) qs.set("hasLiquidations", "false");
   if (p.healthBelow != null) qs.set("healthBelow", String(p.healthBelow));
   if (p.activeWithin != null) qs.set("activeWithin", String(p.activeWithin));
   if (p.sortBy) qs.set("sortBy", p.sortBy);

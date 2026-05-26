@@ -27,6 +27,11 @@ export interface OpenPositionStatsProps {
    *  used by surfaces (e.g. Aave spokes) that prefer the spoke name as a
    *  status-line companion rather than a top-right tag. */
   leadingIdentity?: ReactNode;
+  /** Override the leading status pill. Used by Aave V4 surfaces to render the
+   *  HF-bucket pill (NO DEBT / OPEN / CAUTIOUS / AT RISK / UNDERWATER) in
+   *  place of the default ACTIVE pill, so the detail card speaks the same
+   *  vocabulary as the listing card. */
+  statusPill?: ReactNode;
 }
 
 const GRID_WITH_ICONS: Record<number, string> = {
@@ -42,7 +47,7 @@ const GRID_WITHOUT_ICONS: Record<number, string> = {
   4: "grid grid-cols-2 sm:grid-cols-4 gap-4",
 };
 
-export function OpenPositionStats({ columns, icons, identity, leadingIdentity }: OpenPositionStatsProps) {
+export function OpenPositionStats({ columns, icons, identity, leadingIdentity, statusPill }: OpenPositionStatsProps) {
   const count = columns.length;
   // When any column carries its own asset cluster, drop the leading icons
   // slot — the cluster moves into the column it describes.
@@ -56,7 +61,9 @@ export function OpenPositionStats({ columns, icons, identity, leadingIdentity }:
     <div>
       <div className="flex items-center justify-between gap-2 flex-wrap mb-3">
         <span className="flex items-center gap-2">
-          <span className="font-bold tracking-wider px-2 py-0.5 text-white bg-green-500 rounded-xs text-xs">ACTIVE</span>
+          {statusPill ?? (
+            <span className="font-bold tracking-wider px-2 py-0.5 text-white bg-green-500 rounded-xs text-xs">ACTIVE</span>
+          )}
           {leadingIdentity}
         </span>
         {identity}

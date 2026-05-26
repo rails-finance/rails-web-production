@@ -101,6 +101,10 @@ export interface AaveSpokeCardInfo {
   /** Blended supply yield − borrow cost, as a % of equity (collateral − debt).
    *  Positive = position earning net; negative = leverage cost outweighs yield. */
   netApy: number | null;
+  /** True when the wallet has ever been liquidated on this spoke. Surfaces
+   *  a red LIQUIDATED indicator alongside the status pill — the position may
+   *  still be active afterwards, but the history is permanent. */
+  wasLiquidated: boolean;
 }
 
 // ---- Guard ----
@@ -443,6 +447,8 @@ export function buildSpokeCards(
       }))
       .sort((a, b) => b.usdShare - a.usdShare);
 
+    const wasLiquidated = g.result.reserves.some((r) => r.liquidationCount > 0);
+
     return {
       name: g.name,
       hub: g.hub,
@@ -461,6 +467,7 @@ export function buildSpokeCards(
       assetLiqPrices,
       borrowingPowerUsd: simResult.borrowCapacityUsd,
       netApy,
+      wasLiquidated,
     };
   });
 }

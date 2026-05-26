@@ -15,6 +15,7 @@ import {
   type AaveV4ListFilterParams,
   type AaveV4Debt,
   type AaveV4Health,
+  type AaveV4Liquidations,
 } from "@/components/aave-v4/components/AaveV4ListFilters";
 import { AaveV4PaginationControls } from "@/components/aave-v4/components/AaveV4PaginationControls";
 import { AaveV4ListLoadingSkeleton } from "@/components/aave-v4/components/AaveV4ListLoadingSkeleton";
@@ -59,6 +60,7 @@ function AaveV4ListPageContent() {
     hubs: (searchParams.get("hubs") ?? "").split(",").filter(Boolean),
     debt: (searchParams.get("debt") as AaveV4Debt | null) ?? "all",
     health: (searchParams.get("health") as AaveV4Health | null) ?? "all",
+    liquidations: (searchParams.get("liquidations") as AaveV4Liquidations | null) ?? "all",
     sortBy: searchParams.get("sortBy") ?? "lastActivity",
     sortOrder: (searchParams.get("sortOrder") as "asc" | "desc" | null) ?? "desc",
   };
@@ -79,6 +81,7 @@ function AaveV4ListPageContent() {
     if (next.hubs.length > 0) p.set("hubs", next.hubs.join(","));
     if (next.debt !== "all") p.set("debt", next.debt);
     if (next.health !== "all") p.set("health", next.health);
+    if (next.liquidations !== "all") p.set("liquidations", next.liquidations);
     if (next.sortBy !== "lastActivity") p.set("sortBy", next.sortBy);
     if (next.sortOrder !== "desc") p.set("sortOrder", next.sortOrder);
     if (page > 1) p.set("page", String(page));
@@ -111,6 +114,12 @@ function AaveV4ListPageContent() {
       hubs: filters.hubs,
       hasDebt: filters.debt === "withDebt",
       noDebt: filters.debt === "noDebt",
+      hasLiquidations:
+        filters.liquidations === "with"
+          ? true
+          : filters.liquidations === "without"
+            ? false
+            : undefined,
       healthBelow:
         filters.health === "atRisk"
           ? 1.1
