@@ -15,12 +15,12 @@ import { OpenPositionStats } from "@/components/shared/open-position-stats";
 import { InlineAssetCluster } from "@/components/shared/inline-asset-cluster";
 import { StatValue, StatDash } from "@/components/shared/stat-value";
 import { TokenChipIcon } from "@/components/shared/token-chip-icon";
-import { formatCompact } from "@/lib/shared/format-event";
 import { getSpokeMeta, ARCHETYPE_LABEL, ARCHETYPE_ACCENT } from "@/lib/aave-v4/spoke-meta";
 import { type HubTier } from "@/components/protocol/aave-v4/aave-v4-spoke-constants";
 import type { AaveSpokeCardInfo } from "@/lib/aave-v4/spoke-cards";
 import { bucketForHealth } from "@/lib/aave-v4/health-bucket";
 import { LiquidatedBadge } from "@/components/aave-v4/LiquidatedBadge";
+import { fmtUsd, hfLabel, hfColorClass, fmtLiqPrice } from "@/lib/aave-v4/format";
 
 export type { AaveSpokeCardInfo };
 
@@ -31,37 +31,6 @@ function SpokeIdentity({ name, hub }: { name: string; hub: HubTier }) {
       <span className="text-xs font-bold uppercase tracking-wide">{hub}</span>
     </span>
   );
-}
-
-function fmtUsd(n: number): { display: string; title: string } {
-  if (n < 1) return { display: "< $1", title: "< $1" };
-  const c = formatCompact(n, { decimals: 2 });
-  return { display: `$${c.display}`, title: `$${c.title}` };
-}
-
-function hfLabel(hf: number | null): string {
-  if (hf == null || hf >= 100) return "∞";
-  return hf.toFixed(2);
-}
-
-// Aave's risk thresholds: HF≥2 comfortable, ≥1.5 healthy, ≥1.2 warning,
-// <1.2 danger, <1 already liquidatable.
-function hfColorClass(hf: number | null): string {
-  if (hf == null || hf >= 2) return "text-green-400";
-  if (hf >= 1.5) return "text-green-400";
-  if (hf >= 1.2) return "text-yellow-400";
-  return "text-red-400";
-}
-
-// Liq prices vary wildly: BTC at $100k vs USDC at $1. Scale formatting to the
-// magnitude so we don't get either "$100,000.00" or "$0".
-function fmtLiqPrice(p: number): string {
-  if (p < 0.01) return "< $0.01";
-  if (p < 1) return "$" + p.toFixed(3);
-  if (p < 100) return "$" + p.toFixed(2);
-  if (p < 1_000) return "$" + p.toFixed(0);
-  if (p < 1_000_000) return "$" + (p / 1000).toFixed(p < 10_000 ? 2 : 1) + "K";
-  return "$" + (p / 1_000_000).toFixed(2) + "M";
 }
 
 /**

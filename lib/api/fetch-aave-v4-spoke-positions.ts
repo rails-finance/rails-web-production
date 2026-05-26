@@ -16,6 +16,27 @@
 // file in sync with the SpokePositionRow / SpokePositionsResponse types
 // there — both halves change together when filters or columns shift.
 
+/** Per-reserve breakdown shipped with every listing row. Mirrors the detail
+ *  page's chain-truth shape so the listing card can build the same sim inputs
+ *  (HF / liq price / borrowing power) the detail card uses — no per-row chain
+ *  fetch from the client, no duplicate sim logic, no number drift between the
+ *  two surfaces.
+ *
+ *  Balances ship as token-wei strings (numeric(78,0) precision). Scale by
+ *  `decimals` at render time. `usdPrice` is the same DefiLlama price the
+ *  server used to compute the row's totals — using it client-side means the
+ *  listing's sim arrives at the same totals the server reports. */
+export interface AaveV4SpokeReserveSummary {
+  symbol: string;
+  address: string;
+  decimals: number;
+  supplyBalanceRaw: string;
+  debtBalanceRaw: string;
+  isCollateral: boolean;
+  lt: number | null;
+  usdPrice: number | null;
+}
+
 export interface AaveV4SpokePositionRow {
   wallet: string;
   spoke: string;
@@ -59,6 +80,10 @@ export interface AaveV4SpokePositionRow {
   /** Epoch seconds of the most recent liquidation; null when never liquidated. */
   lastLiquidationAt: number | null;
   ensName: string | null;
+  /** Per-reserve breakdown — chain-truth when overlay succeeded, MV-indexed
+   *  fallback (with `chainHfStale=true`) otherwise. Feeds the listing card's
+   *  asset cluster + the same `simulateAaveV4Position` the detail uses. */
+  reserves: AaveV4SpokeReserveSummary[];
 }
 
 export interface AaveV4SpokePositionsResponse {

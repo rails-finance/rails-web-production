@@ -1,40 +1,45 @@
 "use client";
 
-// Aave V4 spoke-position listing card. Visual analog of Liquity V2's
-// OpenSummaryCard / ClosedSummaryCard: status pill + spoke label + wallet
-// identity in the header, then a four-column stats grid (Supply / Debt /
-// Health Factor / Liq Buffer). Used by /aave-v4 list view.
+// Aave V4 spoke-position listing card. Visual analog of the detail page's
+// position card (components/protocol/aave-v4/aave-v4-spoke-card.tsx) and
+// produces byte-for-byte matching numbers for the same (wallet, spoke).
+//
+// How parity is enforced:
+//   - The server ships per-reserve chain-truth (`reserves[]`: chain balances,
+//     LTs, isCollateral, DefiLlama prices) on every listing row, using the
+//     same source the detail page reads from. See
+//     rails-server-mig/api/src/services/aave-v4-fetcher.ts.
+//   - The listing card runs the same `simulateAaveV4Position` the detail's
+//     `patchSpokeCardWithChain` uses, so totals / liq prices / borrowing
+//     power are derived from identical inputs.
+//   - The same shared `fmtUsd` / `hfLabel` / `fmtLiqPrice` helpers
+//     (`lib/aave-v4/format.ts`) format every value on both surfaces.
+//
+// Differences from the detail card:
+//   - Smaller asset-icon size (24px vs 32px) for listing density.
+//   - No netApy / borrow-rate footnotes (the listing wire doesn't carry the
+//     per-reserve event series those derive from — they belong on the deep view).
+//   - No (i) spoke-narrative info button.
 
 import { Facehash } from "@/components/shared/facehash";
+import { InlineAssetCluster } from "@/components/shared/inline-asset-cluster";
 import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import { Icon } from "@/components/icons/icon";
 import { formatDuration } from "@/lib/date";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import type { AaveV4SpokePositionRow } from "@/lib/api/fetch-aave-v4-spoke-positions";
+import { scaleChainBalance } from "@/lib/api/fetch-aave-v4-spoke-position";
 import { bucketForHealth } from "@/lib/aave-v4/health-bucket";
 import { SPOKE_HUB } from "@/components/protocol/aave-v4/aave-v4-spoke-constants";
 import { LiquidatedBadge } from "@/components/aave-v4/LiquidatedBadge";
-
-function formatUsd(v: number | null): string {
-  if (v == null) return "—";
-  if (v < 0.01) return "$0";
-  if (v >= 1e9) return `$${(v / 1e9).toFixed(2)}B`;
-  if (v >= 1e6) return `$${(v / 1e6).toFixed(2)}M`;
-  if (v >= 1e3) return `$${(v / 1e3).toFixed(1)}K`;
-  return `$${v.toFixed(2)}`;
-}
+import { fmtUsd, hfLabel, fmtLiqPrice } from "@/lib/aave-v4/format";
+import {
+  simulateAaveV4Position,
+  type SimPositionInputs,
+} from "@/lib/aave-v4/utils/simulate";
 
 function shortAddr(addr: string): string {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
-}
-
-// Liquidation buffer = the fraction of weighted collateral that could vanish
-// before HF crosses 1. For HF=2.85 the buffer is ~65%. Returns null when no
-// debt (HF=null) or when HF<=1 (already underwater).
-function liqBuffer(hf: number | null): number | null {
-  if (hf == null) return null;
-  if (hf <= 1) return 0;
-  return (1 - 1 / hf) * 100;
 }
 
 function WalletIdentityRow({
@@ -72,13 +77,98 @@ function WalletIdentityRow({
 }
 
 export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow }) {
-  const bucket = bucketForHealth(row.healthFactor);
-  const buffer = liqBuffer(row.healthFactor);
-  const hasDebt = row.healthFactor != null;
-  // Chain overlay failed for this row → HF/buffer are approximations derived
-  // from indexed balances × DefiLlama prices instead of the spoke's own math.
-  // Only flag when there's debt: HF=null rows have nothing to be stale about.
+  // Build sim inputs from the server's chain-truth reserves[]. Same inputs the
+  // detail page passes to simulateAaveV4Position inside patchSpokeCardWithChain.
+  const sim = useMemo(() => {
+    const supplies: SimPositionInputs["supplies"] = [];
+    const debts: SimPositionInputs["debts"] = [];
+    const supplyingSymbols: string[] = [];
+    const borrowingSymbols: string[] = [];
+    let dominantSupplyAddress: string | null = null;
+    let dominantSupplyUsd = 0;
+    let dominantDebtAddress: string | null = null;
+    let dominantDebtUsd = 0;
+
+    for (const r of row.reserves) {
+      const price = r.usdPrice ?? 0;
+      const supply = scaleChainBalance(r.supplyBalanceRaw, r.decimals);
+      const debt = scaleChainBalance(r.debtBalanceRaw, r.decimals);
+      if (supply > 0) {
+        supplies.push({
+          symbol: r.symbol,
+          amount: supply,
+          price,
+          lt: r.lt ?? 0,
+          collateralEnabled: r.isCollateral,
+        });
+        supplyingSymbols.push(r.symbol);
+        const usd = supply * price;
+        if (usd > dominantSupplyUsd) {
+          dominantSupplyUsd = usd;
+          dominantSupplyAddress = r.address;
+        }
+      }
+      if (debt > 0) {
+        debts.push({ symbol: r.symbol, amount: debt, price });
+        borrowingSymbols.push(r.symbol);
+        const usd = debt * price;
+        if (usd > dominantDebtUsd) {
+          dominantDebtUsd = usd;
+          dominantDebtAddress = r.address;
+        }
+      }
+    }
+
+    const result = simulateAaveV4Position({ supplies, debts });
+
+    // Dominant-collateral liq price: largest-USD supply with a non-null
+    // simulated liq price. Mirrors patchSpokeCardWithChain logic exactly so
+    // the listing's headline Liq Price tracks the detail's.
+    let liqPrice: { symbol: string; liqPrice: number; headroomPct: number } | null = null;
+    if (result.totalDebtUsd > 0) {
+      const ranked = supplies
+        .map((s, i) => ({
+          symbol: s.symbol,
+          usd: s.amount * s.price,
+          lp: result.assetLiqPrices[i],
+        }))
+        .filter((x) => x.lp?.liqPrice != null && x.lp.liqPrice > 0)
+        .sort((a, b) => b.usd - a.usd);
+      if (ranked.length > 0) {
+        const top = ranked[0];
+        liqPrice = {
+          symbol: top.symbol,
+          liqPrice: top.lp!.liqPrice!,
+          headroomPct: top.lp!.headroomPct ?? 0,
+        };
+      }
+    }
+
+    return {
+      ...result,
+      supplyingSymbols,
+      borrowingSymbols,
+      dominantSupplyAddress,
+      dominantDebtAddress,
+      liqPrice,
+    };
+  }, [row.reserves]);
+
+  // Prefer the chain HF the server already shipped (matches Aave UI by
+  // construction) over the sim's derived HF. They agree when LTs are fresh;
+  // chain wins when they don't (premium-shares, recently-changed LT).
+  const healthFactor = row.healthFactor;
+  const hasDebt = healthFactor != null;
+  const bucket = bucketForHealth(healthFactor);
+  // True supply-only: no debt now AND no liquidation in this position's
+  // history. Lifted from the detail card's `supplyOnly` heuristic — the
+  // listing wire doesn't carry peakDebt, so liquidationCount > 0 stands in
+  // for "has had debt at some point."
+  const supplyOnly = !hasDebt && row.liquidationCount === 0;
+  // Chain overlay failed for this row → balances are MV-indexed (potentially
+  // drifted from on-chain). The card still renders; the indicator warns.
   const hfStale = hasDebt && row.chainHfStale;
+  const borrowingPowerUsd = sim.borrowCapacityUsd;
 
   return (
     <div className="text-foreground">
@@ -110,51 +200,45 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
-        {/* Supply */}
+        {/* Collateral / Supplied */}
         <div>
-          <div className="text-xs text-rb-500 font-semibold mb-1">Supply</div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-3xl font-bold">{formatUsd(row.totalSupplyUsd)}</span>
-            {row.dominantSupplySymbol && row.dominantSupplyAddress && (
-              <TokenChipIcon
-                symbol={row.dominantSupplySymbol}
-                address={row.dominantSupplyAddress}
-                size={24}
-                filterable={false}
-              />
+          <div className="text-xs text-rb-500 font-semibold mb-1">
+            {supplyOnly ? "Supplied" : "Collateral"}
+          </div>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span
+              className={`text-3xl font-bold ${supplyOnly ? "text-rb-500" : "text-blue-400"}`}
+              title={fmtUsd(sim.totalCollateralUsd).title}
+            >
+              {fmtUsd(sim.totalCollateralUsd).display}
+            </span>
+            {sim.supplyingSymbols.length > 0 && (
+              <InlineAssetCluster symbols={sim.supplyingSymbols} size={24} overlap={7} />
             )}
           </div>
-          <div className="text-xs mt-0.5 text-rb-500 min-h-[1rem]">
-            {row.supplyAssetCount > 1
-              ? `${row.supplyAssetCount} assets`
-              : row.dominantSupplySymbol ?? ""}
-          </div>
+          <div className="text-xs mt-0.5 text-rb-500 min-h-[1rem]">{""}</div>
         </div>
 
         {/* Debt */}
         <div>
           <div className="text-xs text-rb-500 font-semibold mb-1">Debt</div>
-          <div className="flex items-center gap-1.5">
-            <span
-              className={`text-3xl font-bold ${hasDebt ? "" : "text-rb-500"}`}
-            >
-              {hasDebt ? formatUsd(row.totalDebtUsd) : "—"}
-            </span>
-            {hasDebt && row.dominantDebtSymbol && row.dominantDebtAddress && (
-              <TokenChipIcon
-                symbol={row.dominantDebtSymbol}
-                address={row.dominantDebtAddress}
-                size={24}
-                filterable={false}
-              />
-            )}
-          </div>
+          {supplyOnly ? (
+            <div className="text-3xl font-bold text-rb-500">—</div>
+          ) : (
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span
+                className="text-3xl font-bold text-emerald-400"
+                title={fmtUsd(sim.totalDebtUsd).title}
+              >
+                {fmtUsd(sim.totalDebtUsd).display}
+              </span>
+              {sim.borrowingSymbols.length > 0 && (
+                <InlineAssetCluster symbols={sim.borrowingSymbols} size={24} overlap={7} />
+              )}
+            </div>
+          )}
           <div className="text-xs mt-0.5 text-rb-500 min-h-[1rem]">
-            {hasDebt
-              ? row.debtAssetCount > 1
-                ? `${row.debtAssetCount} assets`
-                : row.dominantDebtSymbol ?? ""
-              : "Supply only"}
+            {supplyOnly ? "Supply only" : ""}
           </div>
         </div>
 
@@ -172,35 +256,44 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
               </span>
             )}
           </div>
-          {hasDebt && row.healthFactor != null ? (
+          {supplyOnly ? (
+            <div className="text-3xl font-bold text-rb-500">—</div>
+          ) : hasDebt ? (
             <div className={`text-3xl font-bold ${bucket.valueColor}`}>
               {hfStale ? "~" : ""}
-              {row.healthFactor < 0.01
-                ? "0"
-                : row.healthFactor < 1.1
-                  ? row.healthFactor.toFixed(4)
-                  : row.healthFactor.toFixed(2)}
+              {hfLabel(healthFactor)}
             </div>
           ) : (
-            <div className="text-3xl font-bold text-rb-500">—</div>
+            <div className="text-3xl font-bold text-rb-500">∞</div>
           )}
-          <div className="text-xs mt-0.5 text-rb-500">
-            {hasDebt ? (hfStale ? "Approx — live source unavailable" : "Min 1.00 threshold") : ""}
+          <div className="text-xs mt-0.5 text-rb-500 min-h-[1rem]">
+            {borrowingPowerUsd > 0.01 ? (
+              <span title={fmtUsd(borrowingPowerUsd).title}>
+                {fmtUsd(borrowingPowerUsd).display} borrowing power
+              </span>
+            ) : (
+              ""
+            )}
           </div>
         </div>
 
-        {/* Liq Buffer */}
+        {/* Liq Price */}
         <div>
-          <div className="text-xs text-rb-500 font-semibold mb-1">Liq Buffer</div>
-          {hasDebt && buffer != null ? (
-            <div className={`text-3xl font-bold ${bucket.valueColor}`}>
-              {hfStale ? "~" : ""}{buffer.toFixed(0)}%
+          <div className="text-xs text-rb-500 font-semibold mb-1">
+            {sim.liqPrice ? `Liq Price (${sim.liqPrice.symbol})` : "Liq Price"}
+          </div>
+          {sim.liqPrice ? (
+            <div className="text-3xl font-bold text-foreground">
+              <span className="inline-flex items-center gap-1.5">
+                {fmtLiqPrice(sim.liqPrice.liqPrice)}
+                <TokenChipIcon symbol={sim.liqPrice.symbol} size={18} filterable={false} />
+              </span>
             </div>
           ) : (
             <div className="text-3xl font-bold text-rb-500">—</div>
           )}
           <div className="text-xs mt-0.5 text-rb-500 min-h-[1rem]">
-            {hasDebt ? "weighted-coll drop till HF=1" : ""}
+            {sim.liqPrice ? `${sim.liqPrice.headroomPct.toFixed(0)}% headroom` : ""}
           </div>
         </div>
       </div>
