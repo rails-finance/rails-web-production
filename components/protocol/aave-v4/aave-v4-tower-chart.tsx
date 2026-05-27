@@ -28,23 +28,18 @@ import {
 import { resolvePrice, type PriceEntry } from "@/lib/aave/prices";
 import type { ReserveStats } from "@/lib/aave-v4/spoke-cards";
 import { aaveV4DisplaySymbol } from "@/lib/aave-v4/pt-tokens";
+import { fmtUsd } from "@/lib/aave-v4/format";
 
 const CHART_HEIGHT = 180;
 
 const COLLATERAL_FADED = "rgba(59,130,246,0.2)";
 const DEBT_GREEN_FADED = "rgba(52,211,153,0.2)";
 
-function fmtUsdCompact(n: number): string {
-  if (n >= 1_000_000) {
-    const v = (n / 1_000_000).toFixed(1);
-    return "$" + (v.endsWith(".0") ? v.slice(0, -2) : v) + "M";
-  }
-  if (n >= 1_000) {
-    const v = (n / 1_000).toFixed(1);
-    return "$" + (v.endsWith(".0") ? v.slice(0, -2) : v) + "K";
-  }
-  return "$" + n.toFixed(0);
-}
+// Below this USD value, lifetime flows (withdrawn / repaid / liquidated) don't
+// earn a breakdown row or a hatched segment. Kept low ($0.01) so test-sized
+// positions where a few cents moved still tell the full story — anything
+// truly zero is already filtered upstream.
+const LIFETIME_DUST_USD = 0.01;
 
 interface AssetRow {
   symbol: string;
@@ -174,7 +169,7 @@ export function AaveV4TowerChart({
         price,
         netSupplyUsd: netSupply * price,
         netDebtUsd: netDebt * price,
-        isClosed: netSupply * price < 1 && netDebt * price < 1,
+        isClosed: netSupply * price < LIFETIME_DUST_USD && netDebt * price < LIFETIME_DUST_USD,
         hasHistoricActivity,
       };
     });
@@ -228,27 +223,27 @@ export function AaveV4TowerChart({
 
   const withdrawnAssets = allRows
     .map((r) => ({ symbol: r.symbol, amount: r.withdrawn, usd: r.withdrawn * r.price }))
-    .filter((r) => r.usd > 1)
+    .filter((r) => r.usd > LIFETIME_DUST_USD)
     .sort((a, b) => b.usd - a.usd);
   const repaidAssets = allRows
     .map((r) => ({ symbol: r.symbol, amount: r.repaid, usd: r.repaid * r.price }))
-    .filter((r) => r.usd > 1)
+    .filter((r) => r.usd > LIFETIME_DUST_USD)
     .sort((a, b) => b.usd - a.usd);
   const liquidatedCollAssets = allRows
     .map((r) => ({ symbol: r.symbol, amount: r.liquidatedCollateral, usd: r.liquidatedCollateral * r.price }))
-    .filter((r) => r.usd > 1)
+    .filter((r) => r.usd > LIFETIME_DUST_USD)
     .sort((a, b) => b.usd - a.usd);
   const liquidatedDebtAssets = allRows
     .map((r) => ({ symbol: r.symbol, amount: r.liquidatedDebt, usd: r.liquidatedDebt * r.price }))
-    .filter((r) => r.usd > 1)
+    .filter((r) => r.usd > LIFETIME_DUST_USD)
     .sort((a, b) => b.usd - a.usd);
 
   const hasLive = supplyAssets.length > 0 || debtAssets.length > 0;
   const hasHistory =
-    totalWithdrawnUsd > 1 ||
-    totalRepaidUsd > 1 ||
-    totalLiquidatedCollUsd > 1 ||
-    totalLiquidatedDebtUsd > 1;
+    totalWithdrawnUsd > LIFETIME_DUST_USD ||
+    totalRepaidUsd > LIFETIME_DUST_USD ||
+    totalLiquidatedCollUsd > LIFETIME_DUST_USD ||
+    totalLiquidatedDebtUsd > LIFETIME_DUST_USD;
   const isLiveView = hideHistorical && (hasLive || !hasHistory);
 
   // Suppress the debt tower for pure supply-side wallets. In live view that
@@ -335,7 +330,7 @@ export function AaveV4TowerChart({
           {
             sign: "",
             label: "Deposited",
-            amount: fmtUsdCompact(totalDepositedUsd),
+            amount: fmtUsd(totalDepositedUsd).display,
             swatchStyle: { backgroundColor: COLLATERAL_FADED },
           } as BreakdownRow,
         ]
@@ -345,7 +340,7 @@ export function AaveV4TowerChart({
           sign: "−",
           label: aaveV4DisplaySymbol(w.symbol),
           amount: fmt(w.amount),
-          usdHint: hideUsd ? undefined : fmtUsdCompact(w.usd),
+          usdHint: hideUsd ? undefined : fmtUsd(w.usd).display,
           swatchStyle: WITHDRAWN_PATTERN,
           icon: <TokenChipIcon symbol={w.symbol} size={14} filterable={false} />,
         })) as BreakdownRow[]
@@ -355,7 +350,7 @@ export function AaveV4TowerChart({
           sign: "−",
           label: `${aaveV4DisplaySymbol(l.symbol)} liquidated`,
           amount: fmt(l.amount),
-          usdHint: hideUsd ? undefined : fmtUsdCompact(l.usd),
+          usdHint: hideUsd ? undefined : fmtUsd(l.usd).display,
           swatchStyle: LIQUIDATION_PATTERN,
           icon: <TokenChipIcon symbol={l.symbol} size={14} filterable={false} />,
         })) as BreakdownRow[]
@@ -366,7 +361,7 @@ export function AaveV4TowerChart({
           sign: "",
           label: aaveV4DisplaySymbol(r.symbol),
           amount: fmt(r.netSupply),
-          usdHint: hideUsd ? undefined : fmtUsdCompact(r.netSupplyUsd),
+          usdHint: hideUsd ? undefined : fmtUsd(r.netSupplyUsd).display,
           swatchClass: "bg-blue-500",
           icon: <TokenChipIcon symbol={r.symbol} size={14} filterable={false} />,
         }) as BreakdownRow,
@@ -374,7 +369,7 @@ export function AaveV4TowerChart({
     {
       sign: "",
       label: isLiveView ? "Total" : "In Protocol",
-      amount: fmtUsdCompact(totalSupplyUsd),
+      amount: fmtUsd(totalSupplyUsd).display,
       isResult: true,
     },
   ];
@@ -385,7 +380,7 @@ export function AaveV4TowerChart({
           {
             sign: "",
             label: "Borrowed",
-            amount: fmtUsdCompact(totalBorrowedUsd),
+            amount: fmtUsd(totalBorrowedUsd).display,
             swatchStyle: { backgroundColor: DEBT_GREEN_FADED },
           } as BreakdownRow,
         ]
@@ -395,7 +390,7 @@ export function AaveV4TowerChart({
           sign: "−",
           label: aaveV4DisplaySymbol(rA.symbol),
           amount: fmt(rA.amount),
-          usdHint: hideUsd ? undefined : fmtUsdCompact(rA.usd),
+          usdHint: hideUsd ? undefined : fmtUsd(rA.usd).display,
           swatchStyle: REPAID_PATTERN,
           icon: <TokenChipIcon symbol={rA.symbol} size={14} filterable={false} />,
         })) as BreakdownRow[]
@@ -405,7 +400,7 @@ export function AaveV4TowerChart({
           sign: "−",
           label: `${aaveV4DisplaySymbol(l.symbol)} liquidated`,
           amount: fmt(l.amount),
-          usdHint: hideUsd ? undefined : fmtUsdCompact(l.usd),
+          usdHint: hideUsd ? undefined : fmtUsd(l.usd).display,
           swatchStyle: LIQUIDATION_PATTERN,
           icon: <TokenChipIcon symbol={l.symbol} size={14} filterable={false} />,
         })) as BreakdownRow[]
@@ -416,7 +411,7 @@ export function AaveV4TowerChart({
           sign: "",
           label: aaveV4DisplaySymbol(r.symbol),
           amount: fmt(r.netDebt),
-          usdHint: hideUsd ? undefined : fmtUsdCompact(r.netDebtUsd),
+          usdHint: hideUsd ? undefined : fmtUsd(r.netDebtUsd).display,
           swatchClass: "bg-emerald-400",
           icon: <TokenChipIcon symbol={r.symbol} size={14} filterable={false} />,
         }) as BreakdownRow,
@@ -424,7 +419,7 @@ export function AaveV4TowerChart({
     {
       sign: "",
       label: "Outstanding",
-      amount: fmtUsdCompact(totalDebtUsd),
+      amount: fmtUsd(totalDebtUsd).display,
       isResult: true,
     },
   ];

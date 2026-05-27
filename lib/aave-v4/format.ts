@@ -6,8 +6,11 @@
 
 import { formatCompact } from "@/lib/shared/format-event";
 
+// Sub-$1 values use 2 decimals ("$0.40") so a $2.48-of-which-$0.40-debt test
+// position stays legible. Only collapse to "< $0.01" for true dust where the
+// cents-rounding would lie ("$0.00" is worse than "< $0.01").
 export function fmtUsd(n: number): { display: string; title: string } {
-  if (n < 1) return { display: "< $1", title: "< $1" };
+  if (n < 0.01) return { display: "< $0.01", title: "< $0.01" };
   const c = formatCompact(n, { decimals: 2 });
   return { display: `$${c.display}`, title: `$${c.title}` };
 }
