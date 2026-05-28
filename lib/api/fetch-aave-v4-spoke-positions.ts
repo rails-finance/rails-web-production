@@ -115,6 +115,14 @@ export interface FetchAaveV4SpokePositionsParams {
   hasLiquidations?: boolean;
   healthBelow?: number;
   activeWithin?: number;
+  /** Multi-asset filter on the supply side. Position must hold at least one
+   *  of these symbols with a non-zero supply balance. "???" matches reserves
+   *  whose symbol couldn't be resolved (unknown ERC20s). Empty/undefined =
+   *  no restriction. */
+  supplyAssets?: string[];
+  /** Multi-asset filter on the debt side. Same semantics as `supplyAssets`,
+   *  ANDed with it server-side when both are provided. */
+  borrowAssets?: string[];
   sortBy?: AaveV4SpokePositionSort;
   sortOrder?: "asc" | "desc";
   limit?: number;
@@ -136,6 +144,8 @@ export async function fetchAaveV4SpokePositions(
   if (p.hasLiquidations === false) qs.set("hasLiquidations", "false");
   if (p.healthBelow != null) qs.set("healthBelow", String(p.healthBelow));
   if (p.activeWithin != null) qs.set("activeWithin", String(p.activeWithin));
+  if (p.supplyAssets && p.supplyAssets.length > 0) qs.set("supplyAssets", p.supplyAssets.join(","));
+  if (p.borrowAssets && p.borrowAssets.length > 0) qs.set("borrowAssets", p.borrowAssets.join(","));
   if (p.sortBy) qs.set("sortBy", p.sortBy);
   if (p.sortOrder) qs.set("sortOrder", p.sortOrder);
   if (p.limit != null) qs.set("limit", String(p.limit));

@@ -58,6 +58,8 @@ function AaveV4ListPageContent() {
     ownerEns: searchParams.get("ownerEns") ?? undefined,
     spokes: (searchParams.get("spokes") ?? "").split(",").filter(Boolean),
     hubs: (searchParams.get("hubs") ?? "").split(",").filter(Boolean),
+    supplyAssets: (searchParams.get("supplyAssets") ?? "").split(",").filter(Boolean),
+    borrowAssets: (searchParams.get("borrowAssets") ?? "").split(",").filter(Boolean),
     debt: (searchParams.get("debt") as AaveV4Debt | null) ?? "all",
     health: (searchParams.get("health") as AaveV4Health | null) ?? "all",
     liquidations: (searchParams.get("liquidations") as AaveV4Liquidations | null) ?? "all",
@@ -79,6 +81,8 @@ function AaveV4ListPageContent() {
     if (next.ownerEns) p.set("ownerEns", next.ownerEns);
     if (next.spokes.length > 0) p.set("spokes", next.spokes.join(","));
     if (next.hubs.length > 0) p.set("hubs", next.hubs.join(","));
+    if (next.supplyAssets.length > 0) p.set("supplyAssets", next.supplyAssets.join(","));
+    if (next.borrowAssets.length > 0) p.set("borrowAssets", next.borrowAssets.join(","));
     if (next.debt !== "all") p.set("debt", next.debt);
     if (next.health !== "all") p.set("health", next.health);
     if (next.liquidations !== "all") p.set("liquidations", next.liquidations);
@@ -112,6 +116,8 @@ function AaveV4ListPageContent() {
       ownerEns: filters.ownerEns,
       spokes: filters.spokes,
       hubs: filters.hubs,
+      supplyAssets: filters.supplyAssets,
+      borrowAssets: filters.borrowAssets,
       hasDebt: filters.debt === "withDebt",
       noDebt: filters.debt === "noDebt",
       hasLiquidations:

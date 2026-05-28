@@ -10,8 +10,10 @@ import { useState, useEffect, useRef } from "react";
 import { ChevronDown, Search, X, Filter } from "lucide-react";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { CheckboxMultiSelect } from "@/components/shared/checkbox-multi-select";
+import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import { WalletHistoryDropdown } from "@/components/shared/wallet-history-dropdown";
 import { upsertSession } from "@/lib/shared/sessions";
+import { fetchAaveV4AssetUniverse } from "@/lib/api/fetch-aave-v4-asset-universe";
 
 export type AaveV4Debt = "all" | "withDebt" | "noDebt";
 export type AaveV4Health = "all" | "atRisk" | "underwater";
@@ -26,6 +28,12 @@ export interface AaveV4ListFilterParams {
   spokes: string[];
   /** Multi-select hub tiers (lowercase keys: "core", "plus", "prime"). */
   hubs: string[];
+  /** Multi-select token symbols on the supply side. "???" matches unknown
+   *  reserves. Empty = no restriction. */
+  supplyAssets: string[];
+  /** Multi-select token symbols on the debt side. ANDs with `supplyAssets`
+   *  server-side. Empty = no restriction. */
+  borrowAssets: string[];
   debt: AaveV4Debt;
   health: AaveV4Health;
   liquidations: AaveV4Liquidations;
@@ -70,6 +78,26 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
   const [searchFocused, setSearchFocused] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  // Asset universe — fetched once on mount, drives the Supplying / Borrowing
+  // multi-select option lists. Empty until the network call returns; the
+  // pills render but their dropdowns just show the "All …" radio in the
+  // interim. Failure is non-fatal — pills stay empty rather than throwing.
+  const [assetUniverse, setAssetUniverse] = useState<string[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchAaveV4AssetUniverse()
+      .then((r) => {
+        if (cancelled) return;
+        setAssetUniverse(r.assets.map((a) => a.symbol));
+      })
+      .catch(() => {
+        // Non-fatal — leave the pills empty.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const searchRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
   const filterRef = useRef<HTMLDivElement>(null);
@@ -146,6 +174,23 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
     onFiltersChange({ ...filters, liquidations });
   const setSpokes = (spokes: string[]) => onFiltersChange({ ...filters, spokes });
   const setHubs = (hubs: string[]) => onFiltersChange({ ...filters, hubs });
+  const setSupplyAssets = (supplyAssets: string[]) =>
+    onFiltersChange({ ...filters, supplyAssets });
+  const setBorrowAssets = (borrowAssets: string[]) =>
+    onFiltersChange({ ...filters, borrowAssets });
+
+  // Render each option with a small token chip — "???" gets the unknown
+  // placeholder by passing the literal sentinel through to TokenChipIcon,
+  // which falls through to its UnknownTokenSvg branch.
+  const assetOptions = assetUniverse.map((symbol) => ({
+    value: symbol,
+    label: symbol === "???" ? "Unknown" : symbol,
+    icon: (
+      <span className="inline-flex">
+        <TokenChipIcon symbol={symbol} size={18} filterable={false} />
+      </span>
+    ),
+  }));
 
   const resetFilters = () =>
     onFiltersChange({ ...filters, debt: "all", health: "all", liquidations: "all" });
@@ -297,6 +342,23 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
             value={filters.spokes}
             onChange={setSpokes}
             options={SPOKE_OPTIONS}
+          />
+          {/* Asset-side pills — independent multi-selects ANDed server-side.
+              Both draw from the same data-driven universe; pick the same
+              symbol in both pills to express "holds X on either side". */}
+          <CheckboxMultiSelect
+            label="Supplying"
+            allLabel="Any supply"
+            value={filters.supplyAssets}
+            onChange={setSupplyAssets}
+            options={assetOptions}
+          />
+          <CheckboxMultiSelect
+            label="Borrowing"
+            allLabel="Any debt"
+            value={filters.borrowAssets}
+            onChange={setBorrowAssets}
+            options={assetOptions}
           />
         </div>
 
