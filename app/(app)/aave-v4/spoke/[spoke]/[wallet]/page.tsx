@@ -33,10 +33,12 @@ import {
   patchSpokeCardWithChain,
 } from "@/lib/aave-v4/apply-chain-truth";
 
+import { spokeFromSlug } from "@/lib/aave-v4/spoke-meta";
+
 // Display-name → server spoke-key map. Mirrors SPOKE_BY_KEY in
 // rails-server-mig/api/src/config/aave-v4-spokes.ts. Used to translate the
-// `/aave-v4/spoke/[spoke]/[wallet]` URL segment (display name) into the
-// lowercase chain key the `/api/aave-v4/spoke-position` endpoint expects.
+// resolved display name into the lowercase chain key the
+// `/api/aave-v4/spoke-position` endpoint expects.
 const SPOKE_NAME_TO_KEY: Record<string, string> = {
   "Main": "main",
   "Bluechip": "bluechip",
@@ -147,7 +149,12 @@ export default function AaveV4SpokePage() {
 function AaveV4SpokePageInner() {
   const params = useParams();
   const wallet = String(params.wallet ?? "").toLowerCase();
-  const spokeName = decodeURIComponent(String(params.spoke ?? ""));
+  // The URL segment is a slug ("ethena-ecosystem"); resolve to the display
+  // name the rest of the app uses. Fall back to URL-decoding the raw param so
+  // legacy `Spoke%20Name`-shape bookmarks still resolve until the 308s catch
+  // them.
+  const rawSpoke = String(params.spoke ?? "");
+  const spokeName = spokeFromSlug(rawSpoke) ?? decodeURIComponent(rawSpoke);
   const isValidWallet = /^0x[a-f0-9]{40}$/.test(wallet);
   const walletFilterHref = `/aave-v4?wallet=${wallet}`;
 

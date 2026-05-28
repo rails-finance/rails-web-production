@@ -19,6 +19,7 @@
 import Link from "next/link";
 import { Facehash } from "@/components/shared/facehash";
 import { TokenChipIcon } from "@/components/shared/token-chip-icon";
+import { slugifySpoke } from "@/lib/aave-v4/spoke-meta";
 import type { AaveV4SpokePositionRow } from "@/lib/api/fetch-aave-v4-spoke-positions";
 
 function formatUsd(v: number | null): string {
@@ -69,10 +70,11 @@ function HealthBadge({ hf }: { hf: number | null }) {
 
 export function AaveV4SpokePositionCard({ row }: { row: AaveV4SpokePositionRow }) {
   const label = row.ensName ?? shortAddr(row.wallet);
+  const spokeSlug = slugifySpoke(row.spokeName) ?? encodeURIComponent(row.spokeName);
 
   return (
     <Link
-      href={`/aave-v4/spoke/${encodeURIComponent(row.spokeName)}/${row.wallet}`}
+      href={`/aave-v4/spoke/${spokeSlug}/${row.wallet}`}
       className="group flex items-center gap-3 sm:gap-4 px-3 sm:px-4 py-3 rounded-lg border border-rb-200 dark:border-rb-800 bg-rb-50 dark:bg-rb-950 hover:border-blue-500/40 hover:bg-rb-100/40 dark:hover:bg-rb-900/40 transition-colors"
     >
       {/* Wallet identity */}

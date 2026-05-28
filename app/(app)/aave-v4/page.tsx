@@ -25,6 +25,7 @@ import {
   type AaveV4SpokePositionRow,
   type AaveV4SpokePositionSort,
 } from "@/lib/api/fetch-aave-v4-spoke-positions";
+import { slugifySpoke } from "@/lib/aave-v4/spoke-meta";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -186,7 +187,7 @@ function AaveV4ListPageContent() {
               {rows.map((row) => (
                 <motion.div key={`${row.wallet}:${row.spoke}`} variants={itemVariants}>
                   <Link
-                    href={`/aave-v4/spoke/${encodeURIComponent(row.spokeName)}/${row.wallet}`}
+                    href={`/aave-v4/spoke/${slugifySpoke(row.spokeName) ?? encodeURIComponent(row.spokeName)}/${row.wallet}`}
                     onClick={() => {
                       if (typeof window !== "undefined") {
                         sessionStorage.setItem(

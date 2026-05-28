@@ -66,6 +66,12 @@ const nextConfig: NextConfig = {
         destination: "/",
         permanent: true,
       },
+      // Aave V4 spoke URLs moved from `/aave-v4/spoke/Display%20Name/[wallet]`
+      // to a kebab-case slug. The legacy → slug 308 is handled in
+      // `middleware.ts` rather than here because Next's `redirects` matcher is
+      // case-insensitive — a `source: "/aave-v4/spoke/Main/:wallet"` rule
+      // would also catch the canonical lowercase `main` and self-loop. The
+      // middleware does explicit case-sensitive slug detection.
     ];
   },
 };

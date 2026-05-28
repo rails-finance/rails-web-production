@@ -22,6 +22,59 @@
 
 import type { HubTier } from "@/components/protocol/aave-v4/aave-v4-spoke-constants";
 
+// ── URL slugs ────────────────────────────────────────────────────────────────
+// Canonical slug ↔ display-name map for `/aave-v4/spoke/[slug]/[wallet]`.
+// The display name is what the API returns as `spokeName` (and what every
+// other table in this file is keyed by); the slug is the lowercase kebab-cased
+// form used in URLs so we don't ship `%20` in production paths.
+//
+// When a new spoke ships:
+//   1. Add the row here.
+//   2. Add a 308 redirect in next.config.ts from the encoded display name
+//      shape, in case the spoke's name contains a space.
+//   3. Mirror in SPOKE_META below if it needs editorial copy.
+const SPOKE_SLUG_TO_NAME: Record<string, string> = {
+  "main":              "Main",
+  "bluechip":          "Bluechip",
+  "forex":             "Forex",
+  "gold":              "Gold",
+  "ethena-correlated": "Ethena Correlated",
+  "ethena-ecosystem":  "Ethena Ecosystem",
+  "etherfi":           "EtherFi",
+  "kelp":              "Kelp",
+  "lido":              "Lido",
+  // API emits "Lombard BTC" as the display name; spoke-meta keys it under
+  // "Lombard" (older copy). Both aliases resolve to the same slug below.
+  "lombard":           "Lombard BTC",
+  "treasury":          "Treasury",
+};
+
+const SPOKE_NAME_TO_SLUG: Record<string, string> = {
+  ...Object.fromEntries(Object.entries(SPOKE_SLUG_TO_NAME).map(([slug, name]) => [name, slug])),
+  // Alias: the older "Lombard" label (used by SPOKE_META keys) maps to the
+  // same slug as the API's "Lombard BTC".
+  Lombard: "lombard",
+};
+
+/** Convert a spoke display name to its URL slug. Returns null for unknown
+ *  names so callers can decide whether to fall back (e.g. encodeURIComponent
+ *  for a not-yet-listed spoke) rather than ship a bad URL. */
+export function slugifySpoke(displayName: string): string | null {
+  return SPOKE_NAME_TO_SLUG[displayName] ?? null;
+}
+
+/** Convert a URL slug to the canonical display name. Returns null when the
+ *  slug isn't a known spoke. The page wrapper falls back to URL-decoding the
+ *  raw param so legacy `%20`-shaped bookmarks still resolve until the 308s
+ *  catch them. */
+export function spokeFromSlug(slug: string): string | null {
+  return SPOKE_SLUG_TO_NAME[slug] ?? null;
+}
+
+/** All known spoke slugs. Used to drive route-level redirects from the
+ *  encoded-display-name form. */
+export const SPOKE_SLUGS: ReadonlyArray<string> = Object.keys(SPOKE_SLUG_TO_NAME);
+
 export type SpokeArchetype =
   /** General-purpose single-hub spoke. Collateral and borrows live in the
    *  same Hub; rate is Hub utilization + Spoke premium. */
