@@ -1,27 +1,31 @@
+// Mirrors the structure of AaveV4ListPageContent: a filter row of pill
+// placeholders on top, then a stack of card placeholders with decaying
+// opacity. No page-title heading — the filled page doesn't render one
+// either, so the skeleton shouldn't conjure phantom chrome.
+
 export function AaveV4ListLoadingSkeleton() {
   return (
     <main className="min-h-screen">
       <div className="max-w-7xl mx-auto py-8">
-        <h1 className="text-2xl font-bold text-foreground mb-6">Explore Aave V4</h1>
-        <div className="animate-pulse flex space-x-3">
-          <div className="h-10 bg-rb-200 dark:bg-rb-800 rounded w-1/3 mb-3"></div>
-          <div className="h-10 bg-rb-200 dark:bg-rb-800 rounded w-1/3 mb-3"></div>
-          <div className="h-10 bg-rb-200 dark:bg-rb-800 rounded w-1/3 mb-3"></div>
+        {/* Filter row — mirrors AaveV4ListFilters: search input + filter
+            button + hubs/spokes/supplying/borrowing pills + sort on right. */}
+        <div className="mb-6 animate-pulse">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="h-10 w-full max-w-xs rounded-lg bg-rb-200 dark:bg-rb-800" />
+            <div className="h-10 w-24 rounded-lg bg-rb-200 dark:bg-rb-800" />
+            <div className="h-10 w-28 rounded-lg bg-rb-200 dark:bg-rb-800" />
+            <div className="h-10 w-28 rounded-lg bg-rb-200 dark:bg-rb-800" />
+            <div className="h-10 w-32 rounded-lg bg-rb-200 dark:bg-rb-800" />
+            <div className="h-10 w-32 rounded-lg bg-rb-200 dark:bg-rb-800" />
+            <div className="ml-auto h-10 w-32 rounded-lg bg-rb-200 dark:bg-rb-800" />
+          </div>
         </div>
-        <div className="animate-pulse flex sm:hidden space-x-3">
-          <div className="h-10 bg-rb-200 dark:bg-rb-800 rounded w-full mb-3"></div>
-        </div>
-        <div className="animate-pulse flex space-x-3">
-          <div className="h-40 bg-rb-200 dark:bg-rb-800 rounded-lg w-full mt-3 mb-6"></div>
-        </div>
-        <div className="animate-pulse flex space-x-3">
-          <div className="h-40 bg-rb-200/75 dark:bg-rb-800/75 rounded-lg w-full mb-6"></div>
-        </div>
-        <div className="animate-pulse flex space-x-3">
-          <div className="h-40 bg-rb-200/50 dark:bg-rb-800/50 rounded-lg w-full mb-6"></div>
-        </div>
-        <div className="animate-pulse flex space-x-3">
-          <div className="h-40 bg-rb-200/25 dark:bg-rb-800/25 rounded-lg w-full mb-6"></div>
+        {/* Card stack — same 24px gap and lg radius as the live grid. */}
+        <div className="space-y-6">
+          <div className="animate-pulse h-40 bg-rb-200 dark:bg-rb-800 rounded-lg" />
+          <div className="animate-pulse h-40 bg-rb-200/75 dark:bg-rb-800/75 rounded-lg" />
+          <div className="animate-pulse h-40 bg-rb-200/50 dark:bg-rb-800/50 rounded-lg" />
+          <div className="animate-pulse h-40 bg-rb-200/25 dark:bg-rb-800/25 rounded-lg" />
         </div>
       </div>
     </main>
