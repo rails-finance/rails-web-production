@@ -222,6 +222,23 @@ export function TowerBar({ segments, sideBar, height = CHART_HEIGHT }: {
   );
 }
 
+/** Tower-shaped pulse placeholder. Reserves the same w-16 sm:w-20 × height
+ *  footprint as a real TowerBar so the chart shell stays in dual-tower
+ *  layout while waiting on data — no left-to-center jump when the second
+ *  tower materializes. */
+export function TowerBarSkeleton({ height = CHART_HEIGHT }: { height?: number }) {
+  return (
+    <div className="flex gap-px shrink-0">
+      <div className="relative w-16 sm:w-20" style={{ height }}>
+        <div
+          className="absolute left-0 right-0 bottom-0 rounded-sm bg-rb-200 dark:bg-rb-800 animate-pulse"
+          style={{ height: Math.round(height * 0.7) }}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function BreakdownTable({ rows }: { rows: BreakdownRow[] }) {
   const visible = rows.filter(r => !r.hidden);
   // Layout: sign (~14px) | swatch (~14px) | label (flex) | amount (150px,

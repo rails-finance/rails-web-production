@@ -12,6 +12,7 @@ import {
   type BreakdownRow,
   CHART_HEIGHT,
   DualTowerChart,
+  TowerBarSkeleton,
   checkerPattern,
   formatPrice,
   formatCompactUsd,
@@ -787,24 +788,37 @@ export function TroveEconomicsSummary({
             )}
             {debtPeak > 0 && (
               <>
-                {/* Towers + breakdowns */}
-                <DualTowerChart
-                  left={collBreakdownRows.length > 0 ? {
-                    segments: collSegments,
-                    breakdownRows: collBreakdownRows,
-                    sideBar: collSideBar,
-                  } : {
-                    segments: debtSegments,
-                    breakdownRows: debtBreakdownRows,
-                    sideBar: debtSideBar,
-                  }}
-                  right={collBreakdownRows.length > 0 ? {
-                    segments: debtSegments,
-                    breakdownRows: debtBreakdownRows,
-                    sideBar: debtSideBar,
-                  } : undefined}
-                  maxValue={towerMax}
-                />
+                {/* Towers + breakdowns.
+                    `collIsPending` keeps the chart in dual-tower layout
+                    while currentPrice is still loading — without it, the
+                    coll side computes empty and we'd briefly fall through
+                    to single-tower-debt-on-left, then visibly snap back to
+                    centered dual when price arrives. The skeleton holds
+                    the left slot so the debt tower stays put. */}
+                {(() => {
+                  const collIsPending = !effectivePrice && meta.status === "open";
+                  const keepDualLayout = collBreakdownRows.length > 0 || collIsPending;
+                  return (
+                    <DualTowerChart
+                      left={keepDualLayout ? {
+                        segments: collSegments,
+                        breakdownRows: collBreakdownRows,
+                        sideBar: collSideBar,
+                        placeholder: collIsPending ? <TowerBarSkeleton /> : undefined,
+                      } : {
+                        segments: debtSegments,
+                        breakdownRows: debtBreakdownRows,
+                        sideBar: debtSideBar,
+                      }}
+                      right={keepDualLayout ? {
+                        segments: debtSegments,
+                        breakdownRows: debtBreakdownRows,
+                        sideBar: debtSideBar,
+                      } : undefined}
+                      maxValue={towerMax}
+                    />
+                  );
+                })()}
                 {/* Liquidation-price axis — open troves only, requires a
                     current oracle price. Read-only: shows the current
                     oracle position relative to the trove's liquidation
