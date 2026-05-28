@@ -77,8 +77,14 @@ export function TokenChipIcon({ symbol, address, size = 16, onClick, filterable 
     ? "cursor-pointer hover:ring-2 hover:ring-rb-400 dark:hover:ring-rb-500 rounded-full transition-shadow"
     : "";
 
-  // Tier 1 — local sprite for the Liquity V2 universe.
+  // Tier 1 — local sprite for the Liquity V2 universe. Sprite SVGs paint a
+  // full-bleed circle to the viewBox edge; CDN brand marks (USDC/USDT/BTC/…)
+  // have ~12% transparent padding inside their canvas. Render the sprite at
+  // a matching inset so its visible disc reads as the same size as a CDN
+  // icon when both are slotted into the same `size` envelope (e.g. inside
+  // InlineAssetCluster).
   if (SPRITE_SYMBOLS.has(symbol)) {
+    const inner = Math.round(size * 0.88);
     return (
       <span
         className={`inline-flex items-center justify-center shrink-0 ${clickClass}`}
@@ -88,8 +94,8 @@ export function TokenChipIcon({ symbol, address, size = 16, onClick, filterable 
         <SpriteTokenIcon
           assetSymbol={symbol}
           className="block"
-          width={size}
-          height={size}
+          width={inner}
+          height={inner}
           sized
         />
       </span>
@@ -144,7 +150,7 @@ function CdnTokenIcon({
       alt={symbol}
       width={size}
       height={size}
-      className={`shrink-0 rounded-full ${clickClass}`}
+      className={`block shrink-0 rounded-full ${clickClass}`}
       onError={() => setTier((t) => (t === 0 ? 1 : 2))}
       {...(clickProps as React.HTMLAttributes<HTMLImageElement>)}
     />

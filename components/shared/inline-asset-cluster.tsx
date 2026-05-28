@@ -17,7 +17,7 @@ export function InlineAssetCluster({ symbols, size = 32, overlap = 9 }: InlineAs
       {symbols.map((sym, i) => (
         <span
           key={`${sym}-${i}`}
-          className="relative rounded-full bg-rb-100 dark:bg-rb-900 p-0.5"
+          className="relative inline-flex items-center justify-center rounded-full bg-rb-100 dark:bg-rb-900 p-0.5"
           style={{ marginLeft: i > 0 ? -overlap : 0, zIndex: symbols.length - i }}
         >
           <TokenChipIcon symbol={sym} size={size} filterable={false} />
