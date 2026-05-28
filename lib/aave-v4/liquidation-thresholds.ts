@@ -61,6 +61,7 @@ const LT_BY_SPOKE: Record<string, SpokeLtTable> = {
       wstETH: 0.83,
       USDC:   0.80,
       USDT:   0.78,
+      EURC:   0,    // borrow-only as of 2026-05 (LT unconfirmed)
       GHO:    0.77,
       frxUSD: 0.77,
     },
@@ -69,14 +70,16 @@ const LT_BY_SPOKE: Record<string, SpokeLtTable> = {
     // Correlated-asset pool: sUSDe/USDe/PT-sUSDE are all Ethena-backed dollars,
     // so LTs are very high.
     lt: {
-      "PT-sUSDE": 0.91,
-      sUSDe:      0.92,
-      USDe:       0.92,
+      "PT-USDe-7MAY2026": 0,    // borrow-only as of 2026-05 (LT unconfirmed)
+      "PT-sUSDE":         0.91,
+      sUSDe:              0.92,
+      USDe:               0.92,
     },
   },
   "Ethena Ecosystem": {
     lt: {
       "PT-sUSDE": 0.78,
+      sUSDe:      0,    // borrow-only as of 2026-05 (LT unconfirmed)
       USDe:       0.80,
       USDC:       0.78,
       USDT:       0.77,
@@ -92,10 +95,12 @@ const LT_BY_SPOKE: Record<string, SpokeLtTable> = {
   },
   "Forex": {
     lt: {
-      EURC: 0.87,
-      USDC: 0.85,
-      USDT: 0.82,
-      GHO:  0.82,
+      EURC:   0.87,
+      USDC:   0.85,
+      USDT:   0.82,
+      USDG:   0,    // borrow-only as of 2026-05 (LT unconfirmed)
+      frxUSD: 0,    // borrow-only as of 2026-05 (LT unconfirmed)
+      GHO:    0.82,
     },
   },
   "Gold": {
@@ -105,6 +110,8 @@ const LT_BY_SPOKE: Record<string, SpokeLtTable> = {
       USDG:   0.78,
       frxUSD: 0.77,
       USDT:   0.76,
+      EURC:   0,    // borrow-only as of 2026-05 (LT unconfirmed)
+      GHO:    0,    // borrow-only as of 2026-05 (LT unconfirmed)
     },
   },
   "Kelp": {
@@ -122,9 +129,11 @@ const LT_BY_SPOKE: Record<string, SpokeLtTable> = {
   "Lombard": {
     lt: {
       LBTC: 0.80,
+      WBTC: 0,    // borrow-only as of 2026-05 (LT unconfirmed)
     },
-    // Lombard is a single-collateral spoke today; if a new reserve lands we'd
-    // rather show a conservative HF than a silent zero.
+    // Lombard *was* a single-collateral spoke; WBTC has since been added as a
+    // second listing (borrow-only). Fallback retained so any future surprise
+    // reserve still gets a conservative HF rather than a silent zero.
     fallbackLt: DEFAULT_UNKNOWN_LT,
   },
 };
@@ -142,8 +151,8 @@ export function getLiquidationThreshold(spokeName: string, symbol: string): numb
 
 /** Symbols the simulator treats as $1 rails — no price slider, no USD conversion. */
 export const STABLE_SYMBOLS = new Set<string>([
-  "USDC", "USDT", "DAI", "GHO", "EURC", "USDG", "frxUSD",
-  "USDe", "sUSDe", "PT-sUSDE", "LUSD", "BOLD",
+  "USDC", "USDT", "DAI", "GHO", "EURC", "USDG", "frxUSD", "RLUSD",
+  "USDe", "sUSDe", "PT-sUSDE", "PT-USDe-7MAY2026", "LUSD", "BOLD",
 ]);
 
 export function isStable(symbol: string): boolean {

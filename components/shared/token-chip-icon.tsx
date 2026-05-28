@@ -48,6 +48,7 @@ const LOGO_ADDRESS_OVERRIDES: Record<string, string> = {
   // asset's logo. Aave's UI does the same conceptually but renders a "PT"
   // badge on top — left out here pending a dedicated PT chip treatment.
   "PT-sUSDE": "0x9D39A5DE30e57443BfF2A8307A4256c8797A3497", // sUSDe address
+  "PT-USDe-7MAY2026": "0x4c9EDD5852cD905f086C759E8383e09bff1E68B3", // USDe address
 };
 
 export interface TokenChipIconProps {

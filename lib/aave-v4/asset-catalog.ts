@@ -49,16 +49,19 @@ const SPOKE_RESERVES: Record<string, RawReserve[]> = {
     { symbol: "wstETH", address: "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0" },
     { symbol: "USDC",   address: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48" },
     { symbol: "USDT",   address: "0xdac17f958d2ee523a2206206994597c13d831ec7" },
+    { symbol: "EURC",   address: "0x1abaea1f7c830bd89acc67ec4af516284b1bc33c" },
     { symbol: "GHO",    address: "0x40d16fc0246ad3160ccc09b8d0d3a2cd28ae6c2f" },
     { symbol: "frxUSD", address: "0xcacd6fd266af91b8aed52accc382b4e165586e29" },
   ],
   "Ethena Correlated": [
+    { symbol: "PT-USDe-7MAY2026", address: "0xaebf0bb9f57e89260d57f31af34eb58657d96ce0" },
     { symbol: "PT-sUSDE", address: "0x3de0ff76e8b528c092d47b9dac775931cef80f49" },
     { symbol: "sUSDe",    address: "0x9d39a5de30e57443bff2a8307a4256c8797a3497" },
     { symbol: "USDe",     address: "0x4c9edd5852cd905f086c759e8383e09bff1e68b3" },
   ],
   "Ethena Ecosystem": [
     { symbol: "PT-sUSDE", address: "0x3de0ff76e8b528c092d47b9dac775931cef80f49" },
+    { symbol: "sUSDe",    address: "0x9d39a5de30e57443bff2a8307a4256c8797a3497" },
     { symbol: "USDe",     address: "0x4c9edd5852cd905f086c759e8383e09bff1e68b3" },
     { symbol: "USDC",     address: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48" },
     { symbol: "USDT",     address: "0xdac17f958d2ee523a2206206994597c13d831ec7" },
@@ -70,10 +73,12 @@ const SPOKE_RESERVES: Record<string, RawReserve[]> = {
     { symbol: "WETH",  address: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2" },
   ],
   Forex: [
-    { symbol: "EURC", address: "0x1abaea1f7c830bd89acc67ec4af516284b1bc33c" },
-    { symbol: "USDC", address: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48" },
-    { symbol: "USDT", address: "0xdac17f958d2ee523a2206206994597c13d831ec7" },
-    { symbol: "GHO",  address: "0x40d16fc0246ad3160ccc09b8d0d3a2cd28ae6c2f" },
+    { symbol: "EURC",   address: "0x1abaea1f7c830bd89acc67ec4af516284b1bc33c" },
+    { symbol: "USDC",   address: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48" },
+    { symbol: "USDT",   address: "0xdac17f958d2ee523a2206206994597c13d831ec7" },
+    { symbol: "USDG",   address: "0xe343167631d89b6ffc58b88d6b7fb0228795491d" },
+    { symbol: "frxUSD", address: "0xcacd6fd266af91b8aed52accc382b4e165586e29" },
+    { symbol: "GHO",    address: "0x40d16fc0246ad3160ccc09b8d0d3a2cd28ae6c2f" },
   ],
   Gold: [
     { symbol: "XAUt",   address: "0x68749665ff8d2d112fa859aa293f07a622782f38" },
@@ -81,6 +86,8 @@ const SPOKE_RESERVES: Record<string, RawReserve[]> = {
     { symbol: "USDG",   address: "0xe343167631d89b6ffc58b88d6b7fb0228795491d" },
     { symbol: "frxUSD", address: "0xcacd6fd266af91b8aed52accc382b4e165586e29" },
     { symbol: "USDT",   address: "0xdac17f958d2ee523a2206206994597c13d831ec7" },
+    { symbol: "EURC",   address: "0x1abaea1f7c830bd89acc67ec4af516284b1bc33c" },
+    { symbol: "GHO",    address: "0x40d16fc0246ad3160ccc09b8d0d3a2cd28ae6c2f" },
   ],
   Kelp: [
     { symbol: "rsETH", address: "0xa1290d69c65a6fe4df752f95823fae25cb99e5a7" },
@@ -92,6 +99,7 @@ const SPOKE_RESERVES: Record<string, RawReserve[]> = {
   ],
   "Lombard BTC": [
     { symbol: "LBTC", address: "0x8236a87084f8b84306f72007f36f2618a5634494" },
+    { symbol: "WBTC", address: "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599" },
   ],
 };
 

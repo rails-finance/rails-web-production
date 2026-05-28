@@ -40,6 +40,7 @@ export const TOKEN_ADDR: Record<string, string> = {
   frxUSD: "0xcacd6fd266af91b8aed52accc382b4e165586e29",
   RLUSD: "0x8292bb45bf1ee4d140127049757c2e0ff06317ed",
   "PT-sUSDE": "0x3de0ff76e8b528c092d47b9dac775931cef80f49",
+  "PT-USDe-7MAY2026": "0xaebf0bb9f57e89260d57f31af34eb58657d96ce0",
 };
 
 const STABLES = new Set([
