@@ -81,9 +81,6 @@ export function AaveV4EventHeader({ ctx, timestamp }: AaveV4EventHeaderProps) {
             <span>Seized: {formatNum(ctx.liquidatedCollateralAmount)} {ctx.collateralSymbol}</span>
           </span>
         )}
-        {ctx.spokeName && (
-          <span className="text-xs text-rb-500">·&nbsp;{ctx.spokeName}</span>
-        )}
         {timestamp > 0 && (
           <span className="ml-auto text-xs ">
             <EventTime ts={timestamp} />
