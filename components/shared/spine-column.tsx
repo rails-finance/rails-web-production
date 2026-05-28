@@ -222,7 +222,15 @@ export function SpineColumn({ tokens, icon, iconDirection, tokenSymbol, spine = 
     // Detached card: spine is bounded by the column itself, no overflow into neighbours.
     <div className={spineClasses} style={{ top: 0, bottom: 0, ...spineStyle }} />
   ) : !isLast && (
-    <div className={spineClasses} style={{ top: 0, bottom: 'calc(-1 * var(--card-pad) - 100px)', ...spineStyle }} />
+    // Overshoot past the card bottom just enough to reach into the *next*
+    // icon's halo (where it's masked by var(--background) box-shadow), then
+    // stop. Layout assumes the standard sibling spacing — space-y-2 (8px
+    // gap) + cardPad (4px) + SpineColumn pt-4 (16px) − halo radius (4px) ≈
+    // 24px from this card's bottom to the next halo's top edge; 28px lands
+    // a few px inside the halo for clean masking. Any further (the old
+    // 100px) and the spine bleeds past the next card entirely, leaving a
+    // bare tail visible below the bottom-most event.
+    <div className={spineClasses} style={{ top: 0, bottom: 'calc(-1 * var(--card-pad) - 28px)', ...spineStyle }} />
   );
 
   // Lead-in line + pulsing dot above the first (newest) event — absolutely positioned so it doesn't push the icon down
