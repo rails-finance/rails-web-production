@@ -50,6 +50,7 @@ const LT_BY_SPOKE: Record<string, SpokeLtTable> = {
       USDG:   0.75,
       frxUSD: 0.75,
       GHO:    0.75,
+      RLUSD:  0,    // borrow-only as of 2026-05; CF 0% on pro.aave.com
     },
   },
   "Bluechip": {

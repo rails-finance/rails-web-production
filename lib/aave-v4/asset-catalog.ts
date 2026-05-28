@@ -37,6 +37,7 @@ const SPOKE_RESERVES: Record<string, RawReserve[]> = {
     { symbol: "USDC",   address: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48" },
     { symbol: "USDT",   address: "0xdac17f958d2ee523a2206206994597c13d831ec7" },
     { symbol: "EURC",   address: "0x1abaea1f7c830bd89acc67ec4af516284b1bc33c" },
+    { symbol: "RLUSD",  address: "0x8292bb45bf1ee4d140127049757c2e0ff06317ed" },
     { symbol: "USDG",   address: "0xe343167631d89b6ffc58b88d6b7fb0228795491d" },
     { symbol: "frxUSD", address: "0xcacd6fd266af91b8aed52accc382b4e165586e29" },
     { symbol: "GHO",    address: "0x40d16fc0246ad3160ccc09b8d0d3a2cd28ae6c2f" },

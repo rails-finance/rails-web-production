@@ -38,12 +38,13 @@ export const TOKEN_ADDR: Record<string, string> = {
   EURC: "0x1abaea1f7c830bd89acc67ec4af516284b1bc33c",
   USDG: "0xe343167631d89b6ffc58b88d6b7fb0228795491d",
   frxUSD: "0xcacd6fd266af91b8aed52accc382b4e165586e29",
+  RLUSD: "0x8292bb45bf1ee4d140127049757c2e0ff06317ed",
   "PT-sUSDE": "0x3de0ff76e8b528c092d47b9dac775931cef80f49",
 };
 
 const STABLES = new Set([
   "USDC", "USDT", "DAI", "LUSD", "BOLD", "GHO", "crvUSD", "USDe",
-  "fxUSD", "sDAI", "EURC", "USDG", "frxUSD",
+  "fxUSD", "sDAI", "EURC", "USDG", "frxUSD", "RLUSD",
 ]);
 
 export function resolvePrice(symbol: string, prices?: Record<string, PriceEntry | number>): number | null {
