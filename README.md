@@ -1,37 +1,41 @@
 # Rails
 
-A DeFi self-service support platform initially designed to make Liquity V2 protocol activity understandable and accessible for everyone.
-
-## Overview
-
-Rails provides clear, intuitive explanations of DeFi transactions and protocol events. The platform displays DeFi activity on simple timelines with comprehensive explanations, helping users understand their positions, transactions, and activities within the Liquity V2 ecosystem.
+A DeFi self-service support frontend that renders position state and transaction timelines for **Liquity V2** and **Aave V4**.
 
 Visit **[rails.finance](https://rails.finance)** to explore the platform.
 
+## Overview
+
+Rails turns on-chain DeFi activity into clear, comprehensible timelines and position cards. Each protocol gets its own end-to-end view — a listing of all positions, a detail page for any one position, and a transaction timeline grounded in what actually happened on chain.
+
+The frontend is mono-rails: each protocol owns its `/[protocol]/...` URL space. There is no cross-protocol composer in production; visit `/liquity-v2` for Liquity, `/aave-v4` for Aave, and use each protocol's own search bar to filter by wallet.
+
 ## Features
 
-**Trove Explorer**
-Search and view Liquity V2 troves by ID, owner address, or ENS name. Track trove ownership history, collateral breakdown, and key statistics across ETH, wstETH, and rETH collateral types.
+### Liquity V2
 
-**Transaction Timeline**
-Detailed transaction history with visual timelines and explanations for each transaction type, including trove operations (open, adjust, close), batch delegations, and liquidations.
+- Trove explorer: search and view troves by ID, owner address, or ENS name.
+- Per-trove timeline: open, adjust, close, redeem, liquidate, batch-delegate — with state-transition cards explaining each event.
+- Batch manager integration: track delegated trove management (Summerstone, Bolder, Caramila Capital, …).
+- Real-time stats: TVL, collateral distribution, and protocol-wide metrics across WETH, wstETH, and rETH collateral.
 
-**Protocol Statistics**
-Real-time Liquity V2 protocol metrics including total value locked, collateral distribution, and network-wide statistics.
+### Aave V4
 
-**Batch Manager Integration**
-View and track batch manager information for delegated trove management, with integration support for services like Summerstone, Bolder, and Caramila Capital.
+- Spoke explorer: browse positions across Aave V4's spoke architecture (Main, Bluechip, EtherFi, Lido, …) — one shared health factor per spoke, independent between spokes.
+- Per-position detail: chain-truth balances and HF, per-asset price-runway, liquidation-price headroom, and net APY.
+- Transaction timeline: Supply, Borrow, Withdraw, Repay, Liquidation, CollateralToggle, with USD pills priced at the event block (Chainlink-direct + LST exchange-rate derivation).
 
-**Additional Capabilities**
-- ENS name resolution for addresses
-- Dark and light theme support
-- Responsive design for mobile and desktop
-- Real-time data updates
+### Cross-cutting
+
+- ENS name resolution.
+- Dark and light themes.
+- Per-protocol wallet history (recent + pinned), stored in local storage.
+- Server-side bearer-authenticated proxy to the `rails-server-mig` API.
 
 ## Status
 
-Rails is currently in beta. While core features are stable, the platform continues to be enhanced with additional features and improvements planned for future releases.
+Rails is in beta. Liquity V2 and Aave V4 are stable; both are continuously enhanced. Additional protocols may follow.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
