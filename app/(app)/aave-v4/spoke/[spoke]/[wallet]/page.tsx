@@ -56,6 +56,7 @@ const SPOKE_NAME_TO_KEY: Record<string, string> = {
 import type { BaseActivityEvent } from "@/lib/shared/types/event-shape";
 import { isAaveV4Event } from "@/lib/shared/types/event-shape";
 import { AaveV4EventCard } from "@/components/protocol/aave-v4/aave-v4-event-card";
+import type { AaveV4TxGroup } from "@/components/protocol/aave-v4/aave-v4-event-header";
 import { AaveV4SpokeCardSelector } from "@/components/protocol/aave-v4/aave-v4-spoke-card";
 import { AaveV4SpokeRunwayStack } from "@/components/protocol/aave-v4/aave-v4-spoke-runway-stack";
 import { AaveV4TowerChart } from "@/components/protocol/aave-v4/aave-v4-tower-chart";
@@ -275,6 +276,33 @@ function AaveV4SpokePageInner() {
       return (e.context.data.spokeName ?? "Main") === spokeName;
     });
   }, [sortedEvents, spokeName]);
+
+  // Stable chronological index (1-based) keyed by event id — survives
+  // asc/desc display flips so "event 3" is always the same event.
+  // Composite-tx grouping: when several spoke events share a txHash,
+  // each gets { index, count } so the header can render "1 OF 2", "2 OF 2".
+  // Both maps are built from spokeScopedEvents (chronological asc).
+  const { eventNumbers, txGroups } = useMemo(() => {
+    const eventNumbers = new Map<string, number>();
+    const counts = new Map<string, number>();
+    for (const e of spokeScopedEvents) {
+      const tx = e.txHash ?? "";
+      if (tx) counts.set(tx, (counts.get(tx) ?? 0) + 1);
+    }
+    const txGroups = new Map<string, AaveV4TxGroup>();
+    const seen = new Map<string, number>();
+    spokeScopedEvents.forEach((e, idx) => {
+      eventNumbers.set(e.id, idx + 1);
+      const tx = e.txHash ?? "";
+      const total = tx ? (counts.get(tx) ?? 1) : 1;
+      if (total > 1) {
+        const next = (seen.get(tx) ?? 0) + 1;
+        seen.set(tx, next);
+        txGroups.set(e.id, { index: next, count: total });
+      }
+    });
+    return { eventNumbers, txGroups };
+  }, [spokeScopedEvents]);
 
   const eventOptions = useMemo<FilterOption[]>(() => {
     const counts = new Map<string, number>();
@@ -513,6 +541,8 @@ function AaveV4SpokePageInner() {
                       event={event}
                       isFirst={idx === 0}
                       isLast={idx === displayedEvents.length - 1}
+                      txGroup={txGroups.get(event.id)}
+                      eventNumber={eventNumbers.get(event.id)}
                     />
                   </EventDateContext.Provider>
                 );

@@ -4,8 +4,16 @@ import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import { formatNum } from "@/lib/shared/format-event";
 import { useHeaderValueHideClass } from "@/lib/shared/header-values";
 import { EventTime } from "@/components/shared/event-time";
+import { useTimelineDisplay } from "@/components/shared/timeline-display-context";
 import { aaveV4DisplaySymbol } from "@/lib/aave-v4/pt-tokens";
 import type { AaveV4Context } from "@/lib/shared/types/protocols/aave-v4";
+
+/** 1-based position + total within a shared tx_hash. `count > 1` triggers
+ * the "X OF Y" group chip on the left of the header. */
+export interface AaveV4TxGroup {
+  index: number;
+  count: number;
+}
 
 // USD value lives in the expanded detail (next to the after-balance and as
 // a single asset-price pill in the footer), not in the header. Mirrors the
@@ -27,21 +35,46 @@ const STYLES: Record<string, OperationStyle> = {
 export interface AaveV4EventHeaderProps {
   ctx: AaveV4Context;
   timestamp: number;
+  /** Composite-tx grouping — when count > 1, the "X OF Y" chip renders. */
+  txGroup?: AaveV4TxGroup;
+  /** 1-based chronological position within the spoke's event list. Stable
+   * across asc/desc display order. */
+  eventNumber?: number;
 }
 
-export function AaveV4EventHeader({ ctx, timestamp }: AaveV4EventHeaderProps) {
+export function AaveV4EventHeader({ ctx, timestamp, txGroup, eventNumber }: AaveV4EventHeaderProps) {
   const style = STYLES[ctx.eventType] ?? { label: ctx.eventType, color: "", bg: "", badge: false };
   const amount = parseFloat(ctx.amount ?? "0") || 0;
   const hideVal = useHeaderValueHideClass({ isPassive: ctx.eventType === "liquidation" });
+  const { showEventNumbers } = useTimelineDisplay();
 
   // For collateral toggle, show enable/disable
   const label = ctx.eventType === "collateral_toggle"
     ? (ctx.enabled ? "Enable Collateral" : "Disable Collateral")
     : style.label;
 
+  const groupChip = txGroup && txGroup.count > 1 ? (
+    <span
+      className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wide bg-rb-200 dark:bg-rb-800 text-rb-500"
+      title={`Operation ${txGroup.index} of ${txGroup.count} in this transaction`}
+    >
+      {txGroup.index} of {txGroup.count}
+    </span>
+  ) : null;
+
+  const counter = eventNumber != null && showEventNumbers ? (
+    <span
+      className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] bg-rb-200 dark:bg-rb-800 text-rb-500"
+      aria-label={`Event ${eventNumber}`}
+    >
+      {eventNumber}
+    </span>
+  ) : null;
+
   return (
     <div className="px-5 pt-4 pb-3">
       <div className="flex items-center gap-1.5 flex-wrap">
+        {groupChip}
         {ctx.alsoToggledCollateral ? (
           <>
             <span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400">Enable Collateral</span>
@@ -81,11 +114,14 @@ export function AaveV4EventHeader({ ctx, timestamp }: AaveV4EventHeaderProps) {
             <span>Seized: {formatNum(ctx.liquidatedCollateralAmount)} {ctx.collateralSymbol}</span>
           </span>
         )}
-        {timestamp > 0 && (
-          <span className="ml-auto text-xs ">
-            <EventTime ts={timestamp} />
-          </span>
-        )}
+        <span className="ml-auto inline-flex items-center gap-2">
+          {timestamp > 0 && (
+            <span className="text-xs ">
+              <EventTime ts={timestamp} />
+            </span>
+          )}
+          {counter}
+        </span>
       </div>
     </div>
   );

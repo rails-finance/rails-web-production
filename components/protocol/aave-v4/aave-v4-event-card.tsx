@@ -12,7 +12,7 @@ import type { BaseActivityEvent } from "@/lib/shared/types/event-shape";
 import type { AaveV4Context } from "@/lib/shared/types/protocols/aave-v4";
 import { EventCard } from "@/components/shared/event-card";
 import { SpineColumn } from "@/components/shared/spine-column";
-import { AaveV4EventHeader } from "./aave-v4-event-header";
+import { AaveV4EventHeader, type AaveV4TxGroup } from "./aave-v4-event-header";
 import { AaveV4EventDetail } from "./aave-v4-event-detail";
 import { AaveV4EventExplainer } from "./aave-v4-event-explainer";
 import { AaveV4BarsSlot } from "./aave-v4-bars-slot";
@@ -21,9 +21,13 @@ export interface AaveV4EventCardProps {
   event: BaseActivityEvent & { context: { protocol: "aave-v4"; data: AaveV4Context } };
   isFirst?: boolean;
   isLast?: boolean;
+  /** Position + total within shared tx_hash. Drives the "X OF Y" chip. */
+  txGroup?: AaveV4TxGroup;
+  /** 1-based chronological position within the spoke's event list. */
+  eventNumber?: number;
 }
 
-export function AaveV4EventCard({ event, isFirst, isLast }: AaveV4EventCardProps) {
+export function AaveV4EventCard({ event, isFirst, isLast, txGroup, eventNumber }: AaveV4EventCardProps) {
   const ctx = event.context.data;
   const isLiquidation = ctx.eventType === "liquidation";
   const isCollateralToggle = ctx.eventType === "collateral_toggle";
@@ -59,7 +63,7 @@ export function AaveV4EventCard({ event, isFirst, isLast }: AaveV4EventCardProps
     <EventCard
       avatar={null}
       iconColumn={iconSlot}
-      header={<AaveV4EventHeader ctx={ctx} timestamp={event.timestamp} />}
+      header={<AaveV4EventHeader ctx={ctx} timestamp={event.timestamp} txGroup={txGroup} eventNumber={eventNumber} />}
       headerBars={<AaveV4BarsSlot eventId={event.id} />}
       detail={<AaveV4EventDetail ctx={ctx} txHash={event.txHash} wallet={event.wallet} />}
       detailLabel="Aave V4 Details"
