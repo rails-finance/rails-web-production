@@ -10,6 +10,7 @@
 // back to current-state-only.
 
 import { useState } from "react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import {
   type TowerSegment,
@@ -257,12 +258,30 @@ export function AaveV4TowerChart({
     ? debtAssets.length === 0
     : !hasHistoricDebt && debtAssets.length === 0;
 
+  // Direction arrow: → for assets moving into the protocol (supply, repay,
+  // debt-cleared); ← for assets moving out (withdraw, borrow, coll-liquidated).
+  // Replaces explicit "supplied/withdrawn/borrowed/repaid" wording.
+  const dirArrow = (dir: 'in' | 'out') =>
+    dir === 'in'
+      ? <ArrowRight className="w-3 h-3 text-rb-500 shrink-0" />
+      : <ArrowLeft className="w-3 h-3 text-rb-500 shrink-0" />;
+
+  const tipBody = (symbol: string | undefined, usd: number, dir: 'in' | 'out') => (
+    <div className="flex items-center gap-1.5">
+      {symbol && <TokenChipIcon symbol={symbol} size={14} filterable={false} />}
+      {symbol && <span>{aaveV4DisplaySymbol(symbol)}</span>}
+      {dirArrow(dir)}
+      <span className="ml-auto tabular-nums">{fmtUsd(usd).title}</span>
+    </div>
+  );
+
   const collSegments: TowerSegment[] = [
     ...supplyAssets.map((r) => ({
       key: `coll-${r.symbol}`,
       label: aaveV4DisplaySymbol(r.symbol),
       value: r.netSupplyUsd,
       colorClass: isSurplus(r.symbol) ? "bg-blue-500/60" : "bg-blue-500",
+      tooltip: tipBody(r.symbol, r.netSupplyUsd, 'in'),
     })),
     ...(!isLiveView
       ? [...liquidatedCollAssets].reverse().map((l) => ({
@@ -271,6 +290,7 @@ export function AaveV4TowerChart({
           value: l.usd,
           colorClass: "",
           patternStyle: LIQUIDATION_PATTERN,
+          tooltip: tipBody(l.symbol, l.usd, 'out'),
         }))
       : []),
     ...(!isLiveView
@@ -280,6 +300,7 @@ export function AaveV4TowerChart({
           value: w.usd,
           colorClass: "",
           patternStyle: WITHDRAWN_PATTERN,
+          tooltip: tipBody(w.symbol, w.usd, 'out'),
         }))
       : []),
   ];
@@ -290,6 +311,7 @@ export function AaveV4TowerChart({
       label: aaveV4DisplaySymbol(r.symbol),
       value: r.netDebtUsd,
       colorClass: "bg-emerald-400",
+      tooltip: tipBody(r.symbol, r.netDebtUsd, 'out'),
     })),
     ...(!isLiveView
       ? [...liquidatedDebtAssets].reverse().map((l) => ({
@@ -298,6 +320,7 @@ export function AaveV4TowerChart({
           value: l.usd,
           colorClass: "",
           patternStyle: LIQUIDATION_PATTERN,
+          tooltip: tipBody(l.symbol, l.usd, 'in'),
         }))
       : []),
     ...(!isLiveView
@@ -307,6 +330,7 @@ export function AaveV4TowerChart({
           value: rA.usd,
           colorClass: "",
           patternStyle: REPAID_PATTERN,
+          tooltip: tipBody(rA.symbol, rA.usd, 'in'),
         }))
       : []),
   ];
@@ -453,6 +477,13 @@ export function AaveV4TowerChart({
           breakdownRows: collRows,
           sideBar: collSideBar,
           placeholder: collPlaceholder,
+          sideBarTooltip: collSideBar ? (
+            <div className="flex items-center gap-1.5">
+              <span>Total</span>
+              {dirArrow('in')}
+              <span className="ml-auto tabular-nums">{fmtUsd(totalDepositedUsd).title}</span>
+            </div>
+          ) : undefined,
         }}
         right={
           supplyOnly
@@ -462,6 +493,13 @@ export function AaveV4TowerChart({
                 breakdownRows: debtRows,
                 sideBar: debtSideBar,
                 placeholder: debtPlaceholder,
+                sideBarTooltip: debtSideBar ? (
+                  <div className="flex items-center gap-1.5">
+                    <span>Total</span>
+                    {dirArrow('out')}
+                    <span className="ml-auto tabular-nums">{fmtUsd(totalBorrowedUsd).title}</span>
+                  </div>
+                ) : undefined,
               }
         }
         height={CHART_HEIGHT}

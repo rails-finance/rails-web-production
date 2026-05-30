@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import type { LiquityContext } from "@/lib/shared/types/protocols/liquity";
 import type { TroveEconomics as TroveEconomicsType } from "@/types/api/trove";
@@ -481,12 +482,38 @@ export function TroveEconomicsSummary({
       ? false
       : hideHistorical;
 
+  // Direction arrow: → into protocol (repay, debt cleared, deposit, surplus
+  // retained); ← out of protocol (borrow, withdraw, liquidate-coll, costs
+  // accruing to debt). Replaces the per-segment descriptor word — the
+  // segment's pattern/color in the tower conveys *which* state-named flow
+  // the row belongs to.
+  const dirArrow = (dir: 'in' | 'out') =>
+    dir === 'in'
+      ? <ArrowRight className="w-3 h-3 text-rb-500 shrink-0" />
+      : <ArrowLeft className="w-3 h-3 text-rb-500 shrink-0" />;
+
+  const debtTip = (bold: number, dir: 'in' | 'out') => (
+    <div className="flex items-center gap-1.5">
+      {dirArrow(dir)}
+      <span className="ml-auto tabular-nums">{formatPrice(bold)} {stableSymbol}</span>
+    </div>
+  );
+  const collTip = (tokenAmount: number, usd: number, dir: 'in' | 'out') => (
+    <div className="space-y-0.5">
+      <div className="flex items-center gap-1.5">
+        {dirArrow(dir)}
+        <span className="ml-auto tabular-nums">{tokenAmount.toFixed(4)} {collateralSymbol}</span>
+      </div>
+      <div className="flex justify-end tabular-nums text-rb-500">{formatUsdValue(usd)}</div>
+    </div>
+  );
+
   const debtSegments: TowerSegment[] = [
-    { key: "current-debt", label: "Current Debt", value: entireDebt, colorClass: "bg-emerald-500" },
-    ...(!isLiveView ? [{ key: "debt-liquidated", label: "Liquidated", value: liquidation?.totalDebtCleared ?? 0, colorClass: "", patternStyle: LIQUIDATION_PATTERN }] : []),
-    ...(!isLiveView ? [{ key: "debt-redeemed", label: "Redeemed", value: redemption?.totalDebtCleared ?? 0, colorClass: "", patternStyle: REDEMPTION_PATTERN }] : []),
-    ...(!isLiveView ? [{ key: "repaid", label: "Repaid", value: repaidPrincipal, colorClass: "", patternStyle: REPAID_PATTERN }] : []),
-    ...(!isLiveView ? [{ key: "costs", label: "Costs", value: costsSettled, colorClass: "", patternStyle: COSTS_PATTERN }] : []),
+    { key: "current-debt", label: "Current Debt", value: entireDebt, colorClass: "bg-emerald-500", tooltip: debtTip(entireDebt, 'out') },
+    ...(!isLiveView ? [{ key: "debt-liquidated", label: "Liquidated", value: liquidation?.totalDebtCleared ?? 0, colorClass: "", patternStyle: LIQUIDATION_PATTERN, tooltip: debtTip(liquidation?.totalDebtCleared ?? 0, 'in') }] : []),
+    ...(!isLiveView ? [{ key: "debt-redeemed", label: "Redeemed", value: redemption?.totalDebtCleared ?? 0, colorClass: "", patternStyle: REDEMPTION_PATTERN, tooltip: debtTip(redemption?.totalDebtCleared ?? 0, 'in') }] : []),
+    ...(!isLiveView ? [{ key: "repaid", label: "Repaid", value: repaidPrincipal, colorClass: "", patternStyle: REPAID_PATTERN, tooltip: debtTip(repaidPrincipal, 'in') }] : []),
+    ...(!isLiveView ? [{ key: "costs", label: "Costs", value: costsSettled, colorClass: "", patternStyle: COSTS_PATTERN, tooltip: debtTip(costsSettled, 'out') }] : []),
   ];
 
   const debtSegmentSum = debtSegments.reduce((sum, s) => sum + Math.max(0, s.value), 0);
@@ -517,13 +544,13 @@ export function TroveEconomicsSummary({
   // outflow rows (Redeemed, Liquidated, Withdrawn) drop in live.
   const collSegments: TowerSegment[] = effectivePrice ? [
     isZombie
-      ? { key: "claimable", label: "Claimable", value: meta.collateralAmount * effectivePrice, colorClass: "bg-blue-700 ring-1 ring-inset ring-green-400" }
-      : { key: "in-trove", label: "In Trove", value: meta.collateralAmount * effectivePrice, colorClass: "bg-blue-500" },
-    { key: "liq-surplus", label: "Claimable", value: claimableSurplus * effectivePrice, colorClass: "bg-blue-700 ring-1 ring-inset ring-green-400" },
-    { key: "fees-received", label: "Fees Received", value: feesReceivedColl * effectivePrice, colorClass: "bg-cyan-800" },
-    ...(!isLiveView ? [{ key: "coll-redeemed", label: "Redeemed", value: (redemption?.totalCollateralLost ?? 0) * effectivePrice, colorClass: "", patternStyle: REDEMPTION_PATTERN }] : []),
-    ...(!isLiveView ? [{ key: "liquidated", label: "Liquidated", value: liquidatedSeized * effectivePrice, colorClass: "", patternStyle: LIQUIDATION_PATTERN }] : []),
-    ...(!isLiveView ? [{ key: "withdrawn", label: "Withdrawn", value: economics.position.totalCollateralWithdrawn * effectivePrice, colorClass: "", patternStyle: WITHDRAWN_PATTERN }] : []),
+      ? { key: "claimable", label: "Claimable", value: meta.collateralAmount * effectivePrice, colorClass: "bg-blue-700 ring-1 ring-inset ring-green-400", tooltip: collTip(meta.collateralAmount, meta.collateralAmount * effectivePrice, 'in') }
+      : { key: "in-trove", label: "In Trove", value: meta.collateralAmount * effectivePrice, colorClass: "bg-blue-500", tooltip: collTip(meta.collateralAmount, meta.collateralAmount * effectivePrice, 'in') },
+    { key: "liq-surplus", label: "Claimable", value: claimableSurplus * effectivePrice, colorClass: "bg-blue-700 ring-1 ring-inset ring-green-400", tooltip: collTip(claimableSurplus, claimableSurplus * effectivePrice, 'in') },
+    { key: "fees-received", label: "Fees Received", value: feesReceivedColl * effectivePrice, colorClass: "bg-cyan-800", tooltip: collTip(feesReceivedColl, feesReceivedColl * effectivePrice, 'in') },
+    ...(!isLiveView ? [{ key: "coll-redeemed", label: "Redeemed", value: (redemption?.totalCollateralLost ?? 0) * effectivePrice, colorClass: "", patternStyle: REDEMPTION_PATTERN, tooltip: collTip(redemption?.totalCollateralLost ?? 0, (redemption?.totalCollateralLost ?? 0) * effectivePrice, 'out') }] : []),
+    ...(!isLiveView ? [{ key: "liquidated", label: "Liquidated", value: liquidatedSeized * effectivePrice, colorClass: "", patternStyle: LIQUIDATION_PATTERN, tooltip: collTip(liquidatedSeized, liquidatedSeized * effectivePrice, 'out') }] : []),
+    ...(!isLiveView ? [{ key: "withdrawn", label: "Withdrawn", value: economics.position.totalCollateralWithdrawn * effectivePrice, colorClass: "", patternStyle: WITHDRAWN_PATTERN, tooltip: collTip(economics.position.totalCollateralWithdrawn, economics.position.totalCollateralWithdrawn * effectivePrice, 'out') }] : []),
   ] : [];
 
   const collSegmentSum = collSegments.reduce((sum, s) => sum + Math.max(0, s.value), 0);
@@ -798,6 +825,27 @@ export function TroveEconomicsSummary({
                 {(() => {
                   const collIsPending = !effectivePrice && meta.status === "open";
                   const keepDualLayout = collBreakdownRows.length > 0 || collIsPending;
+                  // Side-bar tooltips: the faded vertical bars encode the
+                  // lifetime gross totals. Direction arrow shows the flow at
+                  // the protocol boundary — coll lifetime deposits in (→),
+                  // debt lifetime borrows out (←).
+                  const collSideBarTooltip = collSideBar && effectivePrice ? (
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-1.5">
+                        <span>Total</span>
+                        {dirArrow('in')}
+                        <span className="ml-auto tabular-nums">{economics.position.totalCollateralDeposited.toFixed(4)} {collateralSymbol}</span>
+                      </div>
+                      <div className="flex justify-end tabular-nums">{formatCompactUsd(economics.position.totalCollateralDeposited * effectivePrice)}</div>
+                    </div>
+                  ) : undefined;
+                  const debtSideBarTooltip = debtSideBar ? (
+                    <div className="flex items-center gap-1.5">
+                      <span>Total</span>
+                      {dirArrow('out')}
+                      <span className="ml-auto tabular-nums">{formatPrice(economics.position.totalBorrowed)} {stableSymbol}</span>
+                    </div>
+                  ) : undefined;
                   return (
                     <DualTowerChart
                       left={keepDualLayout ? {
@@ -805,15 +853,18 @@ export function TroveEconomicsSummary({
                         breakdownRows: collBreakdownRows,
                         sideBar: collSideBar,
                         placeholder: collIsPending ? <TowerBarSkeleton /> : undefined,
+                        sideBarTooltip: collSideBarTooltip,
                       } : {
                         segments: debtSegments,
                         breakdownRows: debtBreakdownRows,
                         sideBar: debtSideBar,
+                        sideBarTooltip: debtSideBarTooltip,
                       }}
                       right={keepDualLayout ? {
                         segments: debtSegments,
                         breakdownRows: debtBreakdownRows,
                         sideBar: debtSideBar,
+                        sideBarTooltip: debtSideBarTooltip,
                       } : undefined}
                       maxValue={towerMax}
                     />

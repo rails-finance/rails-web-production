@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -11,6 +11,12 @@ export type TowerSegment = {
   value: number;
   colorClass: string;
   patternStyle?: CSSProperties;
+  /** Optional tooltip body shown when this segment is hovered (desktop) or
+   *  tapped (touch). Callers supply formatted markup so each protocol can
+   *  decide its own units (USD on Aave; BOLD on Liquity debt etc.). The
+   *  parent `TowerSide.tooltipFooter` is rendered beneath, on every segment
+   *  of that side. */
+  tooltip?: ReactNode;
 };
 
 export type PositionedSegment = TowerSegment & {
@@ -160,13 +166,24 @@ export function computeTowerLayout(segments: TowerSegment[], maxValue: number, c
 
 // ── Sub-components ─────────────────────────────────────────────────────────
 
-export function TowerBar({ segments, sideBar, height = CHART_HEIGHT }: {
+const SIDEBAR_KEY = '__sidebar__';
+
+export function TowerBar({ segments, sideBar, height = CHART_HEIGHT, tooltipSide = 'right', sideBarTooltip, sideBarTooltipSide = 'left' }: {
   segments: PositionedSegment[];
   /** Single-segment side bar (legacy) or stacked principal + accrued segments. */
   sideBar?:
     | { heightPct: number; color: string }
     | { segments: Array<{ heightPct: number; color: string; patternStyle?: CSSProperties }> };
   height?: number;
+  /** Which side of the tower a *segment* tooltip floats out from. Left tower
+   *  uses 'right'; right tower uses 'left' to keep the popover inside the chart. */
+  tooltipSide?: 'left' | 'right';
+  /** Tooltip body for the faded side bar — typically the lifetime total
+   *  (e.g. "Total Deposited $12,345"). Skipped when omitted. */
+  sideBarTooltip?: ReactNode;
+  /** Which side the sideBar tooltip floats out from. Defaults to 'left' so
+   *  it stays clear of the tower segments. */
+  sideBarTooltipSide?: 'left' | 'right';
 }) {
   const sideBarSegments = sideBar
     ? "segments" in sideBar
@@ -175,8 +192,31 @@ export function TowerBar({ segments, sideBar, height = CHART_HEIGHT }: {
         ? [{ heightPct: sideBar.heightPct, color: sideBar.color }]
         : []
     : [];
+
+  const sideBarTotalHeight = sideBarSegments.reduce((s, seg) => s + seg.heightPct, 0);
+  const sideBarInteractive = !!sideBarTooltip && sideBarTotalHeight > 0;
+
+  const [activeKey, setActiveKey] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Tap-anywhere-else closes the active tooltip (touch dismiss + desktop
+  // outside-click). Only attaches while a tooltip is open.
+  useEffect(() => {
+    if (!activeKey) return;
+    const handler = (e: MouseEvent) => {
+      if (!containerRef.current?.contains(e.target as Node)) setActiveKey(null);
+    };
+    document.addEventListener('click', handler);
+    return () => document.removeEventListener('click', handler);
+  }, [activeKey]);
+
+  const activeSegment = activeKey && activeKey !== SIDEBAR_KEY
+    ? segments.find(s => s.key === activeKey)
+    : null;
+  const sideBarActive = activeKey === SIDEBAR_KEY;
+
   return (
-    <div className="flex gap-px shrink-0">
+    <div ref={containerRef} className="flex gap-px shrink-0">
       {sideBarSegments.length > 0 && (
         <div className="relative shrink-0" style={{ width: 5, height }}>
           {sideBarSegments.reduce<{ cursor: number; nodes: ReactNode[] }>(
@@ -198,25 +238,69 @@ export function TowerBar({ segments, sideBar, height = CHART_HEIGHT }: {
             },
             { cursor: 0, nodes: [] }
           ).nodes}
+          {sideBarInteractive && (
+            // Hit area: stretch slightly outward (−left-1) so the 5px-wide
+            // bar isn't a microscopic touch target. Sits above the painted
+            // segments via z-10.
+            <div
+              className="absolute -left-1 right-0 inset-y-0 cursor-pointer z-10"
+              onMouseEnter={() => setActiveKey(SIDEBAR_KEY)}
+              onMouseLeave={() => setActiveKey(prev => prev === SIDEBAR_KEY ? null : prev)}
+              onClick={(e) => { e.stopPropagation(); setActiveKey(SIDEBAR_KEY); }}
+            />
+          )}
+          {sideBarActive && sideBarTooltip && (
+            <div
+              className={`absolute z-20 ${sideBarTooltipSide === 'right' ? 'left-full ml-2' : 'right-full mr-2'} pointer-events-none`}
+              style={{
+                // Center on the sideBar's filled extent, clamped inside the bar.
+                bottom: Math.max(0, Math.min(sideBarTotalHeight / 2 - 24, height - 48)),
+              }}
+            >
+              <div className="min-w-[160px] max-w-[240px] rounded-md border border-rb-300 dark:border-rb-700 bg-rb-50 dark:bg-rb-900 shadow-lg px-2.5 py-1.5 text-[11px] text-foreground">
+                {sideBarTooltip}
+              </div>
+            </div>
+          )}
         </div>
       )}
       <div className="relative w-16 sm:w-20" style={{ height }}>
-        {segments.map((seg) => (
-          <div key={seg.key}>
-            {seg.colorClass && (
-              <div
-                className={`absolute left-0 right-0 rounded-sm ${seg.colorClass}`}
-                style={{ bottom: seg.bottomPct, height: seg.heightPct }}
-              />
-            )}
-            {seg.patternStyle && (
-              <div
-                className="absolute left-0 right-0 rounded-sm pointer-events-none bg-rb-200 dark:bg-rb-900"
-                style={{ bottom: seg.bottomPct, height: seg.heightPct, ...seg.patternStyle }}
-              />
-            )}
+        {segments.map((seg) => {
+          const interactive = !!seg.tooltip;
+          return (
+            <div
+              key={seg.key}
+              className={`absolute left-0 right-0 rounded-sm ${interactive ? 'cursor-pointer' : ''}`}
+              style={{ bottom: seg.bottomPct, height: seg.heightPct }}
+              onMouseEnter={interactive ? () => setActiveKey(seg.key) : undefined}
+              onMouseLeave={interactive ? () => setActiveKey(prev => prev === seg.key ? null : prev) : undefined}
+              onClick={interactive ? (e) => { e.stopPropagation(); setActiveKey(seg.key); } : undefined}
+            >
+              {seg.colorClass && (
+                <div className={`absolute inset-0 rounded-sm ${seg.colorClass}`} />
+              )}
+              {seg.patternStyle && (
+                <div
+                  className="absolute inset-0 rounded-sm pointer-events-none bg-rb-200 dark:bg-rb-900"
+                  style={seg.patternStyle}
+                />
+              )}
+            </div>
+          );
+        })}
+        {activeSegment && (
+          <div
+            className={`absolute z-20 ${tooltipSide === 'right' ? 'left-full ml-2' : 'right-full mr-2'} pointer-events-none`}
+            style={{
+              // Vertically center on the segment, clamped inside the tower.
+              bottom: Math.max(0, Math.min(activeSegment.bottomPct + activeSegment.heightPct / 2 - 24, height - 48)),
+            }}
+          >
+            <div className="min-w-[160px] max-w-[240px] rounded-md border border-rb-300 dark:border-rb-700 bg-rb-50 dark:bg-rb-900 shadow-lg px-2.5 py-1.5 text-[11px] text-foreground">
+              {activeSegment.tooltip}
+            </div>
           </div>
-        ))}
+        )}
       </div>
     </div>
   );
@@ -309,6 +393,10 @@ export interface TowerSide {
     | { segments: Array<{ heightPct: number; color: string; patternStyle?: CSSProperties }> };
   /** Placeholder element rendered in the tower area when segments are empty */
   placeholder?: ReactNode;
+  /** Tooltip body shown when hovering / tapping the faded side bar — used
+   *  for the lifetime total (e.g. "Total Deposited $12,345"). The side bar
+   *  itself only renders in historic mode; in live mode this is ignored. */
+  sideBarTooltip?: ReactNode;
 }
 
 export interface DualTowerChartProps {
@@ -352,7 +440,7 @@ export function DualTowerChart({ left, right, height = CHART_HEIGHT, maxValue, c
     return (
       <div className={`flex flex-col xl:flex-row items-center xl:items-stretch justify-center gap-3 ${className ?? ""}`}>
         <div className="flex items-end justify-center gap-1 py-2">
-          <TowerBar segments={leftPositioned} sideBar={left.sideBar} height={height} />
+          <TowerBar segments={leftPositioned} sideBar={left.sideBar} height={height} tooltipSide="right" sideBarTooltip={left.sideBarTooltip} sideBarTooltipSide="left" />
         </div>
         <div className="xl:flex-1 xl:flex xl:flex-col">
           <div className="xl:mt-auto w-[300px] max-w-full">
@@ -374,10 +462,10 @@ export function DualTowerChart({ left, right, height = CHART_HEIGHT, maxValue, c
 
       {/* Towers */}
       <div className="flex items-end justify-center gap-1 py-2 order-1 xl:order-none">
-        {showLeft && <TowerBar segments={leftPositioned} sideBar={left.sideBar} height={height} />}
+        {showLeft && <TowerBar segments={leftPositioned} sideBar={left.sideBar} height={height} tooltipSide="right" sideBarTooltip={left.sideBarTooltip} sideBarTooltipSide="left" />}
         {!showLeft && hasLeftPlaceholder && left.placeholder}
         {(leftSlotVisible && rightSlotVisible) && <div className="w-2 shrink-0" />}
-        {showRightTower && <TowerBar segments={rightPositioned} sideBar={right!.sideBar} height={height} />}
+        {showRightTower && <TowerBar segments={rightPositioned} sideBar={right!.sideBar} height={height} tooltipSide="left" sideBarTooltip={right!.sideBarTooltip} sideBarTooltipSide="right" />}
         {!showRightTower && hasRightPlaceholder && right!.placeholder}
       </div>
 
