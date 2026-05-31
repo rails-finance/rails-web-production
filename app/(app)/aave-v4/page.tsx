@@ -26,6 +26,8 @@ import {
   type AaveV4SpokePositionSort,
 } from "@/lib/api/fetch-aave-v4-spoke-positions";
 import { slugifySpoke } from "@/lib/aave-v4/spoke-meta";
+import { useWalletContext } from "@/components/nav/wallet-context";
+import { upsertSession } from "@/lib/shared/sessions";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -69,6 +71,39 @@ function AaveV4ListPageContent() {
   };
 
   const currentPage = Math.max(1, Number(searchParams.get("page")) || 1);
+
+  // Wallet view: surface the searched wallet in the header pill + this rail's
+  // recents. A plain address goes straight in; an ENS name is forward-resolved
+  // via /api/ens/resolve (the spoke-positions proxy resolves independently for
+  // the listing query itself).
+  const { setWallets } = useWalletContext();
+  useEffect(() => {
+    const wallet = filters.wallet?.toLowerCase();
+    if (wallet && /^0x[a-f0-9]{40}$/.test(wallet)) {
+      setWallets([wallet], { [wallet]: null });
+      upsertSession([wallet], { [wallet]: null }, "aave-v4");
+      return;
+    }
+    const ens = filters.ownerEns;
+    if (!ens) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/ens/resolve?name=${encodeURIComponent(ens)}`);
+        if (!res.ok) return;
+        const { address } = (await res.json()) as { address: string | null };
+        if (cancelled || !address) return;
+        const lower = address.toLowerCase();
+        setWallets([lower], { [lower]: ens });
+        upsertSession([lower], { [lower]: ens }, "aave-v4");
+      } catch {
+        /* resolution is best-effort — the listing still loads via the proxy */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [filters.wallet, filters.ownerEns, setWallets]);
 
   const [rows, setRows] = useState<AaveV4SpokePositionRow[]>([]);
   const [total, setTotal] = useState(0);

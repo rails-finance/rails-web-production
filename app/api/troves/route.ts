@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { TrovesResponse } from "@/types/api/trove";
 import { createAuthFetchOptions } from "@/lib/api/fetch-with-auth";
+import { resolveEnsAddress } from "@/lib/ens/resolve-ens";
 
 const RAILS_API_URL = process.env.RAILS_API_URL;
 
@@ -130,8 +131,17 @@ export async function GET(request: NextRequest) {
     } else if (collateralType && VALID_COLLATERAL_TYPES.includes(collateralType)) {
       backendParams.set("collateralType", collateralType);
     }
-    if (ownerAddress) backendParams.set("ownerAddress", ownerAddress);
-    if (ownerEns) backendParams.set("ownerEns", ownerEns);
+    // Owner filter. Prefer an explicit address; otherwise forward-resolve the
+    // ENS name to an address and filter by that (reliable for any on-chain
+    // wallet). If resolution fails, pass the ENS name through so the backend
+    // can still try its reverse-resolution cache.
+    if (ownerAddress) {
+      backendParams.set("ownerAddress", ownerAddress);
+    } else if (ownerEns) {
+      const resolved = await resolveEnsAddress(ownerEns);
+      if (resolved) backendParams.set("ownerAddress", resolved);
+      else backendParams.set("ownerEns", ownerEns);
+    }
     if (activeWithin) backendParams.set("activeWithin", activeWithin);
     if (createdWithin) backendParams.set("createdWithin", createdWithin);
     // Pass boolean parameters with values to backend

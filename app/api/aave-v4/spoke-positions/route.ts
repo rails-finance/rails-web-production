@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAuthFetchOptions } from "@/lib/api/fetch-with-auth";
+import { resolveEnsAddress } from "@/lib/ens/resolve-ens";
 import type { AaveV4SpokePositionsResponse } from "@/lib/api/fetch-aave-v4-spoke-positions";
 
 const RAILS_API_URL = process.env.RAILS_API_URL;
@@ -17,7 +18,21 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const search = request.nextUrl.searchParams.toString();
+    const params = new URLSearchParams(request.nextUrl.searchParams);
+
+    // Forward-resolve ENS → wallet when no explicit wallet is given. Filtering
+    // by the resolved address is reliable for any on-chain wallet; if it
+    // doesn't resolve, leave ownerEns in place for the backend's reverse cache.
+    const ownerEns = params.get("ownerEns");
+    if (ownerEns && !params.get("wallet")) {
+      const resolved = await resolveEnsAddress(ownerEns);
+      if (resolved) {
+        params.set("wallet", resolved);
+        params.delete("ownerEns");
+      }
+    }
+
+    const search = params.toString();
     const url = `${RAILS_API_URL}/api/aave-v4/spoke-positions${search ? `?${search}` : ""}`;
     const response = await fetch(url, createAuthFetchOptions());
 

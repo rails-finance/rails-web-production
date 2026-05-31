@@ -147,6 +147,32 @@ function TrovesPageContent() {
     upsertSession([lower], { [lower]: null }, "liquity-v2");
   }, [filters.ownerAddress, setWallets]);
 
+  // ENS wallet view: forward-resolve the name to an address so the header
+  // pill and recents reflect the wallet (the /api/troves proxy resolves
+  // independently for the listing query itself). Skip when an explicit
+  // address is present — that branch above already handles it.
+  useEffect(() => {
+    const ens = filters.ownerEns;
+    if (filters.ownerAddress || !ens) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/ens/resolve?name=${encodeURIComponent(ens)}`);
+        if (!res.ok) return;
+        const { address } = (await res.json()) as { address: string | null };
+        if (cancelled || !address) return;
+        const lower = address.toLowerCase();
+        setWallets([lower], { [lower]: ens });
+        upsertSession([lower], { [lower]: ens }, "liquity-v2");
+      } catch {
+        /* resolution is best-effort — the listing still loads via the proxy */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [filters.ownerEns, filters.ownerAddress, setWallets]);
+
   // Helper to build URL search params from filters
   const buildSearchParams = (filterParams: TroveListFilterParams, page?: number, includePageAndLimit?: boolean) => {
     const params = new URLSearchParams();
