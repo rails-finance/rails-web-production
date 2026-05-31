@@ -1,8 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
-import { useHover } from "@/components/transaction-timeline/context/HoverContext";
-
 interface TroveContextRowProps {
   /** Plain-English explanation bullets — rendered below the row when open. */
   items: React.ReactNode[];
@@ -18,13 +15,6 @@ interface TroveContextRowProps {
  * (`components/shared/event-card.tsx`).
  */
 export function TroveContextRow({ items, isOpen, onToggle }: TroveContextRowProps) {
-  // Mirror the legacy ExplanationPanel behaviour: hover-highlighting is only
-  // armed while the panel is open.
-  const { setHoverEnabled } = useHover();
-  useEffect(() => {
-    setHoverEnabled(isOpen);
-  }, [isOpen, setHoverEnabled]);
-
   if (items.length === 0) return null;
 
   return (

@@ -10,7 +10,6 @@ import { TroveSummaryCardSelector } from "@/components/trove/TroveSummaryCardSel
 import { TroveDetailsBand } from "@/components/trove/TroveDetailsBand";
 import { TroveContextRow } from "@/components/trove/TroveContextRow";
 import { useTroveExplanationItems } from "@/components/trove/use-trove-explanation-items";
-import { HoverProvider } from "@/components/transaction-timeline/context/HoverContext";
 import { TroveEconomicsSummary } from "@/components/protocol/liquity/trove-economics";
 import { formatDate, formatDuration } from "@/lib/date";
 import { Icon } from "@/components/icons/icon";
@@ -82,11 +81,6 @@ function TimelineDisplayToggle() {
   );
 }
 
-/**
- * Composes the four tiers under one HoverProvider so HighlightableValues in
- * the expanded explanation can highlight their counterparts in the cards
- * above. The hook itself is hover-context-agnostic — it just builds JSX
- * which subscribes when rendered. */
 /** Back-link to the wallet's filtered listing. Replaces the old in-page
  *  position selector: the listing IS the switcher now, and the breadcrumb
  *  is the way back. Production today has a `history.back()` button instead —
@@ -443,25 +437,20 @@ export default function TrovePage() {
         {walletFilterHref && (
           <TroveBreadcrumb walletFilterHref={walletFilterHref} ownerLabel={ownerLabel} />
         )}
-        {/* Single HoverProvider wraps the whole summary stack so
-            HighlightableValues in the expanded explanation can highlight
-            their counterparts up in the summary card and details band. */}
-        <HoverProvider>
-          <TroveSummaryStack
-            trove={troveData}
-            liveState={liveState}
-            prices={prices}
-            debtInFront={debtInFront}
-            trovesAhead={trovesAhead}
-            debtInFrontLoading={debtInFrontLoading}
-            summaryExplanationOpen={summaryExplanationOpen}
-            onToggleSummaryExplanation={setSummaryExplanationOpen}
-            loadingStatus={{
-              message: getEnhancementStatus(),
-              snapshotDate: lastEventTs ?? undefined,
-            }}
-          />
-        </HoverProvider>
+        <TroveSummaryStack
+          trove={troveData}
+          liveState={liveState}
+          prices={prices}
+          debtInFront={debtInFront}
+          trovesAhead={trovesAhead}
+          debtInFrontLoading={debtInFrontLoading}
+          summaryExplanationOpen={summaryExplanationOpen}
+          onToggleSummaryExplanation={setSummaryExplanationOpen}
+          loadingStatus={{
+            message: getEnhancementStatus(),
+            snapshotDate: lastEventTs ?? undefined,
+          }}
+        />
 
         {/* Full-bleed economics band — escapes the max-w-7xl gutter so the
             background extends edge-to-edge (matches rails-explorer). The

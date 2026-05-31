@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { TroveSummary } from "@/types/api/trove";
 
 interface DebtInFrontResult {
   debtInFront: number | null;
@@ -10,11 +9,20 @@ interface DebtInFrontResult {
 }
 
 /**
- * Fetches all open troves for the same collateral type and calculates
- * the total debt in front of a given interest rate. In Liquity V2,
- * redemptions hit the lowest-rate troves first, and all troves at the
- * same rate share redemption risk equally — so debt-in-front includes
- * all debt at rates <= this trove's rate (excluding the trove itself).
+ * Liquity V2 redemption buffer for a trove: the total accrued-inclusive BOLD
+ * debt sitting at interest rates at or below this trove's, within its own
+ * collateral branch, excluding the trove itself. Redemptions are per-branch
+ * queues consumed from the lowest rate up, so this is how much must be redeemed
+ * against the branch before this trove is reached.
+ *
+ * Computed on-chain server-side (MultiTroveGetter walk over live `entireDebt`),
+ * so it reflects current accrued interest and exact sorted order — no indexer
+ * lag and no client-side pagination race. See rails-server-mig
+ * `/api/liquity-v2/debt-in-front`.
+ *
+ * `interestRate` is no longer used in the calculation (the backend reads the
+ * trove's live rate directly); it is retained only as a readiness gate — the
+ * detail page passes it solely for open troves.
  */
 export function useDebtInFront(
   collateralType: string | undefined,
@@ -34,59 +42,20 @@ export function useDebtInFront(
       setLoading(true);
 
       try {
-        let allTroves: TroveSummary[] = [];
-        let offset = 0;
-        const limit = 1000;
-        let hasMore = true;
+        const params = new URLSearchParams({ collateralType, troveId });
+        const response = await fetch(`/api/liquity-v2/debt-in-front?${params}`);
+        if (!response.ok) return;
 
-        // Paginate through all open troves sorted by interest rate
-        while (hasMore) {
-          const params = new URLSearchParams({
-            collateralType,
-            status: "open",
-            sortBy: "interestRate",
-            sortOrder: "asc",
-            limit: limit.toString(),
-            offset: offset.toString(),
-          });
-
-          const response = await fetch(`/api/troves?${params}`);
-          if (!response.ok) break;
-
-          const data = await response.json();
-          const troves: TroveSummary[] = data.data || [];
-          allTroves = allTroves.concat(troves);
-
-          // Stop if we've passed our interest rate or no more data
-          if (troves.length < limit) {
-            hasMore = false;
-          } else {
-            const lastRate = troves[troves.length - 1]?.metrics.interestRate ?? 0;
-            if (lastRate > interestRate) {
-              hasMore = false;
-            } else {
-              offset += limit;
-            }
-          }
-        }
-
+        const json = await response.json();
         if (cancelled) return;
 
-        // Sum debt for all troves at rates <= this trove's rate, excluding itself
-        let totalDebt = 0;
-        let count = 0;
-        for (const trove of allTroves) {
-          if (trove.id === troveId) continue;
-          if (trove.metrics.interestRate <= interestRate) {
-            totalDebt += trove.debt.current;
-            count++;
-          }
+        const data = json?.data;
+        if (data && typeof data.debtInFront === "number") {
+          setDebtInFront(data.debtInFront);
+          setTrovesAhead(typeof data.trovesAhead === "number" ? data.trovesAhead : null);
         }
-
-        setDebtInFront(totalDebt);
-        setTrovesAhead(count);
       } catch (err) {
-        console.error("Error calculating debt in front:", err);
+        console.error("Error fetching debt in front:", err);
       } finally {
         if (!cancelled) setLoading(false);
       }
