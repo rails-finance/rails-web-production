@@ -68,8 +68,8 @@ function PricePill({
   price: number;
 }) {
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs tabular-nums cursor-default">
-      <TokenChipIcon symbol={symbol} address={address} size={32} />
+    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-rb-200 dark:bg-rb-900 text-xs tabular-nums cursor-default">
+      <TokenChipIcon symbol={symbol} address={address} size={14} />
       <span className="font-bold text-green-400">{fmtPrice(price)}</span>
     </span>
   );
@@ -220,7 +220,7 @@ export function AaveV4PriceRunway({
           )}
         </div>
 
-        <div style={{ marginTop: BAR_MID - 16 }}>
+        <div style={{ marginTop: BAR_MID - 12 }}>
           <PricePill
             symbol={collateralSymbol}
             address={collateralAddress}
