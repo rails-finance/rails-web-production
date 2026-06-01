@@ -29,11 +29,11 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL("https://rails.finance"),
   title: {
-    default: "Rails - DeFi Self-Service Support",
+    default: "Rails - DeFi Protocol Explorers",
     template: "Rails | %s",
   },
   description:
-    "Rails is a DeFi self-service support platform. Each protocol gets its own dedicated explorer — a mono-rail — with on-chain-verifiable positions, timelines, and event detail. Live rails: Liquity V2 and Aave V4.",
+    "Rails builds dedicated explorers for DeFi protocols — on-chain-verifiable positions, timelines, and event detail, one protocol at a time. Live now: Liquity V2 and Aave V4, with more bluechip protocols on the way.",
   keywords: [
     "DeFi",
     "Ethereum",
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     "Stablecoin",
     "Transaction Analysis",
     "Lending Protocol",
-    "Self-Service Support",
+    "Protocol Explorer",
   ],
   authors: [{ name: "Rails", url: "https://rails.finance" }],
   creator: "Rails",
@@ -53,24 +53,24 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://rails.finance",
-    title: "Rails - DeFi Self-Service Support",
+    title: "Rails - DeFi Protocol Explorers",
     description:
-      "A DeFi self-service support platform — dedicated mono-rail explorers per protocol, with on-chain-verifiable positions, timelines, and event detail.",
+      "Dedicated explorers for DeFi protocols — on-chain-verifiable positions, timelines, and event detail. Live now: Liquity V2 and Aave V4.",
     siteName: "Rails",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Rails - DeFi Self-Service Support",
+        alt: "Rails - DeFi Protocol Explorers",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Rails - DeFi Self-Service Support",
+    title: "Rails - DeFi Protocol Explorers",
     description:
-      "A DeFi self-service support platform — dedicated mono-rail explorers per protocol, with on-chain-verifiable positions, timelines, and event detail.",
+      "Dedicated explorers for DeFi protocols — on-chain-verifiable positions, timelines, and event detail. Live now: Liquity V2 and Aave V4.",
     images: ["/twitter-image.png"],
     creator: "@rails_finance",
     site: "@rails_finance",

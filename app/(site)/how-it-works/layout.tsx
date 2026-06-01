@@ -3,11 +3,10 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "How Rails Works",
   description:
-    "Rails is a platform that produces mono-rails — dedicated, read-only explorers, one per protocol. The truth principle, the wallet-as-session model, and what's under the hood.",
+    "Rails builds dedicated, read-only explorers for DeFi protocols — one protocol at a time. The truth principle, the wallet-as-session model, and what's under the hood.",
   openGraph: {
     title: "How Rails Works",
-    description:
-      "Rails is a platform that produces mono-rails — dedicated, read-only explorers, one per protocol.",
+    description: "Rails builds dedicated, read-only explorers for DeFi protocols — one protocol at a time.",
     url: "https://rails.finance/how-it-works",
   },
 };

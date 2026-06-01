@@ -1,12 +1,12 @@
 /**
- * Mono-rail directory — the home page's primary CTA grid. Rails is a
- * platform that produces mono-rails; each card here points at a live rail.
+ * Explorer directory — the home page's primary CTA grid. Rails builds a
+ * dedicated explorer per protocol; each card here points at a live one.
  *
- * Each card links to the rail's home (discovery listing) — never to a
+ * Each card links to the explorer's home (discovery listing) — never to a
  * specific wallet. Wallet "memory" lives in the protocol-page search input's
  * recent/pinned dropdown, not in the global chrome or home links.
  *
- * Wired rails get an internal `href`; rails not yet built render as static
+ * Wired explorers get an internal `href`; ones not yet built render as static
  * placeholders to signal what's queued without making a promise we can't
  * keep. When a third protocol comes online, add a card with its `href`.
  */
@@ -49,8 +49,8 @@ export function MonoRailSection() {
             Rails <span className="text-blue-500">Explorers</span>
           </h2>
           <p className="text-sm text-rb-500 max-w-xl mx-auto leading-relaxed">
-            Explore Liquity V2 and Aave V4 in granular detail with our dedicated
-            explorers.
+            Explore Liquity V2 and Aave V4 in granular detail with our dedicated explorers — with more bluechip
+            protocols on the way.
           </p>
         </div>
 
@@ -68,13 +68,7 @@ function MonoRailCard({ rail }: { rail: MonoRail }) {
   const inner = (
     <div className="flex items-center gap-3">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={`/icons/protocols/${rail.id}.png`}
-        alt=""
-        width={64}
-        height={64}
-        style={{ borderRadius: "20%" }}
-      />
+      <img src={`/icons/protocols/${rail.id}.png`} alt="" width={64} height={64} style={{ borderRadius: "20%" }} />
       <div>
         <div className="flex items-center gap-2">
           <span className="text-2xl font-semibold">{rail.label}</span>
@@ -86,10 +80,7 @@ function MonoRailCard({ rail }: { rail: MonoRail }) {
         </div>
         <div className="flex gap-1 mt-1">
           {rail.tags.map((t) => (
-            <span
-              key={t}
-              className="text-xs px-1.5 py-0.5 rounded bg-rb-100 dark:bg-rb-700"
-            >
+            <span key={t} className="text-xs px-1.5 py-0.5 rounded bg-rb-100 dark:bg-rb-700">
               {t}
             </span>
           ))}
@@ -98,11 +89,7 @@ function MonoRailCard({ rail }: { rail: MonoRail }) {
     </div>
   );
 
-  const desc = (
-    <p className="text-sm font-light text-rb-500 leading-relaxed flex-1">
-      {rail.desc}
-    </p>
-  );
+  const desc = <p className="text-sm font-light text-rb-500 leading-relaxed flex-1">{rail.desc}</p>;
 
   if (rail.href) {
     return (

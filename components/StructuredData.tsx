@@ -4,8 +4,7 @@ export function StructuredData() {
     "@type": "WebApplication",
     name: "Rails",
     applicationCategory: "FinanceApplication",
-    description:
-      "DeFi activity timeline and transaction analysis platform for Liquity V2 and beyond",
+    description: "Dedicated, on-chain-verifiable explorers for DeFi protocols. Live now: Liquity V2 and Aave V4.",
     url: "https://rails.finance",
     operatingSystem: "Web",
     offers: {
@@ -17,24 +16,17 @@ export function StructuredData() {
       "@type": "Organization",
       name: "Rails",
       url: "https://rails.finance",
-      sameAs: [
-        "https://x.com/rails_finance",
-        "https://youtube.com/@rails_finance",
-      ],
+      sameAs: ["https://x.com/rails_finance", "https://youtube.com/@rails_finance"],
     },
     featureList: [
-      "DeFi transaction timeline visualization",
-      "Transaction analysis and explanations",
-      "Liquity V2 Trove tracking",
-      "Multi-collateral support (ETH, wstETH, rETH)",
+      "Dedicated explorers for DeFi protocols",
+      "On-chain-verifiable positions and balances",
+      "Plain-language event timelines",
+      "Liquity V2 trove coverage across WETH, wstETH, rETH",
+      "Aave V4 multi-spoke lending coverage",
       "Real-time protocol statistics",
     ],
   };
 
-  return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-    />
-  );
+  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />;
 }

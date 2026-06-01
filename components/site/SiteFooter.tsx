@@ -12,22 +12,26 @@ export function SiteFooter() {
           {/* Rails Info */}
           <div className="md:col-span-2">
             <div className="flex items-center gap-1.5 mb-3 text-foreground">
-              <svg
-                width={28}
-                height={28}
-                viewBox="0 0 200 200"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path fill="currentColor" style={{ opacity: 0.85 }} d="M 79.763 159.671 L 111.637 159.671 L 52.168 41.625 L 20.295 41.625 L 79.763 159.671 Z" />
-                <path fill="currentColor" style={{ opacity: 0.85 }} d="M 98.578 97.056 L 130.451 97.056 L 105.044 47.853 L 73.171 47.853 L 98.578 97.056 Z" />
-                <path fill="currentColor" d="M 148.892 142.388 L 180.766 142.388 L 155.359 93.185 L 123.486 93.185 L 148.892 142.388 Z" />
+              <svg width={28} height={28} viewBox="0 0 200 200" fill="none" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  style={{ opacity: 0.85 }}
+                  d="M 79.763 159.671 L 111.637 159.671 L 52.168 41.625 L 20.295 41.625 L 79.763 159.671 Z"
+                />
+                <path
+                  fill="currentColor"
+                  style={{ opacity: 0.85 }}
+                  d="M 98.578 97.056 L 130.451 97.056 L 105.044 47.853 L 73.171 47.853 L 98.578 97.056 Z"
+                />
+                <path
+                  fill="currentColor"
+                  d="M 148.892 142.388 L 180.766 142.388 L 155.359 93.185 L 123.486 93.185 L 148.892 142.388 Z"
+                />
               </svg>
               <h3 className="text-xl font-semibold tracking-wide">Rails</h3>
             </div>
             <p className="text-foreground text-sm leading-relaxed mb-4">
-              A platform that produces mono-rails — dedicated, read-only
-              explorers, one per protocol. On-chain-verifiable positions,
+              Dedicated, read-only explorers for DeFi protocols — one at a time. On-chain-verifiable positions,
               timelines, and event detail for the protocols you actually use.
             </p>
             <div className="flex items-center gap-4">
@@ -117,9 +121,7 @@ export function SiteFooter() {
           {/* Support */}
           <div>
             <h4 className="text-sm font-semibold text-foreground mb-3">Support Rails</h4>
-            <p className="text-foreground text-sm mb-3">
-              Help us continue building tools for the DeFi community
-            </p>
+            <p className="text-foreground text-sm mb-3">Help us continue building tools for the DeFi community</p>
             <a
               href="https://etherscan.io/name-lookup-search?id=donate.rails.eth"
               className="inline-block bg-fuchsia-600 hover:bg-fuchsia-700 dark:bg-fuchsia-500 dark:hover:bg-fuchsia-600 text-white text-sm font-bold px-4 py-2 rounded-full transition-colors duration-150"

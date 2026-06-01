@@ -4,11 +4,10 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "About Rails",
   description:
-    "Rails is a platform that produces mono-rails — dedicated, read-only explorers, one per protocol. Built by a two-person team with support from Liquity. The team, the roadmap, the supporters.",
+    "Rails builds dedicated, read-only explorers for DeFi protocols — one protocol at a time. Built by a two-person team with support from Liquity. The team, the roadmap, the supporters.",
   openGraph: {
     title: "About Rails",
-    description:
-      "A platform that produces dedicated mono-rail explorers for DeFi protocols. The team, the roadmap, the supporters.",
+    description: "Dedicated explorers for DeFi protocols. The team, the roadmap, the supporters.",
     url: "https://rails.finance/about",
   },
 };
@@ -18,13 +17,10 @@ export default function AboutPage() {
     <div className="container mx-auto md:px-6 px-4 pt-32 pb-12 max-w-7xl">
       <div className="prose prose-lg max-w-none">
         <p className="text-xl mb-8 text-foreground">
-          DeFi is too complex for most people to navigate confidently. The
-          information is on-chain, but it's not legible.{" "}
-          <span className="font-bold">Rails</span> is a platform that
-          produces mono-rails — dedicated, read-only explorers, one per
-          protocol — that translate protocol activity into clear,
-          on-chain-verifiable timelines, positions, and event detail. No
-          wallet connection, no account, no permission.
+          DeFi is too complex for most people to navigate confidently. The information is on-chain, but it's not
+          legible. <span className="font-bold">Rails</span> builds dedicated, read-only explorers for DeFi protocols —
+          one protocol at a time — that translate on-chain activity into clear, verifiable timelines, positions, and
+          event detail. No wallet connection, no account, no permission.
         </p>
 
         {/* Roadmap & Mission Section */}
@@ -35,13 +31,10 @@ export default function AboutPage() {
             className="my-8 lg:my-0 row-span-2 col-start-1 row-start-2 lg:justify-center lg:flex lg:flex-col"
           >
             <div className="">
-              <h3 className="text-2xl font-bold text-foreground mb-6">
-                A rail per protocol
-              </h3>
+              <h3 className="text-2xl font-bold text-foreground mb-6">An explorer per protocol</h3>
               <p className="text-lg text-foreground">
-                <span className="font-bold">Our roadmap</span> is one rail at
-                a time. Each protocol gets a dedicated, sponsor-anchored
-                explorer; the platform sits above them.
+                <span className="font-bold">Our roadmap</span> is one protocol at a time. Each gets a dedicated,
+                sponsor-anchored explorer; the platform sits above them.
               </p>
             </div>
           </div>
@@ -63,16 +56,13 @@ export default function AboutPage() {
                   <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mr-3">
                     <span className="text-white font-bold">1</span>
                   </div>
-                  <h4 className="text-lg font-semibold text-foreground">Liquity V2 rail</h4>
+                  <h4 className="text-lg font-semibold text-foreground">Liquity V2 explorer</h4>
                 </div>
-                <span className="text-xs font-extrabold text-green-100 bg-green-600 px-2 py-1 rounded">
-                  Live
-                </span>
+                <span className="text-xs font-extrabold text-green-100 bg-green-600 px-2 py-1 rounded">Live</span>
               </div>
               <p className="text-sm text-rb-500 ml-13">
-                Full trove coverage across the three collateral types — WETH,
-                wstETH, rETH — with event timelines, batch-manager tracking,
-                and per-trove economics.
+                Full trove coverage across the three collateral types — WETH, wstETH, rETH — with event timelines,
+                batch-manager tracking, and per-trove economics.
               </p>
             </div>
           </div>
@@ -83,16 +73,13 @@ export default function AboutPage() {
                   <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mr-3">
                     <span className="text-white font-bold">2</span>
                   </div>
-                  <h4 className="text-lg font-semibold text-foreground">Aave V4 rail</h4>
+                  <h4 className="text-lg font-semibold text-foreground">Aave V4 explorer</h4>
                 </div>
-                <span className="text-xs font-extrabold text-green-100 bg-green-600 px-2 py-1 rounded">
-                  Live
-                </span>
+                <span className="text-xs font-extrabold text-green-100 bg-green-600 px-2 py-1 rounded">Live</span>
               </div>
               <p className="text-sm text-rb-500 ml-13">
-                Multi-spoke lending coverage — per-spoke health factor,
-                liquidation price, and rate exposure, all derived from
-                current on-chain state.
+                Multi-spoke lending coverage — per-spoke health factor, liquidation price, and rate exposure, all
+                derived from current on-chain state.
               </p>
             </div>
           </div>
@@ -103,18 +90,13 @@ export default function AboutPage() {
                   <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mr-3">
                     <span className="text-white font-bold">3</span>
                   </div>
-                  <h4 className="text-lg font-semibold text-foreground">
-                    Next rails
-                  </h4>
+                  <h4 className="text-lg font-semibold text-foreground">Next explorers</h4>
                 </div>
-                <span className="text-xs font-extrabold text-blue-100 bg-blue-600 px-2 py-1 rounded">
-                  In progress
-                </span>
+                <span className="text-xs font-extrabold text-blue-100 bg-blue-600 px-2 py-1 rounded">In progress</span>
               </div>
               <p className="text-sm text-rb-500 ml-13">
-                One rail at a time. Candidates include Morpho, Compound, Sky,
-                and the Liquity V2 forks — each scoped, sponsor-anchored, and
-                truth-principled.
+                One protocol at a time. Candidates include Morpho, Compound, Sky, and the Liquity V2 forks — each
+                scoped, sponsor-anchored, and truth-principled.
               </p>
             </div>
           </div>
@@ -127,14 +109,11 @@ export default function AboutPage() {
                   </div>
                   <h4 className="text-lg font-semibold text-foreground">Modularisation</h4>
                 </div>
-                <span className="text-xs font-extrabold text-rb-100 bg-rb-400 px-2 py-1 rounded">
-                  Planned
-                </span>
+                <span className="text-xs font-extrabold text-rb-100 bg-rb-400 px-2 py-1 rounded">Planned</span>
               </div>
               <p className="text-sm text-rb-500 ml-13">
-                Rails evolves into portable, composable surfaces — event
-                cards, position cards, timelines — that protocol teams can
-                embed directly in their own UIs.
+                Rails evolves into portable, composable surfaces — event cards, position cards, timelines — that
+                protocol teams can embed directly in their own UIs.
               </p>
             </div>
           </div>
@@ -219,12 +198,11 @@ export default function AboutPage() {
                   </a>
                 </div>
                 <p className="text-foreground mb-3">
-                  Liquity has been instrumental in getting Rails off the ground, providing a grant to
-                  kickstart our development. Their support enables us to build critical infrastructure for the Liquity
-                  ecosystem and beyond. Thank you to Liquity!
+                  Liquity has been instrumental in getting Rails off the ground, providing a grant to kickstart our
+                  development. Their support enables us to build critical infrastructure for the Liquity ecosystem and
+                  beyond. Thank you to Liquity!
                 </p>
               </div>
-              
             </div>
           </div>
         </div>
@@ -269,9 +247,7 @@ export default function AboutPage() {
                     GitHub
                   </a>
                 </div>
-                <p className="text-rb-500 text-sm">
-                  Help us continue building tools for the DeFi community
-                </p>
+                <p className="text-rb-500 text-sm">Help us continue building tools for the DeFi community</p>
               </div>
             </div>
 
