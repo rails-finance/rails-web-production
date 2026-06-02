@@ -93,11 +93,7 @@ export interface AaveV4SpokePositionsResponse {
   offset: number;
 }
 
-export type AaveV4SpokePositionSort =
-  | "lastActivity"
-  | "supplyUsd"
-  | "debtUsd"
-  | "healthFactor";
+export type AaveV4SpokePositionSort = "lastActivity" | "supplyUsd" | "debtUsd" | "healthFactor";
 
 export interface FetchAaveV4SpokePositionsParams {
   /** Multi-spoke filter. Empty/undefined = no spoke restriction. */
@@ -114,6 +110,10 @@ export interface FetchAaveV4SpokePositionsParams {
    *  positions, false → only non-liquidated, undefined → no restriction. */
   hasLiquidations?: boolean;
   healthBelow?: number;
+  /** Hide effectively-closed positions (supply and debt both ~$0). */
+  excludeClosed?: boolean;
+  /** Hide dust positions whose combined supply + debt USD is below this. */
+  minTotalUsd?: number;
   activeWithin?: number;
   /** Multi-asset filter on the supply side. Position must hold at least one
    *  of these symbols with a non-zero supply balance. "???" matches reserves
@@ -143,6 +143,8 @@ export async function fetchAaveV4SpokePositions(
   if (p.hasLiquidations === true) qs.set("hasLiquidations", "true");
   if (p.hasLiquidations === false) qs.set("hasLiquidations", "false");
   if (p.healthBelow != null) qs.set("healthBelow", String(p.healthBelow));
+  if (p.excludeClosed) qs.set("excludeClosed", "true");
+  if (p.minTotalUsd != null) qs.set("minTotalUsd", String(p.minTotalUsd));
   if (p.activeWithin != null) qs.set("activeWithin", String(p.activeWithin));
   if (p.supplyAssets && p.supplyAssets.length > 0) qs.set("supplyAssets", p.supplyAssets.join(","));
   if (p.borrowAssets && p.borrowAssets.length > 0) qs.set("borrowAssets", p.borrowAssets.join(","));

@@ -20,6 +20,26 @@ export type AaveV4Health = "all" | "atRisk" | "underwater";
 /** Tri-state liquidation filter. "with" → positions liquidated at least
  *  once, "without" → positions never liquidated, "all" → no restriction. */
 export type AaveV4Liquidations = "all" | "with" | "without";
+/** Visibility tier. "active" hides effectively-closed positions (supply and
+ *  debt both ~$0); "nodust" additionally hides anything under the dust line;
+ *  "all" shows everything including closed. */
+export type AaveV4Show = "all" | "active" | "nodust";
+
+/** Dust line for the "No dust" tier — combined supply + debt below this (USD)
+ *  is hidden. Closed/near-zero (the "active" tier) is a fixed <$1 server-side. */
+export const AAVE_V4_DUST_USD = 100;
+
+/** The listing doubles as a wallet view. The bare directory hides closed /
+ *  near-zero positions by default; a wallet/ENS-scoped query relaxes to "all"
+ *  so a wallet's full history is visible (see the Liquity rail for the same
+ *  rule). `show` carries raw intent — undefined means "use this default". */
+export function aaveV4ShowDefault(f: { wallet?: string; ownerEns?: string }): AaveV4Show {
+  return f.wallet || f.ownerEns ? "all" : "active";
+}
+
+export function effectiveAaveV4Show(f: { show?: AaveV4Show; wallet?: string; ownerEns?: string }): AaveV4Show {
+  return f.show ?? aaveV4ShowDefault(f);
+}
 
 export interface AaveV4ListFilterParams {
   wallet?: string;
@@ -37,6 +57,9 @@ export interface AaveV4ListFilterParams {
   debt: AaveV4Debt;
   health: AaveV4Health;
   liquidations: AaveV4Liquidations;
+  /** Visibility tier. Raw intent: undefined = use the contextual default
+   *  (active on the bare directory, all on a wallet-scoped query). */
+  show?: AaveV4Show;
   sortBy: string;
   sortOrder: "asc" | "desc";
 }
@@ -47,28 +70,28 @@ interface Props {
 }
 
 const HUB_OPTIONS = [
-  { value: "core",  label: "Core"  },
-  { value: "plus",  label: "Plus"  },
+  { value: "core", label: "Core" },
+  { value: "plus", label: "Plus" },
   { value: "prime", label: "Prime" },
 ];
 
 const SPOKE_OPTIONS = [
-  { value: "main",        label: "Main" },
-  { value: "bluechip",    label: "Bluechip" },
+  { value: "main", label: "Main" },
+  { value: "bluechip", label: "Bluechip" },
   { value: "ethena_corr", label: "Ethena Correlated" },
-  { value: "ethena_eco",  label: "Ethena Ecosystem" },
-  { value: "etherfi",     label: "EtherFi" },
-  { value: "forex",       label: "Forex" },
-  { value: "gold",        label: "Gold" },
-  { value: "kelp",        label: "Kelp" },
-  { value: "lido",        label: "Lido" },
-  { value: "lombard",     label: "Lombard BTC" },
+  { value: "ethena_eco", label: "Ethena Ecosystem" },
+  { value: "etherfi", label: "EtherFi" },
+  { value: "forex", label: "Forex" },
+  { value: "gold", label: "Gold" },
+  { value: "kelp", label: "Kelp" },
+  { value: "lido", label: "Lido" },
+  { value: "lombard", label: "Lombard BTC" },
 ];
 
 const SORT_OPTIONS = [
   { value: "lastActivity", label: "Latest Activity" },
-  { value: "debtUsd",      label: "Debt" },
-  { value: "supplyUsd",    label: "Supply" },
+  { value: "debtUsd", label: "Debt" },
+  { value: "supplyUsd", label: "Supply" },
   { value: "healthFactor", label: "Health Factor" },
 ];
 
@@ -163,21 +186,26 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
     onFiltersChange({ ...filters, wallet: undefined, ownerEns: undefined });
   };
 
+  // Visibility resolves against the contextual default so the badge only
+  // counts it as "active" when the user has overridden it (and the relaxed
+  // wallet view doesn't read as filtered).
+  const effShow = effectiveAaveV4Show(filters);
+  const showDefault = aaveV4ShowDefault(filters);
+
   const activeFilterCount =
+    (effShow !== showDefault ? 1 : 0) +
     (filters.debt !== "all" ? 1 : 0) +
     (filters.health !== "all" ? 1 : 0) +
     (filters.liquidations !== "all" ? 1 : 0);
 
+  const setShow = (show: AaveV4Show) => onFiltersChange({ ...filters, show });
   const setDebt = (debt: AaveV4Debt) => onFiltersChange({ ...filters, debt });
   const setHealth = (health: AaveV4Health) => onFiltersChange({ ...filters, health });
-  const setLiquidations = (liquidations: AaveV4Liquidations) =>
-    onFiltersChange({ ...filters, liquidations });
+  const setLiquidations = (liquidations: AaveV4Liquidations) => onFiltersChange({ ...filters, liquidations });
   const setSpokes = (spokes: string[]) => onFiltersChange({ ...filters, spokes });
   const setHubs = (hubs: string[]) => onFiltersChange({ ...filters, hubs });
-  const setSupplyAssets = (supplyAssets: string[]) =>
-    onFiltersChange({ ...filters, supplyAssets });
-  const setBorrowAssets = (borrowAssets: string[]) =>
-    onFiltersChange({ ...filters, borrowAssets });
+  const setSupplyAssets = (supplyAssets: string[]) => onFiltersChange({ ...filters, supplyAssets });
+  const setBorrowAssets = (borrowAssets: string[]) => onFiltersChange({ ...filters, borrowAssets });
 
   // Render each option with a small token chip — "???" gets the unknown
   // placeholder by passing the literal sentinel through to TokenChipIcon,
@@ -193,7 +221,7 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
   }));
 
   const resetFilters = () =>
-    onFiltersChange({ ...filters, debt: "all", health: "all", liquidations: "all" });
+    onFiltersChange({ ...filters, show: undefined, debt: "all", health: "all", liquidations: "all" });
 
   return (
     <div className="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 xl:gap-4">
@@ -225,6 +253,35 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
                 role="menu"
               >
                 <div className="p-3">
+                  <div className="text-xs text-rb-500 uppercase tracking-wider mb-2">Show</div>
+                  <div className="flex bg-rb-200 dark:bg-rb-900 rounded-lg p-1" role="group">
+                    {(
+                      [
+                        { v: "all", l: "All" },
+                        { v: "active", l: "Active" },
+                        { v: "nodust", l: "No dust" },
+                      ] as { v: AaveV4Show; l: string }[]
+                    ).map(({ v, l }) => (
+                      <button
+                        key={v}
+                        onClick={() => setShow(v)}
+                        title={v === "nodust" ? `Hide positions under $${AAVE_V4_DUST_USD}` : undefined}
+                        className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          effShow === v
+                            ? v === "all"
+                              ? "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
+                              : "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-400 font-semibold"
+                            : "text-rb-500 hover:text-foreground"
+                        }`}
+                        aria-pressed={effShow === v}
+                      >
+                        {l}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="p-3">
                   <div className="text-xs text-rb-500 uppercase tracking-wider mb-2">Position</div>
                   <div className="flex bg-rb-200 dark:bg-rb-900 rounded-lg p-1" role="group">
                     {(
@@ -242,8 +299,8 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
                             ? v === "all"
                               ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-400 font-semibold"
                               : v === "withDebt"
-                              ? "text-white bg-green-500 dark:bg-green-950 dark:text-green-500 rounded"
-                              : "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
+                                ? "text-white bg-green-500 dark:bg-green-950 dark:text-green-500 rounded"
+                                : "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
                             : "text-rb-500 hover:text-foreground"
                         }`}
                         aria-pressed={filters.debt === v}
@@ -272,8 +329,8 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
                             ? v === "all"
                               ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-400 font-semibold"
                               : v === "atRisk"
-                              ? "bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-400 font-semibold"
-                              : "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-400 font-semibold"
+                                ? "bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-400 font-semibold"
+                                : "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-400 font-semibold"
                             : "text-rb-500 hover:text-foreground"
                         }`}
                         aria-pressed={filters.health === v}
@@ -302,8 +359,8 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
                             ? v === "all"
                               ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-400 font-semibold"
                               : v === "with"
-                              ? "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-400 font-semibold"
-                              : "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
+                                ? "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-400 font-semibold"
+                                : "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
                             : "text-rb-500 hover:text-foreground"
                         }`}
                         aria-pressed={filters.liquidations === v}
@@ -387,7 +444,10 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
               <X className="w-4 h-4" aria-hidden="true" />
             </button>
           ) : (
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-rb-500 pointer-events-none" aria-hidden="true" />
+            <Search
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-rb-500 pointer-events-none"
+              aria-hidden="true"
+            />
           )}
           <WalletHistoryDropdown
             show={searchFocused && searchInput.trim() === ""}
@@ -405,9 +465,7 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
       {/* Sort controls */}
       <div className="flex items-center gap-1 w-full lg:w-auto">
         <button
-          onClick={() =>
-            onFiltersChange({ ...filters, sortOrder: filters.sortOrder === "asc" ? "desc" : "asc" })
-          }
+          onClick={() => onFiltersChange({ ...filters, sortOrder: filters.sortOrder === "asc" ? "desc" : "asc" })}
           className="cursor-pointer flex items-center justify-center w-10 h-10 bg-rb-200 dark:bg-rb-900 hover:bg-rb-300 dark:hover:bg-rb-800 rounded-lg transition-colors text-foreground dark:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
           aria-label={filters.sortOrder === "asc" ? "Sort ascending" : "Sort descending"}
         >
@@ -426,7 +484,10 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
             />
           </button>
           {isSortOpen && (
-            <div className="absolute top-full left-0 lg:left-auto right-0 mt-2 bg-rb-100 dark:bg-rb-900 border border-rb-300 dark:border-rb-700 rounded-lg shadow-xl z-50 min-w-[200px] overflow-hidden" role="menu">
+            <div
+              className="absolute top-full left-0 lg:left-auto right-0 mt-2 bg-rb-100 dark:bg-rb-900 border border-rb-300 dark:border-rb-700 rounded-lg shadow-xl z-50 min-w-[200px] overflow-hidden"
+              role="menu"
+            >
               {SORT_OPTIONS.map((o) => (
                 <button
                   key={o.value}

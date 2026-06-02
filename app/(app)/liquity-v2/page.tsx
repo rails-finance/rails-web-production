@@ -14,6 +14,12 @@ import { OraclePricesData, OraclePricesResponse } from "@/types/api/oracle";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWalletContext } from "@/components/nav/wallet-context";
 import { upsertSession } from "@/lib/shared/sessions";
+import {
+  defaultShowZombie,
+  defaultStatus,
+  effectiveShowZombie,
+  effectiveStatus,
+} from "@/lib/liquity-v2/listing-visibility";
 
 // Constants
 const ITEMS_PER_PAGE = 20;
@@ -70,21 +76,22 @@ function TrovesPageContent() {
     const troveId = searchParams.get("troveId");
     if (troveId) filters.troveId = troveId;
 
+    // Carry RAW status intent: "all" (explicit show-everything) and the
+    // concrete statuses pass through verbatim; absence stays undefined so the
+    // contextual default (open on the bare directory, all on a scoped query)
+    // is applied at use via effectiveStatus(). See lib/liquity-v2/
+    // listing-visibility.ts. The landing strip's status=open is unaffected.
     const status = searchParams.get("status");
-    if (status === "all") {
-      filters.status = undefined;
-    } else if (status) {
-      filters.status = status;
-    }
-    // No default — show all statuses (open + closed + liquidated). The
-    // /liquity-v2 landing's recent-activity strip still passes status=open
-    // explicitly, so its open-only filter is unaffected.
+    if (status) filters.status = status;
 
     // collateralTypes (multi) is the canonical form; honor the legacy
     // collateralType (single) for old links.
     const collateralTypesRaw = searchParams.get("collateralTypes");
     if (collateralTypesRaw) {
-      const parts = collateralTypesRaw.split(",").map((s) => s.trim()).filter(Boolean);
+      const parts = collateralTypesRaw
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
       if (parts.length > 0) filters.collateralTypes = parts;
     } else {
       const collateralType = searchParams.get("collateralType");
@@ -118,10 +125,13 @@ function TrovesPageContent() {
     if (hasRedemptionsParam === "true") filters.hasRedemptions = true;
     if (hasRedemptionsParam === "false") filters.hasRedemptions = false;
 
-    // Handle showZombie with true/false values
+    // Handle showZombie. "all" = explicit show-everything; true/false are
+    // concrete choices; absence stays undefined so the contextual default
+    // (hide on the bare directory, all on a scoped query) applies at use.
     const showZombieParam = searchParams.get("showZombie");
-    if (showZombieParam === "true") filters.showZombie = true;
-    if (showZombieParam === "false") filters.showZombie = false;
+    if (showZombieParam === "all") filters.showZombie = "all";
+    else if (showZombieParam === "true") filters.showZombie = true;
+    else if (showZombieParam === "false") filters.showZombie = false;
 
     const sortBy = searchParams.get("sortBy");
     if (sortBy) filters.sortBy = sortBy;
@@ -176,6 +186,7 @@ function TrovesPageContent() {
   // Helper to build URL search params from filters
   const buildSearchParams = (filterParams: TroveListFilterParams, page?: number, includePageAndLimit?: boolean) => {
     const params = new URLSearchParams();
+    const forApi = Boolean(includePageAndLimit);
 
     // Add pagination if requested
     if (includePageAndLimit) {
@@ -189,7 +200,27 @@ function TrovesPageContent() {
 
     // Add filters
     if (filterParams.troveId) params.set("troveId", filterParams.troveId);
-    if (filterParams.status) params.set("status", filterParams.status);
+
+    // Status / zombie visibility. The same builder feeds both the shareable
+    // URL (forApi=false) and the /api/troves request (forApi=true):
+    //   - URL: write only when the user's choice differs from the contextual
+    //     default, so directory + wallet-view URLs stay clean and the absence
+    //     of the param is what drives auto-relax on the next read.
+    //   - API: send the resolved server-side filter; "all" means no filter.
+    if (forApi) {
+      const effStatus = effectiveStatus(filterParams);
+      if (effStatus !== "all") params.set("status", effStatus);
+      const effZombie = effectiveShowZombie(filterParams);
+      if (typeof effZombie === "boolean") params.set("showZombie", String(effZombie));
+    } else {
+      if (filterParams.status !== undefined && filterParams.status !== defaultStatus(filterParams)) {
+        params.set("status", filterParams.status);
+      }
+      if (filterParams.showZombie !== undefined && filterParams.showZombie !== defaultShowZombie(filterParams)) {
+        params.set("showZombie", String(filterParams.showZombie));
+      }
+    }
+
     if (filterParams.collateralTypes && filterParams.collateralTypes.length > 0) {
       params.set("collateralTypes", filterParams.collateralTypes.join(","));
     }
@@ -201,9 +232,6 @@ function TrovesPageContent() {
     if (filterParams.individualOnly) params.set("individualOnly", "true");
     if (filterParams.hasRedemptions !== undefined) {
       params.set("hasRedemptions", String(filterParams.hasRedemptions));
-    }
-    if (filterParams.showZombie !== undefined) {
-      params.set("showZombie", String(filterParams.showZombie));
     }
     if (filterParams.sortBy) params.set("sortBy", filterParams.sortBy);
     if (filterParams.sortOrder) params.set("sortOrder", filterParams.sortOrder);

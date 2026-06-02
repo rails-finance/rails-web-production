@@ -16,6 +16,10 @@ import {
   type AaveV4Debt,
   type AaveV4Health,
   type AaveV4Liquidations,
+  type AaveV4Show,
+  AAVE_V4_DUST_USD,
+  aaveV4ShowDefault,
+  effectiveAaveV4Show,
 } from "@/components/aave-v4/components/AaveV4ListFilters";
 import { AaveV4PaginationControls } from "@/components/aave-v4/components/AaveV4PaginationControls";
 import { AaveV4ListLoadingSkeleton } from "@/components/aave-v4/components/AaveV4ListLoadingSkeleton";
@@ -66,6 +70,11 @@ function AaveV4ListPageContent() {
     debt: (searchParams.get("debt") as AaveV4Debt | null) ?? "all",
     health: (searchParams.get("health") as AaveV4Health | null) ?? "all",
     liquidations: (searchParams.get("liquidations") as AaveV4Liquidations | null) ?? "all",
+    // Raw visibility intent — undefined = contextual default (active on the
+    // bare directory, all on a wallet-scoped query). Keeping it undefined when
+    // absent is what makes auto-relax work: searching a wallet doesn't carry a
+    // stale "active" and re-hide that wallet's closed positions.
+    show: (searchParams.get("show") as AaveV4Show | null) ?? undefined,
     sortBy: searchParams.get("sortBy") ?? "lastActivity",
     sortOrder: (searchParams.get("sortOrder") as "asc" | "desc" | null) ?? "desc",
   };
@@ -119,6 +128,10 @@ function AaveV4ListPageContent() {
     if (next.hubs.length > 0) p.set("hubs", next.hubs.join(","));
     if (next.supplyAssets.length > 0) p.set("supplyAssets", next.supplyAssets.join(","));
     if (next.borrowAssets.length > 0) p.set("borrowAssets", next.borrowAssets.join(","));
+    // Visibility: write only when it differs from the contextual default, so
+    // directory + wallet-view URLs stay clean and the param's absence is what
+    // drives auto-relax on the next read.
+    if (next.show !== undefined && next.show !== aaveV4ShowDefault(next)) p.set("show", next.show);
     if (next.debt !== "all") p.set("debt", next.debt);
     if (next.health !== "all") p.set("health", next.health);
     if (next.liquidations !== "all") p.set("liquidations", next.liquidations);
@@ -156,18 +169,12 @@ function AaveV4ListPageContent() {
       borrowAssets: filters.borrowAssets,
       hasDebt: filters.debt === "withDebt",
       noDebt: filters.debt === "noDebt",
-      hasLiquidations:
-        filters.liquidations === "with"
-          ? true
-          : filters.liquidations === "without"
-            ? false
-            : undefined,
-      healthBelow:
-        filters.health === "atRisk"
-          ? 1.1
-          : filters.health === "underwater"
-          ? 1.0
-          : undefined,
+      hasLiquidations: filters.liquidations === "with" ? true : filters.liquidations === "without" ? false : undefined,
+      healthBelow: filters.health === "atRisk" ? 1.1 : filters.health === "underwater" ? 1.0 : undefined,
+      // Visibility → server filters. "active" hides closed/near-zero (<$1
+      // server-side); "nodust" raises the floor to the dust line.
+      excludeClosed: effectiveAaveV4Show(filters) === "active",
+      minTotalUsd: effectiveAaveV4Show(filters) === "nodust" ? AAVE_V4_DUST_USD : undefined,
       sortBy: filters.sortBy as AaveV4SpokePositionSort,
       sortOrder: filters.sortOrder,
       limit: ITEMS_PER_PAGE,
@@ -225,10 +232,7 @@ function AaveV4ListPageContent() {
                     href={`/aave-v4/spoke/${slugifySpoke(row.spokeName) ?? encodeURIComponent(row.spokeName)}/${row.wallet}`}
                     onClick={() => {
                       if (typeof window !== "undefined") {
-                        sessionStorage.setItem(
-                          "aave-v4-scroll-position",
-                          String(window.scrollY),
-                        );
+                        sessionStorage.setItem("aave-v4-scroll-position", String(window.scrollY));
                       }
                     }}
                     className="group/card block w-full text-left rounded-lg transition-all cursor-pointer border border-transparent bg-rb-200/50 dark:bg-rb-900 hover:border-blue-500 px-5 py-4"

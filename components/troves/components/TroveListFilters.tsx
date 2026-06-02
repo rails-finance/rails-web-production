@@ -6,6 +6,12 @@ import { useDebounce } from "@/lib/hooks/useDebounce";
 import { CheckboxMultiSelect } from "@/components/shared/checkbox-multi-select";
 import { WalletHistoryDropdown } from "@/components/shared/wallet-history-dropdown";
 import { upsertSession } from "@/lib/shared/sessions";
+import {
+  defaultShowZombie,
+  defaultStatus,
+  effectiveShowZombie,
+  effectiveStatus,
+} from "@/lib/liquity-v2/listing-visibility";
 
 export interface TroveListFilterParams {
   troveId?: string;
@@ -19,7 +25,9 @@ export interface TroveListFilterParams {
   batchOnly?: boolean;
   individualOnly?: boolean;
   hasRedemptions?: boolean;
-  showZombie?: boolean;
+  /** Zombie visibility. true = only zombies, false = hide zombies,
+   *  "all" = explicit show-everything, undefined = use contextual default. */
+  showZombie?: boolean | "all";
   sortBy?: string;
   sortOrder?: "asc" | "desc";
 }
@@ -86,7 +94,7 @@ export function TroveListFilters({
       }
     };
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         setIsSortDropdownOpen(false);
         setIsFilterDropdownOpen(false);
       }
@@ -134,13 +142,21 @@ export function TroveListFilters({
     });
   };
 
+  // Resolve visibility against the contextual default (hide closed/zombie on
+  // the bare directory; show everything on a scoped wallet/trove query) so
+  // highlighting + the active-filter badge match what the listing actually
+  // shows. Shared with the page's URL/API serialization — see
+  // lib/liquity-v2/listing-visibility.ts.
+  const effStatus = effectiveStatus(filters);
+  const effZombie = effectiveShowZombie(filters);
+
   const getActiveFilterCount = () => {
     let count = 0;
-    if (filters.status) count++;
+    if (effStatus !== defaultStatus(filters)) count++;
     if (filters.batchOnly) count++;
     if (filters.individualOnly) count++;
     if (filters.hasRedemptions !== undefined) count++;
-    if (filters.showZombie !== undefined) count++;
+    if (effZombie !== defaultShowZombie(filters)) count++;
     return count;
   };
 
@@ -182,11 +198,14 @@ export function TroveListFilters({
               onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
               className="flex cursor-pointer items-center gap-2 px-4 h-10 py-2 bg-rb-200 dark:bg-rb-900 hover:bg-rb-300 dark:hover:bg-rb-800 rounded-lg text-foreground font-bold transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500"
               aria-expanded={isFilterDropdownOpen}
-              aria-label={`Filter troves${activeFilterCount > 0 ? ` (${activeFilterCount} active)` : ''}`}
+              aria-label={`Filter troves${activeFilterCount > 0 ? ` (${activeFilterCount} active)` : ""}`}
             >
               <Filter className="w-4 h-4 text-rb-500" aria-hidden="true" />
               {activeFilterCount > 0 && (
-                <span className="flex items-center justify-center w-5 h-5 bg-rb-100 dark:bg-rb-800 rounded-full text-xs text-rb-500" aria-hidden="true">
+                <span
+                  className="flex items-center justify-center w-5 h-5 bg-rb-100 dark:bg-rb-800 rounded-full text-xs text-rb-500"
+                  aria-hidden="true"
+                >
                   {activeFilterCount}
                 </span>
               )}
@@ -197,19 +216,26 @@ export function TroveListFilters({
             </button>
 
             {isFilterDropdownOpen && (
-              <div className="absolute top-full border border-rb-300 dark:border-rb-700 left-0 mt-2 bg-rb-100 dark:bg-rb-800 rounded-lg shadow-xl z-50 min-w-[280px] max-h-[400px] overflow-y-auto" role="menu">
+              <div
+                className="absolute top-full border border-rb-300 dark:border-rb-700 left-0 mt-2 bg-rb-100 dark:bg-rb-800 rounded-lg shadow-xl z-50 min-w-[280px] max-h-[400px] overflow-y-auto"
+                role="menu"
+              >
                 {/* Status Toggle */}
                 <div className="p-3 ">
                   <div className="text-xs text-rb-500 uppercase tracking-wider mb-2">Status</div>
-                  <div className="flex bg-rb-200 dark:bg-rb-900 rounded-lg p-1" role="group" aria-label="Filter by trove status">
+                  <div
+                    className="flex bg-rb-200 dark:bg-rb-900 rounded-lg p-1"
+                    role="group"
+                    aria-label="Filter by trove status"
+                  >
                     <button
                       onClick={() => handleFilterChange({ status: "all" })}
                       className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        !filters.status
+                        effStatus === "all"
                           ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-400 font-semibold"
                           : "text-rb-500 hover:text-foreground"
                       }`}
-                      aria-pressed={!filters.status}
+                      aria-pressed={effStatus === "all"}
                       aria-label="Show all trove statuses"
                     >
                       All
@@ -217,11 +243,11 @@ export function TroveListFilters({
                     <button
                       onClick={() => handleFilterChange({ status: "open" })}
                       className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        filters.status === "open"
+                        effStatus === "open"
                           ? "text-white bg-green-500 dark:bg-green-950 dark:text-green-500 rounded"
                           : "text-rb-500 hover:text-foreground"
                       }`}
-                      aria-pressed={filters.status === "open"}
+                      aria-pressed={effStatus === "open"}
                       aria-label="Show only active troves"
                     >
                       Active
@@ -229,11 +255,11 @@ export function TroveListFilters({
                     <button
                       onClick={() => handleFilterChange({ status: "closed" })}
                       className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        filters.status === "closed"
+                        effStatus === "closed"
                           ? "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
                           : "text-rb-500 hover:text-foreground"
                       }`}
-                      aria-pressed={filters.status === "closed"}
+                      aria-pressed={effStatus === "closed"}
                       aria-label="Show only closed troves"
                     >
                       Closed
@@ -247,33 +273,35 @@ export function TroveListFilters({
                     status=liquidated. Picking this overrides the Status group;
                     picking a Status option resets this back to Any. */}
                 <div className="p-3">
-                  <div className="text-xs text-rb-500 uppercase tracking-wider mb-2">
-                    Liquidations
-                  </div>
-                  <div className="flex bg-rb-200 dark:bg-rb-900 rounded-lg p-1" role="group" aria-label="Filter by liquidation history">
+                  <div className="text-xs text-rb-500 uppercase tracking-wider mb-2">Liquidations</div>
+                  <div
+                    className="flex bg-rb-200 dark:bg-rb-900 rounded-lg p-1"
+                    role="group"
+                    aria-label="Filter by liquidation history"
+                  >
                     <button
                       onClick={() =>
                         handleFilterChange({
-                          status: filters.status === "liquidated" ? undefined : filters.status,
+                          status: effStatus === "liquidated" ? undefined : filters.status,
                         })
                       }
                       className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        filters.status !== "liquidated"
+                        effStatus !== "liquidated"
                           ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-400 font-semibold"
                           : "text-rb-500 hover:text-foreground"
                       }`}
-                      aria-pressed={filters.status !== "liquidated"}
+                      aria-pressed={effStatus !== "liquidated"}
                     >
                       Any
                     </button>
                     <button
                       onClick={() => handleFilterChange({ status: "liquidated" })}
                       className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        filters.status === "liquidated"
+                        effStatus === "liquidated"
                           ? "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-400 font-semibold"
                           : "text-rb-500 hover:text-foreground"
                       }`}
-                      aria-pressed={filters.status === "liquidated"}
+                      aria-pressed={effStatus === "liquidated"}
                     >
                       Liquidated
                     </button>
@@ -284,10 +312,12 @@ export function TroveListFilters({
                 <div className="p-3 space-y-3">
                   {/* Redemptions Filter */}
                   <div>
-                    <div className="text-xs text-rb-500 uppercase tracking-wider mb-2">
-                      Redemptions
-                    </div>
-                    <div className="flex bg-rb-200 dark:bg-rb-900 rounded-lg p-1" role="group" aria-label="Filter by redemptions">
+                    <div className="text-xs text-rb-500 uppercase tracking-wider mb-2">Redemptions</div>
+                    <div
+                      className="flex bg-rb-200 dark:bg-rb-900 rounded-lg p-1"
+                      role="group"
+                      aria-label="Filter by redemptions"
+                    >
                       <button
                         onClick={() => handleFilterChange({ hasRedemptions: undefined })}
                         className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
@@ -329,10 +359,12 @@ export function TroveListFilters({
 
                   {/* Interest Rate Management Filter */}
                   <div>
-                    <div className="text-xs text-rb-500 uppercase tracking-wider mb-2">
-                      Interest Rate Management
-                    </div>
-                    <div className="flex bg-rb-200 dark:bg-rb-900 rounded-lg p-1" role="group" aria-label="Filter by interest rate management">
+                    <div className="text-xs text-rb-500 uppercase tracking-wider mb-2">Interest Rate Management</div>
+                    <div
+                      className="flex bg-rb-200 dark:bg-rb-900 rounded-lg p-1"
+                      role="group"
+                      aria-label="Filter by interest rate management"
+                    >
                       <button
                         onClick={() => handleFilterChange({ batchOnly: undefined, individualOnly: undefined })}
                         className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
@@ -374,18 +406,20 @@ export function TroveListFilters({
 
                   {/* Zombie Troves Filter */}
                   <div>
-                    <div className="text-xs text-rb-500 uppercase tracking-wider mb-2">
-                      Zombie Troves
-                    </div>
-                    <div className="flex bg-rb-200 dark:bg-rb-900 rounded-lg p-1" role="group" aria-label="Filter zombie troves">
+                    <div className="text-xs text-rb-500 uppercase tracking-wider mb-2">Zombie Troves</div>
+                    <div
+                      className="flex bg-rb-200 dark:bg-rb-900 rounded-lg p-1"
+                      role="group"
+                      aria-label="Filter zombie troves"
+                    >
                       <button
-                        onClick={() => handleFilterChange({ showZombie: undefined })}
+                        onClick={() => handleFilterChange({ showZombie: "all" })}
                         className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          filters.showZombie === undefined
+                          effZombie === "all"
                             ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-400 font-semibold"
                             : "text-rb-500 hover:text-foreground"
                         }`}
-                        aria-pressed={filters.showZombie === undefined}
+                        aria-pressed={effZombie === "all"}
                         aria-label="Show all troves including zombie troves"
                       >
                         All
@@ -393,11 +427,11 @@ export function TroveListFilters({
                       <button
                         onClick={() => handleFilterChange({ showZombie: true })}
                         className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          filters.showZombie === true
+                          effZombie === true
                             ? "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-400 font-semibold"
                             : "text-rb-500 hover:text-foreground"
                         }`}
-                        aria-pressed={filters.showZombie === true}
+                        aria-pressed={effZombie === true}
                         aria-label="Show only zombie troves"
                       >
                         Show
@@ -405,11 +439,11 @@ export function TroveListFilters({
                       <button
                         onClick={() => handleFilterChange({ showZombie: false })}
                         className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          filters.showZombie === false
+                          effZombie === false
                             ? "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
                             : "text-rb-500 hover:text-foreground"
                         }`}
-                        aria-pressed={filters.showZombie === false}
+                        aria-pressed={effZombie === false}
                         aria-label="Hide zombie troves"
                       >
                         Hide
@@ -438,9 +472,7 @@ export function TroveListFilters({
             label="Collateral"
             allLabel="All collateral"
             value={filters.collateralTypes ?? []}
-            onChange={(next) =>
-              onFiltersChange({ ...filters, collateralTypes: next.length > 0 ? next : undefined })
-            }
+            onChange={(next) => onFiltersChange({ ...filters, collateralTypes: next.length > 0 ? next : undefined })}
             options={availableCollateralTypes.map((type) => ({
               value: type,
               label: type,
@@ -482,7 +514,10 @@ export function TroveListFilters({
               <X className="w-4 h-4" aria-hidden="true" />
             </button>
           ) : (
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-rb-500 pointer-events-none" aria-hidden="true" />
+            <Search
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-rb-500 pointer-events-none"
+              aria-hidden="true"
+            />
           )}
           <WalletHistoryDropdown
             show={searchFocused && searchInput.trim() === ""}
@@ -521,7 +556,10 @@ export function TroveListFilters({
           </button>
 
           {isSortDropdownOpen && (
-            <div className="absolute top-full left-0 lg:left-auto right-0 mt-2 bg-rb-100 dark:bg-rb-900 border border-rb-300 dark:border-rb-700 rounded-lg shadow-xl z-50 min-w-[200px] overflow-hidden" role="menu">
+            <div
+              className="absolute top-full left-0 lg:left-auto right-0 mt-2 bg-rb-100 dark:bg-rb-900 border border-rb-300 dark:border-rb-700 rounded-lg shadow-xl z-50 min-w-[200px] overflow-hidden"
+              role="menu"
+            >
               {sortOptions.map((option) => (
                 <button
                   key={option.value}
