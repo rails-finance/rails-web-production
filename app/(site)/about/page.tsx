@@ -12,124 +12,94 @@ export const metadata: Metadata = {
   },
 };
 
+/** Roadmap stages. Live integrations (Liquity V2, Aave V4) carry a coloured
+ *  border; planned stages are quiet. Aave V4 is badged NEW — it's the most
+ *  recent rail to ship. Class strings are literal so Tailwind keeps them. */
+const ROADMAP = [
+  {
+    n: 1,
+    title: "Liquity V2 Support",
+    status: "Completed",
+    body: "Full coverage of Liquity V2 — trove tracking across WETH, wstETH, and rETH, batch-manager attribution, event timelines, and per-trove economics.",
+    circle: "bg-green-500",
+    card: "border-2 border-green-600",
+    badge: "bg-green-600 text-green-50",
+  },
+  {
+    n: 2,
+    title: "Aave V4 Support",
+    status: "New",
+    body: "Multi-spoke lending coverage — per-spoke health factor, liquidation price, and rate exposure, all read from current on-chain state.",
+    circle: "bg-blue-500",
+    card: "border-2 border-blue-600",
+    badge: "bg-blue-600 text-white",
+  },
+  {
+    n: 3,
+    title: "Multi-Protocol Intelligence",
+    status: "Planned",
+    body: "More protocols, each with its own dedicated explorer — Morpho, Compound, Sky, the Liquity V2 forks, and beyond. Rails grows one rail at a time.",
+    circle: "bg-violet-500",
+    card: "border border-rb-300 dark:border-rb-800",
+    badge: "bg-rb-300 text-rb-700 dark:bg-rb-800 dark:text-rb-200",
+  },
+  {
+    n: 4,
+    title: "Modularisation",
+    status: "Planned",
+    body: "Rails evolves into portable, composable surfaces — event cards, position cards, timelines — that protocol teams can embed directly into their own UIs.",
+    circle: "bg-orange-400",
+    card: "border border-rb-300 dark:border-rb-800",
+    badge: "bg-rb-300 text-rb-700 dark:bg-rb-800 dark:text-rb-200",
+  },
+] as const;
+
 export default function AboutPage() {
   return (
-    <div className="container mx-auto md:px-6 px-4 pt-32 pb-12 max-w-7xl">
-      <div className="prose prose-lg max-w-none">
-        <p className="text-xl mb-8 text-foreground">
+    <div className="min-h-screen">
+      {/* Lead */}
+      <section className="max-w-7xl mx-auto px-4 md:px-6 pt-32 pb-14">
+        <p className="text-xl leading-relaxed text-foreground max-w-3xl">
           DeFi is too complex for most people to navigate confidently. The information is on-chain, but it's not
           legible. <span className="font-bold">Rails</span> builds dedicated, read-only explorers for DeFi protocols —
           one protocol at a time — that translate on-chain activity into clear, verifiable timelines, positions, and
           event detail. No wallet connection, no account, no permission.
         </p>
+      </section>
 
-        {/* Roadmap & Mission Section */}
+      {/* Roadmap — its own background band, echoing the home feature spotlight */}
+      <div className="bg-gradient-to-b from-rb-100 to-rb-200 dark:from-rb-900 dark:to-rb-800">
+        <section className="max-w-7xl mx-auto px-4 md:px-6 py-16">
+          <h2 className="font-sans font-semibold tracking-tight leading-tight text-[clamp(26px,3.5vw,40px)] text-foreground mb-3">
+            The definitive DeFi support platform
+          </h2>
+          <p className="text-lg leading-relaxed text-foreground max-w-2xl mb-10">
+            <span className="font-bold">Our mission</span> is to make DeFi more understandable and accessible for
+            everyone — one dedicated, sponsor-anchored explorer at a time.
+          </p>
 
-        <div className="lg:grid mb-12 lg:grid-cols-[1fr_180px_480px] lg:grid-rows-[40px_180px_180px_180px_180px]">
-          <div
-            id="cell_1"
-            className="my-8 lg:my-0 row-span-2 col-start-1 row-start-2 lg:justify-center lg:flex lg:flex-col"
-          >
-            <div className="">
-              <h3 className="text-2xl font-bold text-foreground mb-6">An explorer per protocol</h3>
-              <p className="text-lg text-foreground">
-                <span className="font-bold">Our roadmap</span> is one protocol at a time. Each gets a dedicated,
-                sponsor-anchored explorer; the platform sits above them.
-              </p>
-            </div>
-          </div>
-          <div
-            id="cell_2"
-            className="hidden lg:block row-span-3 col-start-2 bg-rb-50 dark:bg-rb-950 rounded-lg"
-            style={{
-              backgroundImage: "url(/about-mission-lg__1.svg)",
-              backgroundRepeat: "no-repeat",
-              backgroundPosition: "center center",
-              backgroundSize: "contain",
-            }}
-            aria-label="Mission decoration"
-          />
-          <div id="cell_3" className="col-start-3 row-start-2">
-            <div className="rounded-lg p-5 border-2 border-green-600 mb-2 lg:mb-0 lg:h-full lg:flex lg:flex-col">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center">
-                  <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mr-3">
-                    <span className="text-white font-bold">1</span>
+          <div className="grid gap-5 sm:grid-cols-2">
+            {ROADMAP.map((c) => (
+              <div key={c.n} className={`rounded-xl bg-rb-50 dark:bg-rb-950 p-6 flex flex-col ${c.card}`}>
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center text-white font-bold ${c.circle}`}
+                    >
+                      {c.n}
+                    </div>
+                    <h3 className="text-lg font-semibold text-foreground">{c.title}</h3>
                   </div>
-                  <h4 className="text-lg font-semibold text-foreground">Liquity V2 explorer</h4>
+                  <span className={`shrink-0 text-xs font-bold px-2.5 py-1 rounded ${c.badge}`}>{c.status}</span>
                 </div>
-                <span className="text-xs font-extrabold text-green-100 bg-green-600 px-2 py-1 rounded">Live</span>
+                <p className="text-sm leading-relaxed text-rb-500">{c.body}</p>
               </div>
-              <p className="text-sm text-rb-500 ml-13">
-                Full trove coverage across the three collateral types — WETH, wstETH, rETH — with event timelines,
-                batch-manager tracking, and per-trove economics.
-              </p>
-            </div>
+            ))}
           </div>
-          <div id="cell_4" className="mb-2 lg:mb-0 col-start-3 row-start-3">
-            <div className="rounded-lg p-5 border-2 border-green-600 lg:mt-2 lg:h-full lg:flex lg:flex-col">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center">
-                  <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mr-3">
-                    <span className="text-white font-bold">2</span>
-                  </div>
-                  <h4 className="text-lg font-semibold text-foreground">Aave V4 explorer</h4>
-                </div>
-                <span className="text-xs font-extrabold text-green-100 bg-green-600 px-2 py-1 rounded">Live</span>
-              </div>
-              <p className="text-sm text-rb-500 ml-13">
-                Multi-spoke lending coverage — per-spoke health factor, liquidation price, and rate exposure, all
-                derived from current on-chain state.
-              </p>
-            </div>
-          </div>
-          <div id="cell_5" className="col-start-1 row-start-4">
-            <div className="bg-rb-100 dark:bg-rb-800 rounded-lg p-5 mb-2 lg:mb-0 lg:h-full lg:flex lg:flex-col">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center">
-                  <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mr-3">
-                    <span className="text-white font-bold">3</span>
-                  </div>
-                  <h4 className="text-lg font-semibold text-foreground">Next explorers</h4>
-                </div>
-                <span className="text-xs font-extrabold text-blue-100 bg-blue-600 px-2 py-1 rounded">In progress</span>
-              </div>
-              <p className="text-sm text-rb-500 ml-13">
-                One protocol at a time. Candidates include Morpho, Compound, Sky, and the Liquity V2 forks — each
-                scoped, sponsor-anchored, and truth-principled.
-              </p>
-            </div>
-          </div>
-          <div id="cell_6" className="row-start-5 ">
-            <div className="bg-rb-100 dark:bg-rb-800 rounded-lg p-5 lg:mt-2 lg:h-full lg:flex lg:flex-col ">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center">
-                  <div className="w-10 h-10 bg-orange-400 rounded-full flex items-center justify-center mr-3">
-                    <span className="text-white font-bold">4</span>
-                  </div>
-                  <h4 className="text-lg font-semibold text-foreground">Modularisation</h4>
-                </div>
-                <span className="text-xs font-extrabold text-rb-100 bg-rb-400 px-2 py-1 rounded">Planned</span>
-              </div>
-              <p className="text-sm text-rb-500 ml-13">
-                Rails evolves into portable, composable surfaces — event cards, position cards, timelines — that
-                protocol teams can embed directly in their own UIs.
-              </p>
-            </div>
-          </div>
-          <div
-            id="cell_7"
-            className=" hidden lg:block row-span-2  col-span-2 col-start-2 row-start-4 justify-start mt-2 bg-rb-50 dark:bg-rb-950 rounded-lg"
-            style={{
-              backgroundImage: "url(/about-mission-lg__2.svg)",
-              backgroundRepeat: "no-repeat",
-              backgroundPosition: "center center",
-              backgroundSize: "contain",
-            }}
-            aria-label="Roadmap decoration"
-          />
-        </div>
+        </section>
+      </div>
 
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-16">
         {/* Team Section */}
         <div className="mb-12">
           <h2 className="text-3xl font-semibold mb-6 text-foreground">Team</h2>

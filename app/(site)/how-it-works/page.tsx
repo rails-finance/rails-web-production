@@ -56,17 +56,26 @@ export default function HowItWorksPage() {
           woven into the position view.
         </p>
         <p className="text-foreground leading-relaxed">
-          USD prices come from a resolution chain (Chainlink on-chain feeds first, then a cached price history, then a
-          public price API as fallback). The source for any number is verifiable.
+          USD prices resolve through a chain of sources — on-chain oracle feeds like Chainlink first, then a cached
+          price history, then a public price API as a fallback. Which tier a given asset uses depends on what's
+          available for it, and the source is recorded either way, so any number is verifiable.
         </p>
       </section>
 
       <section className="mb-12">
         <h2 className="text-xl font-semibold tracking-tight mb-3 text-foreground">What's under the hood</h2>
         <p className="text-foreground leading-relaxed mb-4">
-          A small pipeline: an indexer reads protocol events from Ethereum, processors enrich them with USD values and
-          protocol-specific context, an API serves the result, and the Rails frontend renders it. Materialized views
-          pre-compute the heavy joins so reads are cheap.
+          Two paths feed every view. <span className="font-medium">History</span> comes from a pipeline: an indexer
+          reads a protocol's events from Ethereum, processors enrich them with USD values and protocol-specific context,
+          and materialized views pre-compute the heavy joins so reads stay cheap.
+        </p>
+        <p className="text-foreground leading-relaxed mb-4">
+          <span className="font-medium">Current state</span> — your live balances, health factor, and the numbers
+          derived from them — is read straight from the protocol's contracts on a short refresh, not inferred from the
+          event history. That distinction matters: event indexes can drift when a position is opened through a swap
+          aggregator that skips a protocol's standard events, and a small drift can flip a health factor from safe to
+          underwater on screen. Reading current state directly is how Rails stays accurate where an events-only view
+          would quietly fall behind. An API stitches both paths together and the Rails frontend renders the result.
         </p>
         <p className="text-foreground leading-relaxed">
           Rails is open source.{" "}

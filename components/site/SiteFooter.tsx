@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FooterThemeToggle } from "@/components/shared/FooterThemeToggle";
 
 export function SiteFooter() {
   // Footer rail links are deliberately dumb — they land on the protocol's
@@ -6,7 +7,7 @@ export function SiteFooter() {
   // entry point (with recent/pinned in its dropdown). The chrome stays
   // simple: one route to discover, one to drill in.
   return (
-    <footer className="bg-rb-100 dark:bg-rb-900 border-rb-200 mt-24">
+    <footer className="bg-rb-100 dark:bg-rb-900 border-rb-200">
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Rails Info */}
@@ -30,7 +31,7 @@ export function SiteFooter() {
               </svg>
               <h3 className="text-xl font-semibold tracking-wide">Rails</h3>
             </div>
-            <p className="text-foreground text-sm leading-relaxed mb-4">
+            <p className="body-text mb-4">
               Dedicated, read-only explorers for DeFi protocols — one at a time. On-chain-verifiable positions,
               timelines, and event detail for the protocols you actually use.
             </p>
@@ -121,7 +122,7 @@ export function SiteFooter() {
           {/* Support */}
           <div>
             <h4 className="text-sm font-semibold text-foreground mb-3">Support Rails</h4>
-            <p className="text-foreground text-sm mb-3">Help us continue building tools for the DeFi community</p>
+            <p className="body-text mb-3">Help us continue building tools for the DeFi community</p>
             <a
               href="https://etherscan.io/name-lookup-search?id=donate.rails.eth"
               className="inline-block bg-fuchsia-600 hover:bg-fuchsia-700 dark:bg-fuchsia-500 dark:hover:bg-fuchsia-600 text-white text-sm font-bold px-4 py-2 rounded-full transition-colors duration-150"
@@ -153,13 +154,14 @@ export function SiteFooter() {
                 </Link>
               </div>
             </div>
-            <div className="flex items-center">
-              <span className="text-rb-500 text-xs mr-2">
+            <div className="flex items-center gap-3">
+              <span className="text-rb-500 text-xs">
                 Built with support from{" "}
                 <a href="https://liquity.org" target="_blank" rel="noopener noreferrer" className="hover:underline">
                   Liquity
                 </a>
               </span>
+              <FooterThemeToggle />
             </div>
           </div>
         </div>

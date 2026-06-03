@@ -48,9 +48,8 @@ export function MonoRailSection() {
           <h2 className="font-sans font-semibold tracking-tight leading-tight mb-3 text-[clamp(24px,3.5vw,38px)]">
             Rails <span className="text-blue-500">Explorers</span>
           </h2>
-          <p className="text-sm text-rb-500 max-w-xl mx-auto leading-relaxed">
-            Explore Liquity V2 and Aave V4 in granular detail with our dedicated explorers — with more bluechip
-            protocols on the way.
+          <p className="body-text max-w-xl mx-auto">
+            Explore Liquity V2 and Aave V4 in granular detail with our dedicated explorers.
           </p>
         </div>
 
@@ -89,7 +88,7 @@ function MonoRailCard({ rail }: { rail: MonoRail }) {
     </div>
   );
 
-  const desc = <p className="text-sm font-light text-rb-500 leading-relaxed flex-1">{rail.desc}</p>;
+  const desc = <p className="body-text flex-1">{rail.desc}</p>;
 
   if (rail.href) {
     return (

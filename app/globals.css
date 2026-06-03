@@ -49,39 +49,39 @@
   /* ── rails-explorer brand: light mode ──────────────────────────────────── */
   --background: rgb(235 240 247); /* rb-50 */
 
-  --surface-hover:   rgba(255, 255, 255, 0.5);
-  --surface-active:  rgba(255, 255, 255, 0.7);
-  --surface-inset:   rgba(255, 255, 255, 0.4);
-  --surface-overlay: #F5F7FA;
+  --surface-hover: rgba(255, 255, 255, 0.5);
+  --surface-active: rgba(255, 255, 255, 0.7);
+  --surface-inset: rgba(255, 255, 255, 0.4);
+  --surface-overlay: #f5f7fa;
 
-  --text-muted:       var(--color-rb-500);
+  --text-muted: var(--color-rb-500);
   --text-muted-hover: var(--rb-text-500);
-  --text-link:        var(--color-blue-400);
-  --text-link-hover:  var(--color-blue-300);
+  --text-link: var(--color-blue-400);
+  --text-link-hover: var(--color-blue-300);
 
-  --pill-active-bg:   var(--surface-active);
+  --pill-active-bg: var(--surface-active);
   --pill-active-text: var(--foreground);
-  --pill-idle-text:   var(--color-rb-500);
-  --pill-idle-hover:  var(--color-rb-300);
+  --pill-idle-text: var(--color-rb-500);
+  --pill-idle-hover: var(--color-rb-300);
 
   --focus-ring: rgba(59, 130, 246, 0.4);
 
-  --sidebar-bg: #E3E9F0;
-  --card-bg: #DDE1E8;
-  --card-hover: #D5DAE0;
+  --sidebar-bg: #e3e9f0;
+  --card-bg: #dde1e8;
+  --card-hover: #d5dae0;
   --card-border-rb: transparent;
-  --card-border-hover: #D5DAE0;
-  --card-border-drag: #C4CDD9;
-  --sidebar-header-hover: #DDE1E8;
-  --backdrop-bg: rgba(255,255,255,0.45);
-  --panel-shadow: -8px 0 30px rgba(0,0,0,0.15);
-  --facehash-ring: #E3E9F0;
+  --card-border-hover: #d5dae0;
+  --card-border-drag: #c4cdd9;
+  --sidebar-header-hover: #dde1e8;
+  --backdrop-bg: rgba(255, 255, 255, 0.45);
+  --panel-shadow: -8px 0 30px rgba(0, 0, 0, 0.15);
+  --facehash-ring: #e3e9f0;
 
-  --rb-text-500: #1E212E;
+  --rb-text-500: #1e212e;
 
-  --rb-chart-grid: #D5DAE0;
-  --rb-tooltip-bg: #E3E9F0;
-  --rb-tooltip-border: #DDE1E8;
+  --rb-chart-grid: #d5dae0;
+  --rb-tooltip-bg: #e3e9f0;
+  --rb-tooltip-border: #dde1e8;
 }
 
 .dark {
@@ -108,27 +108,27 @@
   /* ── rails-explorer brand: dark mode ───────────────────────────────────── */
   --background: rgb(20 22 30); /* rb-800 */
 
-  --surface-hover:   rgba(0, 0, 0, 0.15);
-  --surface-active:  rgba(0, 0, 0, 0.25);
-  --surface-inset:   rgba(0, 0, 0, 0.3);
-  --surface-overlay: #14161E;
+  --surface-hover: rgba(0, 0, 0, 0.15);
+  --surface-active: rgba(0, 0, 0, 0.25);
+  --surface-inset: rgba(0, 0, 0, 0.3);
+  --surface-overlay: #14161e;
 
-  --sidebar-bg: #12131A;
-  --card-bg: #0F1017;
+  --sidebar-bg: #12131a;
+  --card-bg: #0f1017;
   --card-hover: #050507;
   --card-border-rb: transparent;
   --card-border-hover: #050507;
   --card-border-drag: #050507;
-  --sidebar-header-hover: #0F1017;
-  --backdrop-bg: rgba(0,0,0,0.5);
-  --panel-shadow: -8px 0 30px rgba(0,0,0,0.5);
-  --facehash-ring: #12131A;
+  --sidebar-header-hover: #0f1017;
+  --backdrop-bg: rgba(0, 0, 0, 0.5);
+  --panel-shadow: -8px 0 30px rgba(0, 0, 0, 0.5);
+  --facehash-ring: #12131a;
 
-  --rb-text-500: #DDE1E8;
+  --rb-text-500: #dde1e8;
 
-  --rb-chart-grid: #14161E;
+  --rb-chart-grid: #14161e;
   --rb-tooltip-bg: #050507;
-  --rb-tooltip-border: #14161E;
+  --rb-tooltip-border: #14161e;
 }
 
 @theme inline {
@@ -138,7 +138,7 @@
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
   /* Rails brand palette — mode-agnostic (50 lightest, 950 darkest). */
-  --color-rb-50:  rgb(235 240 247);
+  --color-rb-50: rgb(235 240 247);
   --color-rb-100: rgb(228 233 240);
   --color-rb-200: rgb(220 225 232);
   --color-rb-300: rgb(213 218 224);
@@ -153,9 +153,9 @@
 
   --color-rb-text-500: var(--rb-text-500);
 
-  --color-blue-300:  #93c5fd;
-  --color-blue-400:  #60a5fa;
-  --color-blue-500:  #3b82f6;
+  --color-blue-300: #93c5fd;
+  --color-blue-400: #60a5fa;
+  --color-blue-500: #3b82f6;
   --color-amber-400: #fbbf24;
   --color-amber-500: #f59e0b;
 }
@@ -168,11 +168,33 @@ html.dark {
   color-scheme: dark;
 }
 
+/* Dark-mode background darkening — a slightly deeper canvas + section tones
+   than the shared rb-* palette. Scoped to dark only (light revisited later).
+   `html.dark` out-specifies the @theme `:root` defaults above, so every
+   `dark:bg-rb-{800,850,900,950}` utility and the `bg-background` body canvas
+   pick these up together, across both the site and the app. rb-700 is left
+   alone so elevated surfaces/borders keep a touch more contrast. */
+html.dark {
+  --color-rb-800: rgb(16 18 25);
+  --color-rb-850: rgb(13 14 20);
+  --color-rb-900: rgb(11 12 18);
+  --color-rb-950: rgb(3 3 4);
+  --background: rgb(16 18 25);
+}
+
 body {
   font-family: var(--font-inter), Inter, sans-serif;
 }
 
 @layer components {
+  /* Canonical body copy — one treatment so body text stays in parity across
+     marketing + product. 14px / normal weight / rb-500 (#586882, set back in
+     both themes). Reserve text-foreground for emphasis, text-rb-500 utilities
+     for one-off labels. Add layout utilities (max-w-*, mb-*, flex-1) alongside. */
+  .body-text {
+    @apply text-sm font-normal leading-relaxed text-rb-500;
+  }
+
   /* Timeline column layout */
   .transaction-timeline-column {
     width: 80px;
@@ -293,28 +315,46 @@ body {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* Surfaces */
-.surface-hover    { background: var(--surface-hover); }
-.surface-active   { background: var(--surface-active); }
-.surface-inset    { background: var(--surface-inset); }
-.surface-on-hover { transition: background 0.15s; &:hover { background: var(--surface-hover); } }
+.surface-hover {
+  background: var(--surface-hover);
+}
+.surface-active {
+  background: var(--surface-active);
+}
+.surface-inset {
+  background: var(--surface-inset);
+}
+.surface-on-hover {
+  transition: background 0.15s;
+  &:hover {
+    background: var(--surface-hover);
+  }
+}
 
 /* Buttons */
 .btn-primary {
   @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-colors;
   background: var(--color-fuchsia-600, #c026d3);
   color: #ffffff;
-  &:hover { background: var(--color-fuchsia-500, #d946ef); }
+  &:hover {
+    background: var(--color-fuchsia-500, #d946ef);
+  }
 }
 .btn-secondary {
   @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors;
   border: 1px solid var(--color-rb-700);
   color: var(--text-muted);
-  &:hover { color: var(--text-muted-hover); background: var(--surface-hover); }
+  &:hover {
+    color: var(--text-muted-hover);
+    background: var(--surface-hover);
+  }
 }
 .btn-ghost {
   @apply inline-flex items-center gap-1 transition-colors;
   color: var(--text-muted);
-  &:hover { color: var(--text-muted-hover); }
+  &:hover {
+    color: var(--text-muted-hover);
+  }
 }
 
 /* Pills */
@@ -326,29 +366,58 @@ body {
 .pill-idle {
   @apply px-3 py-1 rounded-full text-xs font-medium transition-colors;
   color: var(--pill-idle-text);
-  &:hover { color: var(--pill-idle-hover); background: var(--surface-hover); }
+  &:hover {
+    color: var(--pill-idle-hover);
+    background: var(--surface-hover);
+  }
 }
 
 /* Links */
-.link { color: var(--text-link); transition: color 0.15s; &:hover { color: var(--text-link-hover); } }
-.link-muted { color: var(--text-muted); transition: color 0.15s; &:hover { color: var(--text-muted-hover); } }
+.link {
+  color: var(--text-link);
+  transition: color 0.15s;
+  &:hover {
+    color: var(--text-link-hover);
+  }
+}
+.link-muted {
+  color: var(--text-muted);
+  transition: color 0.15s;
+  &:hover {
+    color: var(--text-muted-hover);
+  }
+}
 
 /* Expand chevron */
-:is(.group\/evt, .group\/card, .group\/proto):hover .expand-chev svg { stroke: white !important; }
+:is(.group\/evt, .group\/card, .group\/proto):hover .expand-chev svg {
+  stroke: white !important;
+}
 
 /* Focus ring */
-.focus-ring { &:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; } }
+.focus-ring {
+  &:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+}
 
 /* Input focus */
 .input-focus {
-  &:focus { border-color: var(--focus-ring); box-shadow: 0 0 0 1px var(--focus-ring); outline: none; }
+  &:focus {
+    border-color: var(--focus-ring);
+    box-shadow: 0 0 0 1px var(--focus-ring);
+    outline: none;
+  }
 }
 
 /* Icon buttons */
 .btn-icon {
   @apply inline-flex items-center justify-center shrink-0 rounded-lg transition-colors;
   color: var(--text-muted);
-  &:hover { color: var(--text-muted-hover); background: var(--surface-hover); }
+  &:hover {
+    color: var(--text-muted-hover);
+    background: var(--surface-hover);
+  }
 }
 
 /* Dropdown / popover containers */
@@ -357,12 +426,17 @@ body {
   border: 1px solid var(--color-rb-200);
   @apply rounded-xl shadow-xl;
 }
-:is(.dark) .overlay-panel { border-color: var(--color-rb-700); }
+:is(.dark) .overlay-panel {
+  border-color: var(--color-rb-700);
+}
 
 .overlay-item {
   @apply flex items-center gap-2 w-full px-3 py-2 text-left text-xs transition-colors cursor-pointer;
   color: var(--text-muted);
-  &:hover { background: var(--surface-hover); color: var(--text-muted-hover); }
+  &:hover {
+    background: var(--surface-hover);
+    color: var(--text-muted-hover);
+  }
 }
 .overlay-item-active {
   background: var(--surface-active);
@@ -370,7 +444,12 @@ body {
 }
 
 /* Form / interaction defaults */
-input, button, textarea, select { font-family: inherit; }
+input,
+button,
+textarea,
+select {
+  font-family: inherit;
+}
 
 /* Tailwind v4 preflight no longer normalises button cursor to `pointer`
    and Safari was treating layered `.cursor-pointer` utilities as losing
@@ -393,26 +472,58 @@ label[for] {
 
 /* Animations */
 @keyframes sidebar-slide-in {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
 @keyframes dropdown-bounce-down {
-  0%   { opacity: 0; transform: translateY(-8px) scale(0.96); }
-  60%  { opacity: 1; transform: translateY(2px)  scale(1.005); }
-  100% { opacity: 1; transform: translateY(0)    scale(1); }
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(2px) scale(1.005);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 @keyframes dropdown-bounce-up {
-  0%   { opacity: 0; transform: translateY(8px)  scale(0.96); }
-  60%  { opacity: 1; transform: translateY(-2px) scale(1.005); }
-  100% { opacity: 1; transform: translateY(0)    scale(1); }
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.005);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
-.animate-dropdown-down { animation: dropdown-bounce-down 240ms cubic-bezier(0.22, 1.4, 0.5, 1) both; transform-origin: top right; }
-.animate-dropdown-up   { animation: dropdown-bounce-up   240ms cubic-bezier(0.22, 1.4, 0.5, 1) both; transform-origin: bottom right; }
+.animate-dropdown-down {
+  animation: dropdown-bounce-down 240ms cubic-bezier(0.22, 1.4, 0.5, 1) both;
+  transform-origin: top right;
+}
+.animate-dropdown-up {
+  animation: dropdown-bounce-up 240ms cubic-bezier(0.22, 1.4, 0.5, 1) both;
+  transform-origin: bottom right;
+}
 
 @keyframes highlight-flash {
-  0% { border-color: rgba(139, 92, 246, 0.7); }
-  100% { border-color: rgba(139, 92, 246, 0.4); }
+  0% {
+    border-color: rgba(139, 92, 246, 0.7);
+  }
+  100% {
+    border-color: rgba(139, 92, 246, 0.4);
+  }
 }
 .animate-highlight-flash {
   animation: highlight-flash 1s ease-out forwards;
@@ -421,13 +532,23 @@ label[for] {
 }
 
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes hero-fade-up {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .animate-hero-fade-up {
   opacity: 0;
@@ -435,14 +556,24 @@ label[for] {
 }
 
 @keyframes track-drift {
-  from { transform: translateY(0px); }
-  to   { transform: translateY(-10px); }
+  from {
+    transform: translateY(0px);
+  }
+  to {
+    transform: translateY(-10px);
+  }
 }
-.animate-track-drift { animation: track-drift 8s ease-in-out infinite alternate; }
+.animate-track-drift {
+  animation: track-drift 8s ease-in-out infinite alternate;
+}
 
 @keyframes line-draw {
-  from { stroke-dashoffset: 1; }
-  to   { stroke-dashoffset: 0; }
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 .hero-track-line {
   stroke-dasharray: 1;
@@ -450,42 +581,68 @@ label[for] {
   animation: line-draw 5s ease-out forwards;
   animation-delay: var(--hero-line-delay, 0s);
 }
-[data-hero-seen="1"] .animate-hero-fade-up { opacity: 1; animation: none; }
-[data-hero-seen="1"] .hero-track-line { stroke-dasharray: none; stroke-dashoffset: 0; animation: none; }
+[data-hero-seen="1"] .animate-hero-fade-up {
+  opacity: 1;
+  animation: none;
+}
+[data-hero-seen="1"] .hero-track-line {
+  stroke-dasharray: none;
+  stroke-dashoffset: 0;
+  animation: none;
+}
 
 @keyframes demo-float {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-4px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
 }
 @keyframes demo-progress {
-  from { width: 0%; }
-  to   { width: 100%; }
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
 }
 
 @keyframes badge-ticker {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }
 
 /* Simulator shimmer border */
 @keyframes shimmer-rotate {
-  from { --shimmer-angle: 0deg; }
-  to   { --shimmer-angle: 360deg; }
+  from {
+    --shimmer-angle: 0deg;
+  }
+  to {
+    --shimmer-angle: 360deg;
+  }
 }
 @property --shimmer-angle {
   syntax: "<angle>";
   initial-value: 0deg;
   inherits: false;
 }
-.simulator-shimmer { position: relative; border-radius: 0.5rem; }
+.simulator-shimmer {
+  position: relative;
+  border-radius: 0.5rem;
+}
 .simulator-shimmer::before {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
   border: 1px solid transparent;
-  background:
-    conic-gradient(
+  background: conic-gradient(
       from var(--shimmer-angle),
       transparent 0%,
       #3b82f6 15%,
@@ -494,7 +651,8 @@ label[for] {
       #3b82f6 65%,
       #60a5fa 80%,
       transparent 100%
-    ) border-box;
+    )
+    border-box;
   -webkit-mask:
     linear-gradient(#000 0 0) padding-box,
     linear-gradient(#000 0 0) border-box;
@@ -509,16 +667,42 @@ label[for] {
 }
 
 /* Terminal-style scrollbar (used by Rails Index activity tables) */
-.terminal-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
-.terminal-scroll::-webkit-scrollbar-track { background: transparent; }
-.terminal-scroll::-webkit-scrollbar-thumb { background: var(--color-rb-700); border-radius: 3px; }
-.terminal-scroll::-webkit-scrollbar-thumb:hover { background: var(--color-rb-600); }
+.terminal-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.terminal-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.terminal-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-rb-700);
+  border-radius: 3px;
+}
+.terminal-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--color-rb-600);
+}
 
 /* Terminal table styles */
-.terminal-table thead { position: sticky; top: 0; z-index: 10; }
-.terminal-row:hover { background: rgba(128, 128, 128, 0.06) !important; }
-.proto-row { transition: background 0.15s ease; }
-.proto-row:hover { background: rgba(128, 128, 128, 0.06) !important; }
-.terminal-subrow { background-color: rgba(128, 128, 128, 0.04); }
-.terminal-subrow:hover { background: rgba(128, 128, 128, 0.06) !important; }
-.terminal-subrow td:first-child { border-left: 2px solid var(--color-rb-600); }
+.terminal-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.terminal-row:hover {
+  background: rgba(128, 128, 128, 0.06) !important;
+}
+.proto-row {
+  transition: background 0.15s ease;
+}
+.proto-row:hover {
+  background: rgba(128, 128, 128, 0.06) !important;
+}
+.terminal-subrow {
+  background-color: rgba(128, 128, 128, 0.04);
+}
+.terminal-subrow:hover {
+  background: rgba(128, 128, 128, 0.06) !important;
+}
+.terminal-subrow td:first-child {
+  border-left: 2px solid var(--color-rb-600);
+}

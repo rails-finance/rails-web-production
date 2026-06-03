@@ -3,7 +3,7 @@
 import { GraduationCap, Wallet, Code2, ShieldAlert } from "lucide-react";
 import { LiquityLogo } from "@/components/LiquityLogo";
 import { HomeHero } from "@/components/home/home-hero";
-import { DemoSlider } from "@/components/home/demo-slider";
+import { FeatureSpotlight } from "@/components/home/feature-spotlight";
 import { MonoRailSection } from "@/components/home/mono-rail-section";
 
 export default function Home() {
@@ -16,24 +16,24 @@ export default function Home() {
           product, not a flavour of an umbrella. ═══ */}
       <MonoRailSection />
 
-      {/* ═══ FEATURE SPOTLIGHT — Economics + Timeline ═══ */}
-      <div className="bg-gradient-to-b from-rb-100 to-rb-200 dark:from-rb-900 dark:to-rb-800 overflow-hidden">
+      {/* ═══ FEATURE SPOTLIGHT — Position card + Economics + Timeline ═══ */}
+      <div className="bg-gradient-to-r from-rb-100 to-rb-200 dark:from-rb-900 dark:to-rb-800 overflow-hidden">
         <section className="max-w-7xl mx-auto px-4 py-4">
-          <DemoSlider />
+          <FeatureSpotlight />
         </section>
       </div>
 
       {/* ═══ WHO IS RAILS FOR ═══ */}
       <div className="bg-rb-50 dark:bg-rb-900">
         <div className="max-w-7xl mx-auto px-4 py-16">
-          <div className="text-center mb-6">
-            <h2 className="font-sans font-semibold tracking-tight leading-tight mb-10 text-center text-[clamp(24px,3.5vw,38px)]">
+          <div className="mb-6">
+            <h2 className="font-sans font-semibold tracking-tight leading-tight mb-10 text-[clamp(24px,3.5vw,38px)]">
               <span className="text-pink-500">DeFi</span> for everyone
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-rb-300 dark:bg-rb-800 rounded-xl overflow-hidden">
-            <div className="bg-rb-100/90 dark:bg-rb-950/90 p-8 flex flex-col hover:bg-rb-100 dark:hover:bg-rb-950 transition-colors">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="flex flex-col">
               <div className="flex items-center gap-2 mb-5">
                 <GraduationCap className="h-[18px] w-[18px] text-pink-500 shrink-0" aria-hidden="true" />
                 <p className="text-xs font-medium tracking-[0.12em] uppercase text-pink-500">The DeFi Curious</p>
@@ -41,12 +41,12 @@ export default function Home() {
               <h3 className="text-[17px] font-semibold tracking-tight leading-snug mb-3.5 text-foreground">
                 Learn by example
               </h3>
-              <p className="text-[13px] leading-relaxed font-light flex-1 mb-6">
+              <p className="body-text flex-1 mb-6">
                 Browse real protocol activity to see how DeFi works in practice. No capital required — just explore the
                 ecosystem, follow live events, and build your intuition before you commit.
               </p>
             </div>
-            <div className="bg-rb-100/90 dark:bg-rb-950/90 p-8 flex flex-col hover:bg-rb-100 dark:hover:bg-rb-950 transition-colors">
+            <div className="flex flex-col">
               <div className="flex items-center gap-2 mb-5">
                 <Wallet className="h-[18px] w-[18px] text-emerald-500 shrink-0" aria-hidden="true" />
                 <p className="text-xs font-medium tracking-[0.12em] uppercase text-emerald-500">The Active DeFi User</p>
@@ -54,12 +54,12 @@ export default function Home() {
               <h3 className="text-[17px] font-semibold tracking-tight leading-snug mb-3.5 text-foreground">
                 Stay on top of positions
               </h3>
-              <p className="text-[13px] leading-relaxed font-light flex-1 mb-6">
+              <p className="body-text flex-1 mb-6">
                 Monitor collateral ratios, redemption exposure, yield earned, and liquidation risk — all translated into
                 plain language. Know exactly where you stand, without reading a transaction trace.
               </p>
             </div>
-            <div className="bg-rb-100/90 dark:bg-rb-950/90 p-8 flex flex-col hover:bg-rb-100 dark:hover:bg-rb-950 transition-colors">
+            <div className="flex flex-col">
               <div className="flex items-center gap-2 mb-5">
                 <Code2 className="h-[18px] w-[18px] text-blue-500 shrink-0" aria-hidden="true" />
                 <p className="text-xs font-medium tracking-[0.12em] uppercase text-blue-500">DeFi Teams</p>
@@ -67,12 +67,12 @@ export default function Home() {
               <h3 className="text-[17px] font-semibold tracking-tight leading-snug mb-3.5 text-foreground">
                 Support your community
               </h3>
-              <p className="text-[13px] leading-relaxed font-light flex-1 mb-6">
+              <p className="body-text flex-1 mb-6">
                 Give your users a dedicated, verifiable window into their positions. A Rails integration means your
                 protocol gets full coverage — and your community gets answers, not confusion.
               </p>
             </div>
-            <div className="bg-rb-100/90 dark:bg-rb-950/90 p-8 flex flex-col hover:bg-rb-100 dark:hover:bg-rb-950 transition-colors">
+            <div className="flex flex-col">
               <div className="flex items-center gap-2 mb-5">
                 <ShieldAlert className="h-[18px] w-[18px] text-red-500 shrink-0" aria-hidden="true" />
                 <p className="text-xs font-medium tracking-[0.12em] uppercase text-red-500">Crisis Support</p>
@@ -80,7 +80,7 @@ export default function Home() {
               <h3 className="text-[17px] font-semibold tracking-tight leading-snug mb-3.5 text-foreground">
                 When frontends fail
               </h3>
-              <p className="text-[13px] leading-relaxed font-light flex-1 mb-6">
+              <p className="body-text flex-1 mb-6">
                 DNS hijacks. Frontend outages. Contract exploits. When your usual interface goes dark, Rails gives you
                 read-only access to your positions — no wallet connection, no permissions, no exposure.
               </p>
@@ -100,17 +100,27 @@ export default function Home() {
  *  rails-web-mig component (which renders the same mark + wordmark). */
 function GetInTouch() {
   return (
-    <div className="bg-rb-200 dark:bg-rb-800">
+    <div className="bg-gradient-to-r from-rb-100 to-rb-200 dark:from-rb-900 dark:to-rb-800">
       <div className="max-w-7xl mx-auto px-4 py-16">
         <h2 className="font-semibold tracking-tight leading-tight pb-4 text-[clamp(28px,4vw,42px)]">Get in touch</h2>
 
-        <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-10">
-          <div className="md:text-left flex flex-col md:items-start flex-1">
-            <p className="leading-relaxed max-w-md mb-8">
+        <div className="flex flex-col md:flex-row items-start justify-between gap-10">
+          <div className="flex flex-col flex-1">
+            <p className="text-base md:text-lg font-normal leading-relaxed text-rb-500 max-w-md mb-4">
               Working with a protocol team or building DeFi infrastructure? Rails partners with sponsors to launch{" "}
               <span className="font-bold">dedicated explorers</span> — one protocol at a time, with the activity,
-              position, and event detail your community can verify on-chain.{" "}
-              <span className="text-blue-500">Liquity</span> is our founding supporter.
+              position, and event detail your community can verify on-chain.
+            </p>
+            <p className="body-text max-w-md mb-8">
+              <a
+                href="https://liquity.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:text-blue-600 transition-colors"
+              >
+                Liquity
+              </a>{" "}
+              is our founding supporter.
             </p>
             <div className="mb-8">
               <a href="https://liquity.org" target="_blank" rel="noopener noreferrer" className="block">
@@ -119,13 +129,13 @@ function GetInTouch() {
             </div>
           </div>
 
-          <div className="flex items-end shrink-0 md:mb-[-64px]">
+          <div className="flex shrink-0 md:-mt-16">
             <div
-              className="relative rounded-2xl md:rounded-b-none overflow-hidden w-[280px] sm:w-[300px]"
+              className="relative overflow-hidden rounded-2xl w-[280px] sm:w-[300px]"
               style={{
                 background: "linear-gradient(135deg, #0c1a3a 0%, #0a1228 100%)",
                 height: 340,
-                boxShadow: "0 -10px 40px rgba(0,0,0,0.4), 0 0 80px rgba(59,130,246,0.06)",
+                boxShadow: "0 20px 50px rgba(0,0,0,0.35), 0 0 80px rgba(59,130,246,0.06)",
               }}
             >
               <div className="absolute top-4 left-5 flex items-center gap-0.5 text-blue-400/30">
@@ -148,24 +158,18 @@ function GetInTouch() {
               <span className="absolute top-5 right-5 font-sans text-[13px] font-bold tracking-[0.3em] uppercase text-blue-400/30">
                 Telegram
               </span>
-              <svg
-                className="absolute pointer-events-none"
-                style={{ left: -80, top: -80, width: "120%", height: "120%" }}
-                viewBox="0 0 300 340"
-                fill="none"
-              >
-                <path
-                  d="M150 30 L168 150 L290 170 L168 190 L150 310 L132 190 L10 170 L132 150 Z"
-                  fill="#3B82F6"
-                  fillOpacity="0.05"
-                />
-              </svg>
               <div
                 className="absolute inset-0 flex flex-col items-center justify-center gap-3 pt-4"
                 style={{ color: "#cbd5e1" }}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/telegram-qr.svg" alt="Rails Finance Telegram QR" width={200} height={200} />
+                <img
+                  src="/telegram-qr.svg"
+                  alt="Rails Finance Telegram QR"
+                  width={200}
+                  height={200}
+                  className="invert"
+                />
                 <a
                   href="https://t.me/railsfinance"
                   target="_blank"

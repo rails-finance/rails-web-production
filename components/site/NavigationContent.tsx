@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Users, BookOpen, Search, FileText, Activity } from "lucide-react";
+import { Home, Users, BookOpen, FileText, Activity } from "lucide-react";
 import { ThemeToggle } from "../ThemeToggle";
 
 interface NavigationContentProps {
@@ -51,42 +51,89 @@ export function NavigationContent({ onLinkClick }: NavigationContentProps) {
       activeColor: "text-purple-600 dark:text-purple-600",
       hoverColor: "hover:text-purple-600 dark:hover:text-purple-600",
     },
+  ];
+
+  // The rails — grouped under their own "Explorers" heading and rendered with
+  // the real protocol marks rather than colour tiles.
+  const explorerItems: {
+    href: string;
+    label: string;
+    iconSrc: string;
+    activeColor: string;
+    hoverColor: string;
+    badge?: string;
+  }[] = [
+    {
+      href: "/aave-v4",
+      label: "Aave V4",
+      iconSrc: "/icons/protocols/aave-v4.png",
+      activeColor: "text-teal-600 dark:text-teal-600",
+      hoverColor: "hover:text-teal-600 dark:hover:text-teal-600",
+      badge: "New",
+    },
     {
       href: "/liquity-v2",
-      label: "Explore Troves",
-      icon: <Search size={16} />,
-      iconBg: "bg-indigo-600",
+      label: "Liquity V2",
+      iconSrc: "/icons/protocols/liquity.png",
       activeColor: "text-indigo-600 dark:text-indigo-600",
       hoverColor: "hover:text-indigo-600 dark:hover:text-indigo-600",
     },
   ];
 
+  const isActiveHref = (href: string) =>
+    href === "/" ? pathname === "/" : pathname === href || pathname?.startsWith(href + "/");
+
   return (
     <>
       <div className="space-y-2">
         {navItems.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = isActiveHref(item.href);
           return (
             <Link
               key={item.href}
               href={item.href}
               className={`flex items-center gap-3 text-lg font-medium py-2 transition-colors ${
-                isActive
-                  ? `${item.activeColor} pointer-events-none`
-                  : `text-foreground ${item.hoverColor}`
+                isActive ? `${item.activeColor} pointer-events-none` : `text-foreground ${item.hoverColor}`
               }`}
               onClick={isActive ? undefined : onLinkClick}
             >
-              <div className={`flex ${item.iconBg} text-white p-1.5 rounded`}>
-                {item.icon}
-              </div>
+              <div className={`flex ${item.iconBg} text-white p-1.5 rounded`}>{item.icon}</div>
               <span>{item.label}</span>
             </Link>
           );
         })}
       </div>
 
-      <div className="my-4 border-t border-rb-200 dark:border-rb-800"></div>
+      <div className="my-4 border-t border-rb-200 dark:border-rb-700"></div>
+
+      {/* Explorers — the rails */}
+      <div className="text-xs text-rb-500 uppercase tracking-wide mb-3">Explorers</div>
+      <div className="space-y-2">
+        {explorerItems.map((item) => {
+          const isActive = isActiveHref(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex items-center gap-3 text-lg font-medium py-2 transition-colors ${
+                isActive ? `${item.activeColor} pointer-events-none` : `text-foreground ${item.hoverColor}`
+              }`}
+              onClick={isActive ? undefined : onLinkClick}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={item.iconSrc} alt="" className="h-7 w-7 shrink-0 rounded" />
+              <span>{item.label}</span>
+              {item.badge && (
+                <span className="rounded bg-teal-600 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                  {item.badge}
+                </span>
+              )}
+            </Link>
+          );
+        })}
+      </div>
+
+      <div className="my-4 border-t border-rb-200 dark:border-rb-700"></div>
 
       {/* Theme Toggle */}
       <div className="flex items-center justify-between mb-4">
@@ -94,7 +141,7 @@ export function NavigationContent({ onLinkClick }: NavigationContentProps) {
         <ThemeToggle />
       </div>
 
-      <div className="border-t border-rb-200 dark:border-rb-800 pt-4"></div>
+      <div className="border-t border-rb-200 dark:border-rb-700 pt-4"></div>
 
       <div className="space-y-3">
         <div className="text-xs text-rb-500 uppercase tracking-wide mb-3">Connect With Us</div>

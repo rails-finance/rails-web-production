@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import type { SessionProtocol } from "@/lib/shared/sessions";
+import { NavMenu } from "@/components/nav/nav-menu";
 
 /** Routes that count as "inside the protocol" — keyed by the active protocol
  *  so the header can render the protocol label. Marketing routes (home,
@@ -80,21 +81,10 @@ function RailsLogo() {
  *  deep view (trove or spoke detail) where it's the fastest jump back to the
  *  full set. Smaller, dimmed uppercase keeps the visual subordination —
  *  Rails is the brand, the protocol label names the rail. */
-function ProtocolLabel({
-  protocol,
-}: {
-  protocol: { id: string; label: string; iconSrc: string; prefixes: string[] };
-}) {
+function ProtocolLabel({ protocol }: { protocol: { id: string; label: string; iconSrc: string; prefixes: string[] } }) {
   return (
-    <Link
-      href={protocol.prefixes[0]}
-      className="group ml-3 flex items-center gap-1.5"
-    >
-      <img
-        src={protocol.iconSrc}
-        alt=""
-        className="w-4 h-4 shrink-0 rounded-[3px]"
-      />
+    <Link href={protocol.prefixes[0]} className="group ml-3 flex items-center gap-1.5">
+      <img src={protocol.iconSrc} alt="" className="w-4 h-4 shrink-0 rounded-[3px]" />
       <span className="text-[11px] uppercase tracking-[0.14em] font-semibold text-rb-500 group-hover:text-foreground transition-colors">
         {protocol.label}
       </span>
@@ -108,9 +98,12 @@ export function HeaderBar() {
 
   return (
     <header className="relative z-40 mb-2">
-      <div className="max-w-7xl mx-auto py-5 px-4 md:px-6 flex items-center">
+      <div className="max-w-7xl mx-auto py-4 px-4 md:px-6 flex items-center">
         <RailsLogo />
         {active && <ProtocolLabel protocol={active} />}
+        <div className="ml-auto">
+          <NavMenu />
+        </div>
       </div>
     </header>
   );
