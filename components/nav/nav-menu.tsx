@@ -121,13 +121,24 @@ export function NavMenu() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-rb-200 p-6 dark:border-rb-700">
-              <div className="flex items-center space-x-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded bg-green-600">
-                  <svg className="h-4 w-4" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <use href="#icon-rails" />
-                  </svg>
-                </div>
-                <div className="text-lg font-bold text-foreground">Rails</div>
+              <div className="flex items-center gap-1.5 text-foreground">
+                <svg width={28} height={28} viewBox="0 0 200 200" fill="none" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    style={{ opacity: 0.85 }}
+                    d="M 79.763 159.671 L 111.637 159.671 L 52.168 41.625 L 20.295 41.625 L 79.763 159.671 Z"
+                  />
+                  <path
+                    fill="currentColor"
+                    style={{ opacity: 0.85 }}
+                    d="M 98.578 97.056 L 130.451 97.056 L 105.044 47.853 L 73.171 47.853 L 98.578 97.056 Z"
+                  />
+                  <path
+                    fill="currentColor"
+                    d="M 148.892 142.388 L 180.766 142.388 L 155.359 93.185 L 123.486 93.185 L 148.892 142.388 Z"
+                  />
+                </svg>
+                <span className="text-lg font-semibold tracking-wide">Rails</span>
               </div>
               <button
                 onClick={toggleMenu}
