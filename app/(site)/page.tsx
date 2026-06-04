@@ -188,7 +188,7 @@ function RoadmapAndSupporters() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:items-center">
           {/* Roadmap + CTAs */}
           <div className="text-center md:text-left">
-            <p className="text-lg md:text-xl font-normal leading-relaxed text-rb-500 mb-8 md:max-w-md">
+            <p className="text-base md:text-lg font-normal leading-relaxed text-rb-500 mb-8 md:max-w-md">
               Rails is building essential DeFi support infrastructure, starting with Liquity V2 and now Aave V4. Our
               roadmap expands across the broader DeFi ecosystem.
             </p>
@@ -212,7 +212,7 @@ function RoadmapAndSupporters() {
 
           {/* Our Supporters */}
           <div>
-            <h2 className="text-center text-lg md:text-xl font-normal leading-relaxed text-rb-500 mb-8">
+            <h2 className="text-center text-base md:text-lg font-normal leading-relaxed text-rb-500 mb-8">
               Our Supporters
             </h2>
             <a
