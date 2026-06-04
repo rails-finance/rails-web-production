@@ -1,6 +1,7 @@
 "use client";
 
-import { GraduationCap, Wallet, Code2, ShieldAlert } from "lucide-react";
+import Link from "next/link";
+import { GraduationCap, Wallet, Code2, ShieldAlert, FileText, Activity } from "lucide-react";
 import { LiquityLogo } from "@/components/LiquityLogo";
 import { HomeHero } from "@/components/home/home-hero";
 import { FeatureSpotlight } from "@/components/home/feature-spotlight";
@@ -91,6 +92,9 @@ export default function Home() {
 
       {/* ═══ GET IN TOUCH ═══ */}
       <GetInTouch />
+
+      {/* ═══ ROADMAP / CTA + OUR SUPPORTERS — paired two-column closer ═══ */}
+      <RoadmapAndSupporters />
     </div>
   );
 }
@@ -106,27 +110,11 @@ function GetInTouch() {
 
         <div className="flex flex-col md:flex-row items-start justify-between gap-10">
           <div className="flex flex-col flex-1">
-            <p className="text-base md:text-lg font-normal leading-relaxed text-rb-500 max-w-md mb-4">
+            <p className="text-base md:text-lg font-normal leading-relaxed text-rb-500 max-w-md">
               Working with a protocol team or building DeFi infrastructure? Rails partners with sponsors to launch{" "}
               <span className="font-bold">dedicated explorers</span> — one protocol at a time, with the activity,
               position, and event detail your community can verify on-chain.
             </p>
-            <p className="body-text max-w-md mb-8">
-              <a
-                href="https://liquity.org"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-500 hover:text-blue-600 transition-colors"
-              >
-                Liquity
-              </a>{" "}
-              is our founding supporter.
-            </p>
-            <div className="mb-8">
-              <a href="https://liquity.org" target="_blank" rel="noopener noreferrer" className="block">
-                <LiquityLogo />
-              </a>
-            </div>
           </div>
 
           <div className="flex shrink-0 md:-mt-16">
@@ -183,6 +171,70 @@ function GetInTouch() {
                 </a>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Closing block: where Rails is headed (blog + Pulse outlets) paired beside
+ *  Liquity's founding-supporter credit. Two columns on desktop, stacked on
+ *  mobile — the roadmap leads, the supporter sits to its right. */
+function RoadmapAndSupporters() {
+  return (
+    <div className="bg-rb-200 dark:bg-rb-800">
+      <div className="max-w-7xl mx-auto px-4 py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:items-center">
+          {/* Roadmap + CTAs */}
+          <div className="text-center md:text-left">
+            <p className="text-lg md:text-xl font-normal leading-relaxed text-rb-500 mb-8 md:max-w-md">
+              Rails is building essential DeFi support infrastructure, starting with Liquity V2 and now Aave V4. Our
+              roadmap expands across the broader DeFi ecosystem.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4">
+              <Link
+                href="/blog"
+                className="inline-flex items-center gap-2 rounded-lg bg-blue-500 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-600"
+              >
+                <FileText className="h-5 w-5" aria-hidden="true" />
+                Read the Blog
+              </Link>
+              <Link
+                href="/pulse"
+                className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-emerald-700"
+              >
+                <Activity className="h-5 w-5" aria-hidden="true" />
+                Check our Pulse
+              </Link>
+            </div>
+          </div>
+
+          {/* Our Supporters */}
+          <div>
+            <h2 className="text-center text-lg md:text-xl font-normal leading-relaxed text-rb-500 mb-8">
+              Our Supporters
+            </h2>
+            <a
+              href="https://liquity.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Liquity"
+              className="flex items-center justify-center py-8 opacity-90 transition-opacity hover:opacity-100"
+            >
+              <LiquityLogo className="h-10 w-auto" />
+            </a>
+            <p className="body-text text-center mt-4">
+              <a
+                href="https://liquity.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 hover:text-blue-600 transition-colors"
+              >
+                Liquity
+              </a>{" "}
+              is our founding supporter.
+            </p>
           </div>
         </div>
       </div>

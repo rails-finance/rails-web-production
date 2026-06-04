@@ -51,7 +51,7 @@ function RailsLogo() {
         height={30}
         viewBox="0 0 200 200"
         fill="none"
-        className="opacity-80 group-hover:opacity-100 transition-opacity"
+        className="opacity-100 group-hover:opacity-70 transition-opacity"
         aria-hidden="true"
       >
         <path
@@ -69,7 +69,7 @@ function RailsLogo() {
           d="M 148.892 142.388 L 180.766 142.388 L 155.359 93.185 L 123.486 93.185 L 148.892 142.388 Z"
         />
       </svg>
-      <span className="text-base tracking-wide font-semibold opacity-80 group-hover:opacity-100 transition-opacity">
+      <span className="text-base tracking-wide font-semibold opacity-100 group-hover:opacity-70 transition-opacity">
         Rails
       </span>
     </Link>
