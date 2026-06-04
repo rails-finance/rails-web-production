@@ -8,6 +8,7 @@ import { LinkedAddress } from "@/components/shared/linked-address";
 import { usePreferences } from "@/lib/shared/preferences-context";
 import { formatRatio, ratioLabel, useLiquityRatioColorClass } from "@/lib/shared/ratio-format";
 import { TransitionArrow, ClosedLabel, StateMetric, StateTransition } from "@/components/shared/state-transition";
+import { useTimelineDisplay } from "@/components/shared/timeline-display-context";
 
 // ── Formatters ──────────────────────────────────────────────────────
 
@@ -106,6 +107,7 @@ function CollateralMetric({
   isLiquidation: boolean;
   collSurplus?: number;
 }) {
+  const { showUsdValues } = useTimelineDisplay();
   const hasChange = isClose ? before !== after : before !== 0 && before !== after;
   const hasSurplus = collSurplus !== undefined && collSurplus > 0;
 
@@ -116,7 +118,7 @@ function CollateralMetric({
           <>
             <div className="flex items-center space-x-1">
               <span className="text-sm font-bold text-rb-500">{formatColl(before)}</span>
-              {isLiquidation && beforeInUsd > 0 && (
+              {showUsdValues && isLiquidation && beforeInUsd > 0 && (
                 <span className="text-xs flex font-bold items-center text-rb-500 border-l-2 border-r-2 ml-2 border-rb-500 rounded-sm px-1 py-0">
                   {formatUsd(beforeInUsd)}
                 </span>
@@ -128,18 +130,16 @@ function CollateralMetric({
         {isClose ? (
           <ClosedLabel />
         ) : (
-          <div className="flex items-center">
-            <span className="text-sm font-bold ">
-              {after === 0 ? "0" : formatColl(after)}
-            </span>
-            {after > 0 && (
-              <span className="text-xs flex font-bold items-center text-rb-500 border-l-2 border-r-2 ml-2 border-rb-500 rounded-sm px-1 py-0">
-                {formatUsd(afterInUsd)}
-              </span>
-            )}
-          </div>
+          <span className="text-sm font-bold ">
+            {after === 0 ? "0" : formatColl(after)}
+          </span>
         )}
         <TokenChipIcon symbol={collateralType} size={16} />
+        {showUsdValues && !isClose && after > 0 && (
+          <span className="text-xs flex font-bold items-center text-rb-500 border-l-2 border-r-2 border-rb-500 rounded-sm px-1 py-0">
+            {formatUsd(afterInUsd)}
+          </span>
+        )}
       </StateTransition>
       {hasSurplus && (
         <div className="text-xs text-green-400 mt-0.5">

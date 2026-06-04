@@ -1,6 +1,6 @@
 "use client";
 
-import type { AaveV4Context } from "@/lib/shared/types/protocols/aave-v4";
+import type { AaveV4Context, AaveV4PriceSource } from "@/lib/shared/types/protocols/aave-v4";
 import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import { shortAddr } from "@/lib/shared/format-event";
 import { usePreferences } from "@/lib/shared/preferences-context";
@@ -34,6 +34,28 @@ function formatUsd(value: number | undefined | null): string {
 
 const TransitionArrow = () => <SharedTransitionArrow size="sm" />;
 
+/** Per-unit asset-price pill shown in the event-detail footer — one per
+ *  distinct asset in the snapshot (collateral + debt), each carrying the
+ *  asset's historic USD price at the event's block. The ≈ prefix on
+ *  stablecoin sources distinguishes pinned-$1 from market. */
+function PricePill({ symbol, usd, source }: { symbol: string; usd: number; source: AaveV4PriceSource }) {
+  const sourceLabel =
+    source === "chainlink" ? "Chainlink feed"
+    : source === "chainlink-eth-derived" ? "Chainlink ETH/USD × on-chain exchange rate"
+    : source === "iaave-oracle" ? "IAaveOracle"
+    : source === "stablecoin" ? "stablecoin, pinned to $1"
+    : "approximation";
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 text-xs font-bold text-rb-500 bg-rb-200/60 dark:bg-rb-800/60 px-2 py-1 rounded-md"
+      title={`${aaveV4DisplaySymbol(symbol)} price at the time of this event (${sourceLabel})`}
+    >
+      {source === "stablecoin" ? "≈" : ""}{formatUsd(usd)}
+      <TokenChipIcon symbol={symbol} size={14} />
+    </span>
+  );
+}
+
 export interface AaveV4EventDetailProps {
   ctx: AaveV4Context;
   txHash: string;
@@ -58,7 +80,7 @@ function PositionRow({
   isChanged: boolean;
   priceUsd?: number;
 }) {
-  const { showTickerLabels } = useTimelineDisplay();
+  const { showTickerLabels, showUsdValues } = useTimelineDisplay();
   const afterN = parseFloat(amount) || 0;
   const afterUsd = priceUsd != null && afterN > 0 ? afterN * priceUsd : undefined;
   return (
@@ -72,13 +94,13 @@ function PositionRow({
       ) : (
         <span className="font-bold">{fmt(amount)}</span>
       )}
-      {afterUsd != null && (
+      <TokenChipIcon symbol={symbol} size={16} />
+      {showTickerLabels && <span className="text-xs">{aaveV4DisplaySymbol(symbol)}</span>}
+      {showUsdValues && afterUsd != null && (
         <span className="text-xs flex font-bold items-center text-rb-500 border-l-2 border-r-2 ml-0.5 border-rb-500 rounded-sm px-1 py-0">
           {formatUsd(afterUsd)}
         </span>
       )}
-      <TokenChipIcon symbol={symbol} size={16} />
-      {showTickerLabels && <span className="text-xs">{aaveV4DisplaySymbol(symbol)}</span>}
     </span>
   );
 }
@@ -140,6 +162,29 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
   const totalDebtUsd = debts.reduce((s, p) => s + parseFloat(p.amount) * getPrice(p.symbol), 0);
   const collRatio = totalDebtUsd > 0 ? totalSupplyUsd / totalDebtUsd : 0;
   const showRatio = hasSupplies && hasDebts && totalDebtUsd > 0.01;
+
+  // Footer price pills — one per distinct asset in the snapshot (collateral +
+  // debt). Prefer each row's historic price; fall back to the event's primary
+  // price (`ctx.price`, or liquidation's `collateralPrice` / `debtPrice`) so
+  // the changed asset still shows when its per-row price is absent.
+  const rowPrice = (sym: string): { usd: number; source: AaveV4PriceSource } | undefined => {
+    if (isLiq) {
+      if (sym === ctx.collateralSymbol) return ctx.collateralPrice;
+      if (sym === token) return ctx.debtPrice;
+      return undefined;
+    }
+    return sym === ctx.reserveSymbol ? ctx.price : undefined;
+  };
+  const pricePills: { symbol: string; usd: number; source: AaveV4PriceSource }[] = [];
+  const seenPill = new Set<string>();
+  for (const row of [...supplies, ...debts]) {
+    if (seenPill.has(row.symbol)) continue;
+    const p = row.price ?? rowPrice(row.symbol);
+    if (p && p.usd > 0) {
+      pricePills.push({ symbol: row.symbol, usd: p.usd, source: p.source });
+      seenPill.add(row.symbol);
+    }
+  }
 
   return (
     <>
@@ -260,25 +305,15 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
         </div>
       )}
 
-      {/* Asset-price footer pill — single per-unit price for the event's
-          primary asset, mirroring Liquity V2's `$X,XXX ◊` chip. The pill is
-          source-aware via its tooltip; the ≈ prefix on stablecoin sources is
-          carried through so the user can tell pinned-$1 apart from market. */}
-      {ctx.price && ctx.price.usd > 0 && ctx.reserveSymbol && (
-        <div className="flex items-center gap-2 px-5 py-2">
-          <span
-            className="ml-auto inline-flex items-center gap-1.5 text-xs font-bold text-rb-500 bg-rb-200/60 dark:bg-rb-800/60 px-2 py-1 rounded-md"
-            title={`${aaveV4DisplaySymbol(ctx.reserveSymbol)} price at the time of this event (${
-              ctx.price.source === "chainlink" ? "Chainlink feed"
-              : ctx.price.source === "chainlink-eth-derived" ? "Chainlink ETH/USD × on-chain exchange rate"
-              : ctx.price.source === "iaave-oracle" ? "IAaveOracle"
-              : ctx.price.source === "stablecoin" ? "stablecoin, pinned to $1"
-              : "approximation"
-            })`}
-          >
-            {ctx.price.source === "stablecoin" ? "≈" : ""}{formatUsd(ctx.price.usd)}
-            <TokenChipIcon symbol={ctx.reserveSymbol} size={14} />
-          </span>
+      {/* Asset-price footer pills — one per-unit price per asset in the
+          snapshot (collateral + debt), mirroring Liquity V2's `$X,XXX ◊` chip.
+          Each pill is source-aware via its tooltip; the ≈ prefix on stablecoin
+          sources lets the user tell pinned-$1 apart from market. */}
+      {pricePills.length > 0 && (
+        <div className="flex items-center justify-end gap-2 px-5 py-2">
+          {pricePills.map(p => (
+            <PricePill key={p.symbol} symbol={p.symbol} usd={p.usd} source={p.source} />
+          ))}
         </div>
       )}
     </>

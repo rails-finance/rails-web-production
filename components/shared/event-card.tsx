@@ -119,9 +119,9 @@ export function EventCard({
       <div
         className={`overflow-visible rounded-xl transition-colors ${
           showDetail
-            ? "rounded-b-none bg-rb-100 dark:bg-rb-850"
+            ? "rounded-b-none bg-rb-100 dark:bg-rb-900"
             : hasDetail
-              ? "hover:bg-rb-100 dark:hover:bg-rb-850"
+              ? "hover:bg-rb-100 dark:hover:bg-rb-900"
               : ""
         }`}
       >
@@ -156,7 +156,7 @@ export function EventCard({
       >
         <div className="overflow-hidden">
           {detailMounted && (
-            <div className="rounded-b-xl bg-rb-100 dark:bg-rb-850">
+            <div className="rounded-b-xl bg-rb-100 dark:bg-rb-900">
               {detailLoading && (
                 <div className="flex items-center justify-center gap-2 py-8 text-sm ">
                   <span className="relative flex size-2">
