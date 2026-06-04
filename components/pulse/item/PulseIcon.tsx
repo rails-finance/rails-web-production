@@ -58,6 +58,7 @@ export function PulseIcon({
               <Avatar
                 handle={event.author}
                 platform={event.platform}
+                overrideSrc={event.iconUrl}
                 size={40}
                 className="border border-slate-200 dark:border-slate-500"
               />
@@ -75,6 +76,7 @@ export function PulseIcon({
               <Avatar
                 handle={event.author}
                 platform={event.platform}
+                overrideSrc={event.iconUrl}
                 size={40}
                 className="border border-slate-200 dark:border-slate-500"
               />

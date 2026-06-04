@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Activity, AlertCircle, Loader2, Pin } from "lucide-react";
@@ -27,6 +27,7 @@ const DEFAULT_DATA_SOURCES = [
   "/data/timeline/x.json",
   "/data/timeline/blog.json",
   "/data/timeline/github.json",
+  "/data/timeline/app.json",
 ];
 
 interface TimelinePageProps {
@@ -35,11 +36,7 @@ interface TimelinePageProps {
   dataSources?: string[];
 }
 
-export function TimelinePage({
-  title,
-  description,
-  dataSources = DEFAULT_DATA_SOURCES
-}: TimelinePageProps) {
+export function TimelinePage({ title, description, dataSources = DEFAULT_DATA_SOURCES }: TimelinePageProps) {
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +55,7 @@ export function TimelinePage({
               return [];
             }
             return (await response.json()) as TimelineEvent[];
-          })
+          }),
         );
 
         const allEvents = results.flat();
@@ -165,7 +162,10 @@ export function TimelinePage({
           items.push(
             <li key={`separator-${group.key}`} className="flex w-full gap-3 flex-row items-stretch">
               {/* Timeline rail column - matches PulseIcon structure */}
-              <div className="relative flex mr-2 sm:mr-4 md:mr-6 shrink-0 flex-col items-center justify-center" style={{ width: '40px' }}>
+              <div
+                className="relative flex mr-2 sm:mr-4 md:mr-6 shrink-0 flex-col items-center justify-center"
+                style={{ width: "40px" }}
+              >
                 {isFirstGroup ? (
                   <>
                     {/* Pulsing dot for first group */}
@@ -176,13 +176,13 @@ export function TimelinePage({
                     {/* Vertical line connecting to first event */}
                     <div
                       className="absolute left-1/2 -translate-x-1/2 w-1 bg-slate-300 dark:bg-[#30343F]"
-                      style={{ top: '50%', bottom: '-1rem' }}
+                      style={{ top: "50%", bottom: "-1rem" }}
                     />
                   </>
                 ) : (
                   <div
                     className="absolute left-1/2 -translate-x-1/2 w-1 bg-slate-300 dark:bg-[#30343F]"
-                    style={{ top: '-1rem', bottom: '-1rem' }}
+                    style={{ top: "-1rem", bottom: "-1rem" }}
                   />
                 )}
               </div>
@@ -192,7 +192,7 @@ export function TimelinePage({
                 <span className="text-xs font-medium text-slate-500 dark:text-slate-500">{group.label}</span>
                 <div className="flex-1 border-t border-dashed border-slate-300 dark:border-slate-700" />
               </div>
-            </li>
+            </li>,
           );
 
           // Add pinned message after first month separator
@@ -200,10 +200,13 @@ export function TimelinePage({
             items.push(
               <li key="pinned-message" className="flex w-full gap-3 flex-row items-stretch">
                 {/* Timeline rail column */}
-                <div className="relative flex mr-2 sm:mr-4 md:mr-6 shrink-0 flex-col items-center" style={{ width: '40px' }}>
+                <div
+                  className="relative flex mr-2 sm:mr-4 md:mr-6 shrink-0 flex-col items-center"
+                  style={{ width: "40px" }}
+                >
                   <div
                     className="absolute left-1/2 -translate-x-1/2 w-1 bg-slate-300 dark:bg-[#30343F]"
-                    style={{ top: '-1rem', bottom: '-1rem' }}
+                    style={{ top: "-1rem", bottom: "-1rem" }}
                   />
                 </div>
                 {/* Pinned message content */}
@@ -216,13 +219,31 @@ export function TimelinePage({
                           We're actively seeking funding to expand Rails.
                         </p>
                         <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-                          We welcome your support and collaboration. Be the first to <a href="https://etherscan.io/name-lookup-search?id=donate.rails.eth" target="_blank" rel="noreferrer" className="text-fuchsia-500 hover:text-fuchsia-600 dark:hover:text-fuchsia-400 transition-colors">donate.rails.eth</a>. Reach us at <a href="https://x.com/rails_finance" target="_blank" rel="noreferrer" className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">@rails_finance</a>, we'd love to hear from you.
+                          We welcome your support and collaboration. Be the first to{" "}
+                          <a
+                            href="https://etherscan.io/name-lookup-search?id=donate.rails.eth"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-fuchsia-500 hover:text-fuchsia-600 dark:hover:text-fuchsia-400 transition-colors"
+                          >
+                            donate.rails.eth
+                          </a>
+                          . Reach us at{" "}
+                          <a
+                            href="https://x.com/rails_finance"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                          >
+                            @rails_finance
+                          </a>
+                          , we'd love to hear from you.
                         </p>
                       </div>
                     </div>
                   </div>
                 </div>
-              </li>
+              </li>,
             );
           }
 
@@ -235,7 +256,7 @@ export function TimelinePage({
                 event={event}
                 isFirst={globalIndex === 0}
                 isLast={globalIndex === filteredEvents.length - 1}
-              />
+              />,
             );
           });
 
@@ -246,7 +267,17 @@ export function TimelinePage({
   );
 }
 
-function FilterChip({ label, icon, active, onClick }: { label?: string; icon?: ReactNode; active: boolean; onClick: () => void }) {
+function FilterChip({
+  label,
+  icon,
+  active,
+  onClick,
+}: {
+  label?: string;
+  icon?: ReactNode;
+  active: boolean;
+  onClick: () => void;
+}) {
   return (
     <button
       type="button"

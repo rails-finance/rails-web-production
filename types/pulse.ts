@@ -19,8 +19,8 @@ export interface TimelineEngagement {
   id: string;
   date: string;
   type: TimelineEngagementType;
-  actor?: string;              // Single actor (Twitter handle)
-  actors?: TimelineActor[];    // Multiple actors
+  actor?: string; // Single actor (Twitter handle)
+  actors?: TimelineActor[]; // Multiple actors
   link?: string;
   description?: string;
   metrics?: TimelineMetrics;
@@ -33,6 +33,9 @@ export interface TimelineEvent {
   platform: TimelinePlatform;
   author?: string;
   authorUrl?: string;
+  /** Explicit spine-icon image, bypassing the /avatars/{platform}/{handle}
+   *  convention — e.g. a protocol logo for a product-milestone entry. */
+  iconUrl?: string;
   postUrl?: string;
   content: string;
   subtitle?: string;

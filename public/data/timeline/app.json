@@ -1,0 +1,12 @@
+[
+  {
+    "id": "rails-2026-aave-v4-soft-launch",
+    "date": "2026-06-16T12:00:00Z",
+    "type": "milestone",
+    "platform": "app",
+    "author": "rails.finance",
+    "iconUrl": "/icons/protocols/aave-v4.png",
+    "postUrl": "https://rails.finance/aave-v4",
+    "content": "Soft launch: the Aave V4 explorer is live. Browse multi-spoke positions with chain-truth health factors, liquidation prices, net APY, and full event timelines."
+  }
+]

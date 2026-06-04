@@ -16,17 +16,20 @@ export function Avatar({
   platform,
   size = 18,
   className = "",
+  overrideSrc,
 }: {
   handle?: string;
   platform?: TimelineEvent["platform"];
   size?: number;
   className?: string;
+  /** Explicit image path that bypasses the /avatars/{platform}/{handle} lookup. */
+  overrideSrc?: string;
 }) {
   const basePath = getAvatarBasePath(handle, platform);
   const [extension, setExtension] = useState<"png" | "jpg" | null>("png");
   const initial = handle?.replace(/^@/, "").charAt(0)?.toUpperCase() ?? "?";
 
-  const src = basePath && extension ? `${basePath}.${extension}` : null;
+  const src = overrideSrc ?? (basePath && extension ? `${basePath}.${extension}` : null);
 
   return (
     <span
