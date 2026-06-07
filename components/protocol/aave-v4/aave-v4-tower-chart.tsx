@@ -203,24 +203,24 @@ export function AaveV4TowerChart({
     (s, r) => s + r.liquidatedDebt * r.price,
     0,
   );
-  // Lifetime side-bar totals — the chain-truth path zeros out r.supplied /
-  // r.borrowed for rows whose live balance is non-zero, so reconstruct the
-  // lifetime peak from the available flows so the side bar is visible even
-  // when chain truth replaced the event-derived totals.
-  const totalDepositedUsd = allRows.reduce((s, r) => {
-    const lifetime = Math.max(
-      r.supplied,
-      r.netSupply + r.withdrawn + r.liquidatedCollateral,
-    );
-    return s + lifetime * r.price;
-  }, 0);
-  const totalBorrowedUsd = allRows.reduce((s, r) => {
-    const lifetime = Math.max(
-      r.borrowed,
-      r.netDebt + r.repaid + r.liquidatedDebt,
-    );
-    return s + lifetime * r.price;
-  }, 0);
+  // Lifetime side-bar totals = current balance + everything that has left the
+  // position (withdrawn / repaid / liquidated). Anchor to the chain-truth
+  // `netSupply` / `netDebt` rather than the event-derived gross `r.supplied` /
+  // `r.borrowed`: gross cumulative double-counts capital re-deposited after a
+  // loop, and counts capital that left through an un-indexed aggregator-wrapper
+  // withdrawal (the same drift the chain-truth path exists to correct). That
+  // inflation made the side bar shoot far above the tower and broke the
+  // breakdown math. Reconstructing from net + flows keeps the bar honest, so
+  // "Deposited − Withdrawn = In Protocol" reconciles and the bar can't exceed
+  // the tower's own segment sum.
+  const totalDepositedUsd = allRows.reduce(
+    (s, r) => s + (r.netSupply + r.withdrawn + r.liquidatedCollateral) * r.price,
+    0,
+  );
+  const totalBorrowedUsd = allRows.reduce(
+    (s, r) => s + (r.netDebt + r.repaid + r.liquidatedDebt) * r.price,
+    0,
+  );
 
   const withdrawnAssets = allRows
     .map((r) => ({ symbol: r.symbol, amount: r.withdrawn, usd: r.withdrawn * r.price }))
@@ -337,7 +337,13 @@ export function AaveV4TowerChart({
 
   const collPeak = collSegments.reduce((s, seg) => s + Math.max(0, seg.value), 0);
   const debtPeak = debtSegments.reduce((s, seg) => s + Math.max(0, seg.value), 0);
-  const towerMax = Math.max(collPeak, debtPeak) * 1.08;
+  // Fold the historic-view side-bar totals into the scale so a lifetime bar can
+  // never paint above the chart. With the reconciled totals above this is ~a
+  // no-op (bar ≈ tower), but it also covers the hide-surplus case (collPeak
+  // drops below the still-full deposited total) and the brief pre-price-
+  // hydration render where per-asset prices haven't streamed in yet.
+  const sideBarMax = isLiveView ? 0 : Math.max(totalDepositedUsd, totalBorrowedUsd);
+  const towerMax = Math.max(collPeak, debtPeak, sideBarMax) * 1.08;
 
   const collSideBar =
     !isLiveView && totalDepositedUsd > 0
