@@ -6,9 +6,10 @@
 // "About this position" layout, as a standalone panel above the stats card.
 
 import type { AaveSpokeCardInfo } from "@/lib/aave-v4/spoke-cards";
-import { getSpokeMeta, ARCHETYPE_LABEL, ARCHETYPE_ACCENT } from "@/lib/aave-v4/spoke-meta";
 import { fmtUsd, hfLabel, hfColorClass, fmtLiqPrice } from "@/lib/aave-v4/format";
 import { aaveV4DisplaySymbol } from "@/lib/aave-v4/pt-tokens";
+import { LearnMore } from "@/components/shared/learn-more-modal";
+import { aaveV4SpokeContent } from "@/lib/shared/learn-more-content";
 
 // Oxford-join a list of asset symbols for prose ("wstETH, WBTC and USDC").
 function joinSymbols(syms: string[]): string {
@@ -144,11 +145,12 @@ function buildSpokePositionItems(spoke: AaveSpokeCardInfo): React.ReactNode[] {
 }
 
 /**
- * Position explanation panel. Leads with a live, data-driven read of *this*
- * position (the Aave analogue of Liquity's trove explanation), then the
- * spoke-architecture narrative from lib/aave-v4/spoke-meta.ts. Neutral panel
- * styling mirrors the Liquity explanation (components/trove/TroveContextRow.tsx)
- * so both rails read alike.
+ * Position explanation panel. Renders a live, data-driven read of *this*
+ * position (the Aave analogue of Liquity's trove explanation). The generic
+ * spoke-architecture narrative (how the spoke type works — archetype, hub
+ * mapping, rate composition) lives behind the shared Learn-More modal opened
+ * by the "?" affordance, mirroring Liquity's "How Redemptions Work" pattern,
+ * so per-position copy stays separate from per-protocol education.
  */
 export function AaveV4PositionExplanation({
   spoke,
@@ -160,11 +162,8 @@ export function AaveV4PositionExplanation({
    *  e.g. the "About this position" bar that expands into this content. */
   embedded?: boolean;
 }) {
-  const meta = getSpokeMeta(spoke.name);
-  const accent = meta ? ARCHETYPE_ACCENT[meta.archetype] : null;
-  const archetypeLabel = meta ? ARCHETYPE_LABEL[meta.archetype] : null;
-  const sameHub = meta ? meta.collateralHub === meta.borrowHub : false;
   const positionItems = buildSpokePositionItems(spoke);
+  const spokeContent = aaveV4SpokeContent(spoke.name);
 
   return (
     <div
@@ -186,42 +185,7 @@ export function AaveV4PositionExplanation({
         </div>
       )}
 
-      {meta && (
-        <div className="pt-2 border-t border-rb-300/30 dark:border-rb-700/40 space-y-2 text-foreground/90 leading-relaxed">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-rb-500">How this spoke works</div>
-          {/* Archetype + hub mapping folded in as the lead bullet so it sits
-              with the rest of the list rather than as a separate header. */}
-          <div className="flex items-start gap-2">
-            <span className="text-rb-500 select-none">•</span>
-            <span>
-              {accent && archetypeLabel && (
-                <span className={`text-[10px] font-bold uppercase tracking-wider ${accent.text} mr-1.5`}>
-                  {archetypeLabel}
-                </span>
-              )}
-              {sameHub ? (
-                <>Collateral and borrow in <span className="text-foreground/90 font-semibold">{meta.collateralHub} Hub</span>.</>
-              ) : (
-                <>
-                  Collateral in <span className="text-foreground/90 font-semibold">{meta.collateralHub} Hub</span>, borrow drawn from{" "}
-                  <span className="text-foreground/90 font-semibold">{meta.borrowHub} Hub</span>.
-                </>
-              )}
-            </span>
-          </div>
-          {meta.narrative.map((line, i) => (
-            <div key={i} className="flex items-start gap-2">
-              <span className="text-rb-500 select-none">•</span>
-              <span>{line}</span>
-            </div>
-          ))}
-          {meta.rateNote && accent && (
-            <p className={`mt-1 pl-2 border-l-2 ${accent.border} text-rb-500 italic`}>
-              {meta.rateNote}
-            </p>
-          )}
-        </div>
-      )}
+      {spokeContent && <LearnMore content={spokeContent} />}
     </div>
   );
 }

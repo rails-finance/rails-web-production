@@ -1,6 +1,7 @@
 import type { LearnMoreContent } from "@/components/shared/learn-more-modal";
 import type { CurveEventType } from "@/lib/shared/types/protocols/curve";
 import type { UniswapEventType } from "@/lib/shared/types/protocols/uniswap";
+import { getSpokeMeta, ARCHETYPE_LABEL } from "@/lib/aave-v4/spoke-meta";
 
 // ── CoW Protocol ─────────────────────────────────────────────────────────────
 
@@ -110,6 +111,33 @@ export function liquityOpenTroveContent(): LearnMoreContent {
       { label: "What is the liquidation reserve?", url: "https://docs.liquity.org/v2-faq/borrowing-and-liquidations#what-is-the-refundable-gas-deposit" },
       { label: "How user-set interest rates work", url: "https://docs.liquity.org/v2-faq/borrowing-and-liquidations#what-are-user-set-rates" },
     ],
+  };
+}
+
+// ── Aave V4 — Spoke architecture ─────────────────────────────────────────────
+
+// Generic, per-spoke-type explainer for the Aave V4 Hub & Spoke model. The copy
+// is keyed purely by spoke name (archetype, hub mapping, narrative) and carries
+// nothing about the wallet's position, so it belongs in the shared Learn-More
+// modal rather than inline on the card. Returns null for spokes without
+// editorial metadata so the caller can omit the "?" affordance.
+export function aaveV4SpokeContent(spokeName: string): LearnMoreContent | null {
+  const meta = getSpokeMeta(spokeName);
+  if (!meta) return null;
+
+  const sameHub = meta.collateralHub === meta.borrowHub;
+  const hubMapping = sameHub
+    ? `Collateral and borrows both sit in the ${meta.collateralHub} Hub.`
+    : `Collateral sits in the ${meta.collateralHub} Hub, while borrows are drawn from the ${meta.borrowHub} Hub.`;
+  const archetype = ARCHETYPE_LABEL[meta.archetype];
+
+  const extraParagraphs = [...meta.narrative];
+  if (meta.rateNote) extraParagraphs.push(meta.rateNote);
+
+  return {
+    title: `How the ${meta.name} Spoke Works`,
+    intro: `${archetype} — ${meta.name} on Aave V4's Hub & Spoke model. ${hubMapping}`,
+    extraParagraphs,
   };
 }
 
