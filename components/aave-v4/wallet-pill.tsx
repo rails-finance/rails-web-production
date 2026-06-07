@@ -6,6 +6,7 @@
 // the address presentation is one component across surfaces.
 
 import { useState } from "react";
+import Link from "next/link";
 import { Facehash } from "@/components/shared/facehash";
 import { Icon } from "@/components/icons/icon";
 
@@ -16,9 +17,14 @@ function shortAddr(addr: string): string {
 export function WalletPill({
   wallet,
   ensName,
+  href,
 }: {
   wallet: string;
   ensName: string | null;
+  /** When set, the address label becomes a link (to the wallet-filtered
+   *  listing). Only the detail card passes this — the listing card already
+   *  wraps the whole row in a <Link>, so a nested anchor would be invalid. */
+  href?: string;
 }) {
   const [copied, setCopied] = useState(false);
   const label = ensName ?? shortAddr(wallet);
@@ -31,7 +37,17 @@ export function WalletPill({
     <span className="inline-flex items-center gap-1.5">
       <Facehash address={wallet} size={16} />
       <span className="inline-flex items-center gap-1 text-xs text-rb-500">
-        <span className="font-mono text-foreground/80">{label}</span>
+        {href ? (
+          <Link
+            href={href}
+            onClick={(e) => e.stopPropagation()}
+            className="font-mono text-foreground/80 hover:text-foreground transition-colors"
+          >
+            {label}
+          </Link>
+        ) : (
+          <span className="font-mono text-foreground/80">{label}</span>
+        )}
         <button
           type="button"
           onClick={(e) => {

@@ -16,7 +16,7 @@
 // hard-coded LT table. No on-chain reads.
 
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowUpDown, ArrowLeft } from "lucide-react";
 import {
@@ -449,35 +449,43 @@ function AaveV4SpokePageInner() {
     <main className="min-h-screen">
       <FeedbackButton />
       <div className="max-w-7xl mx-auto py-8 space-y-6">
-        <SpokeBreadcrumb walletFilterHref={walletFilterHref} wallet={wallet} />
+        {/* Smart back: in-app history → browser back; fresh-tab / direct entry
+            → up to the wallet's spokes (never dead-ends or leaves the site). */}
+        <SmartBackButton walletFilterHref={walletFilterHref} />
 
-        {/* Single spoke card — keeps visual parity with the multi-spoke
-            selector on the listing page while making it clear this is the
-            *one* spoke being viewed. */}
+        {/* Position card in its own rounded panel — owner address sits in its
+            top row, and the (i) at its bottom-right expands the explanation. */}
         {activeCard && (
-          <AaveV4SpokeCardSelector
-            spokes={[activeCard]}
-            selected={spokeName}
-            onSelect={() => {}}
-            wallet={wallet}
-          />
+          <div className="rounded-2xl bg-rb-100/50 dark:bg-rb-900/40">
+            <AaveV4SpokeCardSelector
+              spokes={[activeCard]}
+              selected={spokeName}
+              onSelect={() => {}}
+              wallet={wallet}
+              walletHref={walletFilterHref}
+            />
+          </div>
         )}
 
+        {/* Economics (tower chart + liquidation/price runway) in its own
+            rounded panel — contained now, no full-bleed w-screen section. */}
         {activeGroup && hasUiHydrated ? (
-          <div className="relative left-1/2 -translate-x-1/2 w-screen bg-rb-100 dark:bg-rb-900 py-6">
-            <div className="max-w-7xl mx-auto px-4 md:px-6">
-              <AaveV4SpokeEconomicsBand
-                activeName={activeGroup.name}
-                reserves={activeGroup.result.reserves}
-                prices={prices}
-                runwayCard={activeCard}
-              />
-            </div>
+          <div className="rounded-2xl bg-rb-100/50 dark:bg-rb-900/40 px-4 md:px-6 py-6">
+            <AaveV4SpokeEconomicsBand
+              activeName={activeGroup.name}
+              reserves={activeGroup.result.reserves}
+              prices={prices}
+              runwayCard={activeCard}
+            />
           </div>
         ) : null}
 
         <TimelineDisplayProvider>
-          <div className="flex items-center justify-between flex-wrap gap-2">
+          {/* pl matches the panel content column (economics uses px-4 md:px-6)
+              so "Active since" sits inside the notional container rather than
+              flush to the box edge; no pr, so justify-between keeps the display
+              cluster aligned to the box edge on the right. */}
+          <div className="flex items-center justify-between flex-wrap gap-2 pl-4 md:pl-6">
             <div className="flex items-center gap-2 text-sm">
               {positionOpenedAt ? (
                 <>
@@ -561,7 +569,10 @@ function AaveV4SpokePageInner() {
 
           {displayedEvents.length > 0 ? (
             <AaveV4BarsProvider events={spokeScopedEvents}>
-            <div className="space-y-2">
+            {/* -mr-1 cancels the EventCard's 4px outer pad on the right so an
+                open card's panel reaches the same box edge as the economics /
+                position panels above (the spine fills the left, so no -ml). */}
+            <div className="space-y-2 -mr-1">
               {displayedEvents.map((event, idx) => {
                 if (!isAaveV4Event(event)) return null;
                 const prevDisplayed = idx > 0 ? displayedEvents[idx - 1] : undefined;
@@ -612,6 +623,32 @@ function SpokeBreadcrumb({
       <ArrowLeft size={14} />
       <span className="font-mono">{shortAddr(wallet)}</span>
     </Link>
+  );
+}
+
+// Back affordance above the position card. Prefers browser-history back when
+// the user navigated here in-app; on a fresh tab / direct link (history
+// length 1) it routes up to the wallet's spokes instead, so it never dead-ends
+// or leaves the site. (A bulletproof internal-vs-external check would need a
+// nav-tracking provider; this hybrid covers the common cases two lines.)
+function SmartBackButton({ walletFilterHref }: { walletFilterHref: string }) {
+  const router = useRouter();
+  const onBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push(walletFilterHref);
+    }
+  };
+  return (
+    <button
+      type="button"
+      onClick={onBack}
+      className="inline-flex items-center gap-1.5 rounded-lg border border-rb-200 dark:border-rb-800 bg-rb-100/50 dark:bg-rb-900/40 px-3 py-1.5 text-sm text-rb-500 hover:text-foreground hover:bg-rb-200/60 dark:hover:bg-rb-800/60 hover:border-rb-300 dark:hover:border-rb-700 transition-colors cursor-pointer"
+    >
+      <ArrowLeft size={14} />
+      <span>Back</span>
+    </button>
   );
 }
 

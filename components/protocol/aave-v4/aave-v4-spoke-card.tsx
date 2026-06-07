@@ -6,6 +6,7 @@
 // the v4-namespaced versions of constants / spoke-meta.
 
 import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   CardSelectorShell,
   positionCardSurface,
@@ -15,13 +16,13 @@ import { OpenPositionStats } from "@/components/shared/open-position-stats";
 import { InlineAssetCluster } from "@/components/shared/inline-asset-cluster";
 import { StatValue, StatDash } from "@/components/shared/stat-value";
 import { TokenChipIcon } from "@/components/shared/token-chip-icon";
-import { getSpokeMeta, ARCHETYPE_LABEL, ARCHETYPE_ACCENT } from "@/lib/aave-v4/spoke-meta";
 import { type HubTier } from "@/components/protocol/aave-v4/aave-v4-spoke-constants";
 import type { AaveSpokeCardInfo } from "@/lib/aave-v4/spoke-cards";
 import { bucketForHealth } from "@/lib/aave-v4/health-bucket";
 import { LiquidatedBadge } from "@/components/aave-v4/LiquidatedBadge";
 import { WalletPill } from "@/components/aave-v4/wallet-pill";
 import { fmtUsd, hfLabel, hfColorClass, fmtLiqPrice } from "@/lib/aave-v4/format";
+import { AaveV4PositionExplanation } from "@/components/protocol/aave-v4/aave-v4-position-explanation";
 
 export type { AaveSpokeCardInfo };
 
@@ -34,55 +35,9 @@ function SpokeIdentity({ name, hub }: { name: string; hub: HubTier }) {
   );
 }
 
-/**
- * Spoke-architecture narrative panel surfaced from the (i) info button on
- * the active position card. Editorial copy lives in lib/aave-v4/spoke-meta.ts.
- */
-function SpokeNarrativePanel({ spokeName }: { spokeName: string }) {
-  const meta = getSpokeMeta(spokeName);
-  if (!meta) return null;
-  const accent = ARCHETYPE_ACCENT[meta.archetype];
-  const archetypeLabel = ARCHETYPE_LABEL[meta.archetype];
-  const sameHub = meta.collateralHub === meta.borrowHub;
-  // Neutral panel + bulleted narrative, mirroring the Liquity trove
-  // explanation (components/trove/TroveContextRow.tsx) so both protocols read
-  // the same way. The only retained accent is the small archetype tag and the
-  // rate-note rule, which carry spoke-specific meaning.
-  return (
-    <div className="rounded-lg bg-rb-100 dark:bg-rb-950 px-4 py-3 text-sm text-foreground/90 space-y-2">
-      <div className="flex items-center gap-3 text-xs">
-        <span className={`text-[10px] font-bold uppercase tracking-wider ${accent.text} shrink-0`}>
-          {archetypeLabel}
-        </span>
-        <span className="text-rb-500 truncate">
-          {sameHub ? (
-            <>Collateral and borrow in <span className="text-foreground/80 font-semibold">{meta.collateralHub} Hub</span></>
-          ) : (
-            <>
-              Collateral in <span className="text-foreground/80 font-semibold">{meta.collateralHub} Hub</span>
-              {" · borrow drawn from "}
-              <span className="text-foreground/80 font-semibold">{meta.borrowHub} Hub</span>
-            </>
-          )}
-        </span>
-      </div>
-      <div className="pt-2 border-t border-rb-300/30 dark:border-rb-700/40 space-y-2 text-foreground/90 leading-relaxed">
-        {meta.narrative.map((line, i) => (
-          <div key={i} className="flex items-start gap-2">
-            <span className="text-rb-500 select-none">•</span>
-            <span>{line}</span>
-          </div>
-        ))}
-        {meta.rateNote && (
-          <p className={`mt-1 pl-2 border-l-2 ${accent.border} text-rb-500 italic`}>
-            {meta.rateNote}
-          </p>
-        )}
-      </div>
-    </div>
-  );
-}
-
+// Standalone (i) disclosure with a down-arrow that fades in when open — the
+// same affordance as the event-card timestamps. Stands alone (no adjacent
+// label), so the flex-col stack centers cleanly without absolute positioning.
 function SpokeInfoButton({ isOpen, onClick }: { isOpen: boolean; onClick: () => void }) {
   return (
     <button
@@ -92,10 +47,10 @@ function SpokeInfoButton({ isOpen, onClick }: { isOpen: boolean; onClick: () => 
         onClick();
       }}
       aria-expanded={isOpen}
-      aria-label={isOpen ? "Hide spoke details" : "Show spoke details"}
+      aria-label={isOpen ? "Hide details" : "Show details"}
       className="inline-flex flex-col items-center rounded transition-colors text-rb-500 hover:text-rb-400 cursor-pointer"
     >
-      <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+      <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
         <path
           fillRule="evenodd"
           d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z"
@@ -103,7 +58,7 @@ function SpokeInfoButton({ isOpen, onClick }: { isOpen: boolean; onClick: () => 
         />
       </svg>
       <svg
-        className={`w-2.5 h-2.5 -mt-0.5 transition-opacity ${isOpen ? "opacity-100" : "opacity-0"}`}
+        className={`h-2.5 w-2.5 -mt-0.5 transition-opacity ${isOpen ? "opacity-100" : "opacity-0"}`}
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -126,6 +81,7 @@ function AaveV4SpokeCard({
   onClick,
   wallet,
   ensName,
+  walletHref,
 }: {
   spoke: AaveSpokeCardInfo;
   isSelected: boolean;
@@ -138,16 +94,19 @@ function AaveV4SpokeCard({
    *  wallet). */
   wallet?: string;
   ensName?: string | null;
+  /** When set, the wallet pill's address becomes a link (to the wallet-filtered
+   *  listing). Detail page only. */
+  walletHref?: string;
 }) {
   const { isClosed } = spoke;
-  const showInfo = !isClosed && getSpokeMeta(spoke.name) != null && (
-    (noHover && !isSelected) || !!staticCard
-  );
+  // Open positions carry the expandable explanation. Gate is placement: the
+  // static detail card, or a non-selected card in a hoverless selector.
+  const showInfo = !isClosed && ((noHover && !isSelected) || !!staticCard);
   const [infoOpen, setInfoOpen] = useState(false);
   const supplyOnly = spoke.peakDebtUsd < 1 && spoke.totalDebtUsd < 1;
   const bucket = bucketForHealth(spoke.healthFactor);
   const walletPill = wallet ? (
-    <WalletPill wallet={wallet} ensName={ensName ?? null} />
+    <WalletPill wallet={wallet} ensName={ensName ?? null} href={walletHref} />
   ) : null;
   return (
     <div
@@ -278,15 +237,29 @@ function AaveV4SpokeCard({
             ]}
           />
         )}
-        {/* Info trigger + explanation live beneath the stats, mirroring the
-            Liquity trove explanation (right-aligned (i) with a chevron that
-            fades in when open, neutral panel below). */}
+        {/* (i) at the bottom-right of the card; expands the explanation in
+            place beneath the stats (push-down) within the card panel. */}
         {showInfo && (
-          <div className="mt-3 space-y-3">
-            <div className="flex items-center justify-end">
+          <div className="mt-3">
+            <div className="flex justify-end">
               <SpokeInfoButton isOpen={infoOpen} onClick={() => setInfoOpen((o) => !o)} />
             </div>
-            {infoOpen && <SpokeNarrativePanel spokeName={spoke.name} />}
+            <AnimatePresence initial={false}>
+              {infoOpen && (
+                <motion.div
+                  key="explanation"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="mt-2 border-t border-rb-300/40 dark:border-rb-700/40 pt-3">
+                    <AaveV4PositionExplanation spoke={spoke} embedded />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )}
       </div>
@@ -304,6 +277,9 @@ export interface AaveV4SpokeCardSelectorProps {
    *  inside a wallet-scoped page omit it. */
   wallet?: string;
   ensName?: string | null;
+  /** When set, the wallet pill's address links to the wallet-filtered listing.
+   *  Detail page only. */
+  walletHref?: string;
 }
 
 export function AaveV4SpokeCardSelector({
@@ -312,6 +288,7 @@ export function AaveV4SpokeCardSelector({
   onSelect,
   wallet,
   ensName,
+  walletHref,
 }: AaveV4SpokeCardSelectorProps) {
   const items = spokes.map((s) => {
     const status: "open" | "closed" = s.isClosed ? "closed" : "open";
@@ -335,6 +312,7 @@ export function AaveV4SpokeCardSelector({
           onClick={props.onClick}
           wallet={wallet}
           ensName={ensName}
+          walletHref={walletHref}
         />
       )}
     />
