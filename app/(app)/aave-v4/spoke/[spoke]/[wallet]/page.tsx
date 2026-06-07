@@ -75,7 +75,7 @@ import {
   type FilterOption,
 } from "@/components/shared/filter-dropdown";
 import { TransactionHeatmap } from "@/components/shared/transaction-heatmap";
-import { CsvDownloadButton } from "@/components/shared/csv-download-button";
+import { CsvDownloadButton, ENABLE_CSV_EXPORT } from "@/components/shared/csv-download-button";
 import { EventDateContext } from "@/components/shared/event-time";
 import { dayKey, shortDate, shortDateYear } from "@/lib/shared/format-event";
 import {
@@ -511,10 +511,12 @@ function AaveV4SpokePageInner() {
               >
                 {dateLabel}
               </button>
-              <CsvDownloadButton
-                events={spokeScopedEvents}
-                filename={`aave-v4-${rawSpoke}-${wallet.slice(0, 10)}-activity.csv`}
-              />
+              {ENABLE_CSV_EXPORT && (
+                <CsvDownloadButton
+                  events={spokeScopedEvents}
+                  filename={`aave-v4-${rawSpoke}-${wallet.slice(0, 10)}-activity.csv`}
+                />
+              )}
               <AaveV4TimelineDisplayToggle />
             </div>
           </div>

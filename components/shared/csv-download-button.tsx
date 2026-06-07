@@ -9,6 +9,13 @@ import { Download } from "lucide-react";
 import type { BaseActivityEvent } from "@/lib/shared/types/event-shape";
 import { eventsToCsv } from "@/lib/shared/events-to-csv";
 
+// Master switch for the activity-timeline CSV export. Hidden for now while the
+// feature is held back; flip to `true` to reinstate the download button on the
+// Aave V4 spoke + Liquity trove detail pages. The serializer
+// (lib/shared/events-to-csv.ts) and this component stay in place so bringing it
+// back is a one-line change.
+export const ENABLE_CSV_EXPORT = false;
+
 export function CsvDownloadButton({
   events,
   filename,

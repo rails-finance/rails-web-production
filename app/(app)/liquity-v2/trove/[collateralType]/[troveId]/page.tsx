@@ -28,7 +28,7 @@ import { LiquityEventCard } from "@/components/protocol/liquity/liquity-event-ca
 import { EventDateContext } from "@/components/shared/event-time";
 import { dayKey, shortDate, shortDateYear } from "@/lib/shared/format-event";
 import { TimelineDisplayProvider, useTimelineDisplay } from "@/components/shared/timeline-display-context";
-import { CsvDownloadButton } from "@/components/shared/csv-download-button";
+import { CsvDownloadButton, ENABLE_CSV_EXPORT } from "@/components/shared/csv-download-button";
 import { LiquityTroveBarsProvider } from "@/lib/liquity/use-trove-bars";
 import { FilterDropdown, DisplaySettingsIcon, type FilterOption } from "@/components/shared/filter-dropdown";
 import { getEventActionKey, actionLabel, DEMOTED_ACTIONS } from "@/lib/shared/event-filter-helpers";
@@ -544,10 +544,12 @@ export default function TrovePage() {
                   </button>
                 );
               })()}
-              <CsvDownloadButton
-                events={sortedEvents}
-                filename={`liquity-v2-${collateralType}-trove-${troveId.slice(0, 12)}-activity.csv`}
-              />
+              {ENABLE_CSV_EXPORT && (
+                <CsvDownloadButton
+                  events={sortedEvents}
+                  filename={`liquity-v2-${collateralType}-trove-${troveId.slice(0, 12)}-activity.csv`}
+                />
+              )}
               <TimelineDisplayToggle />
             </div>
           </div>
