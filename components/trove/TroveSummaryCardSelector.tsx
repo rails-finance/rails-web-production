@@ -80,6 +80,7 @@ export function TroveSummaryCardSelector({
               prices={prices}
               loadingStatus={loadingStatus}
               expectsLiveState
+              showActivityMeta={false}
             />
           </div>
         ) : (
@@ -90,7 +91,7 @@ export function TroveSummaryCardSelector({
             href={`/liquity-v2/trove/${item.trove.collateralType}/${item.trove.id}`}
             className="block w-full text-left rounded-lg transition-all cursor-pointer border border-transparent group-hover/card:bg-rb-200/50 dark:group-hover/card:bg-rb-900 hover:border-blue-500 px-5 py-4"
           >
-            <TroveSummaryCard trove={item.trove} prices={prices} />
+            <TroveSummaryCard trove={item.trove} prices={prices} showActivityMeta={false} />
           </Link>
         )
       )}

@@ -66,6 +66,11 @@ interface OpenSummaryCardProps {
    *  notation ("48.1k") for scannability; the detail page leaves it false so
    *  the full-precision value ("48,148.74") shows. */
   compact?: boolean;
+  /** Header right-side cluster (last-activity "X ago" + tx/redemption
+   *  counters). Listing keeps it for at-a-glance scanning; the detail page
+   *  passes false since the activity timeline below already conveys both.
+   *  Defaults to true. */
+  showActivityMeta?: boolean;
 }
 
 // Liq prices vary widely (BTC ~$100k, USDC ~$1). Match rails-explorer's
@@ -79,7 +84,7 @@ function fmtLiqPrice(p: number): string {
   return "$" + (p / 1_000_000).toFixed(2) + "M";
 }
 
-export function OpenSummaryCard({ trove, liveState, prices, loadingStatus, expectsLiveState = false, compact = false }: OpenSummaryCardProps) {
+export function OpenSummaryCard({ trove, liveState, prices, loadingStatus, expectsLiveState = false, compact = false, showActivityMeta = true }: OpenSummaryCardProps) {
   const batchManagerInfo = getBatchManagerByAddress(trove.batch.manager);
   const deprecation = getBatchManagerDeprecation(trove.batch.manager);
 
@@ -148,24 +153,26 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus, expec
               <Loader2 className="w-3.5 h-3.5 text-rb-500 animate-spin" />
             )}
           </span>
-          <span className="flex items-center gap-2 text-xs text-rb-500">
-            <span className="inline-flex items-center gap-1">
-              <Icon name="clock-zap" size={12} />
-              {formatDuration(trove.activity.lastActivityAt, new Date())} ago
+          {showActivityMeta && (
+            <span className="flex items-center gap-2 text-xs text-rb-500">
+              <span className="inline-flex items-center gap-1">
+                <Icon name="clock-zap" size={12} />
+                {formatDuration(trove.activity.lastActivityAt, new Date())} ago
+              </span>
+              {trove.activity.redemptionCount > 0 && (
+                <span className="inline-flex items-center text-orange-400">
+                  <Icon name="triangle" size={12} />
+                  <span className="ml-1">{trove.activity.redemptionCount}</span>
+                </span>
+              )}
+              {txCount > 0 && (
+                <span className="inline-flex items-center">
+                  <Icon name="arrow-left-right" size={12} />
+                  <span className="ml-1">{txCount}</span>
+                </span>
+              )}
             </span>
-            {trove.activity.redemptionCount > 0 && (
-              <span className="inline-flex items-center text-orange-400">
-                <Icon name="triangle" size={12} />
-                <span className="ml-1">{trove.activity.redemptionCount}</span>
-              </span>
-            )}
-            {txCount > 0 && (
-              <span className="inline-flex items-center">
-                <Icon name="arrow-left-right" size={12} />
-                <span className="ml-1">{txCount}</span>
-              </span>
-            )}
-          </span>
+          )}
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">

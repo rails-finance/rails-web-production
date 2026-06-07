@@ -11,9 +11,12 @@ interface ClosedSummaryCardProps {
   /** Listing context passes true to render the peak-debt headline in compact
    *  notation ("48.1k"); the detail page leaves it false for full precision. */
   compact?: boolean;
+  /** Header right-side cluster (last-activity "X ago" + tx/redemption
+   *  counters). Listing keeps it; the detail page passes false. Defaults true. */
+  showActivityMeta?: boolean;
 }
 
-export function ClosedSummaryCard({ trove, compact = false }: ClosedSummaryCardProps) {
+export function ClosedSummaryCard({ trove, compact = false, showActivityMeta = true }: ClosedSummaryCardProps) {
   const txCount = trove.activity.transactionCount - trove.activity.redemptionCount;
   return (
     <div>
@@ -30,24 +33,26 @@ export function ClosedSummaryCard({ trove, compact = false }: ClosedSummaryCardP
             </span>
             <TroveIdentityRow troveId={trove.id} collateralType={trove.collateralType} />
           </span>
-          <span className="flex items-center gap-2 text-xs text-rb-500">
-            <span className="inline-flex items-center gap-1">
-              <Icon name="clock-zap" size={12} />
-              {formatDuration(trove.activity.lastActivityAt, new Date())} ago
+          {showActivityMeta && (
+            <span className="flex items-center gap-2 text-xs text-rb-500">
+              <span className="inline-flex items-center gap-1">
+                <Icon name="clock-zap" size={12} />
+                {formatDuration(trove.activity.lastActivityAt, new Date())} ago
+              </span>
+              {trove.activity.redemptionCount > 0 && (
+                <span className="inline-flex items-center text-orange-400">
+                  <Icon name="triangle" size={12} />
+                  <span className="ml-1">{trove.activity.redemptionCount}</span>
+                </span>
+              )}
+              {txCount > 0 && (
+                <span className="inline-flex items-center">
+                  <Icon name="arrow-left-right" size={12} />
+                  <span className="ml-1">{txCount}</span>
+                </span>
+              )}
             </span>
-            {trove.activity.redemptionCount > 0 && (
-              <span className="inline-flex items-center text-orange-400">
-                <Icon name="triangle" size={12} />
-                <span className="ml-1">{trove.activity.redemptionCount}</span>
-              </span>
-            )}
-            {txCount > 0 && (
-              <span className="inline-flex items-center">
-                <Icon name="arrow-left-right" size={12} />
-                <span className="ml-1">{txCount}</span>
-              </span>
-            )}
-          </span>
+          )}
         </div>
 
         {/* Peak collateral first (mirrors OpenSummaryCard ordering), then peak debt. */}
