@@ -6,7 +6,7 @@ import { TroveIdentityRow } from "./trove-identity-row";
 import { TroveSummary } from "@/types/api/trove";
 import { getBatchManagerByAddress, getBatchManagerDeprecation } from "@/lib/services/batch-manager-service";
 import { formatDate } from "@/lib/date";
-import { formatPrice, formatUsdValue } from "@/lib/utils/format";
+import { formatApproximate, formatPrice, formatUsdValue } from "@/lib/utils/format";
 import { getLiquidationThreshold } from "@/lib/utils/liquidation-utils";
 import { HighlightableValue } from "@/components/transaction-timeline/explanation/HighlightableValue";
 import { Users, Loader2, AlertTriangle } from "lucide-react";
@@ -62,6 +62,10 @@ interface OpenSummaryCardProps {
    *  liveState resolves. Chooser/listing contexts leave it false — they
    *  intentionally don't fetch liveState and shouldn't appear "loading". */
   expectsLiveState?: boolean;
+  /** Listing context passes true to render the debt headline in compact
+   *  notation ("48.1k") for scannability; the detail page leaves it false so
+   *  the full-precision value ("48,148.74") shows. */
+  compact?: boolean;
 }
 
 // Liq prices vary widely (BTC ~$100k, USDC ~$1). Match rails-explorer's
@@ -75,7 +79,7 @@ function fmtLiqPrice(p: number): string {
   return "$" + (p / 1_000_000).toFixed(2) + "M";
 }
 
-export function OpenSummaryCard({ trove, liveState, prices, loadingStatus, expectsLiveState = false }: OpenSummaryCardProps) {
+export function OpenSummaryCard({ trove, liveState, prices, loadingStatus, expectsLiveState = false, compact = false }: OpenSummaryCardProps) {
   const batchManagerInfo = getBatchManagerByAddress(trove.batch.manager);
   const deprecation = getBatchManagerDeprecation(trove.batch.manager);
 
@@ -195,7 +199,7 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus, expec
             <div className="flex items-center gap-1.5">
               <span className="text-3xl font-bold">
                 <HighlightableValue type="debt" state="after" value={displayDebt}>
-                  <FadeNumber value={displayDebt} formatFn={formatPrice} animateOnMount={animateValues} />
+                  <FadeNumber value={displayDebt} formatFn={compact ? formatApproximate : formatPrice} animateOnMount={animateValues} />
                 </HighlightableValue>
               </span>
               <TokenIcon assetSymbol="BOLD" className="inline-block w-7 h-7" />

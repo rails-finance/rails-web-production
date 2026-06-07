@@ -16,9 +16,12 @@ interface TroveSummaryCardProps {
   /** Detail page passes true: shows the live-data loader spinner and animates
    *  values when liveState resolves. Chooser/listing contexts leave it false. */
   expectsLiveState?: boolean;
+  /** Listing context passes true to render the debt headline in compact
+   *  notation ("48.1k"); the detail page leaves it false for full precision. */
+  compact?: boolean;
 }
 
-export function TroveSummaryCard({ trove, liveState, prices, loadingStatus, expectsLiveState }: TroveSummaryCardProps) {
+export function TroveSummaryCard({ trove, liveState, prices, loadingStatus, expectsLiveState, compact }: TroveSummaryCardProps) {
   if (trove.status === "liquidated") {
     return <LiquidatedSummaryCard trove={trove} />;
   }
@@ -31,9 +34,10 @@ export function TroveSummaryCard({ trove, liveState, prices, loadingStatus, expe
         prices={prices}
         loadingStatus={loadingStatus}
         expectsLiveState={expectsLiveState}
+        compact={compact}
       />
     );
   }
 
-  return <ClosedSummaryCard trove={trove} />;
+  return <ClosedSummaryCard trove={trove} compact={compact} />;
 }

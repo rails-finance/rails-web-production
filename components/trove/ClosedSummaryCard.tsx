@@ -1,16 +1,19 @@
 import { TokenIcon } from "@/components/icons/tokenIcon";
 import { formatDuration } from "@/lib/date";
 import { Icon } from "@/components/icons/icon";
-import { formatPrice } from "@/lib/utils/format";
+import { formatApproximate, formatPrice } from "@/lib/utils/format";
 import { HighlightableValue } from "@/components/transaction-timeline/explanation/HighlightableValue";
 import { TroveIdentityRow } from "./trove-identity-row";
 import { TroveSummary } from "@/types/api/trove";
 
 interface ClosedSummaryCardProps {
   trove: TroveSummary;
+  /** Listing context passes true to render the peak-debt headline in compact
+   *  notation ("48.1k"); the detail page leaves it false for full precision. */
+  compact?: boolean;
 }
 
-export function ClosedSummaryCard({ trove }: ClosedSummaryCardProps) {
+export function ClosedSummaryCard({ trove, compact = false }: ClosedSummaryCardProps) {
   const txCount = trove.activity.transactionCount - trove.activity.redemptionCount;
   return (
     <div>
@@ -65,7 +68,7 @@ export function ClosedSummaryCard({ trove }: ClosedSummaryCardProps) {
             <div className="flex items-center gap-1.5">
               <span className="text-3xl font-bold">
                 <HighlightableValue type="peakDebt" state="after" value={trove.debt.peak} variant="card">
-                  {formatPrice(trove.debt.peak)}
+                  {compact ? formatApproximate(trove.debt.peak) : formatPrice(trove.debt.peak)}
                 </HighlightableValue>
               </span>
               <TokenIcon assetSymbol="BOLD" className="inline-block w-7 h-7" />

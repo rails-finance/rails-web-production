@@ -365,7 +365,7 @@ function TrovesPageContent() {
                     }}
                     className="group/card block w-full text-left rounded-lg transition-all cursor-pointer border border-transparent bg-rb-200/50 dark:bg-rb-900 hover:border-blue-500 px-5 py-4"
                   >
-                    <TroveSummaryCard trove={trove} prices={prices ?? undefined} />
+                    <TroveSummaryCard trove={trove} prices={prices ?? undefined} compact />
                   </Link>
                 </motion.div>
               ))}
