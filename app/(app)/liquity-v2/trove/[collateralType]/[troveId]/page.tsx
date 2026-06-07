@@ -138,12 +138,10 @@ function TroveSummaryStack({
         prices={prices}
         loadingStatus={loadingStatus}
       />
-      {/* Match the active card's inner grid bounds: pl-5 mirrors the active
-          card's left padding; pr-12 = active card's right padding (px-5,
-          20px) + gap-2 (8px) + chevron column (20px) = 48px. Without this
-          the supplementary stats below extend past the position card grid
-          on the right and shift left by 20px on the left. */}
-      <div className="pl-5 pr-12">
+      {/* Match the active card's inner grid bounds: pl-5 / pr-5 mirror the
+          active card's px-5 padding. (The selector no longer reserves a
+          chevron gutter for a single position, so no extra right inset.) */}
+      <div className="pl-5 pr-5">
         <TroveDetailsBand
           trove={trove}
           liveState={liveState}
@@ -153,7 +151,7 @@ function TroveSummaryStack({
           debtInFrontLoading={debtInFrontLoading}
         />
       </div>
-      <div className="pl-5 pr-12">
+      <div className="pl-5 pr-5">
         <TroveContextRow
           items={items}
           isOpen={summaryExplanationOpen}
