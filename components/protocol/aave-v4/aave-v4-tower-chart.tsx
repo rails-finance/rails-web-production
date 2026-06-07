@@ -456,10 +456,20 @@ export function AaveV4TowerChart({
 
   const placeholderClass =
     "w-16 sm:w-20 rounded-sm border border-dashed border-rb-400 dark:border-rb-500/60 bg-rb-100/40 dark:bg-rb-800/40";
-  const collPlaceholder =
-    collSegments.length === 0 ? <div className={placeholderClass} style={{ height: CHART_HEIGHT }} /> : undefined;
-  const debtPlaceholder =
-    debtSegments.length === 0 ? <div className={placeholderClass} style={{ height: CHART_HEIGHT }} /> : undefined;
+  const ghostTower = <div className={placeholderClass} style={{ height: CHART_HEIGHT }} />;
+  // Labelled ghost for the pure supply-side case — the dashed tower stands in
+  // for the absent debt side, with a faded "No debt" so the emptiness reads as
+  // intentional rather than a loading gap.
+  const ghostDebtTower = (
+    <div
+      className={`${placeholderClass} flex items-center justify-center`}
+      style={{ height: CHART_HEIGHT }}
+    >
+      <span className="text-[11px] font-medium text-rb-500/60 select-none">No debt</span>
+    </div>
+  );
+  const collPlaceholder = collSegments.length === 0 ? ghostTower : undefined;
+  const debtPlaceholder = debtSegments.length === 0 ? ghostTower : undefined;
 
   return (
     <div className="space-y-2">
@@ -493,7 +503,14 @@ export function AaveV4TowerChart({
         }}
         right={
           supplyOnly
-            ? undefined
+            ? // Pure supply-side wallet: keep the dual-tower footprint with a
+              // ghost debt tower (dashed outline) so the chart stays centered
+              // instead of collapsing left. No breakdown rows on the debt side.
+              {
+                segments: [],
+                breakdownRows: [],
+                placeholder: ghostDebtTower,
+              }
             : {
                 segments: debtSegments,
                 breakdownRows: debtRows,

@@ -431,19 +431,19 @@ export function DualTowerChart({ left, right, height = CHART_HEIGHT, maxValue, c
   }
 
   // Stacked layout (under xl) puts towers on top and the breakdown tables
-  // centered beneath. xl: switches to side-by-side with the left breakdown
+  // centered beneath. lg: switches to side-by-side with the left breakdown
   // right-aligned (its right edge flush to the tower's left edge) and the
   // right breakdown left-aligned (mirrored). The 300px wrapper around each
   // table holds its alignment box at exactly the table width so flex
   // alignment moves the visible block, not just the surrounding whitespace.
   if (showLeft && !showRightTower && !showRightBreakdown && !hasRightPlaceholder) {
     return (
-      <div className={`flex flex-col xl:flex-row items-center xl:items-stretch justify-center gap-3 ${className ?? ""}`}>
+      <div className={`flex flex-col lg:flex-row items-center lg:items-stretch justify-center gap-3 ${className ?? ""}`}>
         <div className="flex items-end justify-center gap-1 py-2">
           <TowerBar segments={leftPositioned} sideBar={left.sideBar} height={height} tooltipSide="right" sideBarTooltip={left.sideBarTooltip} sideBarTooltipSide="left" />
         </div>
-        <div className="xl:flex-1 xl:flex xl:flex-col">
-          <div className="xl:mt-auto w-[300px] max-w-full">
+        <div className="lg:flex-1 lg:flex lg:flex-col">
+          <div className="lg:mt-auto w-[300px] max-w-full">
             <BreakdownTable rows={left.breakdownRows} />
           </div>
         </div>
@@ -452,16 +452,16 @@ export function DualTowerChart({ left, right, height = CHART_HEIGHT, maxValue, c
   }
 
   return (
-    <div className={`flex flex-col xl:flex-row items-center xl:items-stretch justify-center gap-3 ${className ?? ""}`}>
+    <div className={`flex flex-col lg:flex-row items-center lg:items-stretch justify-center gap-3 ${className ?? ""}`}>
       {/* Left breakdown */}
-      <div className="order-2 xl:order-none xl:flex-1 xl:flex xl:flex-col xl:items-center">
-        <div className="xl:mt-auto w-[300px] max-w-full">
+      <div className="order-2 lg:order-none lg:flex-1 lg:flex lg:flex-col lg:items-center">
+        <div className="lg:mt-auto w-[300px] max-w-full">
           <BreakdownTable rows={left.breakdownRows} />
         </div>
       </div>
 
       {/* Towers */}
-      <div className="flex items-end justify-center gap-1 py-2 order-1 xl:order-none">
+      <div className="flex items-end justify-center gap-1 py-2 order-1 lg:order-none">
         {showLeft && <TowerBar segments={leftPositioned} sideBar={left.sideBar} height={height} tooltipSide="right" sideBarTooltip={left.sideBarTooltip} sideBarTooltipSide="left" />}
         {!showLeft && hasLeftPlaceholder && left.placeholder}
         {(leftSlotVisible && rightSlotVisible) && <div className="w-2 shrink-0" />}
@@ -471,8 +471,8 @@ export function DualTowerChart({ left, right, height = CHART_HEIGHT, maxValue, c
 
       {/* Right breakdown — shown when right side has breakdown rows or placeholder */}
       {(showRightBreakdown || hasRightPlaceholder) && (
-        <div className="order-3 xl:order-none xl:flex-1 xl:flex xl:flex-col xl:items-center">
-          <div className="xl:mt-auto w-[300px] max-w-full">
+        <div className="order-3 lg:order-none lg:flex-1 lg:flex lg:flex-col lg:items-center">
+          <div className="lg:mt-auto w-[300px] max-w-full">
             <BreakdownTable rows={right!.breakdownRows} />
           </div>
         </div>
