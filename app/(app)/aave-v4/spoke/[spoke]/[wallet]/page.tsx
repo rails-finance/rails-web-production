@@ -78,6 +78,8 @@ import { TransactionHeatmap } from "@/components/shared/transaction-heatmap";
 import { CsvDownloadButton, ENABLE_CSV_EXPORT } from "@/components/shared/csv-download-button";
 import { EventDateContext } from "@/components/shared/event-time";
 import { dayKey, shortDate, shortDateYear } from "@/lib/shared/format-event";
+import { formatDate, formatDuration } from "@/lib/date";
+import { Icon } from "@/components/icons/icon";
 import {
   getEventActionKey,
   actionLabel,
@@ -413,6 +415,13 @@ function AaveV4SpokePageInner() {
     : "Date";
   const heatmapShown = heatmapOpen || dateRange !== null;
 
+  // Activity-header summary: derive the position lifespan from the spoke's own
+  // event stream (sorted ascending) so the header mirrors Liquity's trove
+  // timeline header ("Active since <date> · <duration> · <last-activity> ago").
+  const positionOpenedAt = spokeScopedEvents[0]?.timestamp;
+  const positionLastActivityAt = spokeScopedEvents[spokeScopedEvents.length - 1]?.timestamp;
+  const positionClosed = activeCard?.isClosed ?? false;
+
   // If the URL points at a spoke that doesn't exist for this wallet (typo,
   // stale link), bail with a path back to the wallet's other spokes.
   if (!activeCard && !loading) {
@@ -469,7 +478,26 @@ function AaveV4SpokePageInner() {
 
         <TimelineDisplayProvider>
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <h2 className="text-sm font-semibold text-foreground">Activity</h2>
+            <div className="flex items-center gap-2 text-sm">
+              {positionOpenedAt ? (
+                <>
+                  <span className="text-foreground">
+                    {positionClosed ? "Opened" : "Active since"} {formatDate(positionOpenedAt)}
+                  </span>
+                  <span className="text-rb-500 rounded-md bg-rb-100 dark:bg-rb-900 px-1.5 py-0.5">
+                    {formatDuration(positionOpenedAt, positionClosed ? positionLastActivityAt ?? new Date() : new Date())}
+                  </span>
+                  {positionLastActivityAt && (
+                    <span className="text-xs text-rb-500 flex items-center gap-1 rounded-full pl-1 pr-2 py-0.5 bg-rb-100 dark:bg-rb-900">
+                      <Icon name="clock-zap" size={14} />
+                      {formatDuration(positionLastActivityAt, new Date())} ago
+                    </span>
+                  )}
+                </>
+              ) : (
+                <h2 className="text-sm font-semibold text-foreground">Activity</h2>
+              )}
+            </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-rb-500 tabular-nums">
                 {filtersActive

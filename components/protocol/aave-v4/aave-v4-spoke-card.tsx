@@ -44,8 +44,12 @@ function SpokeNarrativePanel({ spokeName }: { spokeName: string }) {
   const accent = ARCHETYPE_ACCENT[meta.archetype];
   const archetypeLabel = ARCHETYPE_LABEL[meta.archetype];
   const sameHub = meta.collateralHub === meta.borrowHub;
+  // Neutral panel + bulleted narrative, mirroring the Liquity trove
+  // explanation (components/trove/TroveContextRow.tsx) so both protocols read
+  // the same way. The only retained accent is the small archetype tag and the
+  // rate-note rule, which carry spoke-specific meaning.
   return (
-    <div className={`mt-3 rounded-md border ${accent.border} ${accent.bg} px-3 py-2 space-y-2`}>
+    <div className="rounded-lg bg-rb-100 dark:bg-rb-950 px-4 py-3 text-sm text-foreground/90 space-y-2">
       <div className="flex items-center gap-3 text-xs">
         <span className={`text-[10px] font-bold uppercase tracking-wider ${accent.text} shrink-0`}>
           {archetypeLabel}
@@ -62,9 +66,12 @@ function SpokeNarrativePanel({ spokeName }: { spokeName: string }) {
           )}
         </span>
       </div>
-      <div className="pt-2 border-t border-rb-300/30 dark:border-rb-700/40 space-y-2 text-xs text-foreground/80 leading-relaxed">
+      <div className="pt-2 border-t border-rb-300/30 dark:border-rb-700/40 space-y-2 text-foreground/90 leading-relaxed">
         {meta.narrative.map((line, i) => (
-          <p key={i}>{line}</p>
+          <div key={i} className="flex items-start gap-2">
+            <span className="text-rb-500 select-none">•</span>
+            <span>{line}</span>
+          </div>
         ))}
         {meta.rateNote && (
           <p className={`mt-1 pl-2 border-l-2 ${accent.border} text-rb-500 italic`}>
@@ -86,7 +93,7 @@ function SpokeInfoButton({ isOpen, onClick }: { isOpen: boolean; onClick: () => 
       }}
       aria-expanded={isOpen}
       aria-label={isOpen ? "Hide spoke details" : "Show spoke details"}
-      className="inline-flex items-center justify-center rounded transition-colors text-rb-500 hover:text-rb-400 cursor-pointer"
+      className="inline-flex flex-col items-center rounded transition-colors text-rb-500 hover:text-rb-400 cursor-pointer"
     >
       <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
         <path
@@ -94,6 +101,18 @@ function SpokeInfoButton({ isOpen, onClick }: { isOpen: boolean; onClick: () => 
           d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z"
           clipRule="evenodd"
         />
+      </svg>
+      <svg
+        className={`w-2.5 h-2.5 -mt-0.5 transition-opacity ${isOpen ? "opacity-100" : "opacity-0"}`}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M6 9l6 6 6-6" />
       </svg>
     </button>
   );
@@ -175,9 +194,6 @@ function AaveV4SpokeCard({
                 {walletPill}
               </>
             }
-            identity={showInfo ? (
-              <SpokeInfoButton isOpen={infoOpen} onClick={() => setInfoOpen((o) => !o)} />
-            ) : undefined}
             columns={supplyOnly ? [
               {
                 label: "Supplied",
@@ -262,7 +278,17 @@ function AaveV4SpokeCard({
             ]}
           />
         )}
-        {showInfo && infoOpen && <SpokeNarrativePanel spokeName={spoke.name} />}
+        {/* Info trigger + explanation live beneath the stats, mirroring the
+            Liquity trove explanation (right-aligned (i) with a chevron that
+            fades in when open, neutral panel below). */}
+        {showInfo && (
+          <div className="mt-3 space-y-3">
+            <div className="flex items-center justify-end">
+              <SpokeInfoButton isOpen={infoOpen} onClick={() => setInfoOpen((o) => !o)} />
+            </div>
+            {infoOpen && <SpokeNarrativePanel spokeName={spoke.name} />}
+          </div>
+        )}
       </div>
     </div>
   );
