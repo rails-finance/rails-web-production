@@ -46,7 +46,7 @@ export function AaveV4EventHeader({ ctx, timestamp, txGroup, eventNumber }: Aave
   const style = STYLES[ctx.eventType] ?? { label: ctx.eventType, color: "", bg: "", badge: false };
   const amount = parseFloat(ctx.amount ?? "0") || 0;
   const hideVal = useHeaderValueHideClass({ isPassive: ctx.eventType === "liquidation" });
-  const { showEventNumbers } = useTimelineDisplay();
+  const { showEventNumbers, showInterestRates } = useTimelineDisplay();
 
   // For collateral toggle, show enable/disable
   const label = ctx.eventType === "collateral_toggle"
@@ -99,7 +99,7 @@ export function AaveV4EventHeader({ ctx, timestamp, txGroup, eventNumber }: Aave
             <span className="">{aaveV4DisplaySymbol(ctx.reserveSymbol)}</span>
           </span>
         )}
-        {(ctx.supplyAPR || ctx.borrowAPR) && (
+        {showInterestRates && (ctx.supplyAPR || ctx.borrowAPR) && (
           <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-rb-300/60 dark:bg-rb-800/60 ">
             {((parseFloat(ctx.supplyAPR ?? ctx.borrowAPR ?? "0")) * 100).toFixed(2)}%
           </span>

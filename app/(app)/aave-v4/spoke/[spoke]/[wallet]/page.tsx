@@ -19,19 +19,12 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowUpDown, ArrowLeft } from "lucide-react";
-import {
-  fetchAaveV4Timeline,
-  fetchAaveV4Positions,
-  type AaveV4Position,
-} from "@/lib/api/fetch-aave-v4";
+import { fetchAaveV4Timeline, fetchAaveV4Positions, type AaveV4Position } from "@/lib/api/fetch-aave-v4";
 import {
   fetchAaveV4SpokePosition,
   type AaveV4SpokePositionChainResponse,
 } from "@/lib/api/fetch-aave-v4-spoke-position";
-import {
-  patchReservesWithChain,
-  patchSpokeCardWithChain,
-} from "@/lib/aave-v4/apply-chain-truth";
+import { patchReservesWithChain, patchSpokeCardWithChain } from "@/lib/aave-v4/apply-chain-truth";
 
 import { spokeFromSlug } from "@/lib/aave-v4/spoke-meta";
 
@@ -40,18 +33,18 @@ import { spokeFromSlug } from "@/lib/aave-v4/spoke-meta";
 // resolved display name into the lowercase chain key the
 // `/api/aave-v4/spoke-position` endpoint expects.
 const SPOKE_NAME_TO_KEY: Record<string, string> = {
-  "Main": "main",
-  "Bluechip": "bluechip",
-  "Forex": "forex",
-  "Gold": "gold",
+  Main: "main",
+  Bluechip: "bluechip",
+  Forex: "forex",
+  Gold: "gold",
   "Ethena Correlated": "ethena_corr",
   "Ethena Ecosystem": "ethena_eco",
-  "EtherFi": "etherfi",
-  "Kelp": "kelp",
-  "Lido": "lido",
+  EtherFi: "etherfi",
+  Kelp: "kelp",
+  Lido: "lido",
   "Lombard BTC": "lombard",
-  "Lombard": "lombard",
-  "Treasury": "treasury",
+  Lombard: "lombard",
+  Treasury: "treasury",
 };
 import type { BaseActivityEvent } from "@/lib/shared/types/event-shape";
 import { isAaveV4Event } from "@/lib/shared/types/event-shape";
@@ -65,26 +58,24 @@ import { getLiquidationThreshold, isStable } from "@/lib/aave-v4/liquidation-thr
 import { simulateAaveV4Position, type SimPositionInputs } from "@/lib/aave-v4/utils/simulate";
 import { resolvePrice, type PriceEntry } from "@/lib/aave/prices";
 import type { ReserveStats } from "@/lib/aave-v4/spoke-cards";
-import {
-  TimelineDisplayProvider,
-  useTimelineDisplay,
-} from "@/components/shared/timeline-display-context";
-import {
-  FilterDropdown,
-  DisplaySettingsIcon,
-  type FilterOption,
-} from "@/components/shared/filter-dropdown";
+import { TimelineDisplayProvider, useTimelineDisplay } from "@/components/shared/timeline-display-context";
+import { FilterDropdown, DisplaySettingsIcon, type FilterOption } from "@/components/shared/filter-dropdown";
 import { TransactionHeatmap } from "@/components/shared/transaction-heatmap";
 import { CsvDownloadButton, ENABLE_CSV_EXPORT } from "@/components/shared/csv-download-button";
+import {
+  NAV_BUTTON,
+  NAV_LINK,
+  CTRL_GHOST,
+  CTRL_OFF,
+  CTRL_ON,
+  CTRL_ON_ACCENT,
+  PILL_META,
+} from "@/lib/shared/ui-grammar";
 import { EventDateContext } from "@/components/shared/event-time";
 import { dayKey, shortDate, shortDateYear } from "@/lib/shared/format-event";
 import { formatDate, formatDuration } from "@/lib/date";
 import { Icon } from "@/components/icons/icon";
-import {
-  getEventActionKey,
-  actionLabel,
-  DEMOTED_ACTIONS,
-} from "@/lib/shared/event-filter-helpers";
+import { getEventActionKey, actionLabel, DEMOTED_ACTIONS } from "@/lib/shared/event-filter-helpers";
 import { FeedbackButton } from "@/components/FeedbackButton";
 import { useWalletContext } from "@/components/nav/wallet-context";
 import { upsertSession } from "@/lib/shared/sessions";
@@ -102,6 +93,7 @@ function AaveV4TimelineDisplayToggle() {
     showChangeBars,
     showBalanceBars,
     showUsdValues,
+    showInterestRates,
     toggle,
   } = useTimelineDisplay();
   const options: FilterOption[] = [
@@ -110,6 +102,7 @@ function AaveV4TimelineDisplayToggle() {
     { key: "change-bars", label: "Change bars" },
     { key: "balance-bars", label: "Balance bars" },
     { key: "usd-values", label: "USD values" },
+    { key: "interest-rates", label: "Interest rate" },
     { key: "event-numbers", label: "Event numbers" },
   ];
   const visible = new Set<string>();
@@ -118,6 +111,7 @@ function AaveV4TimelineDisplayToggle() {
   if (showChangeBars) visible.add("change-bars");
   if (showBalanceBars) visible.add("balance-bars");
   if (showUsdValues) visible.add("usd-values");
+  if (showInterestRates) visible.add("interest-rates");
   if (showEventNumbers) visible.add("event-numbers");
   return (
     <FilterDropdown
@@ -136,6 +130,7 @@ function AaveV4TimelineDisplayToggle() {
         else if (key === "change-bars") toggle("showChangeBars");
         else if (key === "balance-bars") toggle("showBalanceBars");
         else if (key === "usd-values") toggle("showUsdValues");
+        else if (key === "interest-rates") toggle("showInterestRates");
         else if (key === "event-numbers") toggle("showEventNumbers");
       }}
     />
@@ -226,7 +221,9 @@ function AaveV4SpokePageInner() {
         setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [wallet, isValidWallet, spokeName]);
 
   const sortedEvents = useMemo(
@@ -235,27 +232,15 @@ function AaveV4SpokePageInner() {
   );
 
   const prices = usePrices();
-  const spokeGroups = useMemo(
-    () => groupBySpoke(sortedEvents, undefined, prices),
-    [sortedEvents, prices],
-  );
-  const spokeCards = useMemo(
-    () => buildAaveV4SpokeCards(sortedEvents, undefined, prices),
-    [sortedEvents, prices],
-  );
+  const spokeGroups = useMemo(() => groupBySpoke(sortedEvents, undefined, prices), [sortedEvents, prices]);
+  const spokeCards = useMemo(() => buildAaveV4SpokeCards(sortedEvents, undefined, prices), [sortedEvents, prices]);
   // The one card we render (single-spoke breadcrumb). If the URL spoke doesn't
   // exist for this wallet we fall back to "no activity on this spoke" below.
   // When chain-truth data is available it overrides the event-derived headline
   // numbers (HF, total supply/debt USD, liq prices, per-asset balances).
   // History fields (peak debt, debt series, event count) stay event-derived.
-  const eventActiveCard = useMemo(
-    () => spokeCards.find((c) => c.name === spokeName),
-    [spokeCards, spokeName],
-  );
-  const eventActiveGroup = useMemo(
-    () => spokeGroups.find((g) => g.name === spokeName),
-    [spokeGroups, spokeName],
-  );
+  const eventActiveCard = useMemo(() => spokeCards.find((c) => c.name === spokeName), [spokeCards, spokeName]);
+  const eventActiveGroup = useMemo(() => spokeGroups.find((g) => g.name === spokeName), [spokeGroups, spokeName]);
   const activeCard = useMemo(() => {
     if (!eventActiveCard) return undefined;
     if (!chainPosition || chainPosition.chainStale) return eventActiveCard;
@@ -346,7 +331,7 @@ function AaveV4SpokePageInner() {
   }, [visibleEvents, dateRange]);
 
   const displayedEvents = useMemo(
-    () => sortDirection === "desc" ? [...dateFilteredEvents].reverse() : dateFilteredEvents,
+    () => (sortDirection === "desc" ? [...dateFilteredEvents].reverse() : dateFilteredEvents),
     [dateFilteredEvents, sortDirection],
   );
 
@@ -386,26 +371,26 @@ function AaveV4SpokePageInner() {
 
   if (loading) {
     return (
-      <main className="min-h-screen">
+      <>
         <FeedbackButton />
-        <div className="max-w-7xl mx-auto py-8 space-y-6">
+        <div className="py-8 space-y-6">
           <div className="h-32 bg-rb-100 dark:bg-rb-900 rounded-lg animate-pulse" />
           <div className="h-64 bg-rb-100 dark:bg-rb-900 rounded-lg animate-pulse" />
         </div>
-      </main>
+      </>
     );
   }
 
   if (error) {
     return (
-      <main className="min-h-screen">
+      <>
         <FeedbackButton />
-        <div className="max-w-7xl mx-auto py-8">
+        <div className="py-8">
           <div className="bg-red-500/10 border border-red-500/40 rounded-lg p-4">
             <p className="text-red-600 dark:text-red-400">{error}</p>
           </div>
         </div>
-      </main>
+      </>
     );
   }
 
@@ -426,29 +411,29 @@ function AaveV4SpokePageInner() {
   // stale link), bail with a path back to the wallet's other spokes.
   if (!activeCard && !loading) {
     return (
-      <main className="min-h-screen">
+      <>
         <FeedbackButton />
-        <div className="max-w-7xl mx-auto py-8 space-y-6">
+        <div className="py-8 space-y-6">
           <SpokeBreadcrumb walletFilterHref={walletFilterHref} wallet={wallet} />
           <div className="text-center py-12">
             <p className="text-foreground text-lg mb-3">
               {shortAddr(wallet)} has no activity on the {spokeName} spoke
             </p>
             <p className="text-sm text-rb-500">
-              <Link href={walletFilterHref} className="underline hover:text-foreground transition-colors">
+              <Link href={walletFilterHref} className={`underline ${NAV_LINK}`}>
                 See this wallet&rsquo;s other spokes →
               </Link>
             </p>
           </div>
         </div>
-      </main>
+      </>
     );
   }
 
   return (
-    <main className="min-h-screen">
+    <>
       <FeedbackButton />
-      <div className="max-w-7xl mx-auto py-8 space-y-6">
+      <div className="py-8 space-y-6">
         {/* Smart back: in-app history → browser back; fresh-tab / direct entry
             → up to the wallet's spokes (never dead-ends or leaves the site). */}
         <SmartBackButton walletFilterHref={walletFilterHref} />
@@ -492,11 +477,14 @@ function AaveV4SpokePageInner() {
                   <span className="text-foreground">
                     {positionClosed ? "Opened" : "Active since"} {formatDate(positionOpenedAt)}
                   </span>
-                  <span className="text-rb-500 rounded-md bg-rb-100 dark:bg-rb-900 px-1.5 py-0.5">
-                    {formatDuration(positionOpenedAt, positionClosed ? positionLastActivityAt ?? new Date() : new Date())}
+                  <span className={PILL_META}>
+                    {formatDuration(
+                      positionOpenedAt,
+                      positionClosed ? (positionLastActivityAt ?? new Date()) : new Date(),
+                    )}
                   </span>
                   {positionLastActivityAt && (
-                    <span className="text-xs text-rb-500 flex items-center gap-1 rounded-full pl-1 pr-2 py-0.5 bg-rb-100 dark:bg-rb-900">
+                    <span className={PILL_META}>
                       <Icon name="clock-zap" size={14} />
                       {formatDuration(positionLastActivityAt, new Date())} ago
                     </span>
@@ -510,13 +498,18 @@ function AaveV4SpokePageInner() {
               <span className="text-xs text-rb-500 tabular-nums">
                 {filtersActive
                   ? `${dateFilteredEvents.length} of ${spokeScopedEvents.length}`
-                  : `${spokeScopedEvents.length}`} event{spokeScopedEvents.length === 1 ? "" : "s"}
+                  : `${spokeScopedEvents.length}`}{" "}
+                event{spokeScopedEvents.length === 1 ? "" : "s"}
               </span>
               <button
                 onClick={() => setSortDirection(sortDirection === "asc" ? "desc" : "asc")}
-                aria-label={sortDirection === "asc" ? "Currently oldest first — click to flip to newest first" : "Currently newest first — click to flip to oldest first"}
+                aria-label={
+                  sortDirection === "asc"
+                    ? "Currently oldest first — click to flip to newest first"
+                    : "Currently newest first — click to flip to oldest first"
+                }
                 title={sortDirection === "asc" ? "Oldest first" : "Newest first"}
-                className="cursor-pointer inline-flex items-center justify-center w-7 h-7 rounded-full text-rb-500 hover:text-foreground bg-rb-100 dark:bg-rb-900 hover:bg-rb-200 dark:hover:bg-rb-800 transition-colors"
+                className={`${CTRL_GHOST} ${CTRL_OFF} w-7 h-7 rounded-md`}
               >
                 <ArrowUpDown size={12} />
               </button>
@@ -536,12 +529,8 @@ function AaveV4SpokePageInner() {
                 type="button"
                 onClick={() => setHeatmapOpen(!heatmapOpen)}
                 aria-pressed={heatmapShown}
-                className={`px-2.5 py-1 text-xs font-semibold rounded border transition-colors ${
-                  dateRange
-                    ? "border-amber-500/60 bg-amber-500/15 text-amber-400 hover:text-amber-300"
-                    : heatmapShown
-                      ? "border-rb-400 dark:border-rb-600 bg-rb-200 dark:bg-rb-900 text-foreground"
-                      : "border-rb-300/60 dark:border-rb-700/60 text-rb-500 hover:text-foreground hover:bg-rb-200/60 dark:hover:bg-rb-900/60"
+                className={`${CTRL_GHOST} h-7 px-2.5 rounded-md text-xs ${
+                  dateRange ? CTRL_ON_ACCENT : heatmapShown ? CTRL_ON : CTRL_OFF
                 }`}
                 title={heatmapShown ? "Hide activity heatmap" : "Filter by date range"}
               >
@@ -559,41 +548,36 @@ function AaveV4SpokePageInner() {
 
           {(heatmapOpen || dateRange !== null) && visibleEvents.length > 0 && (
             <div className="mb-3">
-              <TransactionHeatmap
-                events={visibleEvents}
-                value={dateRange}
-                onChange={setDateRange}
-              />
+              <TransactionHeatmap events={visibleEvents} value={dateRange} onChange={setDateRange} />
             </div>
           )}
 
           {displayedEvents.length > 0 ? (
             <AaveV4BarsProvider events={spokeScopedEvents}>
-            {/* -mr-1 cancels the EventCard's 4px outer pad on the right so an
+              {/* -mr-1 cancels the EventCard's 4px outer pad on the right so an
                 open card's panel reaches the same box edge as the economics /
                 position panels above (the spine fills the left, so no -ml). */}
-            <div className="space-y-2 -mr-1">
-              {displayedEvents.map((event, idx) => {
-                if (!isAaveV4Event(event)) return null;
-                const prevDisplayed = idx > 0 ? displayedEvents[idx - 1] : undefined;
-                const showDate =
-                  !prevDisplayed || dayKey(event.timestamp) !== dayKey(prevDisplayed.timestamp);
-                const datePrefix = showDate
-                  ? `${shortDate(event.timestamp)} ${shortDateYear(event.timestamp)}`
-                  : null;
-                return (
-                  <EventDateContext.Provider key={event.id} value={datePrefix}>
-                    <AaveV4EventCard
-                      event={event}
-                      isFirst={idx === 0}
-                      isLast={idx === displayedEvents.length - 1}
-                      txGroup={txGroups.get(event.id)}
-                      eventNumber={eventNumbers.get(event.id)}
-                    />
-                  </EventDateContext.Provider>
-                );
-              })}
-            </div>
+              <div className="space-y-2 -mr-1">
+                {displayedEvents.map((event, idx) => {
+                  if (!isAaveV4Event(event)) return null;
+                  const prevDisplayed = idx > 0 ? displayedEvents[idx - 1] : undefined;
+                  const showDate = !prevDisplayed || dayKey(event.timestamp) !== dayKey(prevDisplayed.timestamp);
+                  const datePrefix = showDate
+                    ? `${shortDate(event.timestamp)} ${shortDateYear(event.timestamp)}`
+                    : null;
+                  return (
+                    <EventDateContext.Provider key={event.id} value={datePrefix}>
+                      <AaveV4EventCard
+                        event={event}
+                        isFirst={idx === 0}
+                        isLast={idx === displayedEvents.length - 1}
+                        txGroup={txGroups.get(event.id)}
+                        eventNumber={eventNumbers.get(event.id)}
+                      />
+                    </EventDateContext.Provider>
+                  );
+                })}
+              </div>
             </AaveV4BarsProvider>
           ) : (
             <div className="text-center py-8 text-rb-500">
@@ -604,22 +588,13 @@ function AaveV4SpokePageInner() {
           )}
         </TimelineDisplayProvider>
       </div>
-    </main>
+    </>
   );
 }
 
-function SpokeBreadcrumb({
-  walletFilterHref,
-  wallet,
-}: {
-  walletFilterHref: string;
-  wallet: string;
-}) {
+function SpokeBreadcrumb({ walletFilterHref, wallet }: { walletFilterHref: string; wallet: string }) {
   return (
-    <Link
-      href={walletFilterHref}
-      className="inline-flex items-center gap-1.5 text-sm text-rb-500 hover:text-foreground transition-colors"
-    >
+    <Link href={walletFilterHref} className={`inline-flex items-center gap-1.5 text-sm ${NAV_LINK}`}>
       <ArrowLeft size={14} />
       <span className="font-mono">{shortAddr(wallet)}</span>
     </Link>
@@ -641,11 +616,7 @@ function SmartBackButton({ walletFilterHref }: { walletFilterHref: string }) {
     }
   };
   return (
-    <button
-      type="button"
-      onClick={onBack}
-      className="inline-flex items-center gap-1.5 rounded-lg border border-rb-200 dark:border-rb-800 bg-rb-100/50 dark:bg-rb-900/40 px-3 py-1.5 text-sm text-rb-500 hover:text-foreground hover:bg-rb-200/60 dark:hover:bg-rb-800/60 hover:border-rb-300 dark:hover:border-rb-700 transition-colors cursor-pointer"
-    >
+    <button type="button" onClick={onBack} className={NAV_BUTTON}>
       <ArrowLeft size={14} />
       <span>Back</span>
     </button>
@@ -664,26 +635,29 @@ function AaveV4SpokeEconomicsBand({
   prices: Record<string, PriceEntry | number>;
   runwayCard: import("@/lib/aave-v4/spoke-cards").AaveSpokeCardInfo | undefined;
 }) {
-  const simBase: SimPositionInputs = useMemo(() => ({
-    supplies: reserves
-      .map((r) => {
-        const netSupply = r.currentSupplied ?? Math.max(0, r.supplied - r.withdrawn - r.liquidatedCollateral);
-        if (netSupply <= 0.0001) return null;
-        const price = resolvePrice(r.symbol, prices) ?? 1;
-        const lt = getLiquidationThreshold(activeName, r.symbol);
-        const collateralEnabled = r.collateralEnabled ?? true;
-        return { symbol: r.symbol, amount: netSupply, price, lt, collateralEnabled };
-      })
-      .filter(Boolean) as SimPositionInputs["supplies"],
-    debts: reserves
-      .map((r) => {
-        const netDebt = r.currentBorrowed ?? Math.max(0, r.borrowed - r.repaid - r.liquidatedDebt);
-        if (netDebt <= 0.0001) return null;
-        const price = resolvePrice(r.symbol, prices) ?? 1;
-        return { symbol: r.symbol, amount: netDebt, price };
-      })
-      .filter(Boolean) as SimPositionInputs["debts"],
-  }), [reserves, prices, activeName]);
+  const simBase: SimPositionInputs = useMemo(
+    () => ({
+      supplies: reserves
+        .map((r) => {
+          const netSupply = r.currentSupplied ?? Math.max(0, r.supplied - r.withdrawn - r.liquidatedCollateral);
+          if (netSupply <= 0.0001) return null;
+          const price = resolvePrice(r.symbol, prices) ?? 1;
+          const lt = getLiquidationThreshold(activeName, r.symbol);
+          const collateralEnabled = r.collateralEnabled ?? true;
+          return { symbol: r.symbol, amount: netSupply, price, lt, collateralEnabled };
+        })
+        .filter(Boolean) as SimPositionInputs["supplies"],
+      debts: reserves
+        .map((r) => {
+          const netDebt = r.currentBorrowed ?? Math.max(0, r.borrowed - r.repaid - r.liquidatedDebt);
+          if (netDebt <= 0.0001) return null;
+          const price = resolvePrice(r.symbol, prices) ?? 1;
+          return { symbol: r.symbol, amount: netDebt, price };
+        })
+        .filter(Boolean) as SimPositionInputs["debts"],
+    }),
+    [reserves, prices, activeName],
+  );
 
   const [surplusSymbols, hideSurplus, setHideSurplus] = useSurplusState(simBase);
 
@@ -702,7 +676,9 @@ function AaveV4SpokeEconomicsBand({
   );
 }
 
-function useSurplusState(simBase: SimPositionInputs): [Set<string>, boolean, React.Dispatch<React.SetStateAction<boolean>>] {
+function useSurplusState(
+  simBase: SimPositionInputs,
+): [Set<string>, boolean, React.Dispatch<React.SetStateAction<boolean>>] {
   const [hideSurplus, setHideSurplus] = useState(false);
   const surplusSymbols = useMemo(() => {
     const out = new Set<string>();

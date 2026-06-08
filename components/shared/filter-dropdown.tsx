@@ -1,11 +1,21 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { CTRL_GHOST, CTRL_OFF, CTRL_ON } from "@/lib/shared/ui-grammar";
 
 // Lucide list-filter icon
 function ListFilterIcon({ size = 14 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <path d="M3 6h18" />
       <path d="M7 12h10" />
       <path d="M10 18h4" />
@@ -59,7 +69,7 @@ export interface FilterOption {
   /** Dimmed style for demoted/noisy actions */
   demoted?: boolean;
   /** Position status indicator dot */
-  status?: 'active' | 'closed' | 'liquidated';
+  status?: "active" | "closed" | "liquidated";
 }
 
 interface FilterDropdownProps {
@@ -86,7 +96,20 @@ interface FilterDropdownProps {
   variant?: "ghost" | "button";
 }
 
-export function FilterDropdown({ label, options, selected, onSelect, multi = false, onToggle, minimal = false, noClear = false, trigger, align = "left", triggerIcon, variant = "ghost" }: FilterDropdownProps) {
+export function FilterDropdown({
+  label,
+  options,
+  selected,
+  onSelect,
+  multi = false,
+  onToggle,
+  minimal = false,
+  noClear = false,
+  trigger,
+  align = "left",
+  triggerIcon,
+  variant = "ghost",
+}: FilterDropdownProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -101,16 +124,14 @@ export function FilterDropdown({ label, options, selected, onSelect, multi = fal
   }, [open]);
 
   // Normalize selected into a set for rendering
-  const selectedSet = selected instanceof Set ? selected : (selected ? new Set([selected]) : new Set<string>());
-  const allKeys = options.map(o => o.key);
-  const isAll = multi
-    ? (selectedSet.size === 0 || selectedSet.size === allKeys.length)
-    : selectedSet.size === 0;
+  const selectedSet = selected instanceof Set ? selected : selected ? new Set([selected]) : new Set<string>();
+  const allKeys = options.map((o) => o.key);
+  const isAll = multi ? selectedSet.size === 0 || selectedSet.size === allKeys.length : selectedSet.size === 0;
 
   // Build trigger label: "All", or "X, Y, and N more" when many selected
   const selectedLabels = (() => {
     if (isAll) return "All";
-    const labels = options.filter(o => selectedSet.has(o.key)).map(o => o.label);
+    const labels = options.filter((o) => selectedSet.has(o.key)).map((o) => o.label);
     if (labels.length <= 2) return labels.join(", ");
     return `${labels.slice(0, 2).join(", ")}, and ${labels.length - 2} more`;
   })();
@@ -120,7 +141,10 @@ export function FilterDropdown({ label, options, selected, onSelect, multi = fal
       onToggle(key);
     } else {
       // Single-select: toggle (select or deselect if already selected)
-      if (noClear && selectedSet.has(key)) { setOpen(false); return; }
+      if (noClear && selectedSet.has(key)) {
+        setOpen(false);
+        return;
+      }
       onSelect(selectedSet.has(key) ? undefined : key);
       setOpen(false);
     }
@@ -131,7 +155,7 @@ export function FilterDropdown({ label, options, selected, onSelect, multi = fal
   }
 
   return (
-    <div ref={ref} className={`relative ${trigger ? 'flex items-center' : 'inline-flex items-center'}`}>
+    <div ref={ref} className={`relative ${trigger ? "flex items-center" : "inline-flex items-center"}`}>
       {trigger ? (
         <div onClick={() => setOpen(!open)} className="cursor-pointer hover:opacity-80 transition-opacity">
           {trigger(open)}
@@ -140,39 +164,55 @@ export function FilterDropdown({ label, options, selected, onSelect, multi = fal
         <>
           <button
             onClick={() => setOpen(!open)}
-            className={`inline-flex items-center cursor-pointer transition-colors ${
-              variant === "button"
-                ? `gap-2 px-3 py-1.5 rounded-md text-xs bg-rb-200 dark:bg-rb-900 hover:bg-rb-300 dark:hover:bg-rb-900 ${open ? "text-foreground" : ""}`
-                : `gap-1.5 px-2 py-1 rounded text-xs ${open ? "surface-active text-foreground" : !isAll && !minimal ? "text-foreground" : "btn-ghost"}`
+            className={`${CTRL_GHOST} ${open || (!isAll && !minimal) ? CTRL_ON : CTRL_OFF} ${
+              variant === "button" ? "h-7 gap-2 px-2.5 rounded-md text-xs" : "gap-1.5 px-2 py-1 rounded text-xs"
             }`}
           >
             {(minimal || multi) && (triggerIcon ?? <ListFilterIcon size={12} />)}
-            {!minimal && !isAll && !multi && (() => {
-              const sel = options.find(o => selectedSet.has(o.key));
-              return sel?.icon ? <span className="shrink-0">{sel.icon}</span> : null;
-            })()}
-            {!minimal && (
-              multi && !isAll ? (
+            {!minimal &&
+              !isAll &&
+              !multi &&
+              (() => {
+                const sel = options.find((o) => selectedSet.has(o.key));
+                return sel?.icon ? <span className="shrink-0">{sel.icon}</span> : null;
+              })()}
+            {!minimal &&
+              (multi && !isAll ? (
                 <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full bg-rb-500 text-foreground text-[10px] font-semibold">
                   {selectedSet.size}
                 </span>
               ) : (
                 <span className="max-w-[240px] truncate">{selectedLabels}</span>
-              )
-            )}
-            {!minimal && !isAll && !multi && (() => {
-              const sel = options.find(o => selectedSet.has(o.key));
-              return sel?.suffix ? <span className="shrink-0">{sel.suffix}</span> : null;
-            })()}
+              ))}
+            {!minimal &&
+              !isAll &&
+              !multi &&
+              (() => {
+                const sel = options.find((o) => selectedSet.has(o.key));
+                return sel?.suffix ? <span className="shrink-0">{sel.suffix}</span> : null;
+              })()}
             {!minimal && !multi && (
-              <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={` transition-transform ${open ? 'rotate-180' : ''}`}>
+              <svg
+                width={10}
+                height={10}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={` transition-transform ${open ? "rotate-180" : ""}`}
+              >
                 <path d="M6 9l6 6 6-6" />
               </svg>
             )}
           </button>
           {!isAll && !minimal && !noClear && (
             <button
-              onClick={(e) => { e.stopPropagation(); handleClear(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClear();
+              }}
               className="ml-1 link-muted cursor-pointer text-sm leading-none"
               title="Clear filter"
             >
@@ -183,20 +223,23 @@ export function FilterDropdown({ label, options, selected, onSelect, multi = fal
       )}
 
       {open && (
-        <div className={`absolute top-full ${align === "right" ? "right-0" : "left-0"} mt-1 z-50 min-w-[220px] max-h-[320px] overflow-y-auto overlay-panel`}>
+        <div
+          className={`absolute top-full ${align === "right" ? "right-0" : "left-0"} mt-1 z-50 min-w-[220px] max-h-[320px] overflow-y-auto overlay-panel`}
+        >
           <div className="flex items-center justify-between px-3 py-2 border-b border-rb-300 dark:border-rb-700">
             {label && <span className="text-xs  uppercase tracking-wider font-bold">{label}</span>}
             {!isAll && !minimal && !noClear && (
-              <button
-                onClick={() => handleClear()}
-                className="text-xs link-muted cursor-pointer"
-              >
+              <button onClick={() => handleClear()} className="text-xs link-muted cursor-pointer">
                 Clear
               </button>
             )}
           </div>
-          {options.map(opt => {
-            const checked = minimal ? selectedSet.has(opt.key) : multi ? (isAll || selectedSet.has(opt.key)) : selectedSet.has(opt.key);
+          {options.map((opt) => {
+            const checked = minimal
+              ? selectedSet.has(opt.key)
+              : multi
+                ? isAll || selectedSet.has(opt.key)
+                : selectedSet.has(opt.key);
             return (
               <button
                 key={opt.key}
@@ -206,23 +249,34 @@ export function FilterDropdown({ label, options, selected, onSelect, multi = fal
                 }`}
               >
                 {multi && (
-                  <span className={`inline-flex items-center justify-center w-4 h-4 rounded border transition-colors shrink-0 ${
-                    checked
-                      ? "bg-rb-500 border-rb-500"
-                      : "border-rb-300 dark:border-rb-700 bg-transparent"
-                  }`}>
+                  <span
+                    className={`inline-flex items-center justify-center w-4 h-4 rounded border transition-colors shrink-0 ${
+                      checked ? "bg-rb-500 border-rb-500" : "border-rb-300 dark:border-rb-700 bg-transparent"
+                    }`}
+                  >
                     {checked && (
                       <svg viewBox="0 0 12 12" className="w-3 h-3 ">
-                        <path d="M2.5 6l2.5 2.5 4.5-5" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                        <path
+                          d="M2.5 6l2.5 2.5 4.5-5"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          fill="none"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
                       </svg>
                     )}
                   </span>
                 )}
                 {opt.icon && <span className="shrink-0">{opt.icon}</span>}
-                <span className="flex-1 truncate">{opt.label.split(/(\s+)/).map(w => /^[A-Z]{2,}$/.test(w) ? w : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('')}{opt.suffix && <span className="inline-flex ml-1.5 align-middle">{opt.suffix}</span>}</span>
-                {opt.count != null && (
-                  <span className="">{opt.count}</span>
-                )}
+                <span className="flex-1 truncate">
+                  {opt.label
+                    .split(/(\s+)/)
+                    .map((w) => (/^[A-Z]{2,}$/.test(w) ? w : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()))
+                    .join("")}
+                  {opt.suffix && <span className="inline-flex ml-1.5 align-middle">{opt.suffix}</span>}
+                </span>
+                {opt.count != null && <span className="">{opt.count}</span>}
               </button>
             );
           })}

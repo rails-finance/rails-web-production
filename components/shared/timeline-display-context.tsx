@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 
-export type TimelineDisplayKey = "showTimestamps" | "showChangeBars" | "showBalanceBars" | "showTimelineValues" | "showTickerLabels" | "showUsdValues" | "showEventNumbers";
+export type TimelineDisplayKey = "showTimestamps" | "showChangeBars" | "showBalanceBars" | "showTimelineValues" | "showTickerLabels" | "showUsdValues" | "showEventNumbers" | "showInterestRates";
 
 export interface TimelineDisplayState {
   showTimestamps: boolean;
@@ -23,10 +23,13 @@ export interface TimelineDisplayState {
   /** When true, each timeline row displays its 1-based chronological number
    * (stable across asc/desc display). */
   showEventNumbers: boolean;
+  /** When true, event-card headers show the per-event interest-rate badge
+   * (supply/borrow APR). On by default. */
+  showInterestRates: boolean;
   toggle: (key: TimelineDisplayKey) => void;
 }
 
-const DEFAULTS = { showTimestamps: false, showChangeBars: false, showBalanceBars: false, showTimelineValues: true, showTickerLabels: false, showUsdValues: false, showEventNumbers: false };
+const DEFAULTS = { showTimestamps: false, showChangeBars: false, showBalanceBars: false, showTimelineValues: true, showTickerLabels: false, showUsdValues: false, showEventNumbers: false, showInterestRates: true };
 const STORAGE_KEY = "timeline-display-v2";
 
 const Ctx = createContext<TimelineDisplayState>({

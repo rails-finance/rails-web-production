@@ -6,11 +6,7 @@
 // the v4-namespaced versions of constants / spoke-meta.
 
 import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import {
-  CardSelectorShell,
-  positionCardSurface,
-} from "@/components/shared/card-selector-shell";
+import { CardSelectorShell, positionCardSurface } from "@/components/shared/card-selector-shell";
 import { ClosedPositionStats } from "@/components/shared/closed-position-stats";
 import { OpenPositionStats } from "@/components/shared/open-position-stats";
 import { InlineAssetCluster } from "@/components/shared/inline-asset-cluster";
@@ -105,9 +101,7 @@ function AaveV4SpokeCard({
   const [infoOpen, setInfoOpen] = useState(false);
   const supplyOnly = spoke.peakDebtUsd < 1 && spoke.totalDebtUsd < 1;
   const bucket = bucketForHealth(spoke.healthFactor);
-  const walletPill = wallet ? (
-    <WalletPill wallet={wallet} ensName={ensName ?? null} href={walletHref} />
-  ) : null;
+  const walletPill = wallet ? <WalletPill wallet={wallet} ensName={ensName ?? null} href={walletHref} /> : null;
   return (
     <div
       onClick={onClick}
@@ -117,12 +111,14 @@ function AaveV4SpokeCard({
         {isClosed ? (
           <ClosedPositionStats
             outcome={spoke.wasLiquidated ? "liquidated" : "closed"}
-            collateralAssetIcons={spoke.supplyingSymbols.length > 0 ? (
-              <InlineAssetCluster symbols={spoke.supplyingSymbols} />
-            ) : undefined}
-            debtAssetIcons={!supplyOnly && spoke.borrowingSymbols.length > 0 ? (
-              <InlineAssetCluster symbols={spoke.borrowingSymbols} />
-            ) : undefined}
+            collateralAssetIcons={
+              spoke.supplyingSymbols.length > 0 ? <InlineAssetCluster symbols={spoke.supplyingSymbols} /> : undefined
+            }
+            debtAssetIcons={
+              !supplyOnly && spoke.borrowingSymbols.length > 0 ? (
+                <InlineAssetCluster symbols={spoke.borrowingSymbols} />
+              ) : undefined
+            }
             leadingIdentity={
               <>
                 <SpokeIdentity name={spoke.name} hub={spoke.hub} />
@@ -132,12 +128,24 @@ function AaveV4SpokeCard({
             collateralLabel={supplyOnly ? "Peak Supplied" : "Peak Collateral"}
             collateral={(() => {
               const v = fmtUsd(spoke.peakSupplyUsd);
-              return <StatValue color="text-rb-500" title={v.title}>{v.display}</StatValue>;
+              return (
+                <StatValue color="text-rb-500" title={v.title}>
+                  {v.display}
+                </StatValue>
+              );
             })()}
-            debt={supplyOnly ? undefined : (() => {
-              const v = fmtUsd(spoke.peakDebtUsd);
-              return <StatValue color="text-rb-500" title={v.title}>{v.display}</StatValue>;
-            })()}
+            debt={
+              supplyOnly
+                ? undefined
+                : (() => {
+                    const v = fmtUsd(spoke.peakDebtUsd);
+                    return (
+                      <StatValue color="text-rb-500" title={v.title}>
+                        {v.display}
+                      </StatValue>
+                    );
+                  })()
+            }
           />
         ) : (
           <OpenPositionStats
@@ -153,88 +161,114 @@ function AaveV4SpokeCard({
                 {walletPill}
               </>
             }
-            columns={supplyOnly ? [
-              {
-                label: "Supplied",
-                assetIcons: spoke.supplyingSymbols.length > 0 ? (
-                  <InlineAssetCluster symbols={spoke.supplyingSymbols} />
-                ) : undefined,
-                value: (() => {
-                  const v = fmtUsd(spoke.totalSupplyUsd);
-                  return <StatValue color="text-blue-400" title={v.title}>{v.display}</StatValue>;
-                })(),
-              },
-              null,
-              null,
-              null,
-            ] : [
-              {
-                label: "Collateral",
-                assetIcons: spoke.supplyingSymbols.length > 0 ? (
-                  <InlineAssetCluster symbols={spoke.supplyingSymbols} />
-                ) : undefined,
-                value: (() => {
-                  const v = fmtUsd(spoke.totalSupplyUsd);
-                  return <StatValue color="text-blue-400" title={v.title}>{v.display}</StatValue>;
-                })(),
-                footnote: spoke.netApy !== null ? (
-                  <div className={`text-xs mt-0.5 font-medium ${spoke.netApy >= 0 ? "text-green-400" : "text-red-400"}`}>
-                    {spoke.netApy >= 0 ? "+" : ""}{spoke.netApy.toFixed(2)}% net APY
-                  </div>
-                ) : undefined,
-              },
-              {
-                label: "Debt",
-                assetIcons: spoke.borrowingSymbols.length > 0 ? (
-                  <InlineAssetCluster symbols={spoke.borrowingSymbols} />
-                ) : undefined,
-                value: (() => {
-                  const v = fmtUsd(spoke.totalDebtUsd);
-                  return <StatValue color="text-emerald-400" title={v.title}>{v.display}</StatValue>;
-                })(),
-                footnote: spoke.latestBorrowRate !== null ? (
-                  <div className="text-xs mt-0.5 text-rb-500">
-                    {spoke.latestBorrowRate.toFixed(2)}% borrow rate
-                  </div>
-                ) : undefined,
-              },
-              {
-                label: "Health Factor",
-                value: spoke.healthFactor !== null ? (
-                  <StatValue color={hfColorClass(spoke.healthFactor)}>
-                    {hfLabel(spoke.healthFactor)}
-                  </StatValue>
-                ) : (
-                  <StatDash>{"∞"}</StatDash>
-                ),
-                footnote: spoke.borrowingPowerUsd > 0.01 ? (() => {
-                  const v = fmtUsd(spoke.borrowingPowerUsd);
-                  return (
-                    <div className="text-xs mt-0.5 text-rb-500" title={v.title}>
-                      {v.display} borrowing power
-                    </div>
-                  );
-                })() : undefined,
-              },
-              {
-                label: spoke.liqPrice ? `Liq Price (${spoke.liqPrice.symbol})` : "Liq Price",
-                value: spoke.liqPrice ? (
-                  <StatValue color="text-foreground">
-                    <span className="inline-flex items-center gap-1.5">
-                      {fmtLiqPrice(spoke.liqPrice.liqPrice)}
-                      <TokenChipIcon symbol={spoke.liqPrice.symbol} size={18} />
-                    </span>
-                  </StatValue>
-                ) : (
-                  <StatDash />
-                ),
-                footnote: spoke.liqPrice ? (
-                  <div className="text-xs mt-0.5 text-rb-500">
-                    {spoke.liqPrice.headroomPct.toFixed(0)}% headroom
-                  </div>
-                ) : undefined,
-              },
-            ]}
+            columns={
+              supplyOnly
+                ? [
+                    {
+                      label: "Supplied",
+                      assetIcons:
+                        spoke.supplyingSymbols.length > 0 ? (
+                          <InlineAssetCluster symbols={spoke.supplyingSymbols} />
+                        ) : undefined,
+                      value: (() => {
+                        const v = fmtUsd(spoke.totalSupplyUsd);
+                        return (
+                          <StatValue color="text-blue-400" title={v.title}>
+                            {v.display}
+                          </StatValue>
+                        );
+                      })(),
+                    },
+                    null,
+                    null,
+                    null,
+                  ]
+                : [
+                    {
+                      label: "Collateral",
+                      assetIcons:
+                        spoke.supplyingSymbols.length > 0 ? (
+                          <InlineAssetCluster symbols={spoke.supplyingSymbols} />
+                        ) : undefined,
+                      value: (() => {
+                        const v = fmtUsd(spoke.totalSupplyUsd);
+                        return (
+                          <StatValue color="text-blue-400" title={v.title}>
+                            {v.display}
+                          </StatValue>
+                        );
+                      })(),
+                      footnote:
+                        spoke.netApy !== null ? (
+                          <div
+                            className={`text-xs mt-0.5 font-medium ${spoke.netApy >= 0 ? "text-green-400" : "text-red-400"}`}
+                          >
+                            {spoke.netApy >= 0 ? "+" : ""}
+                            {spoke.netApy.toFixed(2)}% net APY
+                          </div>
+                        ) : undefined,
+                    },
+                    {
+                      label: "Debt",
+                      assetIcons:
+                        spoke.borrowingSymbols.length > 0 ? (
+                          <InlineAssetCluster symbols={spoke.borrowingSymbols} />
+                        ) : undefined,
+                      value: (() => {
+                        const v = fmtUsd(spoke.totalDebtUsd);
+                        return (
+                          <StatValue color="text-emerald-400" title={v.title}>
+                            {v.display}
+                          </StatValue>
+                        );
+                      })(),
+                      footnote:
+                        spoke.latestBorrowRate !== null ? (
+                          <div className="text-xs mt-0.5 text-rb-500">
+                            {spoke.latestBorrowRate.toFixed(2)}% borrow rate
+                          </div>
+                        ) : undefined,
+                    },
+                    {
+                      label: "Health Factor",
+                      value:
+                        spoke.healthFactor !== null ? (
+                          <StatValue color={hfColorClass(spoke.healthFactor)}>{hfLabel(spoke.healthFactor)}</StatValue>
+                        ) : (
+                          <StatDash>{"∞"}</StatDash>
+                        ),
+                      footnote:
+                        spoke.borrowingPowerUsd > 0.01
+                          ? (() => {
+                              const v = fmtUsd(spoke.borrowingPowerUsd);
+                              return (
+                                <div className="text-xs mt-0.5 text-rb-500" title={v.title}>
+                                  {v.display} borrowing power
+                                </div>
+                              );
+                            })()
+                          : undefined,
+                    },
+                    {
+                      label: spoke.liqPrice ? `Liq Price (${spoke.liqPrice.symbol})` : "Liq Price",
+                      value: spoke.liqPrice ? (
+                        <StatValue color="text-foreground">
+                          <span className="inline-flex items-center gap-1.5">
+                            {fmtLiqPrice(spoke.liqPrice.liqPrice)}
+                            <TokenChipIcon symbol={spoke.liqPrice.symbol} size={18} />
+                          </span>
+                        </StatValue>
+                      ) : (
+                        <StatDash />
+                      ),
+                      footnote: spoke.liqPrice ? (
+                        <div className="text-xs mt-0.5 text-rb-500">
+                          {spoke.liqPrice.headroomPct.toFixed(0)}% headroom
+                        </div>
+                      ) : undefined,
+                    },
+                  ]
+            }
           />
         )}
         {/* (i) at the bottom-right of the card; expands the explanation in
@@ -244,22 +278,11 @@ function AaveV4SpokeCard({
             <div className="flex justify-end">
               <SpokeInfoButton isOpen={infoOpen} onClick={() => setInfoOpen((o) => !o)} />
             </div>
-            <AnimatePresence initial={false}>
-              {infoOpen && (
-                <motion.div
-                  key="explanation"
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.25, ease: "easeInOut" }}
-                  className="overflow-hidden"
-                >
-                  <div className="mt-2 border-t border-rb-300/40 dark:border-rb-700/40 pt-3">
-                    <AaveV4PositionExplanation spoke={spoke} embedded />
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {infoOpen && (
+              <div className="mt-2 border-t border-rb-300/40 dark:border-rb-700/40 pt-3">
+                <AaveV4PositionExplanation spoke={spoke} embedded />
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -299,10 +322,12 @@ export function AaveV4SpokeCardSelector({
       items={items}
       selected={selected}
       onSelect={onSelect}
-      orderItems={(list) => [...list].sort((a, b) => {
-        if (a.isClosed !== b.isClosed) return a.isClosed ? 1 : -1;
-        return b.totalSupplyUsd - a.totalSupplyUsd;
-      })}
+      orderItems={(list) =>
+        [...list].sort((a, b) => {
+          if (a.isClosed !== b.isClosed) return a.isClosed ? 1 : -1;
+          return b.totalSupplyUsd - a.totalSupplyUsd;
+        })
+      }
       renderCard={(item, props) => (
         <AaveV4SpokeCard
           spoke={item}

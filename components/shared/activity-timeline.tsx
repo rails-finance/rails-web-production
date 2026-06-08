@@ -83,7 +83,9 @@ export function fmtSpine(v: string | number | undefined): string {
     return a >= 10_000 ? `${Math.round(k)}K` : `${parseFloat(k.toFixed(1))}K`;
   }
   if (a >= 1) return a.toLocaleString(undefined, { maximumFractionDigits: 2 });
-  return a.toFixed(4);
+  // Trim trailing zeros so sub-1 amounts read like the card header (0.2, not
+  // 0.2000) while still capping precision at 4 decimals.
+  return parseFloat(a.toFixed(4)).toString();
 }
 
 /** Inline spine value cell for 5-column grid rows. When `onChange` is set,
