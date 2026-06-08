@@ -426,8 +426,12 @@ body {
   border: 1px solid var(--color-rb-200);
   @apply rounded-xl shadow-xl;
 }
+/* Dark: match the wallet-search dropdown (rb-950, near-black) so every popover
+   reads as the same floating surface and lifts clearly off the rb-800 canvas,
+   rather than the old --surface-overlay that sat ~3 levels off the page. */
 :is(.dark) .overlay-panel {
-  border-color: var(--color-rb-700);
+  background: var(--color-rb-950);
+  border-color: var(--color-rb-800);
 }
 
 .overlay-item {
@@ -441,6 +445,14 @@ body {
 .overlay-item-active {
   background: var(--surface-active);
   color: var(--pill-active-text);
+}
+/* The surface-hover/active overlays are black alphas — invisible on the
+   near-black dark panel above — so items lift with a white alpha instead. */
+:is(.dark) .overlay-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+:is(.dark) .overlay-item-active {
+  background: rgba(255, 255, 255, 0.09);
 }
 
 /* Form / interaction defaults */

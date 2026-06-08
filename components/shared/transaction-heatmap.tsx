@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { RESET_LINK } from "@/lib/shared/ui-grammar";
 
 // GitHub-style activity heatmap. Doubles as a date-range selector for the
 // timeline below: click a cell for a single-day filter, or drag across cells
@@ -166,12 +167,8 @@ export function TransactionHeatmap({ events, value, onChange, title = "Transacti
         <div className="flex items-center gap-2">
           <span className="text-xs text-rb-500">{rangeLabel}</span>
           {value && (
-            <button
-              type="button"
-              onClick={() => onChange(null)}
-              className="px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider rounded border border-rb-300/60 dark:border-rb-700/60 text-rb-500 hover:text-foreground"
-            >
-              Clear
+            <button type="button" onClick={() => onChange(null)} className={RESET_LINK}>
+              Reset
             </button>
           )}
         </div>

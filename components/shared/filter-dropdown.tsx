@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Check } from "lucide-react";
-import { CTRL_GHOST, CTRL_OFF, CTRL_ON, COUNT_BADGE } from "@/lib/shared/ui-grammar";
+import { CTRL_GHOST, CTRL_OFF, CTRL_ON, COUNT_BADGE, RESET_LINK } from "@/lib/shared/ui-grammar";
 
 // Lucide list-filter icon
 function ListFilterIcon({ size = 14 }: { size?: number }) {
@@ -206,18 +206,6 @@ export function FilterDropdown({
               </svg>
             )}
           </button>
-          {!isAll && !minimal && !noClear && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleClear();
-              }}
-              className="ml-1 link-muted cursor-pointer text-sm leading-none"
-              title="Clear filter"
-            >
-              ×
-            </button>
-          )}
         </>
       )}
 
@@ -228,8 +216,8 @@ export function FilterDropdown({
           <div className="flex items-center justify-between px-4 py-3 border-b border-rb-300 dark:border-rb-700">
             {label && <span className="text-xs uppercase tracking-wider font-bold">{label}</span>}
             {!isAll && !minimal && !noClear && (
-              <button onClick={() => handleClear()} className="text-xs link-muted cursor-pointer">
-                Clear
+              <button onClick={() => handleClear()} className={RESET_LINK}>
+                Reset
               </button>
             )}
           </div>

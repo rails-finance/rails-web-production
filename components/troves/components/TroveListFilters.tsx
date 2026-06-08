@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { ChevronDown, Search, X, ListFilter, ArrowUp, ArrowDown } from "lucide-react";
-import { CTRL_GHOST, CTRL_OFF, CTRL_ON, COUNT_BADGE } from "@/lib/shared/ui-grammar";
+import { CTRL_GHOST, CTRL_OFF, CTRL_ON, COUNT_BADGE, RESET_LINK } from "@/lib/shared/ui-grammar";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { CheckboxMultiSelect } from "@/components/shared/checkbox-multi-select";
 import { WalletHistoryDropdown } from "@/components/shared/wallet-history-dropdown";
@@ -218,6 +218,14 @@ export function TroveListFilters({
                 className="absolute top-full left-0 mt-2 z-50 min-w-[280px] max-h-[400px] overflow-y-auto overlay-panel"
                 role="menu"
               >
+                <div className="flex items-center justify-between px-4 py-3 border-b border-rb-300 dark:border-rb-700">
+                  <span className="text-xs uppercase tracking-wider font-bold">Filters</span>
+                  {activeFilterCount > 0 && (
+                    <button onClick={resetFilters} className={RESET_LINK}>
+                      Reset
+                    </button>
+                  )}
+                </div>
                 {/* Status Toggle */}
                 <div className="p-3 ">
                   <div className="text-xs text-rb-500 uppercase tracking-wider mb-2">Status</div>
@@ -449,19 +457,6 @@ export function TroveListFilters({
                     </div>
                   </div>
                 </div>
-
-                {/* Reset Filters */}
-                {activeFilterCount > 0 && (
-                  <div className="p-3">
-                    <button
-                      onClick={resetFilters}
-                      className="cursor-pointer w-full px-3 py-1.5 bg-rb-300 dark:bg-rb-700 hover:bg-rb-400 dark:hover:bg-rb-600 rounded text-sm text-foreground transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      aria-label="Reset all filters"
-                    >
-                      Reset Filters
-                    </button>
-                  </div>
-                )}
               </div>
             )}
           </div>

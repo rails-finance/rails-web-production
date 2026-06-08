@@ -45,11 +45,27 @@ export const CTRL_GHOST = "inline-flex items-center justify-center transition-co
 /** Idle in-place control: muted, gains a soft fill + foreground on hover. */
 export const CTRL_OFF = "text-rb-500 hover:bg-rb-50 dark:hover:bg-rb-800 hover:text-foreground";
 
-/** Engaged/open in-place control: persistent soft fill, still reacts on hover. */
-export const CTRL_ON = "bg-rb-200 dark:bg-rb-700 text-foreground hover:bg-rb-300 dark:hover:bg-rb-600";
+/** Engaged/open in-place control: holds the same soft fill CTRL_OFF shows on
+ * hover, so an open control simply looks "hovered" for as long as it's engaged. */
+export const CTRL_ON = "bg-rb-50 dark:bg-rb-800 text-foreground";
 
 /** Engaged in-place control carrying a semantic accent (e.g. an active date filter). */
 export const CTRL_ON_ACCENT = "bg-amber-500/15 text-amber-500 dark:text-amber-400 hover:bg-amber-500/25";
+
+/**
+ * In-panel reset link — the single "Reset" affordance that lives in an open
+ * control's / filter panel's header (events filter, date filter, listing
+ * Filters, …). One token so the verb ("Reset", never "Clear"/"×"), colour, and
+ * styling stay identical everywhere, and the reset always sits in the panel
+ * header rather than floating next to the trigger.
+ *
+ * Colour: teal — the brand's dedicated "utility action" hue (also the New pill /
+ * active nav). Deliberately NOT blue (navigation), amber (active accent), red
+ * (danger) or green (positive), so per the one-meaning-per-colour rule a teal
+ * link always reads as "reset/utility", not a status or a nav target.
+ */
+export const RESET_LINK =
+  "text-xs font-semibold text-teal-600 hover:text-teal-500 transition-colors cursor-pointer";
 
 /**
  * Passive metadata pill — a soft, always-on chip that labels (duration, "ago",
