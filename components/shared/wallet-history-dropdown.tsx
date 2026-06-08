@@ -308,7 +308,7 @@ function SessionRow({
       }}
       onBlur={commitEdit}
       placeholder={fallback}
-      className="flex-1 min-w-0 text-xs font-bold px-1.5 py-0.5 rounded bg-rb-100 dark:bg-rb-900 border border-rb-300 dark:border-rb-700 outline-none"
+      className="flex-1 min-w-0 text-xs font-bold px-1.5 py-0.5 rounded bg-rb-50 dark:bg-rb-800 border border-rb-300 dark:border-rb-700 outline-none"
     />
   ) : (
     <div className="text-xs font-bold truncate flex-1 text-foreground" title={primary}>

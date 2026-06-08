@@ -29,7 +29,7 @@
 
 /** Button that navigates to another page. Blue border appears on hover. */
 export const NAV_BUTTON =
-  "inline-flex items-center gap-1.5 rounded-lg border border-rb-200 dark:border-rb-800 bg-rb-100/50 dark:bg-rb-900/40 px-3 py-1.5 text-sm text-rb-500 hover:text-foreground hover:bg-rb-200/60 dark:hover:bg-rb-700/50 hover:border-blue-500 transition-colors cursor-pointer";
+  "inline-flex items-center gap-1.5 rounded-lg border border-rb-200 dark:border-rb-800 bg-rb-50 dark:bg-rb-800 px-3 py-1.5 text-sm text-rb-500 hover:text-foreground hover:bg-rb-200/60 dark:hover:bg-rb-700/50 hover:border-blue-500 transition-colors cursor-pointer";
 
 /** Text/inline link that navigates to another page. Turns blue on hover. */
 export const NAV_LINK = "text-rb-500 hover:text-blue-500 dark:hover:text-blue-400 transition-colors";
@@ -43,7 +43,7 @@ export const NAV_LINK = "text-rb-500 hover:text-blue-500 dark:hover:text-blue-40
 export const CTRL_GHOST = "inline-flex items-center justify-center transition-colors cursor-pointer";
 
 /** Idle in-place control: muted, gains a soft fill + foreground on hover. */
-export const CTRL_OFF = "text-rb-500 hover:bg-rb-200 dark:hover:bg-rb-700 hover:text-foreground";
+export const CTRL_OFF = "text-rb-500 hover:bg-rb-50 dark:hover:bg-rb-800 hover:text-foreground";
 
 /** Engaged/open in-place control: persistent soft fill, still reacts on hover. */
 export const CTRL_ON = "bg-rb-200 dark:bg-rb-700 text-foreground hover:bg-rb-300 dark:hover:bg-rb-600";
@@ -59,4 +59,15 @@ export const CTRL_ON_ACCENT = "bg-amber-500/15 text-amber-500 dark:text-amber-40
  * pills.
  */
 export const PILL_META =
-  "inline-flex items-center gap-1 rounded-full bg-rb-100 dark:bg-rb-900 px-2 py-0.5 text-xs text-rb-500";
+  "inline-flex items-center gap-1 rounded-full bg-rb-50 dark:bg-rb-800 px-2 py-0.5 text-xs text-rb-500";
+
+/**
+ * Count badge — a solid chip showing a count of active selections (e.g. the
+ * number of engaged filter groups). Deliberately the highest-contrast chip in
+ * the grammar because its whole job is to pull the eye to "you have N active".
+ * One token so the badge reads identically everywhere a count appears — the
+ * listing filter bar, the per-category multi-select pills, and the timeline
+ * controls.
+ */
+export const COUNT_BADGE =
+  "inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full bg-rb-500 text-foreground text-[10px] font-semibold";

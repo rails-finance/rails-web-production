@@ -47,7 +47,7 @@
   --svg-inner-bg: #ffffff;
 
   /* ── rails-explorer brand: light mode ──────────────────────────────────── */
-  --background: rgb(235 240 247); /* rb-50 */
+  --background: rgb(255 255 255);
 
   --surface-hover: rgba(255, 255, 255, 0.5);
   --surface-active: rgba(255, 255, 255, 0.7);
@@ -138,7 +138,7 @@
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
   /* Rails brand palette — mode-agnostic (50 lightest, 950 darkest). */
-  --color-rb-50: rgb(235 240 247);
+  --color-rb-50: rgb(245 245 250);
   --color-rb-100: rgb(228 233 240);
   --color-rb-200: rgb(220 225 232);
   --color-rb-300: rgb(213 218 224);
@@ -179,7 +179,7 @@ html.dark {
   --color-rb-850: rgb(13 14 20);
   --color-rb-900: rgb(11 12 18);
   --color-rb-950: rgb(3 3 4);
-  --background: rgb(16 18 25);
+  --background: rgb(23 27 36);
 }
 
 body {
@@ -431,7 +431,7 @@ body {
 }
 
 .overlay-item {
-  @apply flex items-center gap-2 w-full px-3 py-2 text-left text-xs transition-colors cursor-pointer;
+  @apply flex items-center gap-3 w-full px-4 py-2 text-left text-sm transition-colors cursor-pointer;
   color: var(--text-muted);
   &:hover {
     background: var(--surface-hover);

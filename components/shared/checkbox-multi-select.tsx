@@ -14,6 +14,7 @@
 
 import { useEffect, useRef, useState, ReactNode } from "react";
 import { ChevronDown, Check } from "lucide-react";
+import { CTRL_GHOST, CTRL_OFF, CTRL_ON, COUNT_BADGE } from "@/lib/shared/ui-grammar";
 
 export interface MultiSelectOption {
   value: string;
@@ -34,14 +35,7 @@ interface Props {
   alwaysShowChevron?: boolean;
 }
 
-export function CheckboxMultiSelect({
-  label,
-  value,
-  onChange,
-  options,
-  allLabel,
-  minWidth,
-}: Props) {
+export function CheckboxMultiSelect({ label, value, onChange, options, allLabel, minWidth }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -75,46 +69,39 @@ export function CheckboxMultiSelect({
 
   const clearAll = () => onChange([]);
 
-  const pillText = count > 0 ? `${label} (${count})` : label;
-
   return (
     <div className="relative" ref={rootRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`cursor-pointer flex items-center gap-2 h-10 px-4 py-2 rounded-lg text-foreground font-semibold transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-          count > 0
-            ? "bg-blue-100 dark:bg-blue-900/40 hover:bg-blue-200 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-400"
-            : "bg-rb-200 dark:bg-rb-900 hover:bg-rb-300 dark:hover:bg-rb-800"
-        }`}
+        className={`${CTRL_GHOST} ${count > 0 || isOpen ? CTRL_ON : CTRL_OFF} gap-2 h-8 px-3 rounded-md text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500`}
         style={minWidth ? { minWidth } : undefined}
         aria-expanded={isOpen}
         aria-label={`Filter ${label}`}
       >
-        <span className="whitespace-nowrap">{pillText}</span>
+        <span className="whitespace-nowrap">{label}</span>
+        {count > 0 && <span className={COUNT_BADGE}>{count}</span>}
         <ChevronDown
-          className={`w-4 h-4 ml-auto transition-transform ${isOpen ? "rotate-180" : ""}`}
+          className={`w-3.5 h-3.5 ml-auto transition-transform ${isOpen ? "rotate-180" : ""}`}
           aria-hidden="true"
         />
       </button>
 
       {isOpen && (
         <div
-          className="absolute top-full left-0 mt-2 bg-rb-100 dark:bg-rb-800 border border-rb-300 dark:border-rb-700 rounded-lg shadow-xl z-50 min-w-[220px] max-h-[460px] overflow-y-auto py-1"
+          className="absolute top-full left-0 mt-2 z-50 min-w-[220px] max-h-[460px] overflow-y-auto py-1 overlay-panel"
           role="menu"
         >
           {/* All radio row — clears the selection. */}
           <button
             type="button"
             onClick={clearAll}
-            className={`w-full flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-rb-200 dark:hover:bg-rb-700 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            className={`w-full flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-rb-50 dark:hover:bg-rb-800 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500`}
             role="menuitemradio"
             aria-checked={count === 0}
           >
             <span
               className={`flex items-center justify-center w-5 h-5 rounded-full border-2 transition-colors ${
-                count === 0
-                  ? "bg-blue-500 border-blue-500"
-                  : "border-rb-400 dark:border-rb-600"
+                count === 0 ? "bg-rb-500 border-rb-500" : "border-rb-400 dark:border-rb-600"
               }`}
               aria-hidden="true"
             >
@@ -132,7 +119,7 @@ export function CheckboxMultiSelect({
                 key={o.value}
                 type="button"
                 onClick={() => toggle(o.value)}
-                className={`w-full flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-rb-200 dark:hover:bg-rb-700 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                className={`w-full flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-rb-50 dark:hover:bg-rb-800 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                   checked ? "bg-rb-200/40 dark:bg-rb-700/40" : ""
                 }`}
                 role="menuitemcheckbox"
@@ -140,9 +127,7 @@ export function CheckboxMultiSelect({
               >
                 <span
                   className={`flex items-center justify-center w-5 h-5 rounded-full transition-colors ${
-                    checked
-                      ? "bg-blue-500"
-                      : "border-2 border-rb-400 dark:border-rb-600"
+                    checked ? "bg-rb-500" : "border-2 border-rb-400 dark:border-rb-600"
                   }`}
                   aria-hidden="true"
                 >

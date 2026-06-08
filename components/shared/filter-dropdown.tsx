@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { CTRL_GHOST, CTRL_OFF, CTRL_ON } from "@/lib/shared/ui-grammar";
+import { Check } from "lucide-react";
+import { CTRL_GHOST, CTRL_OFF, CTRL_ON, COUNT_BADGE } from "@/lib/shared/ui-grammar";
 
 // Lucide list-filter icon
 function ListFilterIcon({ size = 14 }: { size?: number }) {
@@ -178,9 +179,7 @@ export function FilterDropdown({
               })()}
             {!minimal &&
               (multi && !isAll ? (
-                <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full bg-rb-500 text-foreground text-[10px] font-semibold">
-                  {selectedSet.size}
-                </span>
+                <span className={COUNT_BADGE}>{selectedSet.size}</span>
               ) : (
                 <span className="max-w-[240px] truncate">{selectedLabels}</span>
               ))}
@@ -191,7 +190,7 @@ export function FilterDropdown({
                 const sel = options.find((o) => selectedSet.has(o.key));
                 return sel?.suffix ? <span className="shrink-0">{sel.suffix}</span> : null;
               })()}
-            {!minimal && !multi && (
+            {!minimal && (
               <svg
                 width={10}
                 height={10}
@@ -201,7 +200,7 @@ export function FilterDropdown({
                 strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className={` transition-transform ${open ? "rotate-180" : ""}`}
+                className={`ml-auto transition-transform ${open ? "rotate-180" : ""}`}
               >
                 <path d="M6 9l6 6 6-6" />
               </svg>
@@ -226,8 +225,8 @@ export function FilterDropdown({
         <div
           className={`absolute top-full ${align === "right" ? "right-0" : "left-0"} mt-1 z-50 min-w-[220px] max-h-[320px] overflow-y-auto overlay-panel`}
         >
-          <div className="flex items-center justify-between px-3 py-2 border-b border-rb-300 dark:border-rb-700">
-            {label && <span className="text-xs  uppercase tracking-wider font-bold">{label}</span>}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-rb-300 dark:border-rb-700">
+            {label && <span className="text-xs uppercase tracking-wider font-bold">{label}</span>}
             {!isAll && !minimal && !noClear && (
               <button onClick={() => handleClear()} className="text-xs link-muted cursor-pointer">
                 Clear
@@ -250,22 +249,11 @@ export function FilterDropdown({
               >
                 {multi && (
                   <span
-                    className={`inline-flex items-center justify-center w-4 h-4 rounded border transition-colors shrink-0 ${
-                      checked ? "bg-rb-500 border-rb-500" : "border-rb-300 dark:border-rb-700 bg-transparent"
+                    className={`inline-flex items-center justify-center w-5 h-5 rounded-full transition-colors shrink-0 ${
+                      checked ? "bg-rb-500" : "border-2 border-rb-400 dark:border-rb-600"
                     }`}
                   >
-                    {checked && (
-                      <svg viewBox="0 0 12 12" className="w-3 h-3 ">
-                        <path
-                          d="M2.5 6l2.5 2.5 4.5-5"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          fill="none"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    )}
+                    {checked && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
                   </span>
                 )}
                 {opt.icon && <span className="shrink-0">{opt.icon}</span>}

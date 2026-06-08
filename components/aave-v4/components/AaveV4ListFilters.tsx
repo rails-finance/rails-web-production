@@ -7,7 +7,8 @@
 // AND together at query time on the server). Search + sort to the right.
 
 import { useState, useEffect, useRef } from "react";
-import { ChevronDown, Search, X, Filter } from "lucide-react";
+import { ChevronDown, Search, X, ListFilter, ArrowUp, ArrowDown } from "lucide-react";
+import { CTRL_GHOST, CTRL_OFF, CTRL_ON, COUNT_BADGE } from "@/lib/shared/ui-grammar";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { CheckboxMultiSelect } from "@/components/shared/checkbox-multi-select";
 import { TokenChipIcon } from "@/components/shared/token-chip-icon";
@@ -231,25 +232,21 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
           <div className="relative" ref={filterRef}>
             <button
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className="flex cursor-pointer items-center gap-2 px-4 h-10 py-2 bg-rb-200 dark:bg-rb-900 hover:bg-rb-300 dark:hover:bg-rb-800 rounded-lg text-foreground font-bold transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`${CTRL_GHOST} ${isFilterOpen || activeFilterCount > 0 ? CTRL_ON : CTRL_OFF} gap-2 px-3 h-8 rounded-md text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500`}
               aria-expanded={isFilterOpen}
               aria-label={`Filter positions${activeFilterCount > 0 ? ` (${activeFilterCount} active)` : ""}`}
             >
-              <Filter className="w-4 h-4 text-rb-500" aria-hidden="true" />
-              {activeFilterCount > 0 && (
-                <span className="flex items-center justify-center w-5 h-5 bg-rb-100 dark:bg-rb-800 rounded-full text-xs text-rb-500">
-                  {activeFilterCount}
-                </span>
-              )}
+              <ListFilter className="w-3.5 h-3.5 text-rb-500" aria-hidden="true" />
+              {activeFilterCount > 0 && <span className={COUNT_BADGE}>{activeFilterCount}</span>}
               <ChevronDown
-                className={`w-4 h-4 text-rb-500 transition-transform ${isFilterOpen ? "rotate-180" : ""}`}
+                className={`w-3.5 h-3.5 text-rb-500 transition-transform ${isFilterOpen ? "rotate-180" : ""}`}
                 aria-hidden="true"
               />
             </button>
 
             {isFilterOpen && (
               <div
-                className="absolute top-full border border-rb-300 dark:border-rb-700 left-0 mt-2 bg-rb-100 dark:bg-rb-800 rounded-lg shadow-xl z-50 min-w-[280px] max-h-[460px] overflow-y-auto"
+                className="absolute top-full left-0 mt-2 z-50 min-w-[280px] max-h-[460px] overflow-y-auto overlay-panel"
                 role="menu"
               >
                 <div className="p-3">
@@ -268,9 +265,7 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
                         title={v === "nodust" ? `Hide positions under $${AAVE_V4_DUST_USD}` : undefined}
                         className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                           effShow === v
-                            ? v === "all"
-                              ? "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
-                              : "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-400 font-semibold"
+                            ? "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
                             : "text-rb-500 hover:text-foreground"
                         }`}
                         aria-pressed={effShow === v}
@@ -297,7 +292,7 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
                         className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                           filters.debt === v
                             ? v === "all"
-                              ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-400 font-semibold"
+                              ? "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
                               : v === "withDebt"
                                 ? "text-white bg-green-500 dark:bg-green-950 dark:text-green-500 rounded"
                                 : "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
@@ -327,7 +322,7 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
                         className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                           filters.health === v
                             ? v === "all"
-                              ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-400 font-semibold"
+                              ? "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
                               : v === "atRisk"
                                 ? "bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-400 font-semibold"
                                 : "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-400 font-semibold"
@@ -357,7 +352,7 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
                         className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                           filters.liquidations === v
                             ? v === "all"
-                              ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-400 font-semibold"
+                              ? "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
                               : v === "with"
                                 ? "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-400 font-semibold"
                                 : "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
@@ -431,7 +426,7 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onFocus={() => setSearchFocused(true)}
-            className="w-full px-4 py-2 pr-10 bg-rb-100 dark:bg-rb-900 h-10 border border-rb-300 dark:border-rb-700 rounded-lg text-foreground placeholder-rb-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="w-full px-3 py-2 pr-10 bg-rb-50 dark:bg-rb-800 h-8 border border-rb-300 dark:border-rb-700 rounded-md text-sm text-foreground placeholder-rb-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             aria-label="Search by wallet address or ENS name"
           />
           {searchInput ? (
@@ -466,26 +461,26 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
       <div className="flex items-center gap-1 w-full lg:w-auto">
         <button
           onClick={() => onFiltersChange({ ...filters, sortOrder: filters.sortOrder === "asc" ? "desc" : "asc" })}
-          className="cursor-pointer flex items-center justify-center w-10 h-10 bg-rb-200 dark:bg-rb-900 hover:bg-rb-300 dark:hover:bg-rb-800 rounded-lg transition-colors text-foreground dark:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={`${CTRL_GHOST} ${CTRL_OFF} w-8 h-8 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
           aria-label={filters.sortOrder === "asc" ? "Sort ascending" : "Sort descending"}
         >
-          <span aria-hidden="true">{filters.sortOrder === "asc" ? "↑" : "↓"}</span>
+          {filters.sortOrder === "asc" ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
         </button>
-        <div className="relative h-10 flex-1 lg:flex-initial" ref={sortRef}>
+        <div className="relative h-8 flex-1 lg:flex-initial" ref={sortRef}>
           <button
             onClick={() => setIsSortOpen(!isSortOpen)}
-            className="cursor-pointer w-full lg:w-auto flex items-center gap-2 px-4 py-2 bg-rb-200 dark:bg-rb-900 hover:bg-rb-300 dark:hover:bg-rb-800 rounded-lg text-foreground font-medium transition-colors lg:min-w-[160px] dark:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`${CTRL_GHOST} ${isSortOpen ? CTRL_ON : CTRL_OFF} w-full lg:w-auto gap-2 px-3 h-8 rounded-md text-xs font-medium lg:min-w-[160px] focus:outline-none focus:ring-2 focus:ring-blue-500`}
             aria-expanded={isSortOpen}
           >
             <span>{SORT_OPTIONS.find((o) => o.value === filters.sortBy)?.label ?? "Sort"}</span>
             <ChevronDown
-              className={`w-4 h-4 text-rb-500 ml-auto transition-transform ${isSortOpen ? "rotate-180" : ""}`}
+              className={`w-3.5 h-3.5 text-rb-500 ml-auto transition-transform ${isSortOpen ? "rotate-180" : ""}`}
               aria-hidden="true"
             />
           </button>
           {isSortOpen && (
             <div
-              className="absolute top-full left-0 lg:left-auto right-0 mt-2 bg-rb-100 dark:bg-rb-900 border border-rb-300 dark:border-rb-700 rounded-lg shadow-xl z-50 min-w-[200px] overflow-hidden"
+              className="absolute top-full left-0 lg:left-auto right-0 mt-2 z-50 min-w-[200px] overflow-hidden overlay-panel"
               role="menu"
             >
               {SORT_OPTIONS.map((o) => (
@@ -495,9 +490,9 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
                     onFiltersChange({ ...filters, sortBy: o.value });
                     setIsSortOpen(false);
                   }}
-                  className={`cursor-pointer block w-full text-left px-4 py-3 text-foreground hover:bg-rb-200 dark:hover:bg-rb-800 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    filters.sortBy === o.value ? "bg-rb-200 dark:bg-rb-800" : ""
-                  }`}
+                  className={`overlay-item ${
+                    filters.sortBy === o.value ? "overlay-item-active" : ""
+                  } focus:outline-none focus:ring-2 focus:ring-blue-500`}
                   role="menuitem"
                 >
                   {o.label}

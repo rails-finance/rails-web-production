@@ -18,7 +18,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowUpDown, ArrowLeft } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowLeft } from "lucide-react";
 import { fetchAaveV4Timeline, fetchAaveV4Positions, type AaveV4Position } from "@/lib/api/fetch-aave-v4";
 import {
   fetchAaveV4SpokePosition,
@@ -374,8 +374,8 @@ function AaveV4SpokePageInner() {
       <>
         <FeedbackButton />
         <div className="py-8 space-y-6">
-          <div className="h-32 bg-rb-100 dark:bg-rb-900 rounded-lg animate-pulse" />
-          <div className="h-64 bg-rb-100 dark:bg-rb-900 rounded-lg animate-pulse" />
+          <div className="h-32 bg-rb-50 dark:bg-rb-800 rounded-lg animate-pulse" />
+          <div className="h-64 bg-rb-50 dark:bg-rb-800 rounded-lg animate-pulse" />
         </div>
       </>
     );
@@ -441,7 +441,7 @@ function AaveV4SpokePageInner() {
         {/* Position card in its own rounded panel — owner address sits in its
             top row, and the (i) at its bottom-right expands the explanation. */}
         {activeCard && (
-          <div className="rounded-2xl bg-rb-100/50 dark:bg-rb-900/40">
+          <div className="rounded-2xl bg-rb-50 dark:bg-rb-800">
             <AaveV4SpokeCardSelector
               spokes={[activeCard]}
               selected={spokeName}
@@ -455,7 +455,7 @@ function AaveV4SpokePageInner() {
         {/* Economics (tower chart + liquidation/price runway) in its own
             rounded panel — contained now, no full-bleed w-screen section. */}
         {activeGroup && hasUiHydrated ? (
-          <div className="rounded-2xl bg-rb-100/50 dark:bg-rb-900/40 px-4 md:px-6 py-6">
+          <div className="rounded-2xl bg-rb-50 dark:bg-rb-800 px-4 md:px-6 py-6">
             <AaveV4SpokeEconomicsBand
               activeName={activeGroup.name}
               reserves={activeGroup.result.reserves}
@@ -511,7 +511,7 @@ function AaveV4SpokePageInner() {
                 title={sortDirection === "asc" ? "Oldest first" : "Newest first"}
                 className={`${CTRL_GHOST} ${CTRL_OFF} w-7 h-7 rounded-md`}
               >
-                <ArrowUpDown size={12} />
+                {sortDirection === "asc" ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
               </button>
               {eventOptions.length > 1 && (
                 <FilterDropdown

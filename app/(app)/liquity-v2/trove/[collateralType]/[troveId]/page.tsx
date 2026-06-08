@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, ArrowUpDown } from "lucide-react";
+import { ArrowLeft, ArrowUp, ArrowDown } from "lucide-react";
 import { TroveSummary, TrovesResponse } from "@/types/api/trove";
 import { TroveSummaryCardSelector } from "@/components/trove/TroveSummaryCardSelector";
 import { TroveDetailsBand } from "@/components/trove/TroveDetailsBand";
@@ -128,7 +128,7 @@ function TroveSummaryStack({
     // rest, so the tinted panel supplies its surface. No ownerTroves passed —
     // the position switcher lives on the wallet-filtered listing (the back
     // button links there); the selector falls through to single-card mode.
-    <div className="rounded-2xl bg-rb-100/50 dark:bg-rb-900/40">
+    <div className="rounded-2xl bg-rb-50 dark:bg-rb-800">
       <TroveSummaryCardSelector trove={trove} liveState={liveState} prices={prices} loadingStatus={loadingStatus} />
       {hasDetail && (
         // px-5 mirrors the card's inner padding; the divider + pt match Aave's
@@ -439,7 +439,7 @@ export default function TrovePage() {
         {/* Economics in its own contained rounded panel — mirrors the Aave
             spoke page (no full-bleed w-screen section) so the two rails share
             one shell. */}
-        <div className="rounded-2xl bg-rb-100/50 dark:bg-rb-900/40 px-4 md:px-6 py-6">
+        <div className="rounded-2xl bg-rb-50 dark:bg-rb-800 px-4 md:px-6 py-6">
           <TroveEconomicsSummary
             events={sortedEvents}
             currentPrice={prices?.[troveData.collateralType.toLowerCase() as keyof OraclePricesData]}
@@ -489,7 +489,7 @@ export default function TrovePage() {
                 title={sortDirection === "asc" ? "Oldest first" : "Newest first"}
                 className={`${CTRL_GHOST} ${CTRL_OFF} w-7 h-7 rounded-md`}
               >
-                <ArrowUpDown size={12} />
+                {sortDirection === "asc" ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
               </button>
               {eventOptions.length > 1 && (
                 <FilterDropdown

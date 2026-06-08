@@ -311,7 +311,7 @@ function RedeemerSummary({ stats, currentPrice }: { stats: RedeemerStats; curren
     : null;
 
   return (
-    <div className="rounded-lg bg-rb-100 dark:bg-rb-900 overflow-hidden">
+    <div className="rounded-lg bg-rb-50 dark:bg-rb-800 overflow-hidden">
       <div className="px-5 pt-5 pb-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
@@ -689,7 +689,7 @@ export function TroveEconomicsSummary({
   return (
     <>
     {!hideHeader && (
-    <div className={`rounded-lg overflow-hidden ${meta.status === "closed" ? "bg-rb-100/50 dark:bg-rb-850 opacity-60" : "bg-rb-100 dark:bg-rb-900"}`}>
+    <div className={`rounded-lg overflow-hidden ${meta.status === "closed" ? "bg-rb-100/50 dark:bg-rb-850 opacity-60" : "bg-rb-50 dark:bg-rb-800"}`}>
       {/* Position Summary Header */}
       <div className="px-5 pt-7 pb-4">
 

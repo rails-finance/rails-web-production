@@ -118,34 +118,31 @@ export function EventCard({
       {/* ── Header panel ─────────────────────────────────────────── */}
       <div
         className={`overflow-visible rounded-xl transition-colors ${
-          showDetail
-            ? "rounded-b-none bg-rb-100 dark:bg-rb-900"
-            : hasDetail
-              ? "hover:bg-rb-100 dark:hover:bg-rb-900"
-              : ""
+          showDetail ? "rounded-b-none bg-rb-50 dark:bg-rb-800" : hasDetail ? "hover:bg-rb-50 dark:hover:bg-rb-800" : ""
         }`}
       >
         <div
           className={hideDetailChevron ? "" : "group/evt cursor-pointer"}
-          onClick={() => { if (hasDetail && !hideDetailChevron) toggleDetail(); }}
+          onClick={() => {
+            if (hasDetail && !hideDetailChevron) toggleDetail();
+          }}
           role={hideDetailChevron ? undefined : "button"}
           tabIndex={hideDetailChevron ? undefined : 0}
-          onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && hasDetail && !hideDetailChevron) { e.preventDefault(); toggleDetail(); } }}
+          onKeyDown={(e) => {
+            if ((e.key === "Enter" || e.key === " ") && hasDetail && !hideDetailChevron) {
+              e.preventDefault();
+              toggleDetail();
+            }
+          }}
         >
-        <div className="flex items-start gap-2">
-          <div className="flex-1 min-w-0">
-            {header}
+          <div className="flex items-start gap-2">
+            <div className="flex-1 min-w-0">{header}</div>
+            {hasDetail && !hideDetailChevron && (
+              <ExpandChevron isOpen={showDetail} group="evt" className="mr-5 mt-[18px]" />
+            )}
           </div>
-          {hasDetail && !hideDetailChevron && (
-            <ExpandChevron isOpen={showDetail} group="evt" className="mr-5 mt-[18px]" />
-          )}
-        </div>
-        {headerBars}
-        {priceBadge && (
-          <div className="flex justify-end px-5 pb-2 -mt-1">
-            {priceBadge}
-          </div>
-        )}
+          {headerBars}
+          {priceBadge && <div className="flex justify-end px-5 pb-2 -mt-1">{priceBadge}</div>}
         </div>
       </div>
 
@@ -156,7 +153,7 @@ export function EventCard({
       >
         <div className="overflow-hidden">
           {detailMounted && (
-            <div className="rounded-b-xl bg-rb-100 dark:bg-rb-900">
+            <div className="rounded-b-xl bg-rb-50 dark:bg-rb-800">
               {detailLoading && (
                 <div className="flex items-center justify-center gap-2 py-8 text-sm ">
                   <span className="relative flex size-2">
@@ -172,7 +169,10 @@ export function EventCard({
                   <span className="text-sm text-red-500">Failed to load data.</span>
                   {onDetailRetry && (
                     <button
-                      onClick={(e) => { e.stopPropagation(); onDetailRetry(); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDetailRetry();
+                      }}
                       className="text-sm text-blue-500 hover:underline"
                     >
                       Retry
@@ -190,13 +190,20 @@ export function EventCard({
                 <div className="flex justify-end px-4 pb-2 pt-1">
                   <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); toggleExplainer(); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleExplainer();
+                    }}
                     aria-expanded={isExplainerOpen}
-                    aria-label={isExplainerOpen ? 'Hide details' : 'Show details'}
+                    aria-label={isExplainerOpen ? "Hide details" : "Show details"}
                     className="inline-flex flex-col items-center rounded transition-colors text-rb-500 hover:text-rb-400"
                   >
                     <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                     <svg
                       className={`w-2.5 h-2.5 -mt-0.5 transition-opacity ${isExplainerOpen ? "opacity-100" : "opacity-0"}`}
@@ -222,9 +229,7 @@ export function EventCard({
                       {explainerTeaser && (
                         <div className="flex items-baseline gap-2 mb-2">
                           <span className=" shrink-0">•</span>
-                          <div className="flex-1 text-sm  leading-relaxed min-w-0">
-                            {explainerTeaser}
-                          </div>
+                          <div className="flex-1 text-sm  leading-relaxed min-w-0">{explainerTeaser}</div>
                         </div>
                       )}
                       {explainer}
@@ -247,9 +252,7 @@ export function EventCard({
     >
       {showAvatar && avatar}
       {/* Spine area — 2/5 width on desktop, hidden on mobile */}
-      <div className="hidden sm:flex w-2/5 shrink-0 self-stretch items-stretch justify-center">
-        {iconColumn}
-      </div>
+      <div className="hidden sm:flex w-2/5 shrink-0 self-stretch items-stretch justify-center">{iconColumn}</div>
       {contentTiers}
     </div>
   );

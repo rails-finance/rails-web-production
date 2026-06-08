@@ -42,7 +42,7 @@ const MONO_RAILS: MonoRail[] = [
 
 export function MonoRailSection() {
   return (
-    <section className="bg-rb-200 dark:bg-rb-800">
+    <section className="bg-background">
       <div className="max-w-7xl mx-auto px-4 py-16">
         <div className="text-center mb-10">
           <h2 className="font-sans font-semibold tracking-tight leading-tight mb-3 text-[clamp(24px,3.5vw,38px)]">
@@ -94,7 +94,7 @@ function MonoRailCard({ rail }: { rail: MonoRail }) {
     return (
       <Link
         href={rail.href}
-        className="p-5 flex flex-col gap-3 rounded-3xl border border-transparent bg-rb-300/50 dark:bg-rb-900/50 transition-colors hover:border-blue-500/40 hover:bg-rb-300/80 dark:hover:bg-rb-900/80"
+        className="p-5 flex flex-col gap-3 rounded-3xl border border-transparent bg-rb-50 dark:bg-rb-800 transition-colors hover:border-blue-500/40"
       >
         {inner}
         {desc}
@@ -103,7 +103,7 @@ function MonoRailCard({ rail }: { rail: MonoRail }) {
   }
 
   return (
-    <div className="p-5 flex flex-col gap-3 rounded-3xl border border-transparent bg-rb-300/50 dark:bg-rb-900/50">
+    <div className="p-5 flex flex-col gap-3 rounded-3xl border border-transparent bg-rb-50 dark:bg-rb-800">
       {inner}
       {desc}
     </div>
