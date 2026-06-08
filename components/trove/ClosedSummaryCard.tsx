@@ -40,7 +40,7 @@ export function ClosedSummaryCard({ trove, compact = false, showActivityMeta = t
                 {formatDuration(trove.activity.lastActivityAt, new Date())} ago
               </span>
               {trove.activity.redemptionCount > 0 && (
-                <span className="inline-flex items-center text-orange-400">
+                <span className="inline-flex items-center text-rb-500">
                   <Icon name="triangle" size={12} />
                   <span className="ml-1">{trove.activity.redemptionCount}</span>
                 </span>
@@ -60,8 +60,8 @@ export function ClosedSummaryCard({ trove, compact = false, showActivityMeta = t
           <div>
             <div className="text-xs text-rb-500 font-semibold mb-1">Highest recorded Collateral</div>
             <div className="flex items-center gap-1.5">
-              <span className="text-3xl font-bold">
-                <HighlightableValue type="peakCollateral" state="after" value={trove.collateral.peakAmount} variant="card">
+              <span className="text-2xl lg:text-3xl font-bold">
+                <HighlightableValue type="peakCollateral" state="after" value={trove.collateral.peakAmount} variant="card" className="text-rb-500">
                   {formatPrice(trove.collateral.peakAmount)}
                 </HighlightableValue>
               </span>
@@ -71,8 +71,8 @@ export function ClosedSummaryCard({ trove, compact = false, showActivityMeta = t
           <div>
             <div className="text-xs text-rb-500 font-semibold mb-1">Highest recorded Debt</div>
             <div className="flex items-center gap-1.5">
-              <span className="text-3xl font-bold">
-                <HighlightableValue type="peakDebt" state="after" value={trove.debt.peak} variant="card">
+              <span className="text-2xl lg:text-3xl font-bold">
+                <HighlightableValue type="peakDebt" state="after" value={trove.debt.peak} variant="card" className="text-rb-500">
                   {compact ? formatApproximate(trove.debt.peak) : formatPrice(trove.debt.peak)}
                 </HighlightableValue>
               </span>

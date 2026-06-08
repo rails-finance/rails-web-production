@@ -20,13 +20,12 @@ export function hfLabel(hf: number | null): string {
   return hf.toFixed(2);
 }
 
-// Aave's risk thresholds: HF≥2 comfortable, ≥1.5 healthy, ≥1.2 warning,
-// <1.2 danger, <1 already liquidatable.
-export function hfColorClass(hf: number | null): string {
-  if (hf == null || hf >= 2) return "text-green-400";
-  if (hf >= 1.5) return "text-green-400";
-  if (hf >= 1.2) return "text-yellow-400";
-  return "text-red-400";
+// Health-factor value color. Intentionally neutral at every level — Rails
+// doesn't color-code risk valence (green=safe / red=danger); the numeric HF
+// and the headroom readout carry the meaning. Kept as a function so call sites
+// don't need to change.
+export function hfColorClass(_hf: number | null): string {
+  return "text-foreground/80";
 }
 
 // Liq prices vary wildly: BTC at $100k vs USDC at $1. Scale formatting to the

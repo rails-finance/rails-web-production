@@ -136,7 +136,7 @@ function AaveV4SpokeCard({
                       value: (() => {
                         const v = fmtUsd(spoke.totalSupplyUsd);
                         return (
-                          <StatValue color="text-blue-400" title={v.title}>
+                          <StatValue color="text-foreground/80" title={v.title}>
                             {v.display}
                           </StatValue>
                         );
@@ -156,16 +156,14 @@ function AaveV4SpokeCard({
                       value: (() => {
                         const v = fmtUsd(spoke.totalSupplyUsd);
                         return (
-                          <StatValue color="text-blue-400" title={v.title}>
+                          <StatValue color="text-foreground/80" title={v.title}>
                             {v.display}
                           </StatValue>
                         );
                       })(),
                       footnote:
                         spoke.netApy !== null ? (
-                          <div
-                            className={`text-xs mt-0.5 font-medium ${spoke.netApy >= 0 ? "text-green-400" : "text-red-400"}`}
-                          >
+                          <div className="text-xs mt-0.5 font-medium text-rb-500">
                             {spoke.netApy >= 0 ? "+" : ""}
                             {spoke.netApy.toFixed(2)}% net APY
                           </div>
@@ -180,7 +178,7 @@ function AaveV4SpokeCard({
                       value: (() => {
                         const v = fmtUsd(spoke.totalDebtUsd);
                         return (
-                          <StatValue color="text-emerald-400" title={v.title}>
+                          <StatValue color="text-foreground/80" title={v.title}>
                             {v.display}
                           </StatValue>
                         );
@@ -215,7 +213,7 @@ function AaveV4SpokeCard({
                     {
                       label: spoke.liqPrice ? `Liq Price (${spoke.liqPrice.symbol})` : "Liq Price",
                       value: spoke.liqPrice ? (
-                        <StatValue color="text-foreground">
+                        <StatValue color="text-foreground/80">
                           <span className="inline-flex items-center gap-1.5">
                             {fmtLiqPrice(spoke.liqPrice.liqPrice)}
                             <TokenChipIcon symbol={spoke.liqPrice.symbol} size={18} />

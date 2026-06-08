@@ -62,7 +62,7 @@ export function OpenPositionStats({ columns, icons, identity, leadingIdentity, s
       <div className="flex items-center justify-between gap-2 flex-wrap mb-3">
         <span className="flex items-center gap-2">
           {statusPill ?? (
-            <span className="font-bold tracking-wider px-2 py-0.5 text-white bg-green-500 rounded-xs text-xs">ACTIVE</span>
+            <span className="font-bold tracking-wider px-2 py-0.5 bg-rb-300 dark:bg-rb-700 text-foreground/80 dark:text-foreground/60 rounded-xs text-xs">ACTIVE</span>
           )}
           {leadingIdentity}
         </span>

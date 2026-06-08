@@ -9,11 +9,9 @@
  * USD totals middle, status badge right) but adapted for V4's per-spoke
  * aggregation.
  *
- * Health-factor badge colors track the same buckets as the runway stack:
- *   ≥ 1.5  healthy (green)
- *   ≥ 1.1  cautious (amber)
- *   < 1.1  at-risk (red)
- *   null   no debt (neutral)
+ * The health-factor badge is rendered in a single neutral surface token at
+ * every level — Rails doesn't color-code risk valence; the "HF 1.23" number
+ * carries the meaning. The no-debt case keeps its own muted marker style.
  */
 
 import Link from "next/link";
@@ -53,12 +51,9 @@ function HealthBadge({ hf }: { hf: number | null }) {
       </span>
     );
   }
-  const cls =
-    hf >= 1.5
-      ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-      : hf >= 1.1
-      ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
-      : "bg-red-500/15 text-red-600 dark:text-red-400";
+  // Neutral badge regardless of HF level — the "HF 1.23" number carries the
+  // meaning; Rails doesn't color-code risk valence.
+  const cls = "bg-rb-200 dark:bg-rb-800 text-foreground";
   return (
     <span
       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider ${cls}`}

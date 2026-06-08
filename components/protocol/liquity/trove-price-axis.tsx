@@ -50,16 +50,17 @@ export interface TrovePriceAxisProps {
   zoneBoundaries?: [number, number];
 }
 
+// Neutral zone styling — Rails doesn't color-code liquidation distance with
+// green/amber/red valence. Every band shares one muted neutral fill; only the
+// band the price currently sits in is emphasized. Position is read from the
+// marker, the zone labels, and the numeric "% to liquidation" readout.
+const ZONE_FILL_ACTIVE = "bg-rb-400 dark:bg-rb-500";
+const ZONE_FILL_MUTED = "bg-rb-200 dark:bg-rb-800";
+
 const ZONE_META = [
-  {
-    key: "conservative",
-    label: "Conservative",
-    active: "bg-emerald-500/55",
-    muted: "bg-emerald-500/20",
-    text: "text-emerald-400",
-  },
-  { key: "caution", label: "Caution", active: "bg-amber-500/55", muted: "bg-amber-500/20", text: "text-amber-400" },
-  { key: "liquidation", label: "Liquidation", active: "bg-red-500/55", muted: "bg-red-500/20", text: "text-red-400" },
+  { key: "conservative", label: "Conservative" },
+  { key: "caution", label: "Caution" },
+  { key: "liquidation", label: "Liquidation" },
 ] as const;
 
 export function TrovePriceAxis({
@@ -103,6 +104,10 @@ export function TrovePriceAxis({
   const oraclePct = priceToPct(oraclePrice);
   const liqPct = liqBoundary;
 
+  // Numeric distance-to-liquidation — carries the meaning the flattened
+  // (uncolored) bands used to convey at a glance.
+  const headroomPct = oraclePrice > 0 ? ((oraclePrice - liquidationPrice) / oraclePrice) * 100 : null;
+
   // Active zone for highlight + label colour.
   const activeZoneIdx = oraclePct < zoneBoundaries[0] ? 0 : oraclePct < zoneBoundaries[1] ? 1 : 2;
 
@@ -131,18 +136,26 @@ export function TrovePriceAxis({
           {/* Liquidation-price label, sitting above the boundary between
               Aggressive and Liquidation zones. */}
           <div
-            className="absolute text-[11px] tabular-nums whitespace-nowrap pointer-events-none leading-tight text-red-400 font-semibold"
+            className="absolute text-[11px] tabular-nums whitespace-nowrap pointer-events-none leading-tight text-foreground font-semibold"
             style={{ left: `${liqPct}%`, transform: "translateX(-50%)", top: H_LIQ_LABEL }}
           >
             {fmtPrice(liquidationPrice)}
           </div>
+          {headroomPct != null && (
+            <div
+              className="absolute text-[11px] tabular-nums whitespace-nowrap pointer-events-none leading-tight text-rb-500 font-medium"
+              style={{ left: 0, top: H_LIQ_LABEL }}
+            >
+              {headroomPct > 0 ? `${headroomPct.toFixed(0)}% to liquidation` : "At liquidation price"}
+            </div>
+          )}
 
           {/* Segmented bar — four zones with gaps. */}
           <div className="absolute left-0 right-0 flex items-center" style={{ top: H_BAR_TOP, height: H_BAR }}>
             {ZONE_META.map((zone, i) => (
               <div
                 key={zone.key}
-                className={`h-full rounded-md transition-colors ${i === activeZoneIdx ? zone.active : zone.muted}`}
+                className={`h-full rounded-md transition-colors ${i === activeZoneIdx ? ZONE_FILL_ACTIVE : ZONE_FILL_MUTED}`}
                 style={{
                   width: `${zoneWidths[i]}%`,
                   marginLeft: i === 0 ? 0 : `${GAP}%`,
@@ -172,7 +185,7 @@ export function TrovePriceAxis({
             {ZONE_META.map((zone, i) => (
               <div
                 key={zone.key}
-                className={`text-[10px] text-center transition-colors ${i === activeZoneIdx ? `${zone.text} font-semibold` : "text-rb-500"}`}
+                className={`text-[10px] text-center transition-colors ${i === activeZoneIdx ? "text-foreground font-semibold" : "text-rb-500"}`}
                 style={{
                   width: `${zoneWidths[i]}%`,
                   marginLeft: i === 0 ? 0 : `${GAP}%`,
@@ -212,7 +225,7 @@ export function trovePriceRunwayExplanation({
   if (underwater) {
     return (
       <>
-        Oracle price is <span className="font-semibold text-red-500">at or below the liquidation threshold</span>. This
+        Oracle price is <span className="font-semibold text-foreground">at or below the liquidation threshold</span>. This
         trove can be liquidated — any keeper hitting the contract repays the debt in {debtSymbol} and claims the
         collateral at a 10% bonus.
       </>
@@ -222,7 +235,7 @@ export function trovePriceRunwayExplanation({
   return (
     <>
       {collateralSymbol} price would need to drop{" "}
-      <span className="font-semibold text-emerald-400">{headroomPct.toFixed(1)}%</span> (to {fmtPrice(liquidationPrice)}
+      <span className="font-semibold text-foreground">{headroomPct.toFixed(1)}%</span> (to {fmtPrice(liquidationPrice)}
       ) before this trove is liquidated. Liquity V2 uses a 110% minimum collateral ratio across branches.
     </>
   );

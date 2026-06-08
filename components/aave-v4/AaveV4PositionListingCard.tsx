@@ -122,7 +122,7 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
   const collateralValue = (() => {
     const v = fmtUsd(sim.totalCollateralUsd);
     return (
-      <StatValue color={supplyOnly ? "text-rb-500" : "text-blue-400"} title={v.title}>
+      <StatValue color={supplyOnly ? "text-rb-500" : "text-foreground"} title={v.title}>
         {v.display}
       </StatValue>
     );
@@ -132,7 +132,7 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
     if (supplyOnly) return <StatDash />;
     const v = fmtUsd(sim.totalDebtUsd);
     return (
-      <StatValue color="text-emerald-400" title={v.title}>
+      <StatValue color="text-foreground/80" title={v.title}>
         {v.display}
       </StatValue>
     );
@@ -152,7 +152,7 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
   const liqPriceValue = (() => {
     if (!sim.liqPrice) return <StatDash />;
     return (
-      <StatValue color="text-foreground">
+      <StatValue color="text-foreground/80">
         <span className="inline-flex items-center gap-1.5">
           {fmtLiqPrice(sim.liqPrice.liqPrice)}
           <TokenChipIcon symbol={sim.liqPrice.symbol} size={18} filterable={false} />

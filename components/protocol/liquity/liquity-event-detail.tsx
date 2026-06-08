@@ -142,7 +142,7 @@ function CollateralMetric({
         )}
       </StateTransition>
       {hasSurplus && (
-        <div className="text-xs text-green-400 mt-0.5">
+        <div className="text-xs text-foreground mt-0.5">
           +{formatColl(collSurplus)} claimable surplus
         </div>
       )}
@@ -381,7 +381,7 @@ export function LiquityEventDetail({ ctx, txHash, previousEvent, currentEvent }:
       {/* Liquidation breakdown */}
       {liquidation && (
         <div className="px-4 py-2">
-          <span className="text-sm font-semibold text-red-400">Liquidation Breakdown</span>
+          <span className="text-sm font-semibold text-foreground">Liquidation Breakdown</span>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
             <Stat label="Debt offset by SP" value={`${toLocaleStringHelper(liquidation.debtOffsetBySP)} ${ctx.assetType ?? "BOLD"}`} />
             {liquidation.debtRedistributed > 0 && (
@@ -392,7 +392,7 @@ export function LiquityEventDetail({ ctx, txHash, previousEvent, currentEvent }:
               <Stat label="Coll redistributed" value={`${formatColl(liquidation.collRedistributed)} ${ctx.collateralType}`} />
             )}
             {liquidation.collSurplus > 0 && (
-              <Stat label="Surplus returned" value={`${formatColl(liquidation.collSurplus)} ${ctx.collateralType} (${formatUsd(liquidation.collSurplus * liquidation.price)})`} className="text-green-400" />
+              <Stat label="Surplus returned" value={`${formatColl(liquidation.collSurplus)} ${ctx.collateralType} (${formatUsd(liquidation.collSurplus * liquidation.price)})`} className="text-foreground" />
             )}
             <Stat label="Price" value={formatUsd(liquidation.price)} />
             {liquidation.boldGasCompensation > 0 && (
@@ -405,7 +405,7 @@ export function LiquityEventDetail({ ctx, txHash, previousEvent, currentEvent }:
       {/* Redemption breakdown */}
       {redemption && (
         <div className="px-4 py-2">
-          <span className="text-sm font-semibold text-amber-400">Redemption Breakdown</span>
+          <span className="text-sm font-semibold text-foreground">Redemption Breakdown</span>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
             {redemption.attemptedBoldAmount !== redemption.actualBoldAmount && (
               <Stat label="Attempted" value={`${toLocaleStringHelper(redemption.attemptedBoldAmount)} ${ctx.assetType ?? "BOLD"}`} />
@@ -413,14 +413,14 @@ export function LiquityEventDetail({ ctx, txHash, previousEvent, currentEvent }:
             <Stat label={`${ctx.assetType ?? "BOLD"} redeemed`} value={`${toLocaleStringHelper(redemption.actualBoldAmount)} ${ctx.assetType ?? "BOLD"}`} />
             <Stat label="Coll taken" value={`${formatColl(redemption.ETHSent)} ${ctx.collateralType} (${formatUsd(redemption.ETHSent * redemption.price)})`} />
             {redemption.ETHFee && Number(redemption.ETHFee) > 0 && (
-              <Stat label="Fee retained" value={`${formatColl(Number(redemption.ETHFee))} ${ctx.collateralType}`} className="text-green-400" />
+              <Stat label="Fee retained" value={`${formatColl(Number(redemption.ETHFee))} ${ctx.collateralType}`} className="text-foreground" />
             )}
             <Stat label="Price" value={formatUsd(redemption.price)} />
             {(() => {
               const collValue = redemption.ETHSent * redemption.price;
               const pl = redemption.actualBoldAmount - collValue;
               return Math.abs(pl) > 0.01 ? (
-                <Stat label="Borrower P/L" value={`${pl > 0 ? '+' : ''}${formatUsd(Math.abs(pl))}`} className={pl > 0 ? "text-green-400" : "text-red-400"} />
+                <Stat label="Borrower P/L" value={`${pl > 0 ? '+' : ''}${formatUsd(Math.abs(pl))}`} className="text-foreground" />
               ) : null;
             })()}
           </div>
@@ -431,7 +431,7 @@ export function LiquityEventDetail({ ctx, txHash, previousEvent, currentEvent }:
       {(ctx.isZombieTrove || ctx.isInBatch || collPrice > 0) && (
         <div className="flex items-center gap-2 px-4 py-2">
           {ctx.isZombieTrove && (
-            <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 font-bold">Zombie Trove</span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-rb-200 dark:bg-rb-800 text-foreground font-bold">Zombie Trove</span>
           )}
           {ctx.isInBatch && (
             <span className="text-xs px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-400 font-bold">Batched</span>

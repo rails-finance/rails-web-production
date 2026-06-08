@@ -16,11 +16,11 @@ function getOperationStyle(operation: string, ctx?: LiquityContext): OperationSt
   switch (operation) {
     case "openTrove":
     case "openTroveAndJoinBatch":
-      return { label: "Open", color: "text-green-700 dark:text-green-400", bg: "bg-green-500/20", badge: true };
+      return { label: "Open", color: "text-foreground", bg: "bg-rb-200 dark:bg-rb-800", badge: true };
     case "closeTrove":
       return { label: "Close", color: "", bg: "bg-rb-500/20 dark:bg-rb-500/20", badge: true };
     case "liquidate":
-      return { label: "Liquidated", color: "text-red-700 dark:text-red-400", bg: "bg-red-500/20", badge: true };
+      return { label: "Liquidated", color: "text-foreground", bg: "bg-rb-200 dark:bg-rb-800", badge: true };
     case "adjustTrove": {
       if (ctx?.troveOperation) {
         const debtOp = ctx.troveOperation.debtChangeFromOperation;
@@ -57,10 +57,10 @@ function getOperationStyle(operation: string, ctx?: LiquityContext): OperationSt
     case "applyPendingDebt":
       return { label: "Apply debt", color: "text-pink-700 dark:text-pink-400", bg: "bg-pink-500/20", badge: true };
     case "redeemCollateral":
-      return { label: "Redemption", color: "text-amber-700 dark:text-amber-400", bg: "bg-amber-500/20", badge: true };
+      return { label: "Redemption", color: "text-foreground", bg: "bg-rb-200 dark:bg-rb-800", badge: true };
     case "adjustZombieTrove":
     case "adjustUnredeemableZombieTrove":
-      return { label: "Redeemed", color: "text-amber-700 dark:text-amber-400", bg: "bg-amber-500/20", badge: true };
+      return { label: "Redeemed", color: "text-foreground", bg: "bg-rb-200 dark:bg-rb-800", badge: true };
     case "setInterestBatchManager":
       return { label: "Delegate", color: "", bg: "", badge: false };
     case "removeFromBatch":
@@ -267,7 +267,7 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
               the debt of a zombie trove, the leftover coll is unlocked for
               the owner. Mirrors the legacy "claimable" pill. */}
           {ctx.operation === "redeemCollateral" && ctx.isZombieTrove && stateAfter.debt === 0 && stateAfter.coll > 0 && (
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium bg-rb-200 dark:bg-rb-800 text-foreground">
               <span className="font-bold tabular-nums">{stateAfter.coll.toFixed(4)}</span>
               <TokenChipIcon symbol={ctx.collateralType} size={14} />
               claimable
@@ -299,8 +299,8 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
               <span
                 className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-bold rounded ${
                   stateAfter.debt === 0
-                    ? "bg-red-400/90 dark:bg-red-500/20 text-white dark:text-red-400"
-                    : "bg-yellow-400/90 dark:bg-yellow-500/20 text-white dark:text-yellow-400"
+                    ? "bg-rb-200 dark:bg-rb-800 text-foreground"
+                    : "bg-rb-200 dark:bg-rb-800 text-foreground"
                 }`}
                 title={stateAfter.debt === 0
                   ? "Zombie trove fully redeemed — debt cleared, collateral now claimable"

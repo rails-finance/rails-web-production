@@ -191,7 +191,7 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
       {/* Collateral toggle status */}
       {isToggle && (
         <div className="px-5 py-2 text-sm">
-          <span className={`font-bold ${ctx.enabled ? "text-green-400" : ""}`}>
+          <span className={`font-bold ${ctx.enabled ? "text-foreground" : ""}`}>
             {ctx.enabled ? "Enabled as collateral" : "Disabled as collateral"}
           </span>
         </div>
@@ -203,13 +203,13 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
           {ctx.debtToCover && (
             <div className="flex flex-col">
               <span className="text-rb-500 text-xs font-semibold">Debt Covered</span>
-              <span className="font-bold text-red-400">{fmt(ctx.debtToCover)} {tokenLabel}</span>
+              <span className="font-bold text-foreground">{fmt(ctx.debtToCover)} {tokenLabel}</span>
             </div>
           )}
           {ctx.liquidatedCollateralAmount && ctx.collateralSymbol && (
             <div className="flex flex-col">
               <span className="text-rb-500 text-xs font-semibold">Collateral Seized</span>
-              <span className="font-bold text-red-400">{fmt(ctx.liquidatedCollateralAmount)} {ctx.collateralSymbol}</span>
+              <span className="font-bold text-foreground">{fmt(ctx.liquidatedCollateralAmount)} {ctx.collateralSymbol}</span>
             </div>
           )}
           {ctx.liquidator && (
@@ -287,7 +287,7 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
               {showRatio && (
                 <div>
                   <div className="text-rb-500 text-xs font-semibold mb-1">{ratioLabel(ratioMode)}</div>
-                  <div className={`text-sm font-bold ${ratioColorClass(collRatio * 100, { danger: 120, warn: 150, warnClass: "text-amber-400", safeClass: "" })}`}>
+                  <div className={`text-sm font-bold ${ratioColorClass(collRatio * 100, { danger: 120, warn: 150, warnClass: "text-foreground", safeClass: "" })}`}>
                     {formatRatio(collRatio * 100, ratioMode, 0)}
                   </div>
                 </div>

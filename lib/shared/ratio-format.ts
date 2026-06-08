@@ -24,14 +24,13 @@ export function formatRatio(cr: number, mode: RatioMode, decimals = 1): string {
   return value.toFixed(decimals) + '%';
 }
 
-// Color class for a CR% value. Thresholds default to the Liquity V2 style
-// (danger <150, warn <200, safe otherwise). Palette mirrors the price-runway
-// zones — emerald = Conservative, amber = Caution. The Liquity hook below
-// collapses the older three-tier (Cons/Mod/Agg) into two by leaving the
-// danger threshold unset, so any CR below the Conservative cutoff renders
-// amber; the orange/danger tier is still available to other protocols that
-// want a finer split. Evaluation stays in CR terms regardless of display
-// mode, so the colour remains accurate when the user has LTV enabled.
+// Color class for a CR% value. Rails does not color-code collateral-ratio
+// risk with green/amber/orange valence — every tier renders in neutral
+// `text-foreground`; the ratio number itself carries the meaning. The
+// threshold params are retained (callers still pass them) but no longer drive
+// a hue, and the per-tier class options remain overridable for any call site
+// that genuinely needs a non-default neutral. Evaluation still happens in CR
+// terms so the (now neutral) result is correct under LTV display too.
 export interface RatioColorOptions {
   danger?: number;
   warn?: number;
@@ -45,9 +44,9 @@ export function ratioColorClass(cr: number, opts: RatioColorOptions = {}): strin
   const {
     danger = 150,
     warn = 200,
-    safeClass = 'text-emerald-700 dark:text-emerald-400',
-    warnClass = 'text-amber-600 dark:text-amber-400',
-    dangerClass = 'text-orange-600 dark:text-orange-400',
+    safeClass = 'text-foreground',
+    warnClass = 'text-foreground',
+    dangerClass = 'text-foreground',
     zeroClass = '',
   } = opts;
   if (!isFinite(cr) || cr <= 0) return zeroClass;

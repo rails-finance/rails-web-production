@@ -54,7 +54,7 @@ function buildSpokePositionItems(spoke: AaveSpokeCardInfo): React.ReactNode[] {
     if (spoke.netApy != null) {
       items.push(
         <span key="apy">
-          The supplied balance earns roughly <strong className="text-green-400">{spoke.netApy.toFixed(2)}%</strong> APY at
+          The supplied balance earns roughly <strong className="text-foreground">{spoke.netApy.toFixed(2)}%</strong> APY at
           the most recent supply rate.
         </span>,
       );
@@ -99,12 +99,12 @@ function buildSpokePositionItems(spoke: AaveSpokeCardInfo): React.ReactNode[] {
       items.push(
         spoke.netApy >= 0 ? (
           <span key="apy">
-            The position nets <strong className="text-green-400">+{spoke.netApy.toFixed(2)}%</strong> APY on equity —
+            The position nets <strong className="text-foreground">+{spoke.netApy.toFixed(2)}%</strong> APY on equity —
             supply yield outpaces borrow cost.
           </span>
         ) : (
           <span key="apy">
-            Borrow cost outweighs supply yield, for a net <strong className="text-red-400">{spoke.netApy.toFixed(2)}%</strong>{" "}
+            Borrow cost outweighs supply yield, for a net <strong className="text-foreground">{spoke.netApy.toFixed(2)}%</strong>{" "}
             APY on equity.
           </span>
         ),
@@ -135,7 +135,7 @@ function buildSpokePositionItems(spoke: AaveSpokeCardInfo): React.ReactNode[] {
 
   if (spoke.wasLiquidated) {
     items.push(
-      <span key="liquidated" className="text-red-400/90">
+      <span key="liquidated" className="text-rb-500">
         This position has been liquidated at least once — that history is permanent even if it is healthy again now.
       </span>,
     );

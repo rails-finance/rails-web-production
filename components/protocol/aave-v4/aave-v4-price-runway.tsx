@@ -25,16 +25,18 @@ import { fmtPrice, PricePill } from "@/components/shared/price-pill";
  * simulation deferred per the truth principle (see migration/phase-2-mono-explorers.md).
  */
 
+// Neutral zone styling — Rails doesn't color-code liquidation distance with
+// green/amber/red valence. Every band shares one muted neutral fill; only the
+// band the price currently sits in is emphasized (stronger neutral). Position
+// is read from the marker, the zone labels, and the numeric "% to liquidation"
+// readout above the bar.
+const ZONE_FILL_ACTIVE = "bg-rb-400 dark:bg-rb-500";
+const ZONE_FILL_MUTED = "bg-rb-200 dark:bg-rb-800";
+
 const ZONE_META = [
-  {
-    key: "conservative",
-    label: "Conservative",
-    active: "bg-emerald-500/55",
-    muted: "bg-emerald-500/20",
-    text: "text-emerald-400",
-  },
-  { key: "caution", label: "Caution", active: "bg-amber-500/55", muted: "bg-amber-500/20", text: "text-amber-400" },
-  { key: "liquidation", label: "Liquidation", active: "bg-red-500/55", muted: "bg-red-500/20", text: "text-red-400" },
+  { key: "conservative", label: "Conservative" },
+  { key: "caution", label: "Caution" },
+  { key: "liquidation", label: "Liquidation" },
 ] as const;
 
 export interface AaveV4PriceRunwayProps {
@@ -63,7 +65,6 @@ export function AaveV4PriceRunway({
   zoneBoundaries = [25, 75],
 }: AaveV4PriceRunwayProps) {
   const hasLiq = liqPrice != null && liqPrice > 0;
-  const underwater = hasLiq && currentPrice <= liqPrice!;
 
   const liqBoundary = zoneBoundaries[1];
   const effectiveThreshold = hasLiq
@@ -92,6 +93,10 @@ export function AaveV4PriceRunway({
   const oraclePct = hasLiq ? priceToPct(currentPrice) : 0;
   const activeZoneIdx = oraclePct < zoneBoundaries[0] ? 0 : oraclePct < zoneBoundaries[1] ? 1 : 2;
 
+  // Numeric distance-to-liquidation — carries the meaning the flattened
+  // (uncolored) bands used to convey at a glance.
+  const headroomPct = hasLiq && currentPrice > 0 ? ((currentPrice - liqPrice!) / currentPrice) * 100 : null;
+
   const GAP = 1.5;
   const numZones = ZONE_META.length;
   const totalGap = (numZones - 1) * GAP;
@@ -113,16 +118,24 @@ export function AaveV4PriceRunway({
         <div className="relative flex-1 min-w-[220px]" style={{ height: H_TOTAL }}>
           {hasLiq && (
             <div
-              className="absolute text-[11px] tabular-nums whitespace-nowrap pointer-events-none leading-tight text-red-400 font-semibold"
+              className="absolute text-[11px] tabular-nums whitespace-nowrap pointer-events-none leading-tight text-foreground font-semibold"
               style={{ left: `${liqBoundary}%`, transform: "translateX(-50%)", top: 0 }}
             >
               {fmtPrice(liqPrice!)}
             </div>
           )}
+          {headroomPct != null && (
+            <div
+              className="absolute text-[11px] tabular-nums whitespace-nowrap pointer-events-none leading-tight text-rb-500 font-medium"
+              style={{ left: 0, top: 0 }}
+            >
+              {headroomPct > 0 ? `${headroomPct.toFixed(0)}% to liquidation` : "At liquidation price"}
+            </div>
+          )}
           <div className="absolute left-0 right-0 flex items-center" style={{ top: H_BAR_OFFSET, height: H_BAR }}>
             {ZONE_META.map((zone, i) => {
               const isActive = hasLiq && i === activeZoneIdx;
-              const fill = !hasLiq && i === 0 ? zone.active : isActive ? zone.active : zone.muted;
+              const fill = (!hasLiq && i === 0) || isActive ? ZONE_FILL_ACTIVE : ZONE_FILL_MUTED;
               return (
                 <div
                   key={zone.key}
@@ -146,9 +159,7 @@ export function AaveV4PriceRunway({
             }}
           >
             <span
-              className={`flex items-center justify-center w-full h-full rounded-full bg-white border-2 ${
-                underwater ? "border-red-500" : "border-rb-300 dark:border-rb-700"
-              }`}
+              className="flex items-center justify-center w-full h-full rounded-full bg-white border-2 border-rb-300 dark:border-rb-700"
               style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.3)" }}
             />
           </div>
@@ -161,7 +172,7 @@ export function AaveV4PriceRunway({
                   <div
                     key={zone.key}
                     className={`text-[10px] text-center transition-colors ${
-                      isActive ? `${zone.text} font-semibold` : "text-rb-500"
+                      isActive ? "text-foreground font-semibold" : "text-rb-500"
                     }`}
                     style={{
                       width: `${zoneWidths[i]}%`,
@@ -207,7 +218,7 @@ export function aaveV4RunwayExplanation({
   if (underwater) {
     return (
       <>
-        <span className="font-semibold text-red-400">{collateralSymbol} is below its liquidation price.</span> On-chain,
+        <span className="font-semibold text-foreground">{collateralSymbol} is below its liquidation price.</span> On-chain,
         this position would be liquidatable.
       </>
     );
@@ -224,7 +235,7 @@ export function aaveV4RunwayExplanation({
     return (
       <>
         {collateralSymbol} would need to drop{" "}
-        <span className="font-semibold text-emerald-400">{headroomPct.toFixed(1)}%</span> (to {fmtPrice(liqPrice!)})
+        <span className="font-semibold text-foreground">{headroomPct.toFixed(1)}%</span> (to {fmtPrice(liqPrice!)})
         before this spoke&apos;s health factor reaches 1 — holding every other asset at its current state.
       </>
     );

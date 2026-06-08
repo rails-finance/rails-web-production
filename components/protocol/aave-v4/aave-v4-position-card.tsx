@@ -159,11 +159,11 @@ function SpokeCard({
             {showHeaderUsd && (
               <>
                 {" · "}
-                <span className="text-blue-500 dark:text-blue-400 tabular-nums">{fmtUsd(collTotal)}</span>
+                <span className="text-foreground tabular-nums">{fmtUsd(collTotal)}</span>
                 {debtTotal > 0 ? (
                   <>
                     {" / "}
-                    <span className="text-emerald-500 dark:text-emerald-400 tabular-nums">{fmtUsd(debtTotal)}</span>
+                    <span className="text-foreground tabular-nums">{fmtUsd(debtTotal)}</span>
                   </>
                 ) : null}
               </>

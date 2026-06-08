@@ -28,7 +28,7 @@ const STYLES: Record<string, OperationStyle> = {
   withdraw:          { label: "Withdraw",           color: "", bg: "", badge: false },
   borrow:            { label: "Borrow",             color: "", bg: "", badge: false },
   repay:             { label: "Repay",              color: "", bg: "", badge: false },
-  liquidation:       { label: "Liquidation",        color: "text-red-400",   bg: "bg-red-500/20", badge: true },
+  liquidation:       { label: "Liquidation",        color: "text-foreground/80 dark:text-foreground/60",   bg: "bg-rb-300 dark:bg-rb-700", badge: true },
   collateral_toggle: { label: "Collateral Toggle",  color: "", bg: "", badge: false },
 };
 
@@ -77,7 +77,7 @@ export function AaveV4EventHeader({ ctx, timestamp, txGroup, eventNumber }: Aave
         {groupChip}
         {ctx.alsoToggledCollateral ? (
           <>
-            <span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400">Enable Collateral</span>
+            <span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold bg-rb-300 dark:bg-rb-700 text-foreground/80 dark:text-foreground/60">Enable Collateral</span>
             <span className="text-sm text-rb-500">Supply</span>
           </>
         ) : style.badge ? (
@@ -105,12 +105,12 @@ export function AaveV4EventHeader({ ctx, timestamp, txGroup, eventNumber }: Aave
           </span>
         )}
         {ctx.eventType === "liquidation" && ctx.debtToCover && (
-          <span className="inline-flex items-center gap-1.5 text-xs text-red-400">
+          <span className="inline-flex items-center gap-1.5 text-xs text-rb-500">
             <span>Debt covered: {formatNum(ctx.debtToCover)} {aaveV4DisplaySymbol(ctx.reserveSymbol)}</span>
           </span>
         )}
         {ctx.eventType === "liquidation" && ctx.liquidatedCollateralAmount && ctx.collateralSymbol && (
-          <span className="inline-flex items-center gap-1.5 text-xs text-red-400">
+          <span className="inline-flex items-center gap-1.5 text-xs text-rb-500">
             <span>Seized: {formatNum(ctx.liquidatedCollateralAmount)} {ctx.collateralSymbol}</span>
           </span>
         )}

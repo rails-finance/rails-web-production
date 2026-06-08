@@ -132,7 +132,7 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus, expec
       <div className="text-foreground">
         <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
           <span className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold tracking-wider px-2 py-0.5 text-white bg-green-500 dark:bg-green-950 dark:text-green-500/70 rounded-xs text-xs">
+            <span className="font-bold tracking-wider px-2 py-0.5 bg-rb-300 dark:bg-rb-700 text-foreground/80 dark:text-foreground/60 rounded-xs text-xs">
               OPEN
             </span>
             <span className="text-xs font-bold uppercase tracking-wide text-foreground/80">
@@ -160,7 +160,7 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus, expec
                 {formatDuration(trove.activity.lastActivityAt, new Date())} ago
               </span>
               {trove.activity.redemptionCount > 0 && (
-                <span className="inline-flex items-center text-orange-400">
+                <span className="inline-flex items-center text-rb-500">
                   <Icon name="triangle" size={12} />
                   <span className="ml-1">{trove.activity.redemptionCount}</span>
                 </span>
@@ -180,8 +180,8 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus, expec
           <div>
             <div className="text-xs text-rb-500 font-semibold mb-1">Collateral</div>
             <div className="flex items-center gap-1.5">
-              <span className="text-3xl font-bold">
-                <HighlightableValue type="collateral" state="after" value={displayCollateral}>
+              <span className="text-2xl lg:text-3xl font-bold">
+                <HighlightableValue type="collateral" state="after" value={displayCollateral} className="text-foreground/80">
                   <FadeNumber value={displayCollateral} animateOnMount={animateValues} />
                 </HighlightableValue>
               </span>
@@ -189,8 +189,8 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus, expec
             </div>
             <div className="text-xs mt-0.5 min-h-[1rem]">
               {collateralUsd !== null && collateralUsd > 0 ? (
-                <span className="inline-flex items-center font-bold text-green-400 border-l-2 border-r-2 border-green-400 rounded-sm px-1 py-0">
-                  <HighlightableValue type="collateralUsd" state="after" value={collateralUsd} className="text-green-400">
+                <span className="inline-flex items-center font-bold text-rb-500 border-l-2 border-r-2 border-rb-300 dark:border-rb-700 rounded-sm px-1 py-0">
+                  <HighlightableValue type="collateralUsd" state="after" value={collateralUsd} className="text-rb-500">
                     <FadeNumber value={collateralUsd} formatFn={formatUsdValue} animateOnMount={animateValues} />
                   </HighlightableValue>
                 </span>
@@ -204,8 +204,8 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus, expec
           <div>
             <div className="text-xs text-rb-500 font-semibold mb-1">Debt</div>
             <div className="flex items-center gap-1.5">
-              <span className="text-3xl font-bold">
-                <HighlightableValue type="debt" state="after" value={displayDebt}>
+              <span className="text-2xl lg:text-3xl font-bold">
+                <HighlightableValue type="debt" state="after" value={displayDebt} className="text-foreground/80">
                   <FadeNumber value={displayDebt} formatFn={compact ? formatApproximate : formatPrice} animateOnMount={animateValues} />
                 </HighlightableValue>
               </span>
@@ -223,15 +223,15 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus, expec
           <div>
             <div className="text-xs text-rb-500 font-semibold mb-1">Collateral Ratio</div>
             {currentPrice && collateralRatio !== null && collateralRatio > 0 ? (
-              <div className="text-3xl font-bold">
-                <HighlightableValue type="collRatio" state="after" value={parseFloat(collateralRatio.toFixed(1))}>
+              <div className="text-2xl lg:text-3xl font-bold">
+                <HighlightableValue type="collRatio" state="after" value={parseFloat(collateralRatio.toFixed(1))} className="text-foreground/80">
                   <FadeNumber value={collateralRatio} decimals={1} animateOnMount={animateValues} />%
                 </HighlightableValue>
               </div>
             ) : expectsLiveState ? (
               <div className="h-9 w-20 bg-skeleton rounded animate-pulse" />
             ) : (
-              <div className="text-3xl font-bold text-rb-500">—</div>
+              <div className="text-2xl lg:text-3xl font-bold text-rb-500">—</div>
             )}
             <div className="text-xs mt-0.5 text-rb-500">Min {mcr}% threshold</div>
           </div>
@@ -243,11 +243,11 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus, expec
             </div>
             {liqPrice !== null ? (
               <div className="flex items-center gap-1.5">
-                <span className="text-3xl font-bold">{fmtLiqPrice(liqPrice)}</span>
+                <span className="text-2xl lg:text-3xl font-bold text-foreground/80">{fmtLiqPrice(liqPrice)}</span>
                 <TokenIcon assetSymbol={trove.collateralType} className="inline-block w-7 h-7" />
               </div>
             ) : (
-              <div className="text-3xl font-bold text-rb-500">—</div>
+              <div className="text-2xl lg:text-3xl font-bold text-rb-500">—</div>
             )}
             <div className="text-xs mt-0.5 text-rb-500 min-h-[1rem]">
               {headroomPct !== null ? (

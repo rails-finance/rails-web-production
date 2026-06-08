@@ -116,7 +116,7 @@ function generateOpenTroveItems(ctx: LiquityContext): ExplainerItem[] {
   items.push({
     content: (
       <span>
-        Position opened with a <V className={stateAfter.collateralRatio < 150 ? "text-red-400" : "text-green-400"}>
+        Position opened with a <V className="text-foreground">
           {stateAfter.collateralRatio.toFixed(1)}%
         </V> collateralization ratio
       </span>
@@ -421,7 +421,7 @@ function generateAdjustRateItems(ctx: LiquityContext, accruedInterest: number, a
     items.push({
       content: (
         <span>
-          Collateral ratio: <V className={stateAfter.collateralRatio < 150 ? "text-red-400" : "text-green-400"}>
+          Collateral ratio: <V className="text-foreground">
             {stateAfter.collateralRatio.toFixed(1)}%
           </V>
         </span>
@@ -468,7 +468,7 @@ function generateLiquidateItems(ctx: LiquityContext): ExplainerItem[] {
     });
     items.push({
       content: (
-        <span className={netBenefit >= 0 ? "text-green-400" : "text-yellow-400"}>
+        <span className="text-foreground">
           Net impact: {netBenefit >= 0 ? "+" : ""}{fmtUsd(Math.abs(netBenefit))}
           {netBenefit >= 0 ? " (beneficial due to liquidation penalty)" : " (small cost)"}
         </span>
@@ -620,7 +620,7 @@ function generateLiquidateItems(ctx: LiquityContext): ExplainerItem[] {
   if (wasPartiallyRedistributed) {
     items.push({
       content: (
-        <span className="text-yellow-400">
+        <span className="text-foreground">
           ⚠️ Partial redistribution occurred (Stability Pool was insufficient)
         </span>
       ),
@@ -754,7 +754,7 @@ function generateRedeemItems(ctx: LiquityContext): ExplainerItem[] {
       content: (
         <span>
           Net outcome: <V>{fmtUsd(debtRedeemed)}</V> debt cleared &minus; {fmtColl(collRedeemed)} &times; {fmtUsd(collateralPrice)} ={" "}
-          <V className={netProfit >= 0 ? "text-green-400" : "text-red-400"}>
+          <V className="text-foreground">
             {netProfit >= 0 ? "+" : "\u2212"}{fmtUsd(Math.abs(netProfit))}
           </V>
         </span>
@@ -806,7 +806,7 @@ function generateApplyPendingDebtItems(ctx: LiquityContext): ExplainerItem[] {
     items.push({
       content: (
         <span>
-          Collateral ratio: <V className={stateAfter.collateralRatio < 150 ? "text-red-400" : "text-green-400"}>
+          Collateral ratio: <V className="text-foreground">
             {stateAfter.collateralRatio.toFixed(1)}%
           </V>
         </span>
@@ -864,7 +864,7 @@ function generateSetBatchManagerItems(ctx: LiquityContext, accruedInterest: numb
     items.push({
       content: (
         <span>
-          Collateral ratio: <V className={stateAfter.collateralRatio < 150 ? "text-red-400" : "text-green-400"}>
+          Collateral ratio: <V className="text-foreground">
             {stateAfter.collateralRatio.toFixed(1)}%
           </V>
         </span>
@@ -923,7 +923,7 @@ function generateRemoveFromBatchItems(ctx: LiquityContext, accruedInterest: numb
     items.push({
       content: (
         <span>
-          Collateral ratio: <V className={stateAfter.collateralRatio < 150 ? "text-red-400" : "text-green-400"}>
+          Collateral ratio: <V className="text-foreground">
             {stateAfter.collateralRatio.toFixed(1)}%
           </V>
         </span>
@@ -979,7 +979,7 @@ function generateBatchRateUpdateItems(ctx: LiquityContext): ExplainerItem[] {
     items.push({
       content: (
         <span>
-          Collateral ratio: <V className={stateAfter.collateralRatio < 150 ? "text-red-400" : "text-green-400"}>
+          Collateral ratio: <V className="text-foreground">
             {stateAfter.collateralRatio.toFixed(1)}%
           </V>
         </span>
@@ -1098,9 +1098,9 @@ function generateItems(ctx: LiquityContext, previousEvent?: BaseActivityEvent, c
 // ── Styles ──────────────────────────────────────────────────────────
 
 const TYPE_STYLES: Record<string, string> = {
-  warning: "text-amber-300",
-  success: "text-green-300",
-  error: "text-red-300",
+  warning: "text-foreground",
+  success: "text-foreground",
+  error: "text-foreground",
   info: "text-blue-300",
 };
 

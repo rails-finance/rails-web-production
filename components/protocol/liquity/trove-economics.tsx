@@ -325,7 +325,7 @@ function RedeemerSummary({ stats, currentPrice }: { stats: RedeemerStats; curren
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <span className="px-1.5 py-0.5 rounded text-xs font-bold border bg-amber-500/20 text-amber-400 border-amber-500/30">
+            <span className="px-1.5 py-0.5 rounded text-xs font-bold border bg-rb-200 dark:bg-rb-800 text-foreground border-rb-300 dark:border-rb-700">
               REDEEMER
             </span>
             <span className="text-sm font-medium ">
@@ -355,7 +355,7 @@ function RedeemerSummary({ stats, currentPrice }: { stats: RedeemerStats; curren
               <TokenChipIcon symbol={stats.collateralType} size={16} />
             </div>
             {collValue !== null && (
-              <div className="text-sm text-green-400 font-medium mt-0.5">({formatUsdValue(collValue)})</div>
+              <div className="text-sm text-foreground font-medium mt-0.5">({formatUsdValue(collValue)})</div>
             )}
           </div>
           <div>
@@ -378,7 +378,7 @@ function RedeemerSummary({ stats, currentPrice }: { stats: RedeemerStats; curren
         {netPL !== null && (
           <div className="flex items-center gap-1.5 mt-4 pt-3 border-t border-rb-200 dark:border-rb-800 text-xs">
             <span className="">Net outcome at today&apos;s price:</span>
-            <span className={`font-bold ${netPL >= 0 ? "text-green-400" : "text-red-400"}`}>
+            <span className={`font-bold text-foreground`}>
               {netPL >= 0 ? "+" : "−"}
               {formatUsdValue(Math.abs(netPL))}
             </span>
@@ -858,10 +858,10 @@ export function TroveEconomicsSummary({ events, currentPrice, hideHeader }: Trov
   const statusLabel = meta.status === "open" ? "ACTIVE" : meta.status === "closed" ? "CLOSED" : "LIQUIDATED";
   const statusColor =
     meta.status === "open"
-      ? "bg-green-500/20 text-green-400 border-green-500/30"
+      ? "bg-rb-200 dark:bg-rb-800 text-foreground border-rb-300 dark:border-rb-700"
       : meta.status === "closed"
         ? "bg-rb-400/20 dark:bg-rb-600/20  border-rb-400/30 dark:border-rb-600/30"
-        : "bg-red-500/20 text-red-400 border-red-500/30";
+        : "bg-rb-200 dark:bg-rb-800 text-foreground border-rb-300 dark:border-rb-700";
 
   // Batch manager name
   const batchManagerAddr = meta.isInBatch
@@ -996,7 +996,7 @@ export function TroveEconomicsSummary({ events, currentPrice, hideHeader }: Trov
                   <TokenChipIcon symbol={collateralSymbol} size={16} />
                 </div>
                 {effectivePrice && (
-                  <div className="text-sm text-green-400 font-medium mt-0.5">
+                  <div className="text-sm text-foreground font-medium mt-0.5">
                     ({formatUsdValue(meta.collateralAmount * effectivePrice)})
                   </div>
                 )}
@@ -1204,14 +1204,14 @@ export function TroveEconomicsSummary({ events, currentPrice, hideHeader }: Trov
           {redemption && (
             <div className="flex flex-wrap items-center gap-1.5 text-xs mb-1 font-semibold">
               <span className="">Borrower&apos;s net outcome from redemptions was</span>
-              <span className={`${redemption.realizedPL >= 0 ? "text-green-400" : "text-red-400"}`}>
+              <span className={`text-foreground`}>
                 {redemption.realizedPL >= 0 ? "+" : "−"}
                 {formatUsdValue(Math.abs(redemption.realizedPL))}
               </span>
               {opportunityPL !== null && (
                 <>
                   <span className=""> or </span>
-                  <span className={` ${opportunityPL >= 0 ? "text-green-400" : "text-red-400"}`}>
+                  <span className={` text-foreground`}>
                     {opportunityPL >= 0 ? "+" : "−"}
                     {formatUsdValue(Math.abs(opportunityPL))}
                   </span>

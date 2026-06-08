@@ -10,12 +10,16 @@ interface StatValueProps {
 export function StatValue({
   children,
   title,
-  color = "text-foreground",
+  // Muted-but-prominent default so every big value shares one tone across both
+  // protocols and pairs with the muted (rb-500) labels. Responsive size:
+  // text-2xl on small/medium (keeps Aave's icon-laden values from crowding the
+  // 4-col row), text-3xl on large for the bigger desktop feel.
+  color = "text-foreground/80",
   className,
 }: StatValueProps) {
   return (
     <div
-      className={`text-2xl font-bold tabular-nums mt-2 ${color}${className ? ` ${className}` : ""}`}
+      className={`text-2xl lg:text-3xl font-bold tabular-nums mt-2 ${color}${className ? ` ${className}` : ""}`}
       title={title}
     >
       {children}
@@ -48,6 +52,6 @@ export function StatFootnote({
 
 export function StatDash({ children = "\u2014" }: { children?: ReactNode }) {
   return (
-    <div className="text-2xl font-bold text-rb-500 mt-2">{children}</div>
+    <div className="text-2xl lg:text-3xl font-bold text-rb-500 mt-2">{children}</div>
   );
 }

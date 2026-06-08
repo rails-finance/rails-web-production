@@ -303,7 +303,7 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
                             ? v === "all"
                               ? "bg-selected text-foreground font-semibold"
                               : v === "withDebt"
-                                ? "text-white bg-green-500 dark:bg-green-950 dark:text-green-500 rounded"
+                                ? "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold rounded"
                                 : "bg-selected text-foreground font-semibold"
                             : "text-rb-500 hover:text-foreground"
                         }`}
@@ -333,8 +333,8 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
                             ? v === "all"
                               ? "bg-selected text-foreground font-semibold"
                               : v === "atRisk"
-                                ? "bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-400 font-semibold"
-                                : "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-400 font-semibold"
+                                ? "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
+                                : "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
                             : "text-rb-500 hover:text-foreground"
                         }`}
                         aria-pressed={filters.health === v}
@@ -363,7 +363,7 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
                             ? v === "all"
                               ? "bg-selected text-foreground font-semibold"
                               : v === "with"
-                                ? "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-400 font-semibold"
+                                ? "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
                                 : "bg-selected text-foreground font-semibold"
                             : "text-rb-500 hover:text-foreground"
                         }`}
