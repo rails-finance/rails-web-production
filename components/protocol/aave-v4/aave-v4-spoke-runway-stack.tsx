@@ -31,17 +31,9 @@ export function AaveV4SpokeRunwayStack({ spoke }: { spoke: AaveSpokeCardInfo }) 
 
   return (
     <div className="mt-4 p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-rb-500">
-          Liquidation runway
-        </h3>
-        <span className="text-[10px] text-rb-500">{spoke.name} spoke</span>
-      </div>
       <div className="flex flex-col gap-3">
         {rows.map((row, idx) => {
-          const thresholdPrice = row.liqPrice && row.liqPrice > 0
-            ? row.liqPrice * (1 + headroomPct / 100)
-            : undefined;
+          const thresholdPrice = row.liqPrice && row.liqPrice > 0 ? row.liqPrice * (1 + headroomPct / 100) : undefined;
           return (
             <AaveV4PriceRunway
               key={row.symbol}

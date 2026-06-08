@@ -1197,9 +1197,9 @@ export function TroveEconomicsSummary({ events, currentPrice, hideHeader }: Trov
             </>
           )}
         </div>
-        {/* Footer: redemption / gas summary. The standalone collateral
-                price chip lives on the TrovePriceAxis pill above — no need
-                to duplicate it here. */}
+        {/* Footer: redemption / gas summary. The live collateral price rides
+                above the TrovePriceAxis marker (and the page price strip) — no
+                need to duplicate it here. */}
         <div className="mt-3 space-y-1">
           {redemption && (
             <div className="flex flex-wrap items-center gap-1.5 text-xs mb-1 font-semibold">

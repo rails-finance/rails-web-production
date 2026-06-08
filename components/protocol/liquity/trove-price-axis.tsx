@@ -1,31 +1,26 @@
 "use client";
 
-import { fmtPrice, PricePill } from "@/components/shared/price-pill";
+import { fmtPrice, niceReferencePrice } from "@/components/shared/price-pill";
+import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 
 /**
- * Segmented price-runway bar for a Liquity V2 trove.
+ * Price-runway bar for a Liquity V2 trove.
  *
- * Three zones across the bar — Conservative / Caution / Liquidation:
- *   • Conservative is open-ended on the safe side (price can rise without bound)
- *   • Caution is the *bounded* interior between the user's Conservative
- *     threshold price and the trove's liquidation price
- *   • Liquidation is open-ended on the loss side (price toward zero)
- * Conservative and Liquidation get stylised fixed widths since their scale is
- * conceptually infinite; the Caution interior is where the marker actually
- * moves between two hard boundaries. Band widths stay fixed across positions
- * — only the dot marker moves.
+ * A single neutral bar that turns red at the liquidation point (b1). Three bar
+ * positions anchor the scale: a rounded reference price (b0), the live oracle
+ * price (the moving caret), and the liquidation price (b1, where the red
+ * begins). The interior between b0 and b1 is where the caret actually travels;
+ * the bar geometry stays fixed across positions — only the caret moves.
  *
  * Marker placement uses one of two modes:
- *   • **Threshold-based** (preferred) — caller passes `thresholdPrice` (the
- *     Conservative→Caution boundary price). The marker pins to 0% while the
- *     price is at or above the Conservative threshold, slides through the
- *     Caution interior between thresholdPrice (0%-side) and liquidationPrice
- *     (right edge of Caution), then pushes into the Liquidation cap if
- *     underwater.
+ *   • **Threshold-based** (preferred) — caller passes `thresholdPrice` (snapped
+ *     to a round reference for b0). The caret pins to 0% while the price is at
+ *     or above the reference, slides between reference (b0) and liquidationPrice
+ *     (b1), then pushes past b1 into the red if underwater.
  *   • **Linear fallback** — when `thresholdPrice` is omitted but
- *     `referenceOraclePrice` is provided, the marker maps linearly between
- *     refPrice (0%) and liquidationPrice (Caution/Liquidation boundary). Used
- *     by callers without a threshold concept.
+ *     `referenceOraclePrice` is provided, the caret maps linearly between
+ *     refPrice (0%) and liquidationPrice (b1). Used by callers without a
+ *     threshold concept.
  *
  * Read-only — renders current oracle-derived state. Hypothetical price
  * simulation deferred per the truth principle (see migration/phase-2-mono-explorers.md).
@@ -50,18 +45,17 @@ export interface TrovePriceAxisProps {
   zoneBoundaries?: [number, number];
 }
 
-// Neutral zone styling — Rails doesn't color-code liquidation distance with
-// green/amber/red valence. Every band shares one muted neutral fill; only the
-// band the price currently sits in is emphasized. Position is read from the
-// marker, the zone labels, and the numeric "% to liquidation" readout.
-const ZONE_FILL_ACTIVE = "bg-rb-400 dark:bg-rb-500";
-const ZONE_FILL_MUTED = "bg-rb-200 dark:bg-rb-800";
-
-const ZONE_META = [
-  { key: "conservative", label: "Conservative" },
-  { key: "caution", label: "Caution" },
-  { key: "liquidation", label: "Liquidation" },
-] as const;
+// Bar styling. The bar is a single neutral track that turns red at the
+// liquidation point — Rails doesn't editorialize the "safe → worrying" gradient
+// before that (a personal risk-tolerance call, deferred to a future
+// user-defined risk-profile feature). The red is the one deliberate exception:
+// being at or below the liquidation price is a hard on-chain fact, not an
+// opinion. It stays muted until the live price is actually in it, then deepens.
+// The boundary prices and the "% from liquidation" readout state the facts
+// numerically around the bar.
+const BAR_FILL_NEUTRAL = "bg-rb-200 dark:bg-rb-800";
+const BAR_FILL_LIQ = "bg-red-400/60 dark:bg-red-500/40";
+const BAR_FILL_LIQ_ACTIVE = "bg-red-500 dark:bg-red-500";
 
 export function TrovePriceAxis({
   collateralSymbol,
@@ -76,18 +70,25 @@ export function TrovePriceAxis({
   if (!(oraclePrice > 0) || !(liquidationPrice > 0)) return null;
 
   const liqBoundary = zoneBoundaries[1]; // bar % at which liq sits (Caution→Liquidation boundary)
-  const usePiecewise = !!thresholdPrice && thresholdPrice > liquidationPrice;
+  // Upper gridline price — snap the supplied threshold to a clean round number
+  // (e.g. 4,706 → 5,000) so it reads as a scale mark rather than a derived
+  // "caution" figure. Doubles as the Conservative→Caution marker anchor.
+  const niceThreshold =
+    thresholdPrice && thresholdPrice > liquidationPrice
+      ? niceReferencePrice(thresholdPrice, liquidationPrice)
+      : undefined;
+  const usePiecewise = !!niceThreshold && niceThreshold > liquidationPrice;
   const refPrice = referenceOraclePrice && referenceOraclePrice > 0 ? referenceOraclePrice : oraclePrice;
   // Skip drawing when the linear fallback can't form a valid runway.
   if (!usePiecewise && !(refPrice > liquidationPrice)) return null;
 
   const priceToPct = (p: number): number => {
-    if (usePiecewise && thresholdPrice) {
+    if (usePiecewise && niceThreshold) {
       // Three zones — Conservative [0, b0], Caution [b0, b1], Liquidation
-      // [b1, 100]. Marker pins to 0 while price ≥ Conservative threshold,
+      // [b1, 100]. Marker pins to 0 while price ≥ the round reference,
       // slides through the bounded Caution interior price-proportionally,
       // then pushes into the Liquidation cap once underwater.
-      const pCons = thresholdPrice;
+      const pCons = niceThreshold;
       const pLiq = liquidationPrice;
       const [b0, b1] = zoneBoundaries;
       if (p >= pCons) return 0;
@@ -104,101 +105,75 @@ export function TrovePriceAxis({
   const oraclePct = priceToPct(oraclePrice);
   const liqPct = liqBoundary;
 
-  // Numeric distance-to-liquidation — carries the meaning the flattened
-  // (uncolored) bands used to convey at a glance.
-  const headroomPct = oraclePrice > 0 ? ((oraclePrice - liquidationPrice) / oraclePrice) * 100 : null;
-
   // Active zone for highlight + label colour.
   const activeZoneIdx = oraclePct < zoneBoundaries[0] ? 0 : oraclePct < zoneBoundaries[1] ? 1 : 2;
 
-  // Zone widths — shrink each zone proportionally so the inter-zone gaps
-  // (1.5% × 2) fit inside the bar without overflowing. For default [25, 75]
-  // this yields ~24.25/48.5/24.25.
-  const GAP = 1.5;
-  const numZones = ZONE_META.length;
-  const totalGap = (numZones - 1) * GAP;
-  const shrink = (100 - totalGap) / 100;
-  const intendedWidths = [zoneBoundaries[0], zoneBoundaries[1] - zoneBoundaries[0], 100 - zoneBoundaries[1]];
-  const zoneWidths = intendedWidths.map((w) => Math.max(0, w * shrink));
+  // Vertical layout — the live price rides above the bar in a tooltip pill (tail
+  // pointing down at the marker); the reference and liquidation prices live
+  // inside the taller bar, each with a small dot marker. Matches Aave V4.
+  const H_BAR = 28; // taller bar — holds the in-bar reference + liquidation prices
+  const H_PILL_TOP = 0; // live-price tooltip pill, above the bar
+  const H_BAR_TOP = 30; // bar top — room for the pill + its down-tail above
+  const H_TOTAL = H_BAR_TOP + H_BAR;
 
-  // Vertical layout — match Aave V4 dimensions (66px total).
-  const H_LIQ_LABEL = 0;
-  const H_BAR = 14;
-  const H_BAR_TOP = 32;
-  const H_LABELS_TOP = 52;
-  const MARKER_SIZE = 14;
-  const H_TOTAL = 66;
+  // The live-price pill tracks the marker; flip its anchor near the ends so it
+  // never overflows the bar, and put the tail near the matching edge so it still
+  // points at the marker.
+  const markerLeft = Math.max(0, Math.min(100, oraclePct));
+  const markerXform = markerLeft < 14 ? "translateX(0)" : markerLeft > 86 ? "translateX(-100%)" : "translateX(-50%)";
+  const tailClass = markerLeft < 14 ? "left-2" : markerLeft > 86 ? "right-2" : "left-1/2 -translate-x-1/2";
 
   return (
     <div>
       <div className="flex items-start gap-3">
         <div className="relative flex-1 min-w-[220px]" style={{ height: H_TOTAL }}>
-          {/* Liquidation-price label, sitting above the boundary between
-              Aggressive and Liquidation zones. */}
+          {/* Live price — tooltip pill above the bar, tail pointing down at the
+              marker. The distance-to-liquidation lives in the (i) info panel. */}
           <div
-            className="absolute text-[11px] tabular-nums whitespace-nowrap pointer-events-none leading-tight text-foreground font-semibold"
-            style={{ left: `${liqPct}%`, transform: "translateX(-50%)", top: H_LIQ_LABEL }}
+            className="absolute pointer-events-none"
+            style={{ left: `${markerLeft}%`, transform: markerXform, top: H_PILL_TOP }}
           >
-            {fmtPrice(liquidationPrice)}
-          </div>
-          {headroomPct != null && (
-            <div
-              className="absolute text-[11px] tabular-nums whitespace-nowrap pointer-events-none leading-tight text-rb-500 font-medium"
-              style={{ left: 0, top: H_LIQ_LABEL }}
-            >
-              {headroomPct > 0 ? `${headroomPct.toFixed(0)}% to liquidation` : "At liquidation price"}
-            </div>
-          )}
-
-          {/* Segmented bar — four zones with gaps. */}
-          <div className="absolute left-0 right-0 flex items-center" style={{ top: H_BAR_TOP, height: H_BAR }}>
-            {ZONE_META.map((zone, i) => (
-              <div
-                key={zone.key}
-                className={`h-full rounded-md transition-colors ${i === activeZoneIdx ? ZONE_FILL_ACTIVE : ZONE_FILL_MUTED}`}
-                style={{
-                  width: `${zoneWidths[i]}%`,
-                  marginLeft: i === 0 ? 0 : `${GAP}%`,
-                }}
+            <div className="relative inline-flex items-center gap-1 whitespace-nowrap rounded-md border border-rb-200 bg-white px-1.5 py-0.5 shadow-sm dark:border-rb-700 dark:bg-rb-800">
+              <TokenChipIcon symbol={collateralSymbol} address={collateralAddress} size={14} filterable={false} />
+              <span className="text-[12px] font-semibold tabular-nums text-foreground">{fmtPrice(oraclePrice)}</span>
+              <span
+                className={`absolute top-full h-0 w-0 border-x-4 border-x-transparent border-t-4 border-t-white dark:border-t-rb-800 ${tailClass}`}
               />
-            ))}
+            </div>
           </div>
 
-          {/* Oracle marker — purely visual; price edits go through the pill. */}
-          <div
-            className="absolute pointer-events-none flex items-center justify-center"
-            style={{
-              left: `calc(${oraclePct}% - ${MARKER_SIZE / 2}px)`,
-              top: H_BAR_TOP + H_BAR / 2 - MARKER_SIZE / 2,
-              width: MARKER_SIZE,
-              height: MARKER_SIZE,
-            }}
-          >
-            <span
-              className="flex items-center justify-center w-full h-full rounded-full bg-white border-2 border-rb-300 dark:border-rb-700"
-              style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.3)" }}
+          {/* Tall bar — neutral up to the liquidation point, red beyond it. The
+              reference and liquidation prices live inside the bar, each with a
+              small dot marker at its exact position. */}
+          <div className="absolute left-0 right-0 rounded-md overflow-hidden" style={{ top: H_BAR_TOP, height: H_BAR }}>
+            <div className={`absolute inset-0 ${BAR_FILL_NEUTRAL}`} />
+            <div
+              className={`absolute bottom-0 right-0 top-0 transition-colors ${
+                activeZoneIdx === 2 ? BAR_FILL_LIQ_ACTIVE : BAR_FILL_LIQ
+              }`}
+              style={{ left: `${liqPct}%` }}
             />
-          </div>
-
-          {/* Zone labels. */}
-          <div className="absolute left-0 right-0 flex items-center" style={{ top: H_LABELS_TOP }}>
-            {ZONE_META.map((zone, i) => (
+            {usePiecewise && niceThreshold && (
               <div
-                key={zone.key}
-                className={`text-[10px] text-center transition-colors ${i === activeZoneIdx ? "text-foreground font-semibold" : "text-rb-500"}`}
-                style={{
-                  width: `${zoneWidths[i]}%`,
-                  marginLeft: i === 0 ? 0 : `${GAP}%`,
-                }}
+                className="absolute flex -translate-y-1/2 items-center gap-1 whitespace-nowrap"
+                style={{ left: `${zoneBoundaries[0]}%`, top: "50%" }}
               >
-                {zone.label}
+                <span className="h-[5px] w-[5px] rounded-full bg-foreground/50" />
+                <span className="text-[12px] font-semibold tabular-nums text-foreground/70">
+                  {fmtPrice(niceThreshold)}
+                </span>
               </div>
-            ))}
+            )}
+            <div
+              className="absolute flex -translate-y-1/2 items-center gap-1 whitespace-nowrap"
+              style={{ left: `${liqPct}%`, top: "50%" }}
+            >
+              <span className="h-[5px] w-[5px] rounded-full bg-red-700 dark:bg-red-300" />
+              <span className="text-[12px] font-semibold tabular-nums text-red-900 dark:text-red-50">
+                {fmtPrice(liquidationPrice)}
+              </span>
+            </div>
           </div>
-        </div>
-
-        <div style={{ marginTop: 27 }}>
-          <PricePill symbol={collateralSymbol} address={collateralAddress} price={oraclePrice} />
         </div>
       </div>
     </div>
@@ -225,8 +200,8 @@ export function trovePriceRunwayExplanation({
   if (underwater) {
     return (
       <>
-        Oracle price is <span className="font-semibold text-foreground">at or below the liquidation threshold</span>. This
-        trove can be liquidated — any keeper hitting the contract repays the debt in {debtSymbol} and claims the
+        Oracle price is <span className="font-semibold text-foreground">at or below the liquidation threshold</span>.
+        This trove can be liquidated — any keeper hitting the contract repays the debt in {debtSymbol} and claims the
         collateral at a 10% bonus.
       </>
     );
@@ -235,8 +210,8 @@ export function trovePriceRunwayExplanation({
   return (
     <>
       {collateralSymbol} price would need to drop{" "}
-      <span className="font-semibold text-foreground">{headroomPct.toFixed(1)}%</span> (to {fmtPrice(liquidationPrice)}
-      ) before this trove is liquidated. Liquity V2 uses a 110% minimum collateral ratio across branches.
+      <span className="font-semibold text-foreground">{headroomPct.toFixed(1)}%</span> (to {fmtPrice(liquidationPrice)})
+      before this trove is liquidated. Liquity V2 uses a 110% minimum collateral ratio across branches.
     </>
   );
 }

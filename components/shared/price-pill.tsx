@@ -17,6 +17,24 @@ export function fmtPrice(v: number): string {
   return `$${(v / 1_000_000).toFixed(2)}M`;
 }
 
+/**
+ * Snap a raw reference price to a clean, human-readable round number near it
+ * (e.g. 4,706 → 5,000), so a runway's upper gridline reads as an at-a-glance
+ * scale mark rather than a derived "caution threshold". Stays strictly above
+ * `floor` (the liquidation price) so the band it anchors never degenerates.
+ */
+export function niceReferencePrice(raw: number, floor: number): number {
+  if (!(raw > 0)) return raw;
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const mults = [1, 2, 2.5, 5, 10];
+  const candidates = Array.from(new Set([mag / 10, mag, mag * 10].flatMap((base) => mults.map((m) => m * base)))).sort(
+    (a, b) => a - b,
+  );
+  let best = candidates.reduce((p, c) => (Math.abs(c - raw) < Math.abs(p - raw) ? c : p), candidates[0]);
+  if (best <= floor) best = candidates.find((c) => c > floor) ?? raw;
+  return best;
+}
+
 export interface PricePillProps {
   symbol: string;
   address?: string;
