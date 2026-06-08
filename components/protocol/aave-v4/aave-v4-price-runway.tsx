@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { InfoIconButton } from "@/components/shared/info-icon-button";
 import { fmtPrice, PricePill } from "@/components/shared/price-pill";
 
 /**
@@ -28,9 +26,15 @@ import { fmtPrice, PricePill } from "@/components/shared/price-pill";
  */
 
 const ZONE_META = [
-  { key: "conservative", label: "Conservative", active: "bg-emerald-500/55", muted: "bg-emerald-500/20", text: "text-emerald-400" },
-  { key: "caution",      label: "Caution",      active: "bg-amber-500/55",   muted: "bg-amber-500/20",   text: "text-amber-400" },
-  { key: "liquidation",  label: "Liquidation",  active: "bg-red-500/55",     muted: "bg-red-500/20",     text: "text-red-400" },
+  {
+    key: "conservative",
+    label: "Conservative",
+    active: "bg-emerald-500/55",
+    muted: "bg-emerald-500/20",
+    text: "text-emerald-400",
+  },
+  { key: "caution", label: "Caution", active: "bg-amber-500/55", muted: "bg-amber-500/20", text: "text-amber-400" },
+  { key: "liquidation", label: "Liquidation", active: "bg-red-500/55", muted: "bg-red-500/20", text: "text-red-400" },
 ] as const;
 
 export interface AaveV4PriceRunwayProps {
@@ -58,15 +62,14 @@ export function AaveV4PriceRunway({
   showZoneLabels = true,
   zoneBoundaries = [25, 75],
 }: AaveV4PriceRunwayProps) {
-  const [infoOpen, setInfoOpen] = useState(false);
-
   const hasLiq = liqPrice != null && liqPrice > 0;
   const underwater = hasLiq && currentPrice <= liqPrice!;
-  const overCovered = liqPrice === 0;
 
   const liqBoundary = zoneBoundaries[1];
   const effectiveThreshold = hasLiq
-    ? (thresholdPrice && thresholdPrice > liqPrice! ? thresholdPrice : liqPrice! * 1.25)
+    ? thresholdPrice && thresholdPrice > liqPrice!
+      ? thresholdPrice
+      : liqPrice! * 1.25
     : 0;
   const usePiecewise = hasLiq && effectiveThreshold > liqPrice!;
 
@@ -87,24 +90,14 @@ export function AaveV4PriceRunway({
   };
 
   const oraclePct = hasLiq ? priceToPct(currentPrice) : 0;
-  const activeZoneIdx = oraclePct < zoneBoundaries[0] ? 0
-    : oraclePct < zoneBoundaries[1] ? 1
-    : 2;
+  const activeZoneIdx = oraclePct < zoneBoundaries[0] ? 0 : oraclePct < zoneBoundaries[1] ? 1 : 2;
 
   const GAP = 1.5;
   const numZones = ZONE_META.length;
   const totalGap = (numZones - 1) * GAP;
   const shrink = (100 - totalGap) / 100;
-  const intendedWidths = [
-    zoneBoundaries[0],
-    zoneBoundaries[1] - zoneBoundaries[0],
-    100 - zoneBoundaries[1],
-  ];
+  const intendedWidths = [zoneBoundaries[0], zoneBoundaries[1] - zoneBoundaries[0], 100 - zoneBoundaries[1]];
   const zoneWidths = intendedWidths.map((w) => Math.max(0, w * shrink));
-
-  const headroomPct = hasLiq && currentPrice > 0
-    ? ((currentPrice - liqPrice!) / currentPrice) * 100
-    : null;
 
   const H_BAR = 14;
   const H_TOP_LABEL = 26;
@@ -117,10 +110,7 @@ export function AaveV4PriceRunway({
   return (
     <div>
       <div className="flex items-start gap-3">
-        <div
-          className="relative flex-1 min-w-[220px]"
-          style={{ height: H_TOTAL }}
-        >
+        <div className="relative flex-1 min-w-[220px]" style={{ height: H_TOTAL }}>
           {hasLiq && (
             <div
               className="absolute text-[11px] tabular-nums whitespace-nowrap pointer-events-none leading-tight text-red-400 font-semibold"
@@ -129,15 +119,10 @@ export function AaveV4PriceRunway({
               {fmtPrice(liqPrice!)}
             </div>
           )}
-          <div
-            className="absolute left-0 right-0 flex items-center"
-            style={{ top: H_BAR_OFFSET, height: H_BAR }}
-          >
+          <div className="absolute left-0 right-0 flex items-center" style={{ top: H_BAR_OFFSET, height: H_BAR }}>
             {ZONE_META.map((zone, i) => {
               const isActive = hasLiq && i === activeZoneIdx;
-              const fill = !hasLiq && i === 0
-                ? zone.active
-                : isActive ? zone.active : zone.muted;
+              const fill = !hasLiq && i === 0 ? zone.active : isActive ? zone.active : zone.muted;
               return (
                 <div
                   key={zone.key}
@@ -169,10 +154,7 @@ export function AaveV4PriceRunway({
           </div>
 
           {showZoneLabels && (
-            <div
-              className="absolute left-0 right-0 flex items-center"
-              style={{ top: ZONE_LABEL_TOP }}
-            >
+            <div className="absolute left-0 right-0 flex items-center" style={{ top: ZONE_LABEL_TOP }}>
               {ZONE_META.map((zone, i) => {
                 const isActive = hasLiq && i === activeZoneIdx;
                 return (
@@ -195,42 +177,57 @@ export function AaveV4PriceRunway({
         </div>
 
         <div style={{ marginTop: BAR_MID - 12 }}>
-          <PricePill
-            symbol={collateralSymbol}
-            address={collateralAddress}
-            price={currentPrice}
-          />
-        </div>
-        <div style={{ marginTop: BAR_MID - 10 }}>
-          <InfoIconButton
-            open={infoOpen}
-            onClick={() => setInfoOpen((v) => !v)}
-            warning={underwater}
-          />
+          <PricePill symbol={collateralSymbol} address={collateralAddress} price={currentPrice} />
         </div>
       </div>
-      {infoOpen && (
-        <div className="mt-2 text-xs text-rb-500 leading-relaxed">
-          {underwater ? (
-            <>
-              <span className="font-semibold text-red-400">{collateralSymbol} is below its liquidation price.</span>
-              {" "}On-chain, this position would be liquidatable.
-            </>
-          ) : overCovered ? (
-            <>
-              The rest of the collateral already covers this spoke&apos;s debt — {collateralSymbol} can fall to zero without tripping a liquidation (other assets would need to fall too).
-            </>
-          ) : hasLiq && headroomPct != null ? (
-            <>
-              {collateralSymbol} would need to drop{" "}
-              <span className="font-semibold text-emerald-400">{headroomPct.toFixed(1)}%</span>{" "}
-              (to {fmtPrice(liqPrice!)}) before this spoke&apos;s health factor reaches 1 — holding every other asset at its current state.
-            </>
-          ) : (
-            <>No debt on this spoke, so there&apos;s no liquidation price to plot.</>
-          )}
-        </div>
-      )}
     </div>
   );
+}
+
+/**
+ * Plain-language explanation for one collateral asset's runway. Lives on the
+ * economics card's standard bottom-left (i) disclosure rather than inline on
+ * the bar, so help has a single consistent home. Recomputes the same
+ * underwater / over-covered / headroom states the bar visualises.
+ */
+export function aaveV4RunwayExplanation({
+  collateralSymbol,
+  currentPrice,
+  liqPrice,
+}: {
+  collateralSymbol: string;
+  currentPrice: number;
+  liqPrice: number | null;
+}): React.ReactNode {
+  const hasLiq = liqPrice != null && liqPrice > 0;
+  const underwater = hasLiq && currentPrice <= liqPrice!;
+  const overCovered = liqPrice === 0;
+  const headroomPct = hasLiq && currentPrice > 0 ? ((currentPrice - liqPrice!) / currentPrice) * 100 : null;
+
+  if (underwater) {
+    return (
+      <>
+        <span className="font-semibold text-red-400">{collateralSymbol} is below its liquidation price.</span> On-chain,
+        this position would be liquidatable.
+      </>
+    );
+  }
+  if (overCovered) {
+    return (
+      <>
+        The rest of the collateral already covers this spoke&apos;s debt — {collateralSymbol} can fall to zero without
+        tripping a liquidation (other assets would need to fall too).
+      </>
+    );
+  }
+  if (hasLiq && headroomPct != null) {
+    return (
+      <>
+        {collateralSymbol} would need to drop{" "}
+        <span className="font-semibold text-emerald-400">{headroomPct.toFixed(1)}%</span> (to {fmtPrice(liqPrice!)})
+        before this spoke&apos;s health factor reaches 1 — holding every other asset at its current state.
+      </>
+    );
+  }
+  return <>No debt on this spoke, so there&apos;s no liquidation price to plot.</>;
 }

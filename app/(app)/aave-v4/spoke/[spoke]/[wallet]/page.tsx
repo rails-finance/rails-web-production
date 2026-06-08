@@ -52,6 +52,8 @@ import { AaveV4EventCard } from "@/components/protocol/aave-v4/aave-v4-event-car
 import type { AaveV4TxGroup } from "@/components/protocol/aave-v4/aave-v4-event-header";
 import { AaveV4SpokeCardSelector } from "@/components/protocol/aave-v4/aave-v4-spoke-card";
 import { AaveV4SpokeRunwayStack } from "@/components/protocol/aave-v4/aave-v4-spoke-runway-stack";
+import { aaveV4RunwayExplanation } from "@/components/protocol/aave-v4/aave-v4-price-runway";
+import { InfoDisclosure } from "@/components/shared/info-disclosure";
 import { AaveV4TowerChart } from "@/components/protocol/aave-v4/aave-v4-tower-chart";
 import { buildAaveV4SpokeCards, groupBySpoke } from "@/lib/aave-v4/spoke-cards";
 import { getLiquidationThreshold, isStable } from "@/lib/aave-v4/liquidation-thresholds";
@@ -674,6 +676,24 @@ function AaveV4SpokeEconomicsBand({
   );
 
   const [surplusSymbols, hideSurplus, setHideSurplus] = useSurplusState(simBase);
+  const [runwayInfoOpen, setRunwayInfoOpen] = useState(false);
+
+  // Per-asset runway copy for the economics card's standard bottom-left (i) —
+  // relocated here from each price-runway bar. Mirrors the row filter used by
+  // AaveV4SpokeRunwayStack so the explanations match the bars shown.
+  const runwayInfo = useMemo(() => {
+    if (!runwayCard || runwayCard.totalDebtUsd <= 0) return [];
+    return runwayCard.assetLiqPrices
+      .filter((a) => a.usdShare > 1 && a.currentPrice > 0)
+      .map((a) => ({
+        symbol: a.symbol,
+        node: aaveV4RunwayExplanation({
+          collateralSymbol: a.symbol,
+          currentPrice: a.currentPrice,
+          liqPrice: a.liqPrice,
+        }),
+      }));
+  }, [runwayCard]);
 
   return (
     <div className="rounded-lg p-3 border border-transparent space-y-3">
@@ -686,6 +706,19 @@ function AaveV4SpokeEconomicsBand({
       />
 
       {runwayCard && <AaveV4SpokeRunwayStack spoke={runwayCard} />}
+
+      {runwayInfo.length > 0 && (
+        <InfoDisclosure open={runwayInfoOpen} onToggle={setRunwayInfoOpen} label="liquidation runway">
+          <div className="space-y-2 text-sm text-foreground/90">
+            {runwayInfo.map((r) => (
+              <div key={r.symbol} className="flex items-start gap-2 leading-relaxed">
+                <span className="select-none text-rb-500">•</span>
+                <span>{r.node}</span>
+              </div>
+            ))}
+          </div>
+        </InfoDisclosure>
+      )}
     </div>
   );
 }

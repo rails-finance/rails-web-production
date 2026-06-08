@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { InfoIconButton } from "@/components/shared/info-icon-button";
 import { fmtPrice, PricePill } from "@/components/shared/price-pill";
 
 /**
@@ -53,9 +51,15 @@ export interface TrovePriceAxisProps {
 }
 
 const ZONE_META = [
-  { key: "conservative", label: "Conservative", active: "bg-emerald-500/55", muted: "bg-emerald-500/20", text: "text-emerald-400" },
-  { key: "caution",      label: "Caution",      active: "bg-amber-500/55",   muted: "bg-amber-500/20",   text: "text-amber-400" },
-  { key: "liquidation",  label: "Liquidation",  active: "bg-red-500/55",     muted: "bg-red-500/20",     text: "text-red-400" },
+  {
+    key: "conservative",
+    label: "Conservative",
+    active: "bg-emerald-500/55",
+    muted: "bg-emerald-500/20",
+    text: "text-emerald-400",
+  },
+  { key: "caution", label: "Caution", active: "bg-amber-500/55", muted: "bg-amber-500/20", text: "text-amber-400" },
+  { key: "liquidation", label: "Liquidation", active: "bg-red-500/55", muted: "bg-red-500/20", text: "text-red-400" },
 ] as const;
 
 export function TrovePriceAxis({
@@ -68,8 +72,6 @@ export function TrovePriceAxis({
   thresholdPrice,
   zoneBoundaries = [25, 75],
 }: TrovePriceAxisProps) {
-  const [infoOpen, setInfoOpen] = useState(false);
-
   if (!(oraclePrice > 0) || !(liquidationPrice > 0)) return null;
 
   const liqBoundary = zoneBoundaries[1]; // bar % at which liq sits (Caution→Liquidation boundary)
@@ -102,9 +104,7 @@ export function TrovePriceAxis({
   const liqPct = liqBoundary;
 
   // Active zone for highlight + label colour.
-  const activeZoneIdx = oraclePct < zoneBoundaries[0] ? 0
-    : oraclePct < zoneBoundaries[1] ? 1
-    : 2;
+  const activeZoneIdx = oraclePct < zoneBoundaries[0] ? 0 : oraclePct < zoneBoundaries[1] ? 1 : 2;
 
   // Zone widths — shrink each zone proportionally so the inter-zone gaps
   // (1.5% × 2) fit inside the bar without overflowing. For default [25, 75]
@@ -113,15 +113,8 @@ export function TrovePriceAxis({
   const numZones = ZONE_META.length;
   const totalGap = (numZones - 1) * GAP;
   const shrink = (100 - totalGap) / 100;
-  const intendedWidths = [
-    zoneBoundaries[0],
-    zoneBoundaries[1] - zoneBoundaries[0],
-    100 - zoneBoundaries[1],
-  ];
+  const intendedWidths = [zoneBoundaries[0], zoneBoundaries[1] - zoneBoundaries[0], 100 - zoneBoundaries[1]];
   const zoneWidths = intendedWidths.map((w) => Math.max(0, w * shrink));
-
-  const headroomPct = ((oraclePrice - liquidationPrice) / oraclePrice) * 100;
-  const underwater = oraclePrice <= liquidationPrice;
 
   // Vertical layout — match Aave V4 dimensions (66px total).
   const H_LIQ_LABEL = 0;
@@ -134,10 +127,7 @@ export function TrovePriceAxis({
   return (
     <div>
       <div className="flex items-start gap-3">
-        <div
-          className="relative flex-1 min-w-[220px]"
-          style={{ height: H_TOTAL }}
-        >
+        <div className="relative flex-1 min-w-[220px]" style={{ height: H_TOTAL }}>
           {/* Liquidation-price label, sitting above the boundary between
               Aggressive and Liquidation zones. */}
           <div
@@ -195,36 +185,45 @@ export function TrovePriceAxis({
         </div>
 
         <div style={{ marginTop: 27 }}>
-          <PricePill
-            symbol={collateralSymbol}
-            address={collateralAddress}
-            price={oraclePrice}
-          />
-        </div>
-        <div style={{ marginTop: 29 }}>
-          <InfoIconButton
-            open={infoOpen}
-            onClick={() => setInfoOpen((v) => !v)}
-            warning={underwater}
-          />
+          <PricePill symbol={collateralSymbol} address={collateralAddress} price={oraclePrice} />
         </div>
       </div>
-      {infoOpen && (
-        <div className="mt-2 text-xs text-rb-500 leading-relaxed">
-          {underwater ? (
-            <>
-              Oracle price is <span className="font-semibold text-red-500">at or below the liquidation threshold</span>.
-              This trove can be liquidated — any keeper hitting the contract repays the debt in {debtSymbol} and claims the collateral at a 10% bonus.
-            </>
-          ) : (
-            <>
-              {collateralSymbol} price would need to drop{" "}
-              <span className="font-semibold text-emerald-400">{headroomPct.toFixed(1)}%</span>{" "}
-              (to {fmtPrice(liquidationPrice)}) before this trove is liquidated. Liquity V2 uses a 110% minimum collateral ratio across branches.
-            </>
-          )}
-        </div>
-      )}
     </div>
+  );
+}
+
+/**
+ * Plain-language explanation for the trove's liquidation runway. Lives on the
+ * economics card's standard bottom-left (i) disclosure rather than inline on
+ * the bar, so help has a single consistent home.
+ */
+export function trovePriceRunwayExplanation({
+  collateralSymbol,
+  debtSymbol,
+  oraclePrice,
+  liquidationPrice,
+}: {
+  collateralSymbol: string;
+  debtSymbol: string;
+  oraclePrice: number;
+  liquidationPrice: number;
+}): React.ReactNode {
+  const underwater = oraclePrice <= liquidationPrice;
+  if (underwater) {
+    return (
+      <>
+        Oracle price is <span className="font-semibold text-red-500">at or below the liquidation threshold</span>. This
+        trove can be liquidated — any keeper hitting the contract repays the debt in {debtSymbol} and claims the
+        collateral at a 10% bonus.
+      </>
+    );
+  }
+  const headroomPct = ((oraclePrice - liquidationPrice) / oraclePrice) * 100;
+  return (
+    <>
+      {collateralSymbol} price would need to drop{" "}
+      <span className="font-semibold text-emerald-400">{headroomPct.toFixed(1)}%</span> (to {fmtPrice(liquidationPrice)}
+      ) before this trove is liquidated. Liquity V2 uses a 110% minimum collateral ratio across branches.
+    </>
   );
 }

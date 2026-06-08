@@ -19,6 +19,7 @@ import { LiquidatedBadge } from "@/components/aave-v4/LiquidatedBadge";
 import { WalletPill } from "@/components/aave-v4/wallet-pill";
 import { fmtUsd, hfLabel, hfColorClass, fmtLiqPrice } from "@/lib/aave-v4/format";
 import { AaveV4PositionExplanation } from "@/components/protocol/aave-v4/aave-v4-position-explanation";
+import { InfoDisclosure } from "@/components/shared/info-disclosure";
 
 export type { AaveSpokeCardInfo };
 
@@ -28,44 +29,6 @@ function SpokeIdentity({ name, hub }: { name: string; hub: HubTier }) {
       <span className="text-xs font-semibold">{name}</span>
       <span className="text-xs font-bold uppercase tracking-wide">{hub}</span>
     </span>
-  );
-}
-
-// Standalone (i) disclosure with a down-arrow that fades in when open — the
-// same affordance as the event-card timestamps. Stands alone (no adjacent
-// label), so the flex-col stack centers cleanly without absolute positioning.
-function SpokeInfoButton({ isOpen, onClick }: { isOpen: boolean; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick();
-      }}
-      aria-expanded={isOpen}
-      aria-label={isOpen ? "Hide details" : "Show details"}
-      className="inline-flex flex-col items-center rounded transition-colors text-rb-500 hover:text-rb-400 cursor-pointer"
-    >
-      <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-        <path
-          fillRule="evenodd"
-          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z"
-          clipRule="evenodd"
-        />
-      </svg>
-      <svg
-        className={`h-2.5 w-2.5 -mt-0.5 transition-opacity ${isOpen ? "opacity-100" : "opacity-0"}`}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden="true"
-      >
-        <path d="M6 9l6 6 6-6" />
-      </svg>
-    </button>
   );
 }
 
@@ -271,18 +234,13 @@ function AaveV4SpokeCard({
             }
           />
         )}
-        {/* (i) at the bottom-right of the card; expands the explanation in
-            place beneath the stats (push-down) within the card panel. */}
+        {/* Standard (i) at the bottom-left of the card; expands the
+            explanation into a rounded panel within the card. */}
         {showInfo && (
-          <div className="mt-3">
-            <div className="flex justify-end">
-              <SpokeInfoButton isOpen={infoOpen} onClick={() => setInfoOpen((o) => !o)} />
-            </div>
-            {infoOpen && (
-              <div className="mt-2 border-t border-rb-300/40 dark:border-rb-700/40 pt-3">
-                <AaveV4PositionExplanation spoke={spoke} embedded />
-              </div>
-            )}
+          <div className="mt-3" onClick={(e) => e.stopPropagation()}>
+            <InfoDisclosure open={infoOpen} onToggle={() => setInfoOpen((o) => !o)} label="explanation">
+              <AaveV4PositionExplanation spoke={spoke} embedded />
+            </InfoDisclosure>
           </div>
         )}
       </div>
