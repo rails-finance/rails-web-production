@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import { InfoIconButton } from "@/components/shared/info-icon-button";
+import { fmtPrice, PricePill } from "@/components/shared/price-pill";
 
 /**
  * Segmented price-runway bar for a Liquity V2 trove.
@@ -52,37 +52,11 @@ export interface TrovePriceAxisProps {
   zoneBoundaries?: [number, number];
 }
 
-function fmtPrice(v: number): string {
-  if (!isFinite(v) || v <= 0) return "–";
-  if (v < 1) return `$${v.toFixed(4)}`;
-  if (v < 100) return `$${v.toFixed(2)}`;
-  if (v < 10_000) return `$${Math.round(v).toLocaleString()}`;
-  if (v < 1_000_000) return `$${(v / 1000).toFixed(1)}K`;
-  return `$${(v / 1_000_000).toFixed(2)}M`;
-}
-
 const ZONE_META = [
   { key: "conservative", label: "Conservative", active: "bg-emerald-500/55", muted: "bg-emerald-500/20", text: "text-emerald-400" },
   { key: "caution",      label: "Caution",      active: "bg-amber-500/55",   muted: "bg-amber-500/20",   text: "text-amber-400" },
   { key: "liquidation",  label: "Liquidation",  active: "bg-red-500/55",     muted: "bg-red-500/20",     text: "text-red-400" },
 ] as const;
-
-function PricePill({
-  symbol,
-  address,
-  price,
-}: {
-  symbol: string;
-  address?: string;
-  price: number;
-}) {
-  return (
-    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-sunken text-xs tabular-nums cursor-default">
-      <TokenChipIcon symbol={symbol} address={address} size={14} />
-      <span className="font-bold text-green-400">{fmtPrice(price)}</span>
-    </span>
-  );
-}
 
 export function TrovePriceAxis({
   collateralSymbol,

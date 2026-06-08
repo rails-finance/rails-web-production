@@ -3,16 +3,21 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { FooterThemeToggle } from "@/components/shared/FooterThemeToggle";
+import { usePriceStripActive } from "@/components/shared/price-strip";
 
 /** Slim app footer used on protocol pages (/liquity-v2, /trove/*).
  *  Single row: copyright + legal on the left, protocol switcher + theme
  *  toggle on the right. The "Built with support from Liquity" credit has
  *  been retired from this surface — it lives on the marketing site footer
- *  (see SiteFooter) where the messaging context fits. */
+ *  (see SiteFooter) where the messaging context fits.
+ *
+ *  When a detail page mounts the fixed bottom PriceStrip, the footer pads its
+ *  bottom so its content clears the strip instead of sitting behind it. */
 export function AppFooter() {
+  const priceStripActive = usePriceStripActive();
   return (
     <footer className="border-t border-rb-200 dark:border-rb-800 mt-16">
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className={`max-w-7xl mx-auto px-4 pt-6 ${priceStripActive ? "pb-20" : "pb-6"}`}>
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex flex-col md:flex-row items-center gap-4">
             <p className="text-xs text-rb-500">© {new Date().getFullYear()} Rails</p>

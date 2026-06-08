@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import { InfoIconButton } from "@/components/shared/info-icon-button";
+import { fmtPrice, PricePill } from "@/components/shared/price-pill";
 
 /**
  * Per-asset price runway for an Aave V4 spoke.
@@ -47,32 +47,6 @@ export interface AaveV4PriceRunwayProps {
    *  where the liquidation marker sits. Default = [25, 75] — Conservative
    *  and Liquidation caps each take 25%, Caution interior takes 50%. */
   zoneBoundaries?: [number, number];
-}
-
-function fmtPrice(v: number): string {
-  if (!isFinite(v) || v <= 0) return "–";
-  if (v < 1) return `$${v.toFixed(4)}`;
-  if (v < 100) return `$${v.toFixed(2)}`;
-  if (v < 10_000) return `$${Math.round(v).toLocaleString()}`;
-  if (v < 1_000_000) return `$${(v / 1000).toFixed(1)}K`;
-  return `$${(v / 1_000_000).toFixed(2)}M`;
-}
-
-function PricePill({
-  symbol,
-  address,
-  price,
-}: {
-  symbol: string;
-  address?: string;
-  price: number;
-}) {
-  return (
-    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-sunken text-xs tabular-nums cursor-default">
-      <TokenChipIcon symbol={symbol} address={address} size={14} />
-      <span className="font-bold text-green-400">{fmtPrice(price)}</span>
-    </span>
-  );
 }
 
 export function AaveV4PriceRunway({

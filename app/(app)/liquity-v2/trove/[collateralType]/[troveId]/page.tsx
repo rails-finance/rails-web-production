@@ -32,6 +32,7 @@ import { LiquityTroveBarsProvider } from "@/lib/liquity/use-trove-bars";
 import { FilterDropdown, DisplaySettingsIcon, type FilterOption } from "@/components/shared/filter-dropdown";
 import { getEventActionKey, actionLabel, DEMOTED_ACTIONS } from "@/lib/shared/event-filter-helpers";
 import { TransactionHeatmap } from "@/components/shared/transaction-heatmap";
+import { PriceStrip, type PriceStripAsset } from "@/components/shared/price-strip";
 
 /** DISPLAY toggle dropdown — Liquity-only subset of rails-explorer's
  * TimelineDisplayToggle. USD Values + Ticker Labels are omitted because they
@@ -416,6 +417,16 @@ export default function TrovePage() {
 
   const walletFilterHref = effectiveOwner ? `/liquity-v2?ownerAddress=${effectiveOwner.toLowerCase()}` : null;
 
+  // Assets relevant to the position in view for the fixed bottom price strip:
+  // the trove's collateral (priced from the Liquity oracle) plus BOLD, the
+  // debt asset — hard-pegged to $1 by the protocol's redemption mechanism, so
+  // there's no separate price source for it.
+  const collateralPrice = prices?.[troveData.collateralType.toLowerCase() as keyof OraclePricesData];
+  const stripAssets: PriceStripAsset[] = [
+    ...(collateralPrice ? [{ symbol: troveData.collateralType, price: collateralPrice }] : []),
+    { symbol: "BOLD", price: 1 },
+  ];
+
   return (
     <>
       <FeedbackButton />
@@ -584,6 +595,7 @@ export default function TrovePage() {
           )}
         </TimelineDisplayProvider>
       </div>
+      <PriceStrip assets={stripAssets} />
     </>
   );
 }

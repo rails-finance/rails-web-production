@@ -57,6 +57,7 @@ import { buildAaveV4SpokeCards, groupBySpoke } from "@/lib/aave-v4/spoke-cards";
 import { getLiquidationThreshold, isStable } from "@/lib/aave-v4/liquidation-thresholds";
 import { simulateAaveV4Position, type SimPositionInputs } from "@/lib/aave-v4/utils/simulate";
 import { resolvePrice, type PriceEntry } from "@/lib/aave/prices";
+import { PriceStrip, type PriceStripAsset } from "@/components/shared/price-strip";
 import type { ReserveStats } from "@/lib/aave-v4/spoke-cards";
 import { TimelineDisplayProvider, useTimelineDisplay } from "@/components/shared/timeline-display-context";
 import { FilterDropdown, DisplaySettingsIcon, type FilterOption } from "@/components/shared/filter-dropdown";
@@ -257,6 +258,18 @@ function AaveV4SpokePageInner() {
       },
     };
   }, [eventActiveGroup, chainPosition]);
+
+  // Assets relevant to the position in view — the union of what this spoke is
+  // currently supplying and borrowing — for the fixed bottom price strip. Only
+  // priced symbols make the cut (resolvePrice → null for unknowns).
+  const stripAssets = useMemo<PriceStripAsset[]>(() => {
+    if (!activeCard) return [];
+    const symbols = [...new Set([...activeCard.supplyingSymbols, ...activeCard.borrowingSymbols])];
+    return symbols.flatMap((symbol) => {
+      const price = resolvePrice(symbol, prices);
+      return price != null ? [{ symbol, address: TOKEN_ADDR[symbol], price }] : [];
+    });
+  }, [activeCard, prices]);
 
   const spokeScopedEvents = useMemo(() => {
     return sortedEvents.filter((e) => {
@@ -588,6 +601,7 @@ function AaveV4SpokePageInner() {
           )}
         </TimelineDisplayProvider>
       </div>
+      <PriceStrip assets={stripAssets} />
     </>
   );
 }
