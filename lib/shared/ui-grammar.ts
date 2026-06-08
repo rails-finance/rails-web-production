@@ -29,7 +29,7 @@
 
 /** Button that navigates to another page. Blue border appears on hover. */
 export const NAV_BUTTON =
-  "inline-flex items-center gap-1.5 rounded-lg border border-rb-200 dark:border-rb-800 bg-rb-50 dark:bg-rb-800 px-3 py-1.5 text-sm text-rb-500 hover:text-foreground hover:bg-rb-200/60 dark:hover:bg-rb-700/50 hover:border-blue-500 transition-colors cursor-pointer";
+  "inline-flex items-center gap-1.5 rounded-lg border border-rb-100 dark:border-rb-800 bg-rb-100 dark:bg-rb-800 px-3 py-1.5 text-sm text-rb-500 hover:text-foreground hover:bg-rb-200/60 dark:hover:bg-rb-700/50 hover:border-blue-500 transition-colors cursor-pointer";
 
 /** Text/inline link that navigates to another page. Turns blue on hover. */
 export const NAV_LINK = "text-rb-500 hover:text-blue-500 dark:hover:text-blue-400 transition-colors";
@@ -43,11 +43,11 @@ export const NAV_LINK = "text-rb-500 hover:text-blue-500 dark:hover:text-blue-40
 export const CTRL_GHOST = "inline-flex items-center justify-center transition-colors cursor-pointer";
 
 /** Idle in-place control: muted, gains a soft fill + foreground on hover. */
-export const CTRL_OFF = "text-rb-500 hover:bg-rb-50 dark:hover:bg-rb-800 hover:text-foreground";
+export const CTRL_OFF = "text-rb-500 hover:bg-rb-100 dark:hover:bg-rb-800 hover:text-foreground";
 
 /** Engaged/open in-place control: holds the same soft fill CTRL_OFF shows on
  * hover, so an open control simply looks "hovered" for as long as it's engaged. */
-export const CTRL_ON = "bg-rb-50 dark:bg-rb-800 text-foreground";
+export const CTRL_ON = "bg-rb-100 dark:bg-rb-800 text-foreground";
 
 /** Engaged in-place control carrying a semantic accent (e.g. an active date filter). */
 export const CTRL_ON_ACCENT = "bg-amber-500/15 text-amber-500 dark:text-amber-400 hover:bg-amber-500/25";
@@ -75,7 +75,7 @@ export const RESET_LINK =
  * pills.
  */
 export const PILL_META =
-  "inline-flex items-center gap-1 rounded-full bg-rb-50 dark:bg-rb-800 px-2 py-0.5 text-xs text-rb-500";
+  "inline-flex items-center gap-1 rounded-full bg-rb-100 dark:bg-rb-800 px-2 py-0.5 text-xs text-rb-500";
 
 /**
  * Count badge — a solid chip showing a count of active selections (e.g. the

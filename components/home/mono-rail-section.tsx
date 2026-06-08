@@ -94,7 +94,7 @@ function MonoRailCard({ rail }: { rail: MonoRail }) {
     return (
       <Link
         href={rail.href}
-        className="p-5 flex flex-col gap-3 rounded-3xl border border-transparent bg-rb-50 dark:bg-rb-800 transition-colors hover:border-blue-500/40"
+        className="p-5 flex flex-col gap-3 rounded-3xl border border-transparent bg-raised transition-colors hover:border-blue-500/40"
       >
         {inner}
         {desc}
@@ -103,7 +103,7 @@ function MonoRailCard({ rail }: { rail: MonoRail }) {
   }
 
   return (
-    <div className="p-5 flex flex-col gap-3 rounded-3xl border border-transparent bg-rb-50 dark:bg-rb-800">
+    <div className="p-5 flex flex-col gap-3 rounded-3xl border border-transparent bg-raised">
       {inner}
       {desc}
     </div>

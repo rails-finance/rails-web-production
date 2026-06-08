@@ -16,7 +16,7 @@ export default function Home() {
       <MonoRailSection />
 
       {/* ═══ FEATURE SPOTLIGHT — Position card + Economics + Timeline ═══ */}
-      <div className="bg-rb-50 dark:bg-rb-800 overflow-hidden">
+      <div className="bg-raised overflow-hidden">
         <section className="max-w-7xl mx-auto px-4 py-4">
           <FeatureSpotlight />
         </section>
@@ -99,7 +99,7 @@ export default function Home() {
  *  rails-web-mig component (which renders the same mark + wordmark). */
 function GetInTouch() {
   return (
-    <div className="bg-rb-50 dark:bg-rb-800">
+    <div className="bg-raised">
       <div className="max-w-7xl mx-auto px-4 py-16">
         <h2 className="font-semibold tracking-tight leading-tight pb-4 text-[clamp(28px,4vw,42px)]">Get in touch</h2>
 

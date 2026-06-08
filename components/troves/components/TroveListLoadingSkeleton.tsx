@@ -15,20 +15,20 @@ export function TroveListLoadingSkeleton() {
           {/* Left group — filter button, collateral pill, search */}
           <div className="flex flex-col lg:flex-row lg:items-center gap-3 lg:flex-1">
             <div className="flex items-center gap-2 w-full lg:w-auto">
-              <div className="h-10 w-20 rounded-lg bg-rb-200 dark:bg-rb-800" />
-              <div className="h-10 w-36 rounded-lg bg-rb-200 dark:bg-rb-800" />
+              <div className="h-10 w-20 rounded-lg bg-skeleton" />
+              <div className="h-10 w-36 rounded-lg bg-skeleton" />
             </div>
-            <div className="h-10 w-full lg:flex-1 rounded-lg bg-rb-200 dark:bg-rb-800" />
+            <div className="h-10 w-full lg:flex-1 rounded-lg bg-skeleton" />
           </div>
           {/* Right group — sort direction + sort dropdown */}
           <div className="flex items-center gap-1 w-full lg:w-auto">
-            <div className="h-10 w-10 rounded-lg bg-rb-200 dark:bg-rb-800" />
-            <div className="h-10 w-full lg:w-40 rounded-lg bg-rb-200 dark:bg-rb-800" />
+            <div className="h-10 w-10 rounded-lg bg-skeleton" />
+            <div className="h-10 w-full lg:w-40 rounded-lg bg-skeleton" />
           </div>
         </div>
         {/* Card stack — same 24px gap and lg radius as the live grid. */}
         <div className="space-y-6">
-          <div className="animate-pulse h-40 bg-rb-200 dark:bg-rb-800 rounded-lg" />
+          <div className="animate-pulse h-40 bg-skeleton rounded-lg" />
           <div className="animate-pulse h-40 bg-rb-200/75 dark:bg-rb-800/75 rounded-lg" />
           <div className="animate-pulse h-40 bg-rb-200/50 dark:bg-rb-800/50 rounded-lg" />
           <div className="animate-pulse h-40 bg-rb-200/25 dark:bg-rb-800/25 rounded-lg" />

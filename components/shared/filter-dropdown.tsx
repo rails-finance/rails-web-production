@@ -213,7 +213,7 @@ export function FilterDropdown({
         <div
           className={`absolute top-full ${align === "right" ? "right-0" : "left-0"} mt-1 z-50 min-w-[220px] max-h-[320px] overflow-y-auto overlay-panel`}
         >
-          <div className="flex items-center justify-between px-4 py-3 border-b border-rb-300 dark:border-rb-700">
+          <div className="flex items-center justify-between px-4 py-3">
             {label && <span className="text-xs uppercase tracking-wider font-bold">{label}</span>}
             {!isAll && !minimal && !noClear && (
               <button onClick={() => handleClear()} className={RESET_LINK}>
@@ -221,6 +221,7 @@ export function FilterDropdown({
               </button>
             )}
           </div>
+          <div className="my-1 mx-3 border-t border-rb-300 dark:border-rb-700" />
           {options.map((opt) => {
             const checked = minimal
               ? selectedSet.has(opt.key)

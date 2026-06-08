@@ -131,7 +131,7 @@ export default function AboutPage() {
 
           <div className="grid md:grid-cols-2 gap-8 mb-8">
             {/* Miles */}
-            <div className="bg-rb-100 dark:bg-rb-800 rounded-lg p-6">
+            <div className="bg-raised rounded-lg p-6">
               <div className="flex items-center mb-4">
                 <img
                   src="/about-team-milesessex.jpg"
@@ -152,7 +152,7 @@ export default function AboutPage() {
               </p>
             </div>
             {/* Slava */}
-            <div className="bg-rb-100 dark:bg-rb-800 rounded-lg p-6">
+            <div className="bg-raised rounded-lg p-6">
               <div className="flex items-center mb-4">
                 <img src="/about-team-slvdev.jpg" alt="Slava" className="w-16 h-16 rounded-full mr-4 object-cover" />
                 <div>
@@ -174,7 +174,7 @@ export default function AboutPage() {
         {/* Supporters Section */}
         <div className="mb-12">
           <h2 className={`${H2} mb-6`}>Our Supporters</h2>
-          <div className="bg-rb-100 dark:bg-rb-800 rounded-lg p-6">
+          <div className="bg-raised rounded-lg p-6">
             <div className="mb-4">
               <a href="https://liquity.org" target="_blank" rel="noopener noreferrer" aria-label="Liquity">
                 <LiquityLogo className="h-9 w-auto" />
@@ -193,7 +193,7 @@ export default function AboutPage() {
           <h2 className={`${H2} mb-6`}>Connect With Us</h2>
 
           <div className="grid md:grid-cols-2 gap-8 mb-8">
-            <div className="bg-rb-100 dark:bg-rb-800 rounded-lg p-6 shadow hover:lg:shadow-lg">
+            <div className="bg-raised rounded-lg p-6 shadow hover:lg:shadow-lg">
               <h3 className={`${H3} mb-4`}>General Inquiries</h3>
               <div className="space-y-3">
                 <div className="flex items-center">

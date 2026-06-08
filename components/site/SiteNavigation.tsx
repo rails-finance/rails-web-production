@@ -96,7 +96,7 @@ export function SiteNavigation() {
                 {/* Desktop Tooltip Modal */}
                 {!isMobile && isHoverMenuOpen && (
                   <div
-                    className="absolute top-full right-0 mt-2 w-60 bg-rb-50 dark:bg-rb-850 shadow-2xl rounded-xl border border-rb-200 dark:border-rb-800 p-6 z-50"
+                    className="absolute top-full right-0 mt-2 w-60 bg-white dark:bg-rb-850 shadow-2xl rounded-xl border border-rb-200 dark:border-rb-800 p-6 z-50"
                     onMouseEnter={handleMouseEnter}
                     onMouseLeave={handleMouseLeave}
                   >
@@ -105,7 +105,7 @@ export function SiteNavigation() {
                       className="absolute -top-2 right-4 w-0 h-0
                       border-l-[8px] border-l-transparent
                       border-r-[8px] border-r-transparent
-                      border-b-[8px] border-b-rb-50 dark:border-b-rb-850
+                      border-b-[8px] border-b-white dark:border-b-rb-850
                       before:content-[''] before:absolute before:-top-[1px] before:-left-[9px]
                       before:w-0 before:h-0
                       before:border-l-[9px] before:border-l-transparent
@@ -137,7 +137,7 @@ export function SiteNavigation() {
           aria-label="Close menu"
         >
           <div
-            className="fixed top-0 right-0 h-full w-80 bg-rb-50 dark:bg-rb-850 shadow-2xl"
+            className="fixed top-0 right-0 h-full w-80 bg-white dark:bg-rb-850 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}

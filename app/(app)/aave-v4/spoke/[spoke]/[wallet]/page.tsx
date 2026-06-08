@@ -374,8 +374,8 @@ function AaveV4SpokePageInner() {
       <>
         <FeedbackButton />
         <div className="py-8 space-y-6">
-          <div className="h-32 bg-rb-50 dark:bg-rb-800 rounded-lg animate-pulse" />
-          <div className="h-64 bg-rb-50 dark:bg-rb-800 rounded-lg animate-pulse" />
+          <div className="h-32 bg-raised rounded-lg animate-pulse" />
+          <div className="h-64 bg-raised rounded-lg animate-pulse" />
         </div>
       </>
     );
@@ -441,7 +441,7 @@ function AaveV4SpokePageInner() {
         {/* Position card in its own rounded panel — owner address sits in its
             top row, and the (i) at its bottom-right expands the explanation. */}
         {activeCard && (
-          <div className="rounded-2xl bg-rb-50 dark:bg-rb-800">
+          <div className="rounded-2xl bg-raised">
             <AaveV4SpokeCardSelector
               spokes={[activeCard]}
               selected={spokeName}
@@ -455,7 +455,7 @@ function AaveV4SpokePageInner() {
         {/* Economics (tower chart + liquidation/price runway) in its own
             rounded panel — contained now, no full-bleed w-screen section. */}
         {activeGroup && hasUiHydrated ? (
-          <div className="rounded-2xl bg-rb-50 dark:bg-rb-800 px-4 md:px-6 py-6">
+          <div className="rounded-2xl bg-raised px-4 md:px-6 py-6">
             <AaveV4SpokeEconomicsBand
               activeName={activeGroup.name}
               reserves={activeGroup.result.reserves}

@@ -149,7 +149,7 @@ function SpokeCard({
 
   return (
     <div className="rounded-lg border border-rb-200 dark:border-rb-800 overflow-hidden">
-      <div className="px-4 py-2.5 bg-rb-50 dark:bg-rb-800 border-b border-rb-200 dark:border-rb-800 flex items-center justify-between gap-2">
+      <div className="px-4 py-2.5 bg-raised border-b border-rb-200 dark:border-rb-800 flex items-center justify-between gap-2">
         <div>
           <h3 className="text-sm font-semibold text-foreground">{group.spokeName} <span className="text-rb-500 font-normal">spoke</span></h3>
           <p className="text-xs text-rb-500">

@@ -218,7 +218,7 @@ export function TroveListFilters({
                 className="absolute top-full left-0 mt-2 z-50 min-w-[280px] max-h-[400px] overflow-y-auto overlay-panel"
                 role="menu"
               >
-                <div className="flex items-center justify-between px-4 py-3 border-b border-rb-300 dark:border-rb-700">
+                <div className="flex items-center justify-between px-4 py-3">
                   <span className="text-xs uppercase tracking-wider font-bold">Filters</span>
                   {activeFilterCount > 0 && (
                     <button onClick={resetFilters} className={RESET_LINK}>
@@ -226,11 +226,12 @@ export function TroveListFilters({
                     </button>
                   )}
                 </div>
+                <div className="my-1 mx-3 border-t border-rb-300 dark:border-rb-700" />
                 {/* Status Toggle */}
                 <div className="p-3 ">
                   <div className="text-xs text-rb-500 uppercase tracking-wider mb-2">Status</div>
                   <div
-                    className="flex bg-rb-200 dark:bg-rb-900 rounded-lg p-1"
+                    className="flex bg-sunken rounded-lg p-1"
                     role="group"
                     aria-label="Filter by trove status"
                   >
@@ -238,7 +239,7 @@ export function TroveListFilters({
                       onClick={() => handleFilterChange({ status: "all" })}
                       className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         effStatus === "all"
-                          ? "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
+                          ? "bg-selected text-foreground font-semibold"
                           : "text-rb-500 hover:text-foreground"
                       }`}
                       aria-pressed={effStatus === "all"}
@@ -262,7 +263,7 @@ export function TroveListFilters({
                       onClick={() => handleFilterChange({ status: "closed" })}
                       className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         effStatus === "closed"
-                          ? "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
+                          ? "bg-selected text-foreground font-semibold"
                           : "text-rb-500 hover:text-foreground"
                       }`}
                       aria-pressed={effStatus === "closed"}
@@ -281,7 +282,7 @@ export function TroveListFilters({
                 <div className="p-3">
                   <div className="text-xs text-rb-500 uppercase tracking-wider mb-2">Liquidations</div>
                   <div
-                    className="flex bg-rb-200 dark:bg-rb-900 rounded-lg p-1"
+                    className="flex bg-sunken rounded-lg p-1"
                     role="group"
                     aria-label="Filter by liquidation history"
                   >
@@ -293,7 +294,7 @@ export function TroveListFilters({
                       }
                       className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         effStatus !== "liquidated"
-                          ? "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
+                          ? "bg-selected text-foreground font-semibold"
                           : "text-rb-500 hover:text-foreground"
                       }`}
                       aria-pressed={effStatus !== "liquidated"}
@@ -320,7 +321,7 @@ export function TroveListFilters({
                   <div>
                     <div className="text-xs text-rb-500 uppercase tracking-wider mb-2">Redemptions</div>
                     <div
-                      className="flex bg-rb-200 dark:bg-rb-900 rounded-lg p-1"
+                      className="flex bg-sunken rounded-lg p-1"
                       role="group"
                       aria-label="Filter by redemptions"
                     >
@@ -328,7 +329,7 @@ export function TroveListFilters({
                         onClick={() => handleFilterChange({ hasRedemptions: undefined })}
                         className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                           filters.hasRedemptions === undefined
-                            ? "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
+                            ? "bg-selected text-foreground font-semibold"
                             : "text-rb-500 hover:text-foreground"
                         }`}
                         aria-pressed={filters.hasRedemptions === undefined}
@@ -352,7 +353,7 @@ export function TroveListFilters({
                         onClick={() => handleFilterChange({ hasRedemptions: false })}
                         className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                           filters.hasRedemptions === false
-                            ? "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
+                            ? "bg-selected text-foreground font-semibold"
                             : "text-rb-500 hover:text-foreground"
                         }`}
                         aria-pressed={filters.hasRedemptions === false}
@@ -367,7 +368,7 @@ export function TroveListFilters({
                   <div>
                     <div className="text-xs text-rb-500 uppercase tracking-wider mb-2">Interest Rate Management</div>
                     <div
-                      className="flex bg-rb-200 dark:bg-rb-900 rounded-lg p-1"
+                      className="flex bg-sunken rounded-lg p-1"
                       role="group"
                       aria-label="Filter by interest rate management"
                     >
@@ -375,7 +376,7 @@ export function TroveListFilters({
                         onClick={() => handleFilterChange({ batchOnly: undefined, individualOnly: undefined })}
                         className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                           !filters.batchOnly && !filters.individualOnly
-                            ? "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
+                            ? "bg-selected text-foreground font-semibold"
                             : "text-rb-500 hover:text-foreground"
                         }`}
                         aria-pressed={!filters.batchOnly && !filters.individualOnly}
@@ -399,7 +400,7 @@ export function TroveListFilters({
                         onClick={() => handleFilterChange({ batchOnly: undefined, individualOnly: true })}
                         className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                           filters.individualOnly
-                            ? "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
+                            ? "bg-selected text-foreground font-semibold"
                             : "text-rb-500 hover:text-foreground"
                         }`}
                         aria-pressed={filters.individualOnly === true}
@@ -414,7 +415,7 @@ export function TroveListFilters({
                   <div>
                     <div className="text-xs text-rb-500 uppercase tracking-wider mb-2">Zombie Troves</div>
                     <div
-                      className="flex bg-rb-200 dark:bg-rb-900 rounded-lg p-1"
+                      className="flex bg-sunken rounded-lg p-1"
                       role="group"
                       aria-label="Filter zombie troves"
                     >
@@ -422,7 +423,7 @@ export function TroveListFilters({
                         onClick={() => handleFilterChange({ showZombie: "all" })}
                         className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                           effZombie === "all"
-                            ? "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
+                            ? "bg-selected text-foreground font-semibold"
                             : "text-rb-500 hover:text-foreground"
                         }`}
                         aria-pressed={effZombie === "all"}
@@ -446,7 +447,7 @@ export function TroveListFilters({
                         onClick={() => handleFilterChange({ showZombie: false })}
                         className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                           effZombie === false
-                            ? "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
+                            ? "bg-selected text-foreground font-semibold"
                             : "text-rb-500 hover:text-foreground"
                         }`}
                         aria-pressed={effZombie === false}
@@ -494,7 +495,7 @@ export function TroveListFilters({
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onFocus={() => setSearchFocused(true)}
-            className="w-full px-3 py-2 pr-10 bg-rb-50 dark:bg-rb-800 h-8 border border-rb-300 dark:border-rb-700 rounded-md text-sm text-foreground placeholder-rb-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="w-full px-3 py-2 pr-10 bg-field h-8 border border-rb-300 dark:border-rb-700 rounded-md text-sm text-foreground placeholder-rb-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             aria-label="Search by wallet address, ENS name, or trove ID"
           />
           {searchInput ? (
@@ -553,6 +554,10 @@ export function TroveListFilters({
               className="absolute top-full left-0 lg:left-auto right-0 mt-2 z-50 min-w-[200px] overflow-hidden overlay-panel"
               role="menu"
             >
+              <div className="flex items-center px-4 py-3">
+                <span className="text-xs uppercase tracking-wider font-bold">Sort</span>
+              </div>
+              <div className="my-1 mx-3 border-t border-rb-300 dark:border-rb-700" />
               {sortOptions.map((option) => (
                 <button
                   key={option.value}

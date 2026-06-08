@@ -257,7 +257,7 @@ export function TowerBar({ segments, sideBar, height = CHART_HEIGHT, tooltipSide
                 bottom: Math.max(0, Math.min(sideBarTotalHeight / 2 - 24, height - 48)),
               }}
             >
-              <div className="min-w-[160px] max-w-[240px] rounded-md border border-rb-300 dark:border-rb-700 bg-rb-50 dark:bg-rb-900 shadow-lg px-2.5 py-1.5 text-[11px] text-foreground">
+              <div className="min-w-[160px] max-w-[240px] rounded-md border border-rb-300 dark:border-rb-700 bg-white dark:bg-rb-900 shadow-lg px-2.5 py-1.5 text-[11px] text-foreground">
                 {sideBarTooltip}
               </div>
             </div>
@@ -281,7 +281,7 @@ export function TowerBar({ segments, sideBar, height = CHART_HEIGHT, tooltipSide
               )}
               {seg.patternStyle && (
                 <div
-                  className="absolute inset-0 rounded-sm pointer-events-none bg-rb-200 dark:bg-rb-900"
+                  className="absolute inset-0 rounded-sm pointer-events-none bg-sunken"
                   style={seg.patternStyle}
                 />
               )}
@@ -296,7 +296,7 @@ export function TowerBar({ segments, sideBar, height = CHART_HEIGHT, tooltipSide
               bottom: Math.max(0, Math.min(activeSegment.bottomPct + activeSegment.heightPct / 2 - 24, height - 48)),
             }}
           >
-            <div className="min-w-[160px] max-w-[240px] rounded-md border border-rb-300 dark:border-rb-700 bg-rb-50 dark:bg-rb-900 shadow-lg px-2.5 py-1.5 text-[11px] text-foreground">
+            <div className="min-w-[160px] max-w-[240px] rounded-md border border-rb-300 dark:border-rb-700 bg-white dark:bg-rb-900 shadow-lg px-2.5 py-1.5 text-[11px] text-foreground">
               {activeSegment.tooltip}
             </div>
           </div>
@@ -315,7 +315,7 @@ export function TowerBarSkeleton({ height = CHART_HEIGHT }: { height?: number })
     <div className="flex gap-px shrink-0">
       <div className="relative w-16 sm:w-20" style={{ height }}>
         <div
-          className="absolute left-0 right-0 bottom-0 rounded-sm bg-rb-200 dark:bg-rb-800 animate-pulse"
+          className="absolute left-0 right-0 bottom-0 rounded-sm bg-skeleton animate-pulse"
           style={{ height: Math.round(height * 0.7) }}
         />
       </div>

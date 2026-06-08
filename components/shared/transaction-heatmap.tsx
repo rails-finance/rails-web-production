@@ -161,7 +161,7 @@ export function TransactionHeatmap({ events, value, onChange, title = "Transacti
   const dowLabels = ["Mon", "", "Wed", "", "Fri", "", "Sun"];
 
   return (
-    <div className="rounded-lg border border-rb-200/60 dark:border-rb-800/60 bg-rb-100/40 dark:bg-rb-950/50 p-3 select-none">
+    <div className="rounded-lg border border-rb-200/60 dark:border-rb-800/60 bg-raised p-3 select-none">
       <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
         <span className="text-sm font-bold tracking-wide">{title}</span>
         <div className="flex items-center gap-2">

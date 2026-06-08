@@ -56,7 +56,7 @@ export function LiquityEventCard({
         onClick={(e) => e.stopPropagation()}
         onMouseEnter={() => setHoveredAddress?.(wallet.toLowerCase())}
         onMouseLeave={() => setHoveredAddress?.(null)}
-        className={`inline-flex items-center justify-center rounded-full border-2 p-1.5 bg-rb-200 dark:bg-rb-900 transition-colors ${hoveredAddress === wallet.toLowerCase() ? "border-rb-500 dark:border-rb-500" : "border-rb-300 dark:border-rb-700"} hover:border-rb-500 dark:hover:border-rb-500`}
+        className={`inline-flex items-center justify-center rounded-full border-2 p-1.5 bg-sunken transition-colors ${hoveredAddress === wallet.toLowerCase() ? "border-rb-500 dark:border-rb-500" : "border-rb-300 dark:border-rb-700"} hover:border-rb-500 dark:hover:border-rb-500`}
         title={ensName || wallet}
       >
         <Facehash address={wallet} size={20} />
@@ -69,7 +69,7 @@ export function LiquityEventCard({
         onClick={(e) => e.stopPropagation()}
         onMouseEnter={() => setHoveredAddress?.(wallet.toLowerCase())}
         onMouseLeave={() => setHoveredAddress?.(null)}
-        className={`flex items-center rounded-full bg-rb-200 dark:bg-rb-900 px-3 py-2 transition-colors ${hoveredAddress === wallet.toLowerCase() ? "text-blue-300 border-rb-500 dark:border-rb-500" : "text-blue-400"} hover:text-blue-500 hover:border-rb-500 dark:hover:border-rb-500`}
+        className={`flex items-center rounded-full bg-sunken px-3 py-2 transition-colors ${hoveredAddress === wallet.toLowerCase() ? "text-blue-300 border-rb-500 dark:border-rb-500" : "text-blue-400"} hover:text-blue-500 hover:border-rb-500 dark:hover:border-rb-500`}
       >
         <span className="inline-flex items-center gap-1.5 w-[140px]">
           <Facehash address={wallet} size={16} />

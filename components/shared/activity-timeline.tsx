@@ -164,7 +164,7 @@ function SpineValEditable({
           if (e.key === "Escape") setEditing(false);
         }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-rb-200 dark:bg-rb-900 rounded px-1 py-0 text-base font-semibold tabular-nums w-24 outline-none ring-1 ring-blue-500/50 text-foreground"
+        className="bg-sunken rounded px-1 py-0 text-base font-semibold tabular-nums w-24 outline-none ring-1 ring-blue-500/50 text-foreground"
       />
     );
   }

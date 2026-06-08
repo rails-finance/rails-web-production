@@ -91,10 +91,10 @@ export function NavMenu() {
               exit={{ opacity: 0, y: -6, scale: 0.96 }}
               transition={{ type: "spring", stiffness: 460, damping: 20, mass: 0.8 }}
               style={{ transformOrigin: "top right" }}
-              className="absolute right-0 top-full z-50 mt-2 w-64 rounded-xl border border-rb-50 bg-rb-50 p-6 shadow-2xl dark:border-rb-800 dark:bg-rb-900"
+              className="absolute right-0 top-full z-50 mt-2 w-64 rounded-xl border border-rb-200 bg-white p-6 shadow-2xl dark:border-rb-800 dark:bg-rb-900"
             >
               {/* Triangle pointer */}
-              <div className="absolute -top-2 right-4 h-0 w-0 border-l-[8px] border-r-[8px] border-b-[8px] border-l-transparent border-r-transparent border-b-rb-50 before:absolute before:-left-[9px] before:-top-[1px] before:h-0 before:w-0 before:border-l-[9px] before:border-r-[9px] before:border-b-[9px] before:border-l-transparent before:border-r-transparent before:border-b-rb-50 before:content-[''] dark:border-b-rb-900 dark:before:border-b-rb-900" />
+              <div className="absolute -top-2 right-4 h-0 w-0 border-l-[8px] border-r-[8px] border-b-[8px] border-l-transparent border-r-transparent border-b-white before:absolute before:-left-[9px] before:-top-[1px] before:h-0 before:w-0 before:border-l-[9px] before:border-r-[9px] before:border-b-[9px] before:border-l-transparent before:border-r-transparent before:border-b-white before:content-[''] dark:border-b-rb-900 dark:before:border-b-rb-900" />
               <NavigationContent onLinkClick={closeMenu} />
             </motion.div>
           )}
@@ -117,7 +117,7 @@ export function NavMenu() {
           aria-label="Close menu"
         >
           <div
-            className="fixed right-0 top-0 h-full w-80 max-w-[85vw] overflow-y-auto bg-rb-50 shadow-2xl dark:bg-rb-900"
+            className="fixed right-0 top-0 h-full w-80 max-w-[85vw] overflow-y-auto bg-white shadow-2xl dark:bg-rb-900"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-rb-200 p-6 dark:border-rb-700">

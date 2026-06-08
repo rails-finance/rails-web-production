@@ -55,7 +55,7 @@ export function AaveV4EventHeader({ ctx, timestamp, txGroup, eventNumber }: Aave
 
   const groupChip = txGroup && txGroup.count > 1 ? (
     <span
-      className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wide bg-rb-200 dark:bg-rb-800 text-rb-500"
+      className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wide bg-sunken text-rb-500"
       title={`Operation ${txGroup.index} of ${txGroup.count} in this transaction`}
     >
       {txGroup.index} of {txGroup.count}
@@ -64,7 +64,7 @@ export function AaveV4EventHeader({ ctx, timestamp, txGroup, eventNumber }: Aave
 
   const counter = eventNumber != null && showEventNumbers ? (
     <span
-      className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] bg-rb-200 dark:bg-rb-800 text-rb-500"
+      className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] bg-sunken text-rb-500"
       aria-label={`Event ${eventNumber}`}
     >
       {eventNumber}

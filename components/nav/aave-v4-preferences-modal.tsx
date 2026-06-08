@@ -177,7 +177,7 @@ function HeadroomRow({
                 const v = parseInt(e.target.value, 10);
                 if (!isNaN(v)) onChange!(v);
               }}
-              className="bg-rb-200 dark:bg-rb-900 rounded px-2 py-1 text-sm font-bold tabular-nums w-20 outline-none ring-1 ring-transparent focus:ring-blue-500/50 text-foreground"
+              className="bg-sunken rounded px-2 py-1 text-sm font-bold tabular-nums w-20 outline-none ring-1 ring-transparent focus:ring-blue-500/50 text-foreground"
             />
             <span className="ml-2">{suffix}</span>
           </>

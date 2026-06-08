@@ -249,7 +249,7 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
                 className="absolute top-full left-0 mt-2 z-50 min-w-[280px] max-h-[460px] overflow-y-auto overlay-panel"
                 role="menu"
               >
-                <div className="flex items-center justify-between px-4 py-3 border-b border-rb-300 dark:border-rb-700">
+                <div className="flex items-center justify-between px-4 py-3">
                   <span className="text-xs uppercase tracking-wider font-bold">Filters</span>
                   {activeFilterCount > 0 && (
                     <button onClick={resetFilters} className={RESET_LINK}>
@@ -257,9 +257,10 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
                     </button>
                   )}
                 </div>
+                <div className="my-1 mx-3 border-t border-rb-300 dark:border-rb-700" />
                 <div className="p-3">
                   <div className="text-xs text-rb-500 uppercase tracking-wider mb-2">Show</div>
-                  <div className="flex bg-rb-200 dark:bg-rb-900 rounded-lg p-1" role="group">
+                  <div className="flex bg-sunken rounded-lg p-1" role="group">
                     {(
                       [
                         { v: "all", l: "All" },
@@ -273,7 +274,7 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
                         title={v === "nodust" ? `Hide positions under $${AAVE_V4_DUST_USD}` : undefined}
                         className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                           effShow === v
-                            ? "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
+                            ? "bg-selected text-foreground font-semibold"
                             : "text-rb-500 hover:text-foreground"
                         }`}
                         aria-pressed={effShow === v}
@@ -286,7 +287,7 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
 
                 <div className="p-3">
                   <div className="text-xs text-rb-500 uppercase tracking-wider mb-2">Position</div>
-                  <div className="flex bg-rb-200 dark:bg-rb-900 rounded-lg p-1" role="group">
+                  <div className="flex bg-sunken rounded-lg p-1" role="group">
                     {(
                       [
                         { v: "all", l: "Any" },
@@ -300,10 +301,10 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
                         className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                           filters.debt === v
                             ? v === "all"
-                              ? "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
+                              ? "bg-selected text-foreground font-semibold"
                               : v === "withDebt"
                                 ? "text-white bg-green-500 dark:bg-green-950 dark:text-green-500 rounded"
-                                : "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
+                                : "bg-selected text-foreground font-semibold"
                             : "text-rb-500 hover:text-foreground"
                         }`}
                         aria-pressed={filters.debt === v}
@@ -316,7 +317,7 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
 
                 <div className="p-3">
                   <div className="text-xs text-rb-500 uppercase tracking-wider mb-2">Health</div>
-                  <div className="flex bg-rb-200 dark:bg-rb-900 rounded-lg p-1" role="group">
+                  <div className="flex bg-sunken rounded-lg p-1" role="group">
                     {(
                       [
                         { v: "all", l: "Any" },
@@ -330,7 +331,7 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
                         className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                           filters.health === v
                             ? v === "all"
-                              ? "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
+                              ? "bg-selected text-foreground font-semibold"
                               : v === "atRisk"
                                 ? "bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-400 font-semibold"
                                 : "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-400 font-semibold"
@@ -346,7 +347,7 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
 
                 <div className="p-3">
                   <div className="text-xs text-rb-500 uppercase tracking-wider mb-2">Liquidations</div>
-                  <div className="flex bg-rb-200 dark:bg-rb-900 rounded-lg p-1" role="group">
+                  <div className="flex bg-sunken rounded-lg p-1" role="group">
                     {(
                       [
                         { v: "all", l: "Any" },
@@ -360,10 +361,10 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
                         className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                           filters.liquidations === v
                             ? v === "all"
-                              ? "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
+                              ? "bg-selected text-foreground font-semibold"
                               : v === "with"
                                 ? "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-400 font-semibold"
-                                : "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
+                                : "bg-selected text-foreground font-semibold"
                             : "text-rb-500 hover:text-foreground"
                         }`}
                         aria-pressed={filters.liquidations === v}
@@ -424,7 +425,7 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onFocus={() => setSearchFocused(true)}
-            className="w-full px-3 py-2 pr-10 bg-rb-50 dark:bg-rb-800 h-8 border border-rb-300 dark:border-rb-700 rounded-md text-sm text-foreground placeholder-rb-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            className="w-full px-3 py-2 pr-10 bg-field h-8 border border-rb-300 dark:border-rb-700 rounded-md text-sm text-foreground placeholder-rb-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             aria-label="Search by wallet address or ENS name"
           />
           {searchInput ? (
@@ -481,6 +482,10 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
               className="absolute top-full left-0 lg:left-auto right-0 mt-2 z-50 min-w-[200px] overflow-hidden overlay-panel"
               role="menu"
             >
+              <div className="flex items-center px-4 py-3">
+                <span className="text-xs uppercase tracking-wider font-bold">Sort</span>
+              </div>
+              <div className="my-1 mx-3 border-t border-rb-300 dark:border-rb-700" />
               {SORT_OPTIONS.map((o) => (
                 <button
                   key={o.value}

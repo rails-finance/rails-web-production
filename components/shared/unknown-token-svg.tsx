@@ -24,7 +24,7 @@ export function UnknownTokenSvg({ size = 16, symbol, clickProps, clickClass }: U
   const initial = (symbol ?? "?").slice(0, 1).toUpperCase();
   return (
     <span
-      className={`inline-flex items-center justify-center shrink-0 rounded-full bg-rb-200 dark:bg-rb-800 text-rb-500 font-semibold ${clickClass ?? ""}`}
+      className={`inline-flex items-center justify-center shrink-0 rounded-full bg-marker text-rb-500 font-semibold ${clickClass ?? ""}`}
       style={{ width: size, height: size, fontSize: Math.max(8, size * 0.55) }}
       {...(clickProps ?? {})}
     >

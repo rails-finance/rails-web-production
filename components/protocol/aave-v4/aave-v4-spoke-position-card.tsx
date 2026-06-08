@@ -48,7 +48,7 @@ function timeAgo(unix: number): string {
 function HealthBadge({ hf }: { hf: number | null }) {
   if (hf == null) {
     return (
-      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-rb-200 dark:bg-rb-800 text-rb-500">
+      <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-marker text-rb-500">
         No debt
       </span>
     );
@@ -75,7 +75,7 @@ export function AaveV4SpokePositionCard({ row }: { row: AaveV4SpokePositionRow }
   return (
     <Link
       href={`/aave-v4/spoke/${spokeSlug}/${row.wallet}`}
-      className="group flex items-center gap-3 sm:gap-4 px-3 sm:px-4 py-3 rounded-lg border border-rb-200 dark:border-rb-800 bg-rb-50 dark:bg-rb-950 hover:border-blue-500/40 hover:bg-rb-100/40 dark:hover:bg-rb-900/40 transition-colors"
+      className="group flex items-center gap-3 sm:gap-4 px-3 sm:px-4 py-3 rounded-lg border border-rb-200 dark:border-rb-800 bg-rb-100 dark:bg-rb-950 hover:border-blue-500/40 hover:bg-rb-200/40 dark:hover:bg-rb-900/40 transition-colors"
     >
       {/* Wallet identity */}
       <div className="flex items-center gap-2 shrink-0 min-w-0 w-[180px]">

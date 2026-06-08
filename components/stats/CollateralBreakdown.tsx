@@ -25,15 +25,15 @@ export function CollateralBreakdown({ data, loading, mode = "overview" }: Collat
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="bg-rb-50 dark:bg-rb-900 rounded-xl p-6 animate-pulse">
-            <div className="h-14 bg-rb-200 dark:bg-rb-800 rounded mb-4" />
+          <div key={i} className="bg-rb-100 dark:bg-rb-900 rounded-xl p-6 animate-pulse">
+            <div className="h-14 bg-skeleton rounded mb-4" />
             <div className="space-y-2">
-              <div className="h-4 bg-rb-200 dark:bg-rb-800 rounded w-[3ch]" />
-              <div className="h-7 bg-rb-200 dark:bg-rb-800 rounded w-1/4 mb-5" />
-              <div className="h-4 bg-rb-200 dark:bg-rb-800 rounded w-1/6" />
-              <div className="h-6 bg-rb-200 dark:bg-rb-800 rounded w-1/4 mb-6" />
+              <div className="h-4 bg-skeleton rounded w-[3ch]" />
+              <div className="h-7 bg-skeleton rounded w-1/4 mb-5" />
+              <div className="h-4 bg-skeleton rounded w-1/6" />
+              <div className="h-6 bg-skeleton rounded w-1/4 mb-6" />
 
-              <div className="h-6 bg-rb-200 dark:bg-rb-800 rounded-full w-1/4" />
+              <div className="h-6 bg-skeleton rounded-full w-1/4" />
             </div>
           </div>
         ))}
@@ -76,7 +76,7 @@ export function CollateralBreakdown({ data, loading, mode = "overview" }: Collat
           <div key={collateralType}>
             <Link
               href={`/liquity-v2?collateralType=${collateralType}`}
-              className="group bg-rb-50 dark:bg-rb-900 hover:bg-rb-100 dark:hover:bg-rb-850 rounded-xl p-4 hover:shadow-lg transition-all cursor-pointer block"
+              className="group bg-rb-100 dark:bg-rb-900 hover:bg-rb-200 dark:hover:bg-rb-850 rounded-xl p-4 hover:shadow-lg transition-all cursor-pointer block"
               aria-label={`View ${stats.openTroveCount.toLocaleString()} ${collateralType} troves with ${formatNumber(stats.totalDebt)} BOLD total debt`}
             >
               <div className="space-y-4 md:space-y-0">
@@ -114,7 +114,7 @@ export function CollateralBreakdown({ data, loading, mode = "overview" }: Collat
             {isLastCollateral && (
               <div className="mt-4">
                 <div className="flex flex-wrap items-center gap-2">
-                  <div className="inline-flex items-center bg-rb-50 dark:bg-rb-900 rounded-md overflow-hidden divide-x divide-rb-200 dark:divide-rb-800">
+                  <div className="inline-flex items-center bg-rb-100 dark:bg-rb-900 rounded-md overflow-hidden divide-x divide-rb-200 dark:divide-rb-800">
                     <a
                       href="https://liquity.org"
                       target="_blank"

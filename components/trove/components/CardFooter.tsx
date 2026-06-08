@@ -26,7 +26,7 @@ export function CardFooter({ trove, dateText, showDetailedInfo = true, isLiquida
   // Different background colors for liquidated vs active troves
   const badgeBgClass = isLiquidated
     ? "bg-red-100 dark:bg-red-900/30"
-    : "bg-rb-200 dark:bg-rb-900";
+    : "bg-sunken";
 
   return (
     <div className="text-xs">
@@ -146,7 +146,7 @@ export function CardFooter({ trove, dateText, showDetailedInfo = true, isLiquida
                   </HighlightableValue>
                   <Link2
                     size={14}
-                    className="-rotate-45 inline-flex items-center justify-center ml-0.5 bg-rb-200 dark:bg-rb-800 w-4 h-4 rounded-full transition-colors duration-150"
+                    className="-rotate-45 inline-flex items-center justify-center ml-0.5 bg-marker w-4 h-4 rounded-full transition-colors duration-150"
                   />
                 </a>
               </span>

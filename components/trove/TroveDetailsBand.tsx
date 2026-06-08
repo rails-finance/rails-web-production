@@ -110,8 +110,8 @@ export function TroveDetailsBand({
               Debt Breakdown
             </div>
             <div className="space-y-1">
-              <div className="h-3 w-32 bg-rb-200 dark:bg-rb-800 rounded animate-pulse" />
-              <div className="h-3 w-28 bg-rb-200 dark:bg-rb-800 rounded animate-pulse" />
+              <div className="h-3 w-32 bg-skeleton rounded animate-pulse" />
+              <div className="h-3 w-28 bg-skeleton rounded animate-pulse" />
             </div>
           </>
         )}
@@ -160,8 +160,8 @@ export function TroveDetailsBand({
         </div>
         {debtInFrontLoading ? (
           <div className="space-y-1">
-            <div className="h-3 w-24 bg-rb-200 dark:bg-rb-800 rounded animate-pulse" />
-            <div className="h-3 w-32 bg-rb-200 dark:bg-rb-800 rounded animate-pulse" />
+            <div className="h-3 w-24 bg-skeleton rounded animate-pulse" />
+            <div className="h-3 w-32 bg-skeleton rounded animate-pulse" />
           </div>
         ) : debtInFront !== null && debtInFront !== undefined ? (
           <>

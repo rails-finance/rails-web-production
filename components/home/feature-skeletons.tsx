@@ -27,7 +27,7 @@ function Screen({ label, children }: { label: string; children: ReactNode }) {
     <div
       role="img"
       aria-label={label}
-      className="relative h-full w-full overflow-hidden rounded-2xl bg-rb-50 ring-1 ring-rb-200/70 dark:bg-rb-900 dark:ring-rb-800/70"
+      className="relative h-full w-full overflow-hidden rounded-2xl bg-rb-100 ring-1 ring-rb-200/70 dark:bg-rb-900 dark:ring-rb-800/70"
       style={BOTTOM_FADE}
     >
       {children}

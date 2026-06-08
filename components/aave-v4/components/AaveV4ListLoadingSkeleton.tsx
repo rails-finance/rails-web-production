@@ -11,18 +11,18 @@ export function AaveV4ListLoadingSkeleton() {
             button + hubs/spokes/supplying/borrowing pills + sort on right. */}
         <div className="mb-6 animate-pulse">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="h-10 w-full max-w-xs rounded-lg bg-rb-200 dark:bg-rb-800" />
-            <div className="h-10 w-24 rounded-lg bg-rb-200 dark:bg-rb-800" />
-            <div className="h-10 w-28 rounded-lg bg-rb-200 dark:bg-rb-800" />
-            <div className="h-10 w-28 rounded-lg bg-rb-200 dark:bg-rb-800" />
-            <div className="h-10 w-32 rounded-lg bg-rb-200 dark:bg-rb-800" />
-            <div className="h-10 w-32 rounded-lg bg-rb-200 dark:bg-rb-800" />
-            <div className="ml-auto h-10 w-32 rounded-lg bg-rb-200 dark:bg-rb-800" />
+            <div className="h-10 w-full max-w-xs rounded-lg bg-skeleton" />
+            <div className="h-10 w-24 rounded-lg bg-skeleton" />
+            <div className="h-10 w-28 rounded-lg bg-skeleton" />
+            <div className="h-10 w-28 rounded-lg bg-skeleton" />
+            <div className="h-10 w-32 rounded-lg bg-skeleton" />
+            <div className="h-10 w-32 rounded-lg bg-skeleton" />
+            <div className="ml-auto h-10 w-32 rounded-lg bg-skeleton" />
           </div>
         </div>
         {/* Card stack — same 24px gap and lg radius as the live grid. */}
         <div className="space-y-6">
-          <div className="animate-pulse h-40 bg-rb-200 dark:bg-rb-800 rounded-lg" />
+          <div className="animate-pulse h-40 bg-skeleton rounded-lg" />
           <div className="animate-pulse h-40 bg-rb-200/75 dark:bg-rb-800/75 rounded-lg" />
           <div className="animate-pulse h-40 bg-rb-200/50 dark:bg-rb-800/50 rounded-lg" />
           <div className="animate-pulse h-40 bg-rb-200/25 dark:bg-rb-800/25 rounded-lg" />

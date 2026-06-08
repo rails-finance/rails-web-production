@@ -128,7 +128,7 @@ function TroveSummaryStack({
     // rest, so the tinted panel supplies its surface. No ownerTroves passed —
     // the position switcher lives on the wallet-filtered listing (the back
     // button links there); the selector falls through to single-card mode.
-    <div className="rounded-2xl bg-rb-50 dark:bg-rb-800">
+    <div className="rounded-2xl bg-raised">
       <TroveSummaryCardSelector trove={trove} liveState={liveState} prices={prices} loadingStatus={loadingStatus} />
       {hasDetail && (
         // px-5 mirrors the card's inner padding; the divider + pt match Aave's
@@ -385,10 +385,10 @@ export default function TrovePage() {
       <>
         <FeedbackButton />
         <div className="py-8 space-y-6">
-          <div className="bg-rb-100 dark:bg-rb-800 rounded-lg h-48 animate-pulse" />
+          <div className="bg-raised rounded-lg h-48 animate-pulse" />
           <div className="space-y-4">
-            <div className="h-8 bg-rb-100 dark:bg-rb-800 rounded w-1/4 animate-pulse" />
-            <div className="h-32 bg-rb-100 dark:bg-rb-800 rounded animate-pulse" />
+            <div className="h-8 bg-raised rounded w-1/4 animate-pulse" />
+            <div className="h-32 bg-raised rounded animate-pulse" />
           </div>
         </div>
       </>
@@ -439,7 +439,7 @@ export default function TrovePage() {
         {/* Economics in its own contained rounded panel — mirrors the Aave
             spoke page (no full-bleed w-screen section) so the two rails share
             one shell. */}
-        <div className="rounded-2xl bg-rb-50 dark:bg-rb-800 px-4 md:px-6 py-6">
+        <div className="rounded-2xl bg-raised px-4 md:px-6 py-6">
           <TroveEconomicsSummary
             events={sortedEvents}
             currentPrice={prices?.[troveData.collateralType.toLowerCase() as keyof OraclePricesData]}

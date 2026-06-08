@@ -124,7 +124,7 @@ export function WalletHistoryDropdown({ show, containerRef, onClose, onPick, pro
   const visible = tab === "pinned" ? pinnedList : recentList;
 
   return (
-    <div className="absolute left-0 right-0 top-full mt-2 z-30 rounded-xl border border-rb-200 dark:border-rb-800 bg-rb-50 dark:bg-rb-900 shadow-lg overflow-hidden">
+    <div className="absolute left-0 right-0 top-full mt-2 z-30 rounded-xl border border-rb-200 dark:border-rb-800 bg-white dark:bg-rb-900 shadow-lg overflow-hidden">
       <div className="p-3 space-y-3">
         {hasAny ? (
           <>
@@ -308,7 +308,7 @@ function SessionRow({
       }}
       onBlur={commitEdit}
       placeholder={fallback}
-      className="flex-1 min-w-0 text-xs font-bold px-1.5 py-0.5 rounded bg-rb-50 dark:bg-rb-800 border border-rb-300 dark:border-rb-700 outline-none"
+      className="flex-1 min-w-0 text-xs font-bold px-1.5 py-0.5 rounded bg-raised border border-rb-300 dark:border-rb-700 outline-none"
     />
   ) : (
     <div className="text-xs font-bold truncate flex-1 text-foreground" title={primary}>

@@ -149,7 +149,7 @@ export function OpenListingCard({ trove, prices, selectorMode = false }: { trove
             showDetailedInfo={false}
           />
           {!selectorMode && (
-            <div className="flex items-center bg-rb-200 dark:bg-rb-800 group-hover:bg-blue-500 transition-colors rounded-full pl-3 pr-2 py-1">
+            <div className="flex items-center bg-marker group-hover:bg-blue-500 transition-colors rounded-full pl-3 pr-2 py-1">
               <span className="text-sm text-rb-500 group-hover:text-white font-semibold flex items-center gap-1">
                 <Icon name="timeline" size={20} aria-hidden="true" />
                 View

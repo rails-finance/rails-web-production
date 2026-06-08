@@ -106,7 +106,7 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
 
   const groupChip = ctx.blockGrouping?.isGrouped ? (
     <span
-      className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wide bg-rb-200 dark:bg-rb-800 text-rb-500"
+      className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wide bg-sunken text-rb-500"
       title={`Operation ${ctx.blockGrouping.sameBlockIndex} of ${ctx.blockGrouping.sameBlockCount} in this transaction`}
     >
       {ctx.blockGrouping.sameBlockIndex} of {ctx.blockGrouping.sameBlockCount}
@@ -115,7 +115,7 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
 
   const counter = eventNumber != null && showEventNumbers ? (
     <span
-      className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] bg-rb-200 dark:bg-rb-800 text-rb-500"
+      className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] bg-sunken text-rb-500"
       aria-label={`Event ${eventNumber}`}
     >
       {eventNumber}

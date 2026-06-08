@@ -195,7 +195,7 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus, expec
                   </HighlightableValue>
                 </span>
               ) : expectsLiveState ? (
-                <span className="inline-block h-3 w-16 bg-rb-200 dark:bg-rb-800 rounded animate-pulse" />
+                <span className="inline-block h-3 w-16 bg-skeleton rounded animate-pulse" />
               ) : null}
             </div>
           </div>
@@ -229,7 +229,7 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus, expec
                 </HighlightableValue>
               </div>
             ) : expectsLiveState ? (
-              <div className="h-9 w-20 bg-rb-200 dark:bg-rb-800 rounded animate-pulse" />
+              <div className="h-9 w-20 bg-skeleton rounded animate-pulse" />
             ) : (
               <div className="text-3xl font-bold text-rb-500">—</div>
             )}
@@ -253,7 +253,7 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus, expec
               {headroomPct !== null ? (
                 <>{headroomPct.toFixed(0)}% headroom</>
               ) : expectsLiveState ? (
-                <span className="inline-block h-3 w-20 bg-rb-200 dark:bg-rb-800 rounded animate-pulse" />
+                <span className="inline-block h-3 w-20 bg-skeleton rounded animate-pulse" />
               ) : null}
             </div>
           </div>

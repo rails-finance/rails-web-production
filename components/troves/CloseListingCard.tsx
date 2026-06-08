@@ -22,7 +22,7 @@ export function ClosedListingCard({ trove, selectorMode = false }: { trove: Trov
       className={
         selectorMode
           ? "block relative text-foreground transition-colors cursor-pointer group"
-          : "block relative rounded-xl text-foreground bg-rb-200 dark:bg-rb-900 hover:bg-rb-300 dark:hover:bg-rb-800 transition-colors cursor-pointer group"
+          : "block relative rounded-xl text-foreground bg-sunken hover:bg-rb-300 dark:hover:bg-rb-800 transition-colors cursor-pointer group"
       }
       aria-label={`View closed trove ${trove.id.substring(0, 8)}... with peak debt of ${formatApproximate(trove.debt.peak)} BOLD`}
     >

@@ -363,7 +363,7 @@ function TrovesPageContent() {
                         sessionStorage.setItem("troves-scroll-position", String(window.scrollY));
                       }
                     }}
-                    className="group/card block w-full text-left rounded-lg transition-all cursor-pointer border border-transparent bg-rb-50 dark:bg-rb-800 hover:border-blue-500 px-5 py-4"
+                    className="group/card block w-full text-left rounded-lg transition-all cursor-pointer border border-transparent bg-raised hover:border-blue-500 px-5 py-4"
                   >
                     <TroveSummaryCard trove={trove} prices={prices ?? undefined} compact />
                   </Link>

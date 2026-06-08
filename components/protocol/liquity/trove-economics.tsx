@@ -311,7 +311,7 @@ function RedeemerSummary({ stats, currentPrice }: { stats: RedeemerStats; curren
     : null;
 
   return (
-    <div className="rounded-lg bg-rb-50 dark:bg-rb-800 overflow-hidden">
+    <div className="rounded-lg bg-raised overflow-hidden">
       <div className="px-5 pt-5 pb-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
@@ -689,7 +689,7 @@ export function TroveEconomicsSummary({
   return (
     <>
     {!hideHeader && (
-    <div className={`rounded-lg overflow-hidden ${meta.status === "closed" ? "bg-rb-100/50 dark:bg-rb-850 opacity-60" : "bg-rb-50 dark:bg-rb-800"}`}>
+    <div className={`rounded-lg overflow-hidden ${meta.status === "closed" ? "bg-rb-100/50 dark:bg-rb-850 opacity-60" : "bg-raised"}`}>
       {/* Position Summary Header */}
       <div className="px-5 pt-7 pb-4">
 
@@ -701,7 +701,7 @@ export function TroveEconomicsSummary({
           {openedDate && (
             <div className="flex items-center gap-2 text-xs ">
               <span>Opened {openedDate}</span>
-              <span className="px-1.5 py-0.5 rounded bg-rb-200 dark:bg-rb-900  text-xs font-medium">{ageDays} days</span>
+              <span className="px-1.5 py-0.5 rounded bg-sunken  text-xs font-medium">{ageDays} days</span>
               <span className=" flex items-center gap-0.5">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>
                 {eventCount}

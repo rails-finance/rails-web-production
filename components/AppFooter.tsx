@@ -118,7 +118,7 @@ function ProtocolSwitcher() {
       {open && (
         <div
           role="menu"
-          className="absolute bottom-full left-0 mb-2 min-w-[180px] rounded-xl border border-rb-200 dark:border-rb-800 bg-rb-50 dark:bg-rb-950 shadow-lg p-1 z-30"
+          className="absolute bottom-full left-0 mb-2 min-w-[180px] rounded-xl border border-rb-200 dark:border-rb-800 bg-white dark:bg-rb-950 shadow-lg p-1 z-30"
         >
           <ProtocolLink
             href="/liquity-v2"
