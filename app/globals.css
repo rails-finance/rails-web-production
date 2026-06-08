@@ -424,18 +424,23 @@ body {
 .overlay-panel {
   background: var(--surface-overlay);
   border: 1px solid var(--color-rb-200);
-  @apply rounded-xl shadow-xl;
+  /* flex-col so inset rows (mx-1, no w-full) stretch to a uniform width minus
+     their margin, instead of a bare <button> shrinking to its content width. */
+  @apply flex flex-col rounded-xl shadow-xl;
 }
 /* Dark: match the wallet-search dropdown (rb-950, near-black) so every popover
    reads as the same floating surface and lifts clearly off the rb-800 canvas,
    rather than the old --surface-overlay that sat ~3 levels off the page. */
 :is(.dark) .overlay-panel {
-  background: var(--color-rb-950);
+  background: var(--color-rb-900);
   border-color: var(--color-rb-800);
 }
 
 .overlay-item {
-  @apply flex items-center gap-3 w-full px-4 py-2 text-left text-sm transition-colors cursor-pointer;
+  /* Inset + rounded so each row reads as a button within the panel rather than
+     a full-bleed strip. No w-full: a block-level flex button already fills the
+     panel minus its margins, so mx-1 insets it without overflow. */
+  @apply flex items-center gap-3 mx-1 my-0.5 px-4 py-2 rounded-lg text-left text-sm transition-colors cursor-pointer;
   color: var(--text-muted);
   &:hover {
     background: var(--surface-hover);

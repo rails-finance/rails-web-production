@@ -124,7 +124,7 @@ export function WalletHistoryDropdown({ show, containerRef, onClose, onPick, pro
   const visible = tab === "pinned" ? pinnedList : recentList;
 
   return (
-    <div className="absolute left-0 right-0 top-full mt-2 z-30 rounded-xl border border-rb-200 dark:border-rb-800 bg-rb-50 dark:bg-rb-950 shadow-lg overflow-hidden">
+    <div className="absolute left-0 right-0 top-full mt-2 z-30 rounded-xl border border-rb-200 dark:border-rb-800 bg-rb-50 dark:bg-rb-900 shadow-lg overflow-hidden">
       <div className="p-3 space-y-3">
         {hasAny ? (
           <>

@@ -95,7 +95,7 @@ export function CheckboxMultiSelect({ label, value, onChange, options, allLabel,
           <button
             type="button"
             onClick={clearAll}
-            className={`w-full flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-rb-50 dark:hover:bg-rb-800 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            className={`flex items-center gap-3 mx-1 my-0.5 px-4 py-2 rounded-lg text-sm text-foreground hover:bg-rb-50 dark:hover:bg-rb-800 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500`}
             role="menuitemradio"
             aria-checked={count === 0}
           >
@@ -119,7 +119,7 @@ export function CheckboxMultiSelect({ label, value, onChange, options, allLabel,
                 key={o.value}
                 type="button"
                 onClick={() => toggle(o.value)}
-                className={`w-full flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-rb-50 dark:hover:bg-rb-800 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                className={`flex items-center gap-3 mx-1 my-0.5 px-4 py-2 rounded-lg text-sm text-foreground hover:bg-rb-50 dark:hover:bg-rb-800 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                   checked ? "bg-rb-200/40 dark:bg-rb-700/40" : ""
                 }`}
                 role="menuitemcheckbox"

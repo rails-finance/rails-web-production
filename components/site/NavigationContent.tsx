@@ -3,6 +3,11 @@ import { usePathname } from "next/navigation";
 import { Home, Users, BookOpen, FileText, Activity } from "lucide-react";
 import { ThemeToggle } from "../ThemeToggle";
 
+// Nav links are navigation, so their text shares the grammar's single blue
+// hover (blue = "this goes somewhere") rather than a per-item colour. The icon
+// tiles / protocol marks / badge keep their own distinct brand colours.
+const NAV_TEXT_HOVER = "hover:text-blue-500 dark:hover:text-blue-400";
+
 interface NavigationContentProps {
   onLinkClick?: () => void;
 }
@@ -17,7 +22,6 @@ export function NavigationContent({ onLinkClick }: NavigationContentProps) {
       icon: <Home size={16} />,
       iconBg: "bg-green-600",
       activeColor: "text-green-600 dark:text-green-600",
-      hoverColor: "hover:text-green-600 dark:hover:text-green-600",
     },
     {
       href: "/about",
@@ -25,7 +29,6 @@ export function NavigationContent({ onLinkClick }: NavigationContentProps) {
       icon: <Users size={16} />,
       iconBg: "bg-blue-600",
       activeColor: "text-blue-600 dark:text-blue-600",
-      hoverColor: "hover:text-blue-600 dark:hover:text-blue-600",
     },
     {
       href: "/pulse",
@@ -33,7 +36,6 @@ export function NavigationContent({ onLinkClick }: NavigationContentProps) {
       icon: <Activity size={16} />,
       iconBg: "bg-emerald-600",
       activeColor: "text-emerald-600 dark:text-emerald-600",
-      hoverColor: "hover:text-emerald-600 dark:hover:text-emerald-600",
     },
     {
       href: "/blog",
@@ -41,7 +43,6 @@ export function NavigationContent({ onLinkClick }: NavigationContentProps) {
       icon: <FileText size={16} />,
       iconBg: "bg-orange-600",
       activeColor: "text-orange-600 dark:text-orange-600",
-      hoverColor: "hover:text-orange-600 dark:hover:text-orange-600",
     },
     {
       href: "/how-it-works",
@@ -49,7 +50,6 @@ export function NavigationContent({ onLinkClick }: NavigationContentProps) {
       icon: <BookOpen size={16} />,
       iconBg: "bg-purple-600",
       activeColor: "text-purple-600 dark:text-purple-600",
-      hoverColor: "hover:text-purple-600 dark:hover:text-purple-600",
     },
   ];
 
@@ -60,7 +60,6 @@ export function NavigationContent({ onLinkClick }: NavigationContentProps) {
     label: string;
     iconSrc: string;
     activeColor: string;
-    hoverColor: string;
     badge?: string;
   }[] = [
     {
@@ -68,7 +67,6 @@ export function NavigationContent({ onLinkClick }: NavigationContentProps) {
       label: "Aave V4",
       iconSrc: "/icons/protocols/aave-v4.png",
       activeColor: "text-teal-600 dark:text-teal-600",
-      hoverColor: "hover:text-teal-600 dark:hover:text-teal-600",
       badge: "New",
     },
     {
@@ -76,7 +74,6 @@ export function NavigationContent({ onLinkClick }: NavigationContentProps) {
       label: "Liquity V2",
       iconSrc: "/icons/protocols/liquity.png",
       activeColor: "text-indigo-600 dark:text-indigo-600",
-      hoverColor: "hover:text-indigo-600 dark:hover:text-indigo-600",
     },
   ];
 
@@ -93,7 +90,7 @@ export function NavigationContent({ onLinkClick }: NavigationContentProps) {
               key={item.href}
               href={item.href}
               className={`flex items-center gap-3 text-lg font-medium py-2 transition-colors ${
-                isActive ? `${item.activeColor} pointer-events-none` : `text-foreground ${item.hoverColor}`
+                isActive ? `${item.activeColor} pointer-events-none` : `text-foreground ${NAV_TEXT_HOVER}`
               }`}
               onClick={isActive ? undefined : onLinkClick}
             >
@@ -116,7 +113,7 @@ export function NavigationContent({ onLinkClick }: NavigationContentProps) {
               key={item.href}
               href={item.href}
               className={`flex items-center gap-3 text-lg font-medium py-2 transition-colors ${
-                isActive ? `${item.activeColor} pointer-events-none` : `text-foreground ${item.hoverColor}`
+                isActive ? `${item.activeColor} pointer-events-none` : `text-foreground ${NAV_TEXT_HOVER}`
               }`}
               onClick={isActive ? undefined : onLinkClick}
             >
