@@ -17,7 +17,7 @@ import type { AaveSpokeCardInfo } from "@/lib/aave-v4/spoke-cards";
 import { bucketForHealth } from "@/lib/aave-v4/health-bucket";
 import { LiquidatedBadge } from "@/components/aave-v4/LiquidatedBadge";
 import { WalletPill } from "@/components/aave-v4/wallet-pill";
-import { fmtUsd, hfLabel, hfColorClass, fmtLiqPrice } from "@/lib/aave-v4/format";
+import { fmtUsd, hfLabel, hfColorClass, fmtLiqPrice, fmtSignedUsd } from "@/lib/aave-v4/format";
 import { AaveV4PositionExplanation } from "@/components/protocol/aave-v4/aave-v4-position-explanation";
 import { InfoDisclosure } from "@/components/shared/info-disclosure";
 
@@ -29,6 +29,25 @@ function SpokeIdentity({ name, hub }: { name: string; hub: HubTier }) {
       <span className="text-xs font-semibold">{name}</span>
       <span className="text-xs font-bold uppercase tracking-wide">{hub}</span>
     </span>
+  );
+}
+
+/** Chain-faithful net-interest footnote ("+$12 net interest" / "−$46 net
+ *  interest"): supply interest earned minus borrow interest paid, computed from
+ *  chain-truth balances vs. indexed deposits — no rate involved. Replaces the
+ *  old inferred net-APY footnote. Neutral tone: the sign carries the meaning,
+ *  per Rails' no-opinionated-color rule. Renders nothing without chain-truth. */
+function InterestFootnote({ spoke }: { spoke: AaveSpokeCardInfo }) {
+  const pnl = spoke.interestPnl;
+  if (!pnl || !pnl.hasData) return null;
+  const v = fmtSignedUsd(pnl.netUsd);
+  return (
+    <div
+      className="text-xs mt-0.5 font-medium text-rb-500"
+      title={`${v.title} net interest — supply interest earned minus borrow interest paid, from on-chain balances vs. deposits`}
+    >
+      {v.display} net interest
+    </div>
   );
 }
 
@@ -147,6 +166,7 @@ function AaveV4SpokeCard({
                           </StatValue>
                         );
                       })(),
+                      footnote: <InterestFootnote spoke={spoke} />,
                     },
                     null,
                     null,
@@ -167,13 +187,7 @@ function AaveV4SpokeCard({
                           </StatValue>
                         );
                       })(),
-                      footnote:
-                        spoke.netApy !== null ? (
-                          <div className="text-xs mt-0.5 font-medium text-rb-500">
-                            {spoke.netApy >= 0 ? "+" : ""}
-                            {spoke.netApy.toFixed(2)}% net APY
-                          </div>
-                        ) : undefined,
+                      footnote: <InterestFootnote spoke={spoke} />,
                     },
                     {
                       label: "Debt",

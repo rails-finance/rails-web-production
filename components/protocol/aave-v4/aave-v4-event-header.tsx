@@ -105,9 +105,9 @@ export function AaveV4EventHeader({ ctx, timestamp, txGroup, eventNumber }: Aave
             <span className="">{aaveV4DisplaySymbol(ctx.reserveSymbol)}</span>
           </span>
         )}
-        {showInterestRates && (ctx.supplyAPR ?? effectiveBorrowAPR(ctx)) && (
+        {showInterestRates && effectiveBorrowAPR(ctx) && (
           <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-rb-300/60 dark:bg-rb-800/60 ">
-            {(parseFloat(ctx.supplyAPR ?? effectiveBorrowAPR(ctx) ?? "0") * 100).toFixed(2)}%
+            {(parseFloat(effectiveBorrowAPR(ctx) ?? "0") * 100).toFixed(2)}%
           </span>
         )}
         {ctx.eventType === "liquidation" && ctx.debtToCover && (

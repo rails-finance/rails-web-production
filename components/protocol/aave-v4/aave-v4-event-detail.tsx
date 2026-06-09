@@ -291,13 +291,12 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
       ),
     });
   }
-  if (ctx.supplyAPR) {
-    snapshotCards.push({
-      key: "supply-rate",
-      label: "Supply Rate",
-      body: <div className="text-sm font-bold">{(parseFloat(ctx.supplyAPR) * 100).toFixed(2)}%</div>,
-    });
-  }
+  // Supply rate is intentionally not shown. Aave V4's hub emits no supply-side
+  // rate or index (UpdateAsset carries only the drawn/borrow side); a per-event
+  // supply APY would have to be inferred from index slope (noisy, same flicker
+  // the borrow rate had) or reconstructed from flows (drifts). We only surface
+  // rates we can stand behind on-chain — see the borrow rate below.
+  //
   // Borrow rate of the debt the position holds — the true per-block on-chain
   // rate, consistent across adjacent events (see effectiveBorrowAPR for why the
   // MV's inferred ctx.borrowAPR is only a fallback).

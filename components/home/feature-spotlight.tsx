@@ -21,7 +21,7 @@ const FEATURES = [
     name: "Position card",
     heading: "Live positions at a glance",
     description:
-      "Supply, debt, health factor, liquidation price, and net APY — one card, computed from current on-chain state.",
+      "Supply, debt, health factor, liquidation price, and net interest earned — one card, computed from current on-chain state.",
     slide: "position-card",
   },
   {

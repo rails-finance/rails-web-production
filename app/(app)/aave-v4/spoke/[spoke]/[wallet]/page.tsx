@@ -11,9 +11,10 @@
 // `useAaveV4UiState`'s selectedSpoke. The SpokeCardSelector becomes a
 // single-card breadcrumb and the auto-select effect is gone.
 //
-// Health factor, liq price, borrowing power, and net APY are computed
-// client-side via lib/aave-v4/spoke-cards.ts → simulateAaveV4Position over a
-// hard-coded LT table. No on-chain reads.
+// Health factor, liq price, and borrowing power are computed client-side via
+// lib/aave-v4/spoke-cards.ts → simulateAaveV4Position over a hard-coded LT
+// table. Net interest carry comes from chain-truth balances vs. indexed
+// deposits (computeAaveV4InterestPnl). No on-chain reads beyond chain-truth.
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -55,7 +56,7 @@ import { AaveV4SpokeRunwayStack } from "@/components/protocol/aave-v4/aave-v4-sp
 import { aaveV4RunwayExplanation } from "@/components/protocol/aave-v4/aave-v4-price-runway";
 import { InfoDisclosure } from "@/components/shared/info-disclosure";
 import { AaveV4TowerChart } from "@/components/protocol/aave-v4/aave-v4-tower-chart";
-import { buildAaveV4SpokeCards, groupBySpoke } from "@/lib/aave-v4/spoke-cards";
+import { buildAaveV4SpokeCards, groupBySpoke, computeAaveV4InterestPnl } from "@/lib/aave-v4/spoke-cards";
 import { getLiquidationThreshold, isStable } from "@/lib/aave-v4/liquidation-thresholds";
 import { simulateAaveV4Position, type SimPositionInputs } from "@/lib/aave-v4/utils/simulate";
 import { resolvePrice, type PriceEntry } from "@/lib/aave/prices";
@@ -247,8 +248,15 @@ function AaveV4SpokePageInner() {
   const activeCard = useMemo(() => {
     if (!eventActiveCard) return undefined;
     if (!chainPosition || chainPosition.chainStale) return eventActiveCard;
-    return patchSpokeCardWithChain(eventActiveCard, chainPosition, prices);
-  }, [eventActiveCard, chainPosition, prices]);
+    const patched = patchSpokeCardWithChain(eventActiveCard, chainPosition, prices);
+    // Interest carry needs both legs together: chain-truth current balances and
+    // event-derived principal. Patched reserves carry both, so compute here and
+    // hang it off the card for the headline footnote + explanation band.
+    const patchedReserves = eventActiveGroup
+      ? patchReservesWithChain(eventActiveGroup.result.reserves, chainPosition)
+      : [];
+    return { ...patched, interestPnl: computeAaveV4InterestPnl(patchedReserves, prices) };
+  }, [eventActiveCard, eventActiveGroup, chainPosition, prices]);
   const activeGroup = useMemo(() => {
     if (!eventActiveGroup) return undefined;
     if (!chainPosition || chainPosition.chainStale) return eventActiveGroup;

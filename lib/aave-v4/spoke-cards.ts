@@ -4,9 +4,10 @@
 // aave-v4 check, the AaveContext import becomes AaveV4Context, and the event
 // type uses BaseActivityEvent's shape.
 //
-// Crucially, every datapoint here (HF, liq price, borrowing power, net APY,
-// dominant-asset headroom %) derives from the events the API already returns
-// plus the static LT lookup table — no on-chain reads are needed.
+// Crucially, the risk datapoints here (HF, liq price, borrowing power,
+// dominant-asset headroom %) derive from the events the API already returns
+// plus the static LT lookup table — no on-chain reads are needed. Interest
+// carry (computeAaveV4InterestPnl) additionally consumes chain-truth balances.
 
 import type { BaseActivityEvent } from "@/lib/shared/types/event-shape";
 import type { AaveV4Context } from "@/lib/shared/types/protocols/aave-v4";
@@ -14,10 +15,15 @@ import { type PriceEntry, resolvePrice } from "@/lib/aave/prices";
 import { SPOKE_HUB, type HubTier } from "@/components/protocol/aave-v4/aave-v4-spoke-constants";
 import { getLiquidationThreshold } from "@/lib/aave-v4/liquidation-thresholds";
 import { simulateAaveV4Position } from "@/lib/aave-v4/utils/simulate";
+import { effectiveBorrowAPR } from "@/lib/aave-v4/borrow-rate";
 
 // ---- Types ----
 
-interface DebtPoint { timestamp: number; debt: number; eventIndex: number }
+interface DebtPoint {
+  timestamp: number;
+  debt: number;
+  eventIndex: number;
+}
 interface FlowEvent {
   timestamp: number;
   amount: number;
@@ -95,16 +101,131 @@ export interface AaveSpokeCardInfo {
   /** Per-collateral-asset liq prices (full output of the simulator). Drives the
    *  stacked price-runway view below the active spoke card. Sorted by USD share
    *  desc so the runway stack reads dominant → minor. */
-  assetLiqPrices: { symbol: string; address?: string; currentPrice: number; liqPrice: number | null; headroomPct: number | null; usdShare: number }[];
+  assetLiqPrices: {
+    symbol: string;
+    address?: string;
+    currentPrice: number;
+    liqPrice: number | null;
+    headroomPct: number | null;
+    usdShare: number;
+  }[];
   /** Remaining USD that can be borrowed before HF=1. */
   borrowingPowerUsd: number;
-  /** Blended supply yield − borrow cost, as a % of equity (collateral − debt).
-   *  Positive = position earning net; negative = leverage cost outweighs yield. */
-  netApy: number | null;
   /** True when the wallet has ever been liquidated on this spoke. Surfaces
    *  a red LIQUIDATED indicator alongside the status pill — the position may
    *  still be active afterwards, but the history is permanent. */
   wasLiquidated: boolean;
+  /** Chain-faithful lifetime interest carry — supply interest earned minus
+   *  borrow interest paid. Present only when chain-truth balances have been
+   *  applied (see computeAaveV4InterestPnl); null otherwise. */
+  interestPnl?: AaveV4InterestPnl | null;
+}
+
+/** Per-asset realized interest for the position, derived as
+ *  `chain-truth current balance − net principal moved`. Token figures are
+ *  exact (no rate needed); USD is the token figure at the current price. */
+export interface AaveV4AssetInterest {
+  symbol: string;
+  /** Supply interest earned, in underlying tokens (≥ 0 in normal operation). */
+  supplyInterest: number;
+  /** Borrow interest paid, in underlying tokens (≥ 0 in normal operation). */
+  borrowInterest: number;
+  supplyInterestUsd: number;
+  borrowInterestUsd: number;
+}
+
+export interface AaveV4InterestPnl {
+  /** Assets with a non-dust, reliable interest figure on at least one leg. */
+  assets: AaveV4AssetInterest[];
+  /** Σ supplyInterestUsd − Σ borrowInterestUsd across reliable assets — the
+   *  net carry ("Total Earnings" analogue). Negative = paid more than earned. */
+  netUsd: number;
+  /** True when at least one priced asset produced a usable figure. */
+  hasData: boolean;
+}
+
+// Below this token threshold an interest leg is treated as zero — share-rounding
+// and dust make sub-threshold figures meaningless. A leg more negative than this
+// signals the event-derived principal is missing deposits/repays (indexer drift
+// the chain-truth balance can't repair), so we drop that leg as unreliable
+// rather than show a nonsensical "negative interest earned".
+const INTEREST_DUST_TOKENS = 1e-9;
+
+/**
+ * Interest on one leg (supply or borrow) of a reserve, with reliability gates.
+ * `interest = current − netPrincipal` is exact only when we saw every flow
+ * event for the leg; the gates drop the cases where we provably didn't:
+ *
+ *  - `current == null` → no chain-truth balance, can't isolate interest.
+ *  - `grossIn <= 0` → we never indexed any deposit/borrow here, yet a balance
+ *    exists (aggregator-wrapped open — CowSwap/1inch/Pendle). Attributing the
+ *    whole balance to "interest" would be nonsense, so bail. This is the common
+ *    drift case chain-truth exists for.
+ *  - `interest < dust` → zero, or negative because principal events are missing.
+ *  - `interest > grossIn` → more "interest" than total principal ever moved in:
+ *    physically implausible (would need >100% cumulative yield), so it's missed
+ *    principal, not interest — drop. Legit exited positions (withdrew principal
+ *    + a little interest) stay well under this bound.
+ */
+function legInterest(current: number | undefined, netPrincipal: number, grossIn: number): number {
+  if (current == null || grossIn <= 0) return 0;
+  const interest = current - netPrincipal;
+  if (interest < INTEREST_DUST_TOKENS) return 0;
+  if (interest > grossIn) return 0;
+  return interest;
+}
+
+/**
+ * Chain-faithful interest carry for a position, computed per reserve as
+ * `current balance (chain-truth) − net principal (events)`:
+ *
+ *   supplyInterest = currentSupplied − (supplied − withdrawn − liquidatedCollateral)
+ *   borrowInterest = currentBorrowed − (borrowed − repaid − liquidatedDebt)
+ *
+ * The token result is exact and needs no rate — it's literally "what you hold
+ * now minus what you put in". USD is that token figure valued at the current
+ * price (clearly a current-value view, not accrual-time). Requires reserves
+ * that have been through `patchReservesWithChain` (so `currentSupplied` /
+ * `currentBorrowed` are populated); without chain-truth it returns null.
+ *
+ * Caveat surfaced to callers via `hasData`: the principal legs are
+ * event-derived, so a leg that comes out implausibly negative (missed
+ * deposit/repay events) is dropped rather than shown.
+ */
+export function computeAaveV4InterestPnl(
+  reserves: ReserveStats[],
+  prices: Record<string, PriceEntry | number>,
+): AaveV4InterestPnl | null {
+  // No chain-truth applied → we can't separate interest from principal. Bail
+  // so callers fall back to showing nothing rather than an event-only guess.
+  const hasChainTruth = reserves.some((r) => r.currentSupplied != null || r.currentBorrowed != null);
+  if (!hasChainTruth) return null;
+
+  const assets: AaveV4AssetInterest[] = [];
+  let netUsd = 0;
+  let hasData = false;
+
+  for (const r of reserves) {
+    const price = resolvePrice(r.symbol, prices) ?? 0;
+
+    const netSupplyPrincipal = r.supplied - r.withdrawn - r.liquidatedCollateral;
+    const netBorrowPrincipal = r.borrowed - r.repaid - r.liquidatedDebt;
+
+    const supplyInterest = legInterest(r.currentSupplied, netSupplyPrincipal, r.supplied);
+    const borrowInterest = legInterest(r.currentBorrowed, netBorrowPrincipal, r.borrowed);
+
+    if (supplyInterest === 0 && borrowInterest === 0) continue;
+
+    const supplyInterestUsd = supplyInterest * price;
+    const borrowInterestUsd = borrowInterest * price;
+    netUsd += supplyInterestUsd - borrowInterestUsd;
+    if (price > 0) hasData = true;
+
+    assets.push({ symbol: r.symbol, supplyInterest, borrowInterest, supplyInterestUsd, borrowInterestUsd });
+  }
+
+  if (assets.length === 0) return null;
+  return { assets, netUsd, hasData };
 }
 
 // ---- Guard ----
@@ -149,10 +270,20 @@ export function calculateAaveEconomics(
     let stats = reserveMap.get(symbol);
     if (!stats) {
       stats = {
-        symbol, supplied: 0, withdrawn: 0, borrowed: 0, repaid: 0,
-        liquidatedDebt: 0, liquidatedCollateral: 0, liquidationCount: 0,
+        symbol,
+        supplied: 0,
+        withdrawn: 0,
+        borrowed: 0,
+        repaid: 0,
+        liquidatedDebt: 0,
+        liquidatedCollateral: 0,
+        liquidationCount: 0,
         eventCount: 0,
-        debtSeries: [], peakDebt: 0, peakDebtTimestamp: 0, peakSupply: 0, flowEvents: [],
+        debtSeries: [],
+        peakDebt: 0,
+        peakDebtTimestamp: 0,
+        peakSupply: 0,
+        flowEvents: [],
       };
       reserveMap.set(symbol, stats);
       runningDebt.set(symbol, 0);
@@ -166,24 +297,56 @@ export function calculateAaveEconomics(
         const supply = (runningSupply.get(symbol) ?? 0) + amount;
         runningSupply.set(symbol, supply);
         if (supply > stats.peakSupply) stats.peakSupply = supply;
-        if (amount > 0) stats.flowEvents.push({ timestamp: event.timestamp, amount, side: "supply", direction: "in", label: "Supply", eventIndex: eventSeq });
+        if (amount > 0)
+          stats.flowEvents.push({
+            timestamp: event.timestamp,
+            amount,
+            side: "supply",
+            direction: "in",
+            label: "Supply",
+            eventIndex: eventSeq,
+          });
         break;
       }
       case "withdraw": {
         stats.withdrawn += amount;
         runningSupply.set(symbol, Math.max(0, (runningSupply.get(symbol) ?? 0) - amount));
-        if (amount > 0) stats.flowEvents.push({ timestamp: event.timestamp, amount, side: "supply", direction: "out", label: "Withdraw", eventIndex: eventSeq });
+        if (amount > 0)
+          stats.flowEvents.push({
+            timestamp: event.timestamp,
+            amount,
+            side: "supply",
+            direction: "out",
+            label: "Withdraw",
+            eventIndex: eventSeq,
+          });
         break;
       }
       case "borrow":
         stats.borrowed += amount;
         runningDebt.set(symbol, (runningDebt.get(symbol) ?? 0) + amount);
-        if (amount > 0) stats.flowEvents.push({ timestamp: event.timestamp, amount, side: "borrow", direction: "in", label: "Borrow", eventIndex: eventSeq });
+        if (amount > 0)
+          stats.flowEvents.push({
+            timestamp: event.timestamp,
+            amount,
+            side: "borrow",
+            direction: "in",
+            label: "Borrow",
+            eventIndex: eventSeq,
+          });
         break;
       case "repay":
         stats.repaid += amount;
         runningDebt.set(symbol, (runningDebt.get(symbol) ?? 0) - amount);
-        if (amount > 0) stats.flowEvents.push({ timestamp: event.timestamp, amount, side: "borrow", direction: "out", label: "Repay", eventIndex: eventSeq });
+        if (amount > 0)
+          stats.flowEvents.push({
+            timestamp: event.timestamp,
+            amount,
+            side: "borrow",
+            direction: "out",
+            label: "Repay",
+            eventIndex: eventSeq,
+          });
         break;
       case "liquidation": {
         // V4 liquidation events carry two assets:
@@ -198,7 +361,15 @@ export function calculateAaveEconomics(
         stats.liquidatedDebt += debtCovered;
         stats.liquidationCount++;
         runningDebt.set(symbol, (runningDebt.get(symbol) ?? 0) - debtCovered);
-        if (debtCovered > 0) stats.flowEvents.push({ timestamp: event.timestamp, amount: debtCovered, side: "borrow", direction: "out", label: "Liquidate", eventIndex: eventSeq });
+        if (debtCovered > 0)
+          stats.flowEvents.push({
+            timestamp: event.timestamp,
+            amount: debtCovered,
+            side: "borrow",
+            direction: "out",
+            label: "Liquidate",
+            eventIndex: eventSeq,
+          });
 
         if (collSeized > 0) {
           // Collateral side lands on the seized asset's stats. When the
@@ -209,10 +380,20 @@ export function calculateAaveEconomics(
             let cs = reserveMap.get(collSym);
             if (!cs) {
               cs = {
-                symbol: collSym, supplied: 0, withdrawn: 0, borrowed: 0, repaid: 0,
-                liquidatedDebt: 0, liquidatedCollateral: 0, liquidationCount: 0,
+                symbol: collSym,
+                supplied: 0,
+                withdrawn: 0,
+                borrowed: 0,
+                repaid: 0,
+                liquidatedDebt: 0,
+                liquidatedCollateral: 0,
+                liquidationCount: 0,
                 eventCount: 0,
-                debtSeries: [], peakDebt: 0, peakDebtTimestamp: 0, peakSupply: 0, flowEvents: [],
+                debtSeries: [],
+                peakDebt: 0,
+                peakDebtTimestamp: 0,
+                peakSupply: 0,
+                flowEvents: [],
               };
               reserveMap.set(collSym, cs);
               runningDebt.set(collSym, 0);
@@ -222,7 +403,14 @@ export function calculateAaveEconomics(
           }
           collStats.liquidatedCollateral += collSeized;
           runningSupply.set(collStats.symbol, Math.max(0, (runningSupply.get(collStats.symbol) ?? 0) - collSeized));
-          collStats.flowEvents.push({ timestamp: event.timestamp, amount: collSeized, side: "supply", direction: "out", label: "Liquidate", eventIndex: eventSeq });
+          collStats.flowEvents.push({
+            timestamp: event.timestamp,
+            amount: collSeized,
+            side: "supply",
+            direction: "out",
+            label: "Liquidate",
+            eventIndex: eventSeq,
+          });
         }
         break;
       }
@@ -315,57 +503,49 @@ export function buildSpokeCards(
       (s, r) => s + r.peakSupply * (resolvePrice(r.symbol, prices) ?? 1),
       0,
     );
-    const peakDebtUsd = g.result.reserves.reduce(
-      (s, r) => s + r.peakDebt * (resolvePrice(r.symbol, prices) ?? 1),
-      0,
-    );
+    const peakDebtUsd = g.result.reserves.reduce((s, r) => s + r.peakDebt * (resolvePrice(r.symbol, prices) ?? 1), 0);
     const liveSupplying = g.result.reserves
-      .map((r) => ({ symbol: r.symbol, usd: Math.max(0, r.supplied - r.withdrawn) * (resolvePrice(r.symbol, prices) ?? 1) }))
+      .map((r) => ({
+        symbol: r.symbol,
+        usd: Math.max(0, r.supplied - r.withdrawn) * (resolvePrice(r.symbol, prices) ?? 1),
+      }))
       .filter((r) => r.usd > SPOKE_ICON_USD_MIN)
       .sort((a, b) => b.usd - a.usd)
       .map((r) => r.symbol);
     const liveBorrowing = g.result.reserves
-      .map((r) => ({ symbol: r.symbol, usd: Math.max(0, r.borrowed - r.repaid) * (resolvePrice(r.symbol, prices) ?? 1) }))
+      .map((r) => ({
+        symbol: r.symbol,
+        usd: Math.max(0, r.borrowed - r.repaid) * (resolvePrice(r.symbol, prices) ?? 1),
+      }))
       .filter((r) => r.usd > SPOKE_ICON_USD_MIN)
       .sort((a, b) => b.usd - a.usd)
       .map((r) => r.symbol);
-    const supplyingSymbols = liveSupplying.length > 0
-      ? liveSupplying
-      : g.result.reserves
-          .map((r) => ({ symbol: r.symbol, usd: r.peakSupply * (resolvePrice(r.symbol, prices) ?? 1) }))
-          .filter((r) => r.usd > SPOKE_ICON_USD_MIN)
-          .sort((a, b) => b.usd - a.usd)
-          .map((r) => r.symbol);
-    const borrowingSymbols = liveBorrowing.length > 0
-      ? liveBorrowing
-      : g.result.reserves
-          .map((r) => ({ symbol: r.symbol, usd: r.peakDebt * (resolvePrice(r.symbol, prices) ?? 1) }))
-          .filter((r) => r.usd > SPOKE_ICON_USD_MIN)
-          .sort((a, b) => b.usd - a.usd)
-          .map((r) => r.symbol);
+    const supplyingSymbols =
+      liveSupplying.length > 0
+        ? liveSupplying
+        : g.result.reserves
+            .map((r) => ({ symbol: r.symbol, usd: r.peakSupply * (resolvePrice(r.symbol, prices) ?? 1) }))
+            .filter((r) => r.usd > SPOKE_ICON_USD_MIN)
+            .sort((a, b) => b.usd - a.usd)
+            .map((r) => r.symbol);
+    const borrowingSymbols =
+      liveBorrowing.length > 0
+        ? liveBorrowing
+        : g.result.reserves
+            .map((r) => ({ symbol: r.symbol, usd: r.peakDebt * (resolvePrice(r.symbol, prices) ?? 1) }))
+            .filter((r) => r.usd > SPOKE_ICON_USD_MIN)
+            .sort((a, b) => b.usd - a.usd)
+            .map((r) => r.symbol);
 
+    // Most-recent borrow rate on this spoke — the true per-block on-chain rate
+    // (effectiveBorrowAPR prefers allDebts[].borrowAPR, falls back to inferred).
     let spokeBorrowRate: number | null = null;
     for (const e of [...g.events].reverse()) {
       if (!isAaveV4Event(e)) continue;
-      const ctx = e.context.data;
-      if (ctx.borrowAPR) {
-        spokeBorrowRate = parseFloat(ctx.borrowAPR) * 100;
+      const apr = effectiveBorrowAPR(e.context.data);
+      if (apr) {
+        spokeBorrowRate = parseFloat(apr) * 100;
         break;
-      }
-    }
-
-    const latestSupplyAprBySym = new Map<string, number>();
-    const latestBorrowAprBySym = new Map<string, number>();
-    for (const e of [...g.events].reverse()) {
-      if (!isAaveV4Event(e)) continue;
-      const ctx = e.context.data;
-      const sym = ctx.reserveSymbol;
-      if (!sym) continue;
-      if (ctx.supplyAPR && !latestSupplyAprBySym.has(sym)) {
-        latestSupplyAprBySym.set(sym, parseFloat(ctx.supplyAPR));
-      }
-      if (ctx.borrowAPR && !latestBorrowAprBySym.has(sym)) {
-        latestBorrowAprBySym.set(sym, parseFloat(ctx.borrowAPR));
       }
     }
 
@@ -404,37 +584,6 @@ export function buildSpokeCards(
       }
     }
 
-    let netApy: number | null = null;
-    let supplyYieldUsd = 0;
-    let yieldKnownUsd = 0;
-    for (const s of simSupplies) {
-      if (!s.collateralEnabled) continue;
-      const apr = latestSupplyAprBySym.get(s.symbol);
-      const usd = s.amount * s.price;
-      if (apr != null) {
-        supplyYieldUsd += usd * apr;
-        yieldKnownUsd += usd;
-      }
-    }
-    let borrowCostUsd = 0;
-    let costKnownUsd = 0;
-    for (const d of simDebts) {
-      const apr = latestBorrowAprBySym.get(d.symbol);
-      const usd = d.amount * d.price;
-      if (apr != null) {
-        borrowCostUsd += usd * apr;
-        costKnownUsd += usd;
-      }
-    }
-    const totalSupplyUsd = simResult.totalCollateralUsd;
-    const totalDebtUsd = simResult.totalDebtUsd;
-    const equityUsd = totalSupplyUsd - totalDebtUsd;
-    const supplyCovered = totalSupplyUsd <= 0 || yieldKnownUsd / totalSupplyUsd > 0.5;
-    const borrowCovered = totalDebtUsd <= 0 || costKnownUsd / totalDebtUsd > 0.5;
-    if (equityUsd > 0.0001 && supplyCovered && borrowCovered) {
-      netApy = ((supplyYieldUsd - borrowCostUsd) / equityUsd) * 100;
-    }
-
     const usdBySym = new Map<string, number>();
     for (const s of simSupplies) usdBySym.set(s.symbol, s.amount * s.price);
     const assetLiqPrices = simResult.assetLiqPrices
@@ -466,7 +615,6 @@ export function buildSpokeCards(
       liqPrice,
       assetLiqPrices,
       borrowingPowerUsd: simResult.borrowCapacityUsd,
-      netApy,
       wasLiquidated,
     };
   });

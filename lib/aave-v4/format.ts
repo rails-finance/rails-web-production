@@ -15,6 +15,30 @@ export function fmtUsd(n: number): { display: string; title: string } {
   return { display: `$${c.display}`, title: `$${c.title}` };
 }
 
+// Signed USD for P&L-style figures (net interest carry). Unlike fmtUsd this
+// keeps the sign and never collapses a negative to "< $0.01" (fmtUsd's `n <
+// 0.01` guard would mis-handle −$46). Near-zero reads as "$0.00" so a dust
+// position doesn't flash a misleading "+$0". Intentionally NOT color-coded —
+// the sign carries the meaning (see hfColorClass rationale).
+export function fmtSignedUsd(n: number): { display: string; title: string } {
+  if (Math.abs(n) < 0.005) return { display: "$0.00", title: "$0.00" };
+  const sign = n < 0 ? "−" : "+";
+  const c = formatCompact(Math.abs(n), { decimals: 2 });
+  return { display: `${sign}$${c.display}`, title: `${sign}$${c.title}` };
+}
+
+// Compact token amount for interest figures — scales decimals to the magnitude
+// so sub-unit interest (0.0312 ETH, 0.00041 WBTC) stays legible without
+// underflowing to "0". Returns the bare number; callers append the symbol/icon.
+export function fmtTokenAmount(n: number): string {
+  const abs = Math.abs(n);
+  if (abs === 0) return "0";
+  if (abs >= 1_000) return n.toLocaleString(undefined, { maximumFractionDigits: 0 });
+  if (abs >= 1) return n.toLocaleString(undefined, { maximumFractionDigits: 4 });
+  const decimals = Math.min(8, Math.ceil(-Math.log10(abs)) + 2);
+  return n.toLocaleString(undefined, { maximumFractionDigits: decimals });
+}
+
 export function hfLabel(hf: number | null): string {
   if (hf == null || hf >= 100) return "∞";
   return hf.toFixed(2);

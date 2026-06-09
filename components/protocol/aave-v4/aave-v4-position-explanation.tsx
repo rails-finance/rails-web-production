@@ -5,8 +5,8 @@
 // aave-v4-spoke-card.tsx so it can render either inside the card or, in the
 // "About this position" layout, as a standalone panel above the stats card.
 
-import type { AaveSpokeCardInfo } from "@/lib/aave-v4/spoke-cards";
-import { fmtUsd, hfLabel, fmtLiqPrice } from "@/lib/aave-v4/format";
+import type { AaveSpokeCardInfo, AaveV4InterestPnl } from "@/lib/aave-v4/spoke-cards";
+import { fmtUsd, hfLabel, fmtLiqPrice, fmtSignedUsd, fmtTokenAmount } from "@/lib/aave-v4/format";
 import { aaveV4DisplaySymbol } from "@/lib/aave-v4/pt-tokens";
 import { LearnMore } from "@/components/shared/learn-more-modal";
 import { aaveV4SpokeContent } from "@/lib/shared/learn-more-content";
@@ -21,9 +21,51 @@ function joinSymbols(syms: string[]): string {
 }
 
 /**
+ * Chain-faithful interest-carry prose: a net summary plus a per-asset
+ * earned/paid breakdown. Token figures are exact (current chain balance minus
+ * indexed deposits — no rate); USD is that figure at the current price. Mirrors
+ * what Aave calls "Total Earnings", but read straight off chain-truth balances.
+ */
+function buildInterestItems(pnl: AaveV4InterestPnl): React.ReactNode[] {
+  const items: React.ReactNode[] = [];
+  const net = fmtSignedUsd(pnl.netUsd);
+  items.push(
+    <span key="net-interest">
+      Net interest to date: <strong className="text-foreground">{net.display}</strong> — supply interest earned minus
+      borrow interest paid, read from on-chain balances against indexed deposits rather than an annualized rate.
+    </span>,
+  );
+  for (const a of pnl.assets) {
+    if (a.supplyInterest > 0) {
+      items.push(
+        <span key={`earn-${a.symbol}`}>
+          Earned{" "}
+          <strong className="text-foreground">
+            {fmtTokenAmount(a.supplyInterest)} {aaveV4DisplaySymbol(a.symbol)}
+          </strong>
+          {a.supplyInterestUsd > 0 && <> ({fmtUsd(a.supplyInterestUsd).display})</>} in supply interest.
+        </span>,
+      );
+    }
+    if (a.borrowInterest > 0) {
+      items.push(
+        <span key={`paid-${a.symbol}`}>
+          Paid{" "}
+          <strong className="text-foreground">
+            {fmtTokenAmount(a.borrowInterest)} {aaveV4DisplaySymbol(a.symbol)}
+          </strong>
+          {a.borrowInterestUsd > 0 && <> ({fmtUsd(a.borrowInterestUsd).display})</>} in borrow interest.
+        </span>,
+      );
+    }
+  }
+  return items;
+}
+
+/**
  * Plain-language read of the *actual* position. Every figure is read from the
- * already-computed AaveSpokeCardInfo (HF, liq price, borrowing power, net APY,
- * peaks), so this adds depth with no extra fetch or compute.
+ * already-computed AaveSpokeCardInfo (HF, liq price, borrowing power, interest
+ * carry, peaks), so this adds depth with no extra fetch or compute.
  */
 function buildSpokePositionItems(spoke: AaveSpokeCardInfo): React.ReactNode[] {
   const items: React.ReactNode[] = [];
@@ -57,13 +99,8 @@ function buildSpokePositionItems(spoke: AaveSpokeCardInfo): React.ReactNode[] {
         </span>,
       );
     }
-    if (spoke.netApy != null) {
-      items.push(
-        <span key="apy">
-          The supplied balance earns roughly <strong className="text-foreground">{spoke.netApy.toFixed(2)}%</strong> APY
-          at the most recent supply rate.
-        </span>,
-      );
+    if (spoke.interestPnl?.hasData) {
+      items.push(...buildInterestItems(spoke.interestPnl));
     }
   } else {
     items.push(
@@ -114,20 +151,8 @@ function buildSpokePositionItems(spoke: AaveSpokeCardInfo): React.ReactNode[] {
         </span>,
       );
     }
-    if (spoke.netApy != null) {
-      items.push(
-        spoke.netApy >= 0 ? (
-          <span key="apy">
-            The position nets <strong className="text-foreground">+{spoke.netApy.toFixed(2)}%</strong> APY on equity —
-            supply yield outpaces borrow cost.
-          </span>
-        ) : (
-          <span key="apy">
-            Borrow cost outweighs supply yield, for a net{" "}
-            <strong className="text-foreground">{spoke.netApy.toFixed(2)}%</strong> APY on equity.
-          </span>
-        ),
-      );
+    if (spoke.interestPnl?.hasData) {
+      items.push(...buildInterestItems(spoke.interestPnl));
     }
     if (spoke.latestBorrowRate != null) {
       items.push(
