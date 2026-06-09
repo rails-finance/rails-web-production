@@ -6,6 +6,7 @@ import { useHeaderValueHideClass } from "@/lib/shared/header-values";
 import { EventTime } from "@/components/shared/event-time";
 import { useTimelineDisplay } from "@/components/shared/timeline-display-context";
 import { aaveV4DisplaySymbol } from "@/lib/aave-v4/pt-tokens";
+import { effectiveBorrowAPR } from "@/lib/aave-v4/borrow-rate";
 import type { AaveV4Context } from "@/lib/shared/types/protocols/aave-v4";
 
 /** 1-based position + total within a shared tx_hash. `count > 1` triggers
@@ -104,9 +105,9 @@ export function AaveV4EventHeader({ ctx, timestamp, txGroup, eventNumber }: Aave
             <span className="">{aaveV4DisplaySymbol(ctx.reserveSymbol)}</span>
           </span>
         )}
-        {showInterestRates && (ctx.supplyAPR || ctx.borrowAPR) && (
+        {showInterestRates && (ctx.supplyAPR ?? effectiveBorrowAPR(ctx)) && (
           <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-rb-300/60 dark:bg-rb-800/60 ">
-            {(parseFloat(ctx.supplyAPR ?? ctx.borrowAPR ?? "0") * 100).toFixed(2)}%
+            {(parseFloat(ctx.supplyAPR ?? effectiveBorrowAPR(ctx) ?? "0") * 100).toFixed(2)}%
           </span>
         )}
         {ctx.eventType === "liquidation" && ctx.debtToCover && (

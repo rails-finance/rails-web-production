@@ -11,6 +11,7 @@ import { resolvePrice } from "@/lib/aave/prices";
 import { usePrices } from "@/lib/shared/prices-context";
 import { useTimelineDisplay } from "@/components/shared/timeline-display-context";
 import { aaveV4DisplaySymbol } from "@/lib/aave-v4/pt-tokens";
+import { effectiveBorrowAPR } from "@/lib/aave-v4/borrow-rate";
 
 function fmt(v: string | number | undefined): string {
   if (!v) return "0";
@@ -297,13 +298,10 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
       body: <div className="text-sm font-bold">{(parseFloat(ctx.supplyAPR) * 100).toFixed(2)}%</div>,
     });
   }
-  // Borrow rate of the debt the position holds. Prefer the event's own
-  // moved-asset rate (present on borrow/repay); otherwise fall back to the
-  // per-debt-item rate the backend attaches to the snapshot — so the rate also
-  // shows on supply/withdraw events that never touched the debt leg. Pick the
-  // moved asset's debt row first, else any debt row carrying a rate.
-  const debtBorrowAPR =
-    ctx.borrowAPR ?? debts.find(d => d.symbol === token)?.borrowAPR ?? debts.find(d => d.borrowAPR != null)?.borrowAPR;
+  // Borrow rate of the debt the position holds — the true per-block on-chain
+  // rate, consistent across adjacent events (see effectiveBorrowAPR for why the
+  // MV's inferred ctx.borrowAPR is only a fallback).
+  const debtBorrowAPR = effectiveBorrowAPR(ctx);
   if (debtBorrowAPR) {
     snapshotCards.push({
       key: "borrow-rate",
