@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import type { AaveV4Context, AaveV4PriceSource } from "@/lib/shared/types/protocols/aave-v4";
 import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import { shortAddr } from "@/lib/shared/format-event";
@@ -53,6 +54,25 @@ function PricePill({ symbol, usd, source }: { symbol: string; usd: number; sourc
       {source === "stablecoin" ? "≈" : ""}{formatUsd(usd)}
       <TokenChipIcon symbol={symbol} size={14} />
     </span>
+  );
+}
+
+/** Equal-size surfaced stat card — the building block of the event-detail
+ *  snapshot grid. Every section (Collateral, Debt, LTV, Borrow Rate) renders as
+ *  one of these, all sharing a single CSS grid so they balance in width and —
+ *  via `sm:auto-rows-fr` on the grid plus `h-full` here — match the tallest
+ *  card's height per row. An odd trailing card spans the full width so the grid
+ *  always reads as a tidy block rather than leaving a ragged gap. */
+function StatCard({ label, span, children }: { label: string; span?: boolean; children: ReactNode }) {
+  return (
+    <div
+      className={`flex h-full flex-col rounded-xl border border-rb-200/60 bg-rb-50/70 px-4 py-3 dark:border-rb-700/50 dark:bg-rb-900/40 ${
+        span ? "sm:col-span-2" : ""
+      }`}
+    >
+      <div className="mb-1.5 text-xs font-semibold text-rb-500">{label}</div>
+      {children}
+    </div>
   );
 }
 
@@ -186,6 +206,92 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
     }
   }
 
+  // Full-position snapshot, assembled as a flat list of equal-size cards.
+  // Collateral · Debt · LTV · Borrow Rate each become one StatCard; the grid
+  // below balances their widths and heights. Built here (rather than inline)
+  // so the trailing-card full-width span can key off the final count.
+  const snapshotCards: { key: string; label: string; body: ReactNode }[] = [];
+  if (hasSupplies) {
+    snapshotCards.push({
+      key: "collateral",
+      label: "Collateral",
+      body: (
+        <div className="flex flex-col gap-1">
+          {supplies.map(s => {
+            // The changed asset is the supply side's primary asset for
+            // supply/withdraw, or the collateral asset for liquidations.
+            const isThisChanged = (isSupplySide || isLiq) && s.symbol === (isLiq ? ctx.collateralSymbol : token);
+            // Prefer the per-row price (server enriches every snapshot item with
+            // its historic USD price). Fall back to the event's primary price on
+            // the changed row so older clients / payloads without per-row prices
+            // still render.
+            const priceUsd =
+              s.price?.usd ?? (!isThisChanged ? undefined : isLiq ? ctx.collateralPrice?.usd : ctx.price?.usd);
+            return (
+              <PositionRow
+                key={s.symbol}
+                symbol={s.symbol}
+                amount={s.amount}
+                before={isThisChanged ? supplyBefore : undefined}
+                isChanged={isThisChanged}
+                priceUsd={priceUsd}
+              />
+            );
+          })}
+        </div>
+      ),
+    });
+  }
+  if (hasDebts) {
+    snapshotCards.push({
+      key: "debt",
+      label: "Debt",
+      body: (
+        <div className="flex flex-col gap-1">
+          {debts.map(d => {
+            const isThisChanged = (isDebtSide || isLiq) && d.symbol === token;
+            const priceUsd = d.price?.usd ?? (!isThisChanged ? undefined : isLiq ? ctx.debtPrice?.usd : ctx.price?.usd);
+            return (
+              <PositionRow
+                key={d.symbol}
+                symbol={d.symbol}
+                amount={d.amount}
+                before={isThisChanged ? debtBefore : undefined}
+                isChanged={isThisChanged}
+                priceUsd={priceUsd}
+              />
+            );
+          })}
+        </div>
+      ),
+    });
+  }
+  if (showRatio) {
+    snapshotCards.push({
+      key: "ratio",
+      label: ratioLabel(ratioMode),
+      body: (
+        <div
+          className={`text-sm font-bold ${ratioColorClass(collRatio * 100, {
+            danger: 120,
+            warn: 150,
+            warnClass: "text-foreground",
+            safeClass: "",
+          })}`}
+        >
+          {formatRatio(collRatio * 100, ratioMode, 0)}
+        </div>
+      ),
+    });
+  }
+  if (ctx.supplyAPR || ctx.borrowAPR) {
+    snapshotCards.push({
+      key: "rate",
+      label: ctx.supplyAPR ? "Supply Rate" : "Borrow Rate",
+      body: <div className="text-sm font-bold">{(parseFloat(ctx.supplyAPR ?? ctx.borrowAPR ?? "0") * 100).toFixed(2)}%</div>,
+    });
+  }
+
   return (
     <>
       {/* Collateral toggle status */}
@@ -221,87 +327,23 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
         </div>
       )}
 
-      {/* Full position snapshot — supply, debt, and collateral ratio */}
-      {(hasSupplies || hasDebts) && (
+      {/* Full position snapshot — one equal-size card per section (Collateral,
+          Debt, LTV, Borrow Rate), all in a single grid so they balance in width
+          and match heights per row. Replaces the earlier two-grid +
+          border-divider layout. */}
+      {snapshotCards.length > 0 && (
         <div className="px-5 py-2">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {hasSupplies && (
-              <div>
-                <div className="text-rb-500 text-xs font-semibold mb-1.5">Collateral</div>
-                <div className="flex flex-col gap-1">
-                  {supplies.map(s => {
-                    // The changed asset is the supply side's primary asset for
-                    // supply/withdraw, or the collateral asset for liquidations.
-                    const isThisChanged = (isSupplySide || isLiq) && s.symbol === (isLiq ? ctx.collateralSymbol : token);
-                    // Prefer the per-row price (server enriches every snapshot
-                    // item with its historic USD price). Fall back to the
-                    // event's primary price on the changed row so older clients
-                    // / older payloads without per-row prices still render.
-                    const priceUsd = s.price?.usd ?? (
-                      !isThisChanged ? undefined
-                        : isLiq ? ctx.collateralPrice?.usd
-                        : ctx.price?.usd
-                    );
-                    return (
-                      <PositionRow
-                        key={s.symbol}
-                        symbol={s.symbol}
-                        amount={s.amount}
-                        before={isThisChanged ? supplyBefore : undefined}
-                        isChanged={isThisChanged}
-                        priceUsd={priceUsd}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-            {hasDebts && (
-              <div>
-                <div className="text-rb-500 text-xs font-semibold mb-1.5">Debt</div>
-                <div className="flex flex-col gap-1">
-                  {debts.map(d => {
-                    const isThisChanged = (isDebtSide || isLiq) && d.symbol === token;
-                    const priceUsd = d.price?.usd ?? (
-                      !isThisChanged ? undefined
-                        : isLiq ? ctx.debtPrice?.usd
-                        : ctx.price?.usd
-                    );
-                    return (
-                      <PositionRow
-                        key={d.symbol}
-                        symbol={d.symbol}
-                        amount={d.amount}
-                        before={isThisChanged ? debtBefore : undefined}
-                        isChanged={isThisChanged}
-                        priceUsd={priceUsd}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+          <div className="grid grid-cols-1 gap-2.5 sm:auto-rows-fr sm:grid-cols-2">
+            {snapshotCards.map((c, i) => (
+              <StatCard
+                key={c.key}
+                label={c.label}
+                span={snapshotCards.length % 2 === 1 && i === snapshotCards.length - 1}
+              >
+                {c.body}
+              </StatCard>
+            ))}
           </div>
-          {(showRatio || ctx.supplyAPR || ctx.borrowAPR) && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 mt-3 pt-3 border-t border-rb-200/40 dark:border-rb-800/40">
-              {showRatio && (
-                <div>
-                  <div className="text-rb-500 text-xs font-semibold mb-1">{ratioLabel(ratioMode)}</div>
-                  <div className={`text-sm font-bold ${ratioColorClass(collRatio * 100, { danger: 120, warn: 150, warnClass: "text-foreground", safeClass: "" })}`}>
-                    {formatRatio(collRatio * 100, ratioMode, 0)}
-                  </div>
-                </div>
-              )}
-              {(ctx.supplyAPR || ctx.borrowAPR) && (
-                <div>
-                  <div className="text-rb-500 text-xs font-semibold mb-1">{ctx.supplyAPR ? "Supply Rate" : "Borrow Rate"}</div>
-                  <div className="text-sm font-bold">
-                    {((parseFloat(ctx.supplyAPR ?? ctx.borrowAPR ?? "0")) * 100).toFixed(2)}%
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
         </div>
       )}
 
