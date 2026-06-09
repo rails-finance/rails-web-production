@@ -1,37 +1,29 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { ChevronDown, Search, X, ListFilter, ArrowUp, ArrowDown } from "lucide-react";
-import { CTRL_GHOST, CTRL_OFF, CTRL_ON, COUNT_BADGE, RESET_LINK } from "@/lib/shared/ui-grammar";
+// Liquity V2 list filters — per-section filter dropdowns (Status / Collateral /
+// Redemptions / Delegation / Zombies) up top beside the wallet/trove search and
+// sort controls, with the active predicates as removable chips in a row beneath.
+// The predicates are declared as a dimension registry in
+// lib/liquity-v2/list-filter-dimensions and rendered by the shared
+// <FilterSections> + <FilterChips>; this component only owns search + sort and
+// the collateral token-icon options. Mirrors AaveV4ListFilters.
+
+import { useState, useEffect, useRef, useMemo } from "react";
+import { ChevronDown, Search, X, ArrowUp, ArrowDown } from "lucide-react";
+import { CTRL_GHOST, CTRL_OFF, CTRL_ON } from "@/lib/shared/ui-grammar";
 import { useDebounce } from "@/lib/hooks/useDebounce";
-import { CheckboxMultiSelect } from "@/components/shared/checkbox-multi-select";
 import { WalletHistoryDropdown } from "@/components/shared/wallet-history-dropdown";
 import { upsertSession } from "@/lib/shared/sessions";
-import {
-  defaultShowZombie,
-  defaultStatus,
-  effectiveShowZombie,
-  effectiveStatus,
-} from "@/lib/liquity-v2/listing-visibility";
+import { FilterSections } from "@/components/shared/filter-bar/filter-sections";
+import { FilterChips } from "@/components/shared/filter-bar/filter-chips";
+import type { FilterOptionDef } from "@/components/shared/filter-bar/types";
+import { troveFilterDimensions } from "@/lib/liquity-v2/list-filter-dimensions";
 
-export interface TroveListFilterParams {
-  troveId?: string;
-  status?: string;
-  /** Multi-select collateral types. Empty/undefined = all. */
-  collateralTypes?: string[];
-  ownerAddress?: string;
-  ownerEns?: string;
-  activeWithin?: string;
-  createdWithin?: string;
-  batchOnly?: boolean;
-  individualOnly?: boolean;
-  hasRedemptions?: boolean;
-  /** Zombie visibility. true = only zombies, false = hide zombies,
-   *  "all" = explicit show-everything, undefined = use contextual default. */
-  showZombie?: boolean | "all";
-  sortBy?: string;
-  sortOrder?: "asc" | "desc";
-}
+// Re-export the param shape (moved to list-filter-types so the dimension
+// registry can import it without a cycle) for existing callers (the page).
+export { type TroveListFilterParams } from "@/lib/liquity-v2/list-filter-types";
+
+import type { TroveListFilterParams } from "@/lib/liquity-v2/list-filter-types";
 
 interface TroveListFiltersProps {
   filters: TroveListFilterParams;
@@ -42,6 +34,15 @@ interface TroveListFiltersProps {
   availableCollateralTypes?: string[];
 }
 
+// Sort options — map UI labels to backend field names.
+const SORT_OPTIONS = [
+  { value: "lastActivity", label: "Latest Activity" },
+  { value: "debt", label: "Debt" },
+  { value: "coll", label: "Collateral" },
+  { value: "ratio", label: "Ratio" },
+  { value: "interestRate", label: "Interest Rate" },
+];
+
 export function TroveListFilters({
   filters,
   onFiltersChange,
@@ -50,55 +51,43 @@ export function TroveListFilters({
   onSortChange,
   availableCollateralTypes = ["WETH", "wstETH", "rETH"],
 }: TroveListFiltersProps) {
-  // Initialize with actual filter value that's set (troveId, address, or ENS)
+  // Initialize with whichever identity filter is set (troveId, address, or ENS).
   const initialSearchValue = filters.troveId || filters.ownerAddress || filters.ownerEns || "";
   const [searchInput, setSearchInput] = useState<string>(initialSearchValue);
   const [searchFocused, setSearchFocused] = useState(false);
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
-  const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const searchRef = useRef<HTMLFormElement>(null);
   const sortDropdownRef = useRef<HTMLDivElement>(null);
-  const filterDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Debounce search input to reduce API calls
   const debouncedSearchInput = useDebounce(searchInput, 500);
 
-  // Keep search input in sync with filters from props
+  // Keep search input in sync with filters from props.
   useEffect(() => {
-    // Sync with the actual filter value that was set
     const filterValue = filters.troveId || filters.ownerAddress || filters.ownerEns || "";
     setSearchInput(filterValue);
   }, [filters.troveId, filters.ownerAddress, filters.ownerEns]);
 
-  // Trigger search when debounced value changes
+  // Trigger search when the debounced value changes.
   useEffect(() => {
-    // If empty, clear immediately (no debounce delay)
     if (!debouncedSearchInput.trim()) {
       if (filters.troveId || filters.ownerAddress || filters.ownerEns) {
         handleClearSearch();
       }
       return;
     }
-
-    // Trigger search with debounced value
     handleSearchSubmit();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearchInput]);
 
-  // Close dropdowns on outside click and Escape key
+  // Close the sort dropdown on outside click / Escape.
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target as Node)) {
         setIsSortDropdownOpen(false);
       }
-      if (filterDropdownRef.current && !filterDropdownRef.current.contains(event.target as Node)) {
-        setIsFilterDropdownOpen(false);
-      }
     };
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setIsSortDropdownOpen(false);
-        setIsFilterDropdownOpen(false);
-      }
+      if (event.key === "Escape") setIsSortDropdownOpen(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("keydown", handleEscape);
@@ -111,8 +100,6 @@ export function TroveListFilters({
   const handleSearchSubmit = (e?: React.FormEvent) => {
     e?.preventDefault();
     const trimmedValue = searchInput.trim();
-
-    // Detect input type
     const isTroveId = trimmedValue && /^\d+$/.test(trimmedValue);
     const isEns = trimmedValue && trimmedValue.toLowerCase().endsWith(".eth");
     const isAddress = trimmedValue && /^0x[a-fA-F0-9]{40}$/.test(trimmedValue);
@@ -123,10 +110,9 @@ export function TroveListFilters({
       ownerAddress: isAddress ? trimmedValue : undefined,
       ownerEns: isEns ? trimmedValue : undefined,
     });
-    // Record this wallet in the Liquity V2 recents list so it appears in
-    // the dropdown next time. Each rail keeps its own list — no cross-rail
-    // bleed. ENS-typed entries aren't recorded here (no resolution yet);
-    // they'll get picked up when the user drills into a wallet's detail page.
+    // Record this wallet in the Liquity V2 recents list. ENS-typed entries
+    // aren't recorded here (no resolution yet); they get picked up on the
+    // wallet's detail page.
     if (isAddress) {
       const lowered = trimmedValue.toLowerCase();
       upsertSession([lowered], { [lowered]: null }, "liquity-v2");
@@ -135,359 +121,40 @@ export function TroveListFilters({
 
   const handleClearSearch = () => {
     setSearchInput("");
-    onFiltersChange({
-      ...filters,
-      troveId: undefined,
-      ownerAddress: undefined,
-      ownerEns: undefined,
-    });
+    onFiltersChange({ ...filters, troveId: undefined, ownerAddress: undefined, ownerEns: undefined });
   };
 
-  // Resolve visibility against the contextual default (hide closed/zombie on
-  // the bare directory; show everything on a scoped wallet/trove query) so
-  // highlighting + the active-filter badge match what the listing actually
-  // shows. Shared with the page's URL/API serialization — see
-  // lib/liquity-v2/listing-visibility.ts.
-  const effStatus = effectiveStatus(filters);
-  const effZombie = effectiveShowZombie(filters);
+  // Collateral options carry the token + BOLD overlay icon pair used across the
+  // Liquity rail.
+  const collateralOptions = useMemo<FilterOptionDef[]>(
+    () =>
+      availableCollateralTypes.map((type) => ({
+        value: type,
+        label: type,
+        icon: (
+          <span className="inline-flex">
+            <svg className="w-5 h-5" aria-hidden="true">
+              <use href={`#icon-${type.toLowerCase().replace("weth", "eth")}`} />
+            </svg>
+            <svg className="w-5 h-5 -ml-2.5" aria-hidden="true">
+              <use href="#icon-bold" />
+            </svg>
+          </span>
+        ),
+      })),
+    [availableCollateralTypes],
+  );
 
-  const getActiveFilterCount = () => {
-    let count = 0;
-    if (effStatus !== defaultStatus(filters)) count++;
-    if (filters.batchOnly) count++;
-    if (filters.individualOnly) count++;
-    if (filters.hasRedemptions !== undefined) count++;
-    if (effZombie !== defaultShowZombie(filters)) count++;
-    return count;
-  };
-
-  const activeFilterCount = getActiveFilterCount();
-
-  const handleFilterChange = (updates: Partial<TroveListFilterParams>) => {
-    onFiltersChange({ ...filters, ...updates });
-  };
-
-  const resetFilters = () => {
-    onFiltersChange({
-      ...filters,
-      status: undefined,
-      batchOnly: undefined,
-      individualOnly: undefined,
-      hasRedemptions: undefined,
-      showZombie: undefined,
-    });
-  };
-
-  // Sort options - map UI labels to backend field names
-  const sortOptions = [
-    { value: "lastActivity", label: "Latest Activity" },
-    { value: "debt", label: "Debt" },
-    { value: "coll", label: "Collateral" },
-    { value: "ratio", label: "Ratio" },
-    { value: "interestRate", label: "Interest Rate" },
-  ];
+  const dimensions = useMemo(() => troveFilterDimensions({ collateralOptions }), [collateralOptions]);
 
   return (
-    <div className="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 xl:gap-4">
-      {/* Filter and Collateral row on mobile, inline on desktop */}
-      <div className="flex flex-col lg:flex-row lg:items-center gap-3 lg:flex-1">
-        {/* First row on mobile: Filter button and collateral buttons */}
-        <div className="flex items-center gap-2 w-full lg:w-auto">
-          {/* Filter Dropdown */}
-          <div className="relative" ref={filterDropdownRef}>
-            <button
-              onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
-              className={`${CTRL_GHOST} ${isFilterDropdownOpen || activeFilterCount > 0 ? CTRL_ON : CTRL_OFF} gap-2 px-3 h-8 rounded-md text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500`}
-              aria-expanded={isFilterDropdownOpen}
-              aria-label={`Filter troves${activeFilterCount > 0 ? ` (${activeFilterCount} active)` : ""}`}
-            >
-              <ListFilter className="w-3.5 h-3.5 text-rb-500" aria-hidden="true" />
-              {activeFilterCount > 0 && (
-                <span className={COUNT_BADGE} aria-hidden="true">
-                  {activeFilterCount}
-                </span>
-              )}
-              <ChevronDown
-                className={`w-3.5 h-3.5 text-rb-500 transition-transform ${isFilterDropdownOpen ? "rotate-180" : ""}`}
-                aria-hidden="true"
-              />
-            </button>
+    <div className="mb-6 flex flex-col gap-3">
+      {/* Top row: per-section filter dropdowns (preceding the address), then the
+          wallet/trove search (primary — the listing doubles as a wallet view)
+          and sort. */}
+      <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+        <FilterSections dimensions={dimensions} filters={filters} onChange={onFiltersChange} />
 
-            {isFilterDropdownOpen && (
-              <div
-                className="absolute top-full left-0 mt-2 z-50 min-w-[280px] max-h-[400px] overflow-y-auto overlay-panel"
-                role="menu"
-              >
-                <div className="flex items-center justify-between px-4 py-3">
-                  <span className="text-xs uppercase tracking-wider font-bold">Filters</span>
-                  {activeFilterCount > 0 && (
-                    <button onClick={resetFilters} className={RESET_LINK}>
-                      Reset
-                    </button>
-                  )}
-                </div>
-                <div className="my-1 mx-3 border-t border-rb-300 dark:border-rb-700" />
-                {/* Status Toggle */}
-                <div className="p-3 ">
-                  <div className="text-xs text-rb-500 uppercase tracking-wider mb-2">Status</div>
-                  <div
-                    className="flex bg-sunken rounded-lg p-1"
-                    role="group"
-                    aria-label="Filter by trove status"
-                  >
-                    <button
-                      onClick={() => handleFilterChange({ status: "all" })}
-                      className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        effStatus === "all"
-                          ? "bg-selected text-foreground font-semibold"
-                          : "text-rb-500 hover:text-foreground"
-                      }`}
-                      aria-pressed={effStatus === "all"}
-                      aria-label="Show all trove statuses"
-                    >
-                      All
-                    </button>
-                    <button
-                      onClick={() => handleFilterChange({ status: "open" })}
-                      className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        effStatus === "open"
-                          ? "text-white bg-green-500 dark:bg-green-950 dark:text-green-500 rounded"
-                          : "text-rb-500 hover:text-foreground"
-                      }`}
-                      aria-pressed={effStatus === "open"}
-                      aria-label="Show only active troves"
-                    >
-                      Active
-                    </button>
-                    <button
-                      onClick={() => handleFilterChange({ status: "closed" })}
-                      className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        effStatus === "closed"
-                          ? "bg-selected text-foreground font-semibold"
-                          : "text-rb-500 hover:text-foreground"
-                      }`}
-                      aria-pressed={effStatus === "closed"}
-                      aria-label="Show only closed troves"
-                    >
-                      Closed
-                    </button>
-                  </div>
-                </div>
-
-                {/* Liquidations — thin shortcut over `status`. Liquity troves
-                    are terminal entities (a liquidated trove can't be reopened
-                    with the same ID), so "with liquidations" is just
-                    status=liquidated. Picking this overrides the Status group;
-                    picking a Status option resets this back to Any. */}
-                <div className="p-3">
-                  <div className="text-xs text-rb-500 uppercase tracking-wider mb-2">Liquidations</div>
-                  <div
-                    className="flex bg-sunken rounded-lg p-1"
-                    role="group"
-                    aria-label="Filter by liquidation history"
-                  >
-                    <button
-                      onClick={() =>
-                        handleFilterChange({
-                          status: effStatus === "liquidated" ? undefined : filters.status,
-                        })
-                      }
-                      className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        effStatus !== "liquidated"
-                          ? "bg-selected text-foreground font-semibold"
-                          : "text-rb-500 hover:text-foreground"
-                      }`}
-                      aria-pressed={effStatus !== "liquidated"}
-                    >
-                      Any
-                    </button>
-                    <button
-                      onClick={() => handleFilterChange({ status: "liquidated" })}
-                      className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        effStatus === "liquidated"
-                          ? "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-400 font-semibold"
-                          : "text-rb-500 hover:text-foreground"
-                      }`}
-                      aria-pressed={effStatus === "liquidated"}
-                    >
-                      Liquidated
-                    </button>
-                  </div>
-                </div>
-
-                {/* Advanced Filters */}
-                <div className="p-3 space-y-3">
-                  {/* Redemptions Filter */}
-                  <div>
-                    <div className="text-xs text-rb-500 uppercase tracking-wider mb-2">Redemptions</div>
-                    <div
-                      className="flex bg-sunken rounded-lg p-1"
-                      role="group"
-                      aria-label="Filter by redemptions"
-                    >
-                      <button
-                        onClick={() => handleFilterChange({ hasRedemptions: undefined })}
-                        className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          filters.hasRedemptions === undefined
-                            ? "bg-selected text-foreground font-semibold"
-                            : "text-rb-500 hover:text-foreground"
-                        }`}
-                        aria-pressed={filters.hasRedemptions === undefined}
-                        aria-label="Show troves with or without redemptions"
-                      >
-                        All
-                      </button>
-                      <button
-                        onClick={() => handleFilterChange({ hasRedemptions: true })}
-                        className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          filters.hasRedemptions === true
-                            ? "bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-400 font-semibold"
-                            : "text-rb-500 hover:text-foreground"
-                        }`}
-                        aria-pressed={filters.hasRedemptions === true}
-                        aria-label="Show only troves with redemptions"
-                      >
-                        With
-                      </button>
-                      <button
-                        onClick={() => handleFilterChange({ hasRedemptions: false })}
-                        className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          filters.hasRedemptions === false
-                            ? "bg-selected text-foreground font-semibold"
-                            : "text-rb-500 hover:text-foreground"
-                        }`}
-                        aria-pressed={filters.hasRedemptions === false}
-                        aria-label="Show only troves without redemptions"
-                      >
-                        Without
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Interest Rate Management Filter */}
-                  <div>
-                    <div className="text-xs text-rb-500 uppercase tracking-wider mb-2">Interest Rate Management</div>
-                    <div
-                      className="flex bg-sunken rounded-lg p-1"
-                      role="group"
-                      aria-label="Filter by interest rate management"
-                    >
-                      <button
-                        onClick={() => handleFilterChange({ batchOnly: undefined, individualOnly: undefined })}
-                        className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          !filters.batchOnly && !filters.individualOnly
-                            ? "bg-selected text-foreground font-semibold"
-                            : "text-rb-500 hover:text-foreground"
-                        }`}
-                        aria-pressed={!filters.batchOnly && !filters.individualOnly}
-                        aria-label="Show all troves regardless of interest rate management"
-                      >
-                        All
-                      </button>
-                      <button
-                        onClick={() => handleFilterChange({ batchOnly: true, individualOnly: undefined })}
-                        className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          filters.batchOnly
-                            ? "bg-pink-100 dark:bg-pink-900 text-pink-700 dark:text-pink-400 font-semibold"
-                            : "text-rb-500 hover:text-foreground"
-                        }`}
-                        aria-pressed={filters.batchOnly === true}
-                        aria-label="Show only troves with delegated interest rate management"
-                      >
-                        Delegated
-                      </button>
-                      <button
-                        onClick={() => handleFilterChange({ batchOnly: undefined, individualOnly: true })}
-                        className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          filters.individualOnly
-                            ? "bg-selected text-foreground font-semibold"
-                            : "text-rb-500 hover:text-foreground"
-                        }`}
-                        aria-pressed={filters.individualOnly === true}
-                        aria-label="Show only troves with individual interest rate management"
-                      >
-                        Individual
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Zombie Troves Filter */}
-                  <div>
-                    <div className="text-xs text-rb-500 uppercase tracking-wider mb-2">Zombie Troves</div>
-                    <div
-                      className="flex bg-sunken rounded-lg p-1"
-                      role="group"
-                      aria-label="Filter zombie troves"
-                    >
-                      <button
-                        onClick={() => handleFilterChange({ showZombie: "all" })}
-                        className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          effZombie === "all"
-                            ? "bg-selected text-foreground font-semibold"
-                            : "text-rb-500 hover:text-foreground"
-                        }`}
-                        aria-pressed={effZombie === "all"}
-                        aria-label="Show all troves including zombie troves"
-                      >
-                        All
-                      </button>
-                      <button
-                        onClick={() => handleFilterChange({ showZombie: true })}
-                        className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          effZombie === true
-                            ? "bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-400 font-semibold"
-                            : "text-rb-500 hover:text-foreground"
-                        }`}
-                        aria-pressed={effZombie === true}
-                        aria-label="Show only zombie troves"
-                      >
-                        Show
-                      </button>
-                      <button
-                        onClick={() => handleFilterChange({ showZombie: false })}
-                        className={`cursor-pointer flex-1 px-3 py-1.5 rounded text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          effZombie === false
-                            ? "bg-selected text-foreground font-semibold"
-                            : "text-rb-500 hover:text-foreground"
-                        }`}
-                        aria-pressed={effZombie === false}
-                        aria-label="Hide zombie troves"
-                      >
-                        Hide
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-          {/* Collateral Type — multi-select with token icons */}
-          <CheckboxMultiSelect
-            label="Collateral"
-            allLabel="All collateral"
-            value={filters.collateralTypes ?? []}
-            onChange={(next) => onFiltersChange({ ...filters, collateralTypes: next.length > 0 ? next : undefined })}
-            options={availableCollateralTypes.map((type) => ({
-              value: type,
-              label: type,
-              icon: (
-                <span className="inline-flex">
-                  <svg className="w-5 h-5" aria-hidden="true">
-                    <use href={`#icon-${type.toLowerCase().replace("weth", "eth")}`} />
-                  </svg>
-                  <svg className="w-5 h-5 -ml-2.5" aria-hidden="true">
-                    <use href={`#icon-bold`} />
-                  </svg>
-                </span>
-              ),
-            }))}
-          />
-        </div>
-
-        {/* Second row on mobile: Search Input. The relatively-positioned form
-            anchors the recent/pinned dropdown when focused-empty. Picking a
-            row just fills the input — the existing debounce/filter pipeline
-            handles everything else, keeping the search Liquity-scoped. */}
         <form ref={searchRef} onSubmit={handleSearchSubmit} className="relative w-full lg:flex-1">
           <input
             type="text"
@@ -524,61 +191,64 @@ export function TroveListFilters({
             }}
           />
         </form>
-      </div>
 
-      {/* Third row on mobile: Sort controls */}
-      <div className="flex items-center gap-1 w-full lg:w-auto">
-        <button
-          onClick={() => onSortChange?.(sortBy, sortOrder === "asc" ? "desc" : "asc")}
-          className={`${CTRL_GHOST} ${CTRL_OFF} w-8 h-8 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
-          aria-label={sortOrder === "asc" ? "Sort ascending" : "Sort descending"}
-        >
-          {sortOrder === "asc" ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
-        </button>
-        <div className="relative h-8 flex-1 lg:flex-initial" ref={sortDropdownRef}>
+        <div className="flex items-center gap-1 w-full lg:w-auto">
           <button
-            onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
-            className={`${CTRL_GHOST} ${isSortDropdownOpen ? CTRL_ON : CTRL_OFF} w-full lg:w-auto gap-2 px-3 h-8 rounded-md text-xs font-medium lg:min-w-[160px] focus:outline-none focus:ring-2 focus:ring-blue-500`}
-            aria-expanded={isSortDropdownOpen}
-            aria-label={`Sort by ${sortOptions.find((o) => o.value === sortBy)?.label || "Sort"}`}
+            onClick={() => onSortChange?.(sortBy, sortOrder === "asc" ? "desc" : "asc")}
+            className={`${CTRL_GHOST} ${CTRL_OFF} w-8 h-8 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
+            aria-label={sortOrder === "asc" ? "Sort ascending" : "Sort descending"}
           >
-            <span>{sortOptions.find((o) => o.value === sortBy)?.label || "Sort"}</span>
-            <ChevronDown
-              className={`w-3.5 h-3.5 text-rb-500 ml-auto transition-transform ${isSortDropdownOpen ? "rotate-180" : ""}`}
-              aria-hidden="true"
-            />
+            {sortOrder === "asc" ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
           </button>
-
-          {isSortDropdownOpen && (
-            <div
-              className="absolute top-full left-0 lg:left-auto right-0 mt-2 z-50 min-w-[200px] overflow-hidden overlay-panel"
-              role="menu"
+          <div className="relative h-8 flex-1 lg:flex-initial" ref={sortDropdownRef}>
+            <button
+              onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
+              className={`${CTRL_GHOST} ${isSortDropdownOpen ? CTRL_ON : CTRL_OFF} w-full lg:w-auto gap-2 px-3 h-8 rounded-md text-xs font-medium lg:min-w-[160px] focus:outline-none focus:ring-2 focus:ring-blue-500`}
+              aria-expanded={isSortDropdownOpen}
+              aria-label={`Sort by ${SORT_OPTIONS.find((o) => o.value === sortBy)?.label || "Sort"}`}
             >
-              <div className="flex items-center px-4 py-3">
-                <span className="text-xs uppercase tracking-wider font-bold">Sort</span>
+              <span>{SORT_OPTIONS.find((o) => o.value === sortBy)?.label || "Sort"}</span>
+              <ChevronDown
+                className={`w-3.5 h-3.5 text-rb-500 ml-auto transition-transform ${isSortDropdownOpen ? "rotate-180" : ""}`}
+                aria-hidden="true"
+              />
+            </button>
+
+            {isSortDropdownOpen && (
+              <div
+                className="absolute top-full left-0 lg:left-auto right-0 mt-2 z-50 min-w-[200px] overflow-hidden overlay-panel"
+                role="menu"
+              >
+                <div className="flex items-center px-4 py-3">
+                  <span className="text-xs uppercase tracking-wider font-bold">Sort</span>
+                </div>
+                <div className="my-1 mx-3 border-t border-rb-300 dark:border-rb-700" />
+                {SORT_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => {
+                      onSortChange?.(option.value);
+                      setIsSortDropdownOpen(false);
+                    }}
+                    className={`overlay-item ${
+                      sortBy === option.value ? "overlay-item-active" : ""
+                    } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                    role="menuitem"
+                    aria-label={`Sort by ${option.label}`}
+                    aria-current={sortBy === option.value ? "true" : undefined}
+                  >
+                    {option.label}
+                  </button>
+                ))}
               </div>
-              <div className="my-1 mx-3 border-t border-rb-300 dark:border-rb-700" />
-              {sortOptions.map((option) => (
-                <button
-                  key={option.value}
-                  onClick={() => {
-                    onSortChange?.(option.value);
-                    setIsSortDropdownOpen(false);
-                  }}
-                  className={`overlay-item ${
-                    sortBy === option.value ? "overlay-item-active" : ""
-                  } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                  role="menuitem"
-                  aria-label={`Sort by ${option.label}`}
-                  aria-current={sortBy === option.value ? "true" : undefined}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Active predicates as removable chips — renders nothing when none are
+          set, so the wallet-view resting state stays quiet. */}
+      <FilterChips dimensions={dimensions} filters={filters} onChange={onFiltersChange} />
     </div>
   );
 }
