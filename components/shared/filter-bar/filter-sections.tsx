@@ -120,7 +120,10 @@ export function FilterSections<F>({ dimensions, filters, onChange }: FilterSecti
                   // to host the Clear link when active.
                   const showLabel = group.dims.length > 1;
                   return (
-                    <div key={dim.id}>
+                    // flex-col so the inset overlay-item rows stretch to the
+                    // panel width (align-items: stretch) rather than shrinking to
+                    // their content — matching the sort menu's direct flex rows.
+                    <div key={dim.id} className="flex flex-col">
                       {i > 0 && <div className="my-1 mx-3 border-t border-rb-300 dark:border-rb-700" />}
                       {(showLabel || active) && (
                         <div className="flex items-center justify-between px-4 pt-2 pb-1">
