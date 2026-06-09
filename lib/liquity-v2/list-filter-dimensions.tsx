@@ -62,8 +62,8 @@ export function troveFilterDimensions({ collateralOptions }: { collateralOptions
     cardinality: "single",
     options: [
       { value: "active", label: "Active" },
-      { value: "zombie", label: "Zombie" },
       { value: "closed", label: "Closed" },
+      { value: "zombie", label: "Zombie" },
       { value: "liquidated", label: "Liquidated" },
     ],
     get: (f) => {
