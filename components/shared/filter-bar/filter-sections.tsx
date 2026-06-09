@@ -115,17 +115,29 @@ export function FilterSections<F>({ dimensions, filters, onChange }: FilterSecti
                 {group.dims.map((dim, i) => {
                   const selected = new Set(dim.get(filters));
                   const active = isDimensionActive(dim, filters);
+                  // A single-dimension group is already named by its button, so
+                  // its label header is redundant — drop it, keeping the row only
+                  // to host the Clear link when active.
+                  const showLabel = group.dims.length > 1;
                   return (
                     <div key={dim.id}>
                       {i > 0 && <div className="my-1 mx-3 border-t border-rb-300 dark:border-rb-700" />}
-                      <div className="flex items-center justify-between px-4 pt-2 pb-1">
-                        <span className="text-[10px] uppercase tracking-wider font-bold text-rb-500">{dim.label}</span>
-                        {active && (
-                          <button type="button" onClick={() => clearDim(dim)} className={RESET_LINK}>
-                            Clear
-                          </button>
-                        )}
-                      </div>
+                      {(showLabel || active) && (
+                        <div className="flex items-center justify-between px-4 pt-2 pb-1">
+                          {showLabel ? (
+                            <span className="text-[10px] uppercase tracking-wider font-bold text-rb-500">
+                              {dim.label}
+                            </span>
+                          ) : (
+                            <span />
+                          )}
+                          {active && (
+                            <button type="button" onClick={() => clearDim(dim)} className={RESET_LINK}>
+                              Clear
+                            </button>
+                          )}
+                        </div>
+                      )}
                       {dim.options.map((opt) => (
                         <OptionRow
                           key={opt.value}

@@ -9,12 +9,13 @@ export function AaveV4ListLoadingSkeleton() {
     <main className="min-h-screen">
       <div className="max-w-7xl mx-auto py-8">
         {/* Filter row — mirrors AaveV4ListFilters at rest: the Risk / Market /
-            Assets / View section dropdowns, then the address search (flex-1),
-            then the sort order toggle + sort menu. Heights match the live h-8
-            controls. */}
+            Supply / Borrow / View section dropdowns, then the address search
+            (flex-1), then the sort order toggle + sort menu. Heights match the
+            live h-8 controls. */}
         <div className="mb-6 animate-pulse flex flex-col lg:flex-row lg:items-center gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <div className="h-8 w-16 rounded-md bg-skeleton" />
+            <div className="h-8 w-20 rounded-md bg-skeleton" />
             <div className="h-8 w-20 rounded-md bg-skeleton" />
             <div className="h-8 w-20 rounded-md bg-skeleton" />
             <div className="h-8 w-16 rounded-md bg-skeleton" />

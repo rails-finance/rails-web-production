@@ -124,7 +124,7 @@ export function aaveV4FilterDimensions({ assetOptions }: { assetOptions: FilterO
   const supplying: Dim = {
     id: "supplyAssets",
     label: "Supplying",
-    group: "Assets",
+    group: "Supply",
     cardinality: "multi",
     options: assetOptions,
     get: (f) => f.supplyAssets,
@@ -135,7 +135,7 @@ export function aaveV4FilterDimensions({ assetOptions }: { assetOptions: FilterO
   const borrowing: Dim = {
     id: "borrowAssets",
     label: "Borrowing",
-    group: "Assets",
+    group: "Borrow",
     cardinality: "multi",
     options: assetOptions,
     get: (f) => f.borrowAssets,
