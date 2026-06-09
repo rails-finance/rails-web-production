@@ -138,7 +138,7 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus, expec
             <span className="text-xs font-bold uppercase tracking-wide text-foreground/80">
               {trove.collateralType}
             </span>
-            <TroveIdentityRow troveId={trove.id} collateralType={trove.collateralType} />
+            <TroveIdentityRow troveId={trove.id} collateralType={trove.collateralType} owner={trove.owner} lastOwner={trove.lastOwner} ownerEns={trove.ownerEns} />
             {/* Delegate marker — name lives in the row below the card, the
                 fuchsia icon here is just a status flag. */}
             {trove.batch.isMember && (

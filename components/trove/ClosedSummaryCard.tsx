@@ -31,7 +31,7 @@ export function ClosedSummaryCard({ trove, compact = false, showActivityMeta = t
             <span className="text-xs font-bold uppercase tracking-wide text-foreground/80">
               {trove.collateralType}
             </span>
-            <TroveIdentityRow troveId={trove.id} collateralType={trove.collateralType} />
+            <TroveIdentityRow troveId={trove.id} collateralType={trove.collateralType} owner={trove.owner} lastOwner={trove.lastOwner} ownerEns={trove.ownerEns} />
           </span>
           {showActivityMeta && (
             <span className="flex items-center gap-2 text-xs text-rb-500">
