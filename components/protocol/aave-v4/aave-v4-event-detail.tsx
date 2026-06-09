@@ -41,17 +41,22 @@ const TransitionArrow = () => <SharedTransitionArrow size="sm" />;
  *  stablecoin sources distinguishes pinned-$1 from market. */
 function PricePill({ symbol, usd, source }: { symbol: string; usd: number; source: AaveV4PriceSource }) {
   const sourceLabel =
-    source === "chainlink" ? "Chainlink feed"
-    : source === "chainlink-eth-derived" ? "Chainlink ETH/USD × on-chain exchange rate"
-    : source === "iaave-oracle" ? "IAaveOracle"
-    : source === "stablecoin" ? "stablecoin, pinned to $1"
-    : "approximation";
+    source === "chainlink"
+      ? "Chainlink feed"
+      : source === "chainlink-eth-derived"
+        ? "Chainlink ETH/USD × on-chain exchange rate"
+        : source === "iaave-oracle"
+          ? "IAaveOracle"
+          : source === "stablecoin"
+            ? "stablecoin, pinned to $1"
+            : "approximation";
   return (
     <span
-      className="inline-flex items-center gap-1.5 text-xs font-bold text-rb-500 bg-rb-200/60 dark:bg-rb-800/60 px-2 py-1 rounded-md"
+      className="inline-flex items-center gap-1.5 text-xs font-bold text-rb-500 bg-background px-2 py-1 rounded-md"
       title={`${aaveV4DisplaySymbol(symbol)} price at the time of this event (${sourceLabel})`}
     >
-      {source === "stablecoin" ? "≈" : ""}{formatUsd(usd)}
+      {source === "stablecoin" ? "≈" : ""}
+      {formatUsd(usd)}
       <TokenChipIcon symbol={symbol} size={14} />
     </span>
   );
@@ -61,15 +66,11 @@ function PricePill({ symbol, usd, source }: { symbol: string; usd: number; sourc
  *  snapshot grid. Every section (Collateral, Debt, LTV, Borrow Rate) renders as
  *  one of these, all sharing a single CSS grid so they balance in width and —
  *  via `sm:auto-rows-fr` on the grid plus `h-full` here — match the tallest
- *  card's height per row. An odd trailing card spans the full width so the grid
- *  always reads as a tidy block rather than leaving a ragged gap. */
-function StatCard({ label, span, children }: { label: string; span?: boolean; children: ReactNode }) {
+ *  card's height per row. Cards keep a uniform half-width even when the count is
+ *  odd; the trailing slot is simply left empty rather than stretched. */
+function StatCard({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div
-      className={`flex h-full flex-col rounded-xl border border-rb-200/60 bg-rb-50/70 px-4 py-3 dark:border-rb-700/50 dark:bg-rb-900/40 ${
-        span ? "sm:col-span-2" : ""
-      }`}
-    >
+    <div className="flex h-full flex-col rounded-xl bg-background px-4 py-3">
       <div className="mb-1.5 text-xs font-semibold text-rb-500">{label}</div>
       {children}
     </div>
@@ -144,8 +145,8 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
   const supplyAfterVal = parseFloat(ctx.supplyAfter ?? "0");
   const debtBeforeVal = parseFloat(ctx.debtBefore ?? "0");
   const debtAfterVal = parseFloat(ctx.debtAfter ?? "0");
-  const hasOldSupply = (supplyBeforeVal > 0.0001 || supplyAfterVal > 0.0001);
-  const hasOldDebt = (debtBeforeVal > 0.0001 || debtAfterVal > 0.0001);
+  const hasOldSupply = supplyBeforeVal > 0.0001 || supplyAfterVal > 0.0001;
+  const hasOldDebt = debtBeforeVal > 0.0001 || debtAfterVal > 0.0001;
   const baseSupplies = ctx.allSupplies?.length
     ? ctx.allSupplies
     : (isSupplySide || isLiq) && hasOldSupply
@@ -158,17 +159,22 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
       : [];
 
   const supplyChangeSym = isLiq ? ctx.collateralSymbol : token;
-  const supplyZeroOut = (isSupplySide || isLiq) && supplyChangeSym && supplyAfterVal <= 0.0001 && supplyBeforeVal > 0.0001
-    && !baseSupplies.some(s => s.symbol === supplyChangeSym);
+  const supplyZeroOut =
+    (isSupplySide || isLiq) &&
+    supplyChangeSym &&
+    supplyAfterVal <= 0.0001 &&
+    supplyBeforeVal > 0.0001 &&
+    !baseSupplies.some((s) => s.symbol === supplyChangeSym);
   const supplies = supplyZeroOut
     ? [...baseSupplies, { symbol: supplyChangeSym!, amount: ctx.supplyAfter ?? "0" }]
     : baseSupplies;
 
-  const debtZeroOut = (isDebtSide || isLiq) && debtAfterVal <= 0.0001 && debtBeforeVal > 0.0001
-    && !baseDebts.some(d => d.symbol === token);
-  const debts = debtZeroOut
-    ? [...baseDebts, { symbol: token, amount: ctx.debtAfter ?? "0" }]
-    : baseDebts;
+  const debtZeroOut =
+    (isDebtSide || isLiq) &&
+    debtAfterVal <= 0.0001 &&
+    debtBeforeVal > 0.0001 &&
+    !baseDebts.some((d) => d.symbol === token);
+  const debts = debtZeroOut ? [...baseDebts, { symbol: token, amount: ctx.debtAfter ?? "0" }] : baseDebts;
   const hasSupplies = supplies.length > 0;
   const hasDebts = debts.length > 0;
 
@@ -217,7 +223,7 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
       label: "Collateral",
       body: (
         <div className="flex flex-col gap-1">
-          {supplies.map(s => {
+          {supplies.map((s) => {
             // The changed asset is the supply side's primary asset for
             // supply/withdraw, or the collateral asset for liquidations.
             const isThisChanged = (isSupplySide || isLiq) && s.symbol === (isLiq ? ctx.collateralSymbol : token);
@@ -248,7 +254,7 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
       label: "Debt",
       body: (
         <div className="flex flex-col gap-1">
-          {debts.map(d => {
+          {debts.map((d) => {
             const isThisChanged = (isDebtSide || isLiq) && d.symbol === token;
             const priceUsd = d.price?.usd ?? (!isThisChanged ? undefined : isLiq ? ctx.debtPrice?.usd : ctx.price?.usd);
             return (
@@ -288,7 +294,9 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
     snapshotCards.push({
       key: "rate",
       label: ctx.supplyAPR ? "Supply Rate" : "Borrow Rate",
-      body: <div className="text-sm font-bold">{(parseFloat(ctx.supplyAPR ?? ctx.borrowAPR ?? "0") * 100).toFixed(2)}%</div>,
+      body: (
+        <div className="text-sm font-bold">{(parseFloat(ctx.supplyAPR ?? ctx.borrowAPR ?? "0") * 100).toFixed(2)}%</div>
+      ),
     });
   }
 
@@ -297,7 +305,7 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
       {/* Collateral toggle status */}
       {isToggle && (
         <div className="px-5 py-2 text-sm">
-          <span className={`font-bold ${ctx.enabled ? "text-foreground" : ""}`}>
+          <span className={`font-bold ${ctx.enabled ? "text-green-400" : ""}`}>
             {ctx.enabled ? "Enabled as collateral" : "Disabled as collateral"}
           </span>
         </div>
@@ -309,13 +317,17 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
           {ctx.debtToCover && (
             <div className="flex flex-col">
               <span className="text-rb-500 text-xs font-semibold">Debt Covered</span>
-              <span className="font-bold text-foreground">{fmt(ctx.debtToCover)} {tokenLabel}</span>
+              <span className="font-bold text-red-400">
+                {fmt(ctx.debtToCover)} {tokenLabel}
+              </span>
             </div>
           )}
           {ctx.liquidatedCollateralAmount && ctx.collateralSymbol && (
             <div className="flex flex-col">
               <span className="text-rb-500 text-xs font-semibold">Collateral Seized</span>
-              <span className="font-bold text-foreground">{fmt(ctx.liquidatedCollateralAmount)} {ctx.collateralSymbol}</span>
+              <span className="font-bold text-red-400">
+                {fmt(ctx.liquidatedCollateralAmount)} {ctx.collateralSymbol}
+              </span>
             </div>
           )}
           {ctx.liquidator && (
@@ -334,12 +346,8 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
       {snapshotCards.length > 0 && (
         <div className="px-5 py-2">
           <div className="grid grid-cols-1 gap-2.5 sm:auto-rows-fr sm:grid-cols-2">
-            {snapshotCards.map((c, i) => (
-              <StatCard
-                key={c.key}
-                label={c.label}
-                span={snapshotCards.length % 2 === 1 && i === snapshotCards.length - 1}
-              >
+            {snapshotCards.map((c) => (
+              <StatCard key={c.key} label={c.label}>
                 {c.body}
               </StatCard>
             ))}
@@ -353,7 +361,7 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
           sources lets the user tell pinned-$1 apart from market. */}
       {pricePills.length > 0 && (
         <div className="flex items-center justify-end gap-2 px-5 py-2">
-          {pricePills.map(p => (
+          {pricePills.map((p) => (
             <PricePill key={p.symbol} symbol={p.symbol} usd={p.usd} source={p.source} />
           ))}
         </div>

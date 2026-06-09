@@ -170,7 +170,7 @@ function AaveV4ListPageContent() {
       hasDebt: filters.debt === "withDebt",
       noDebt: filters.debt === "noDebt",
       hasLiquidations: filters.liquidations === "with" ? true : filters.liquidations === "without" ? false : undefined,
-      healthBelow: filters.health === "atRisk" ? 1.1 : filters.health === "underwater" ? 1.0 : undefined,
+      healthBelow: filters.health === "underwater" ? 1.0 : undefined,
       // Visibility → server filters. "active" hides closed/near-zero (<$1
       // server-side); "nodust" raises the floor to the dust line.
       excludeClosed: effectiveAaveV4Show(filters) === "active",

@@ -24,12 +24,12 @@ export interface AaveV4TxGroup {
 type OperationStyle = { label: string; color: string; bg: string; badge: boolean };
 
 const STYLES: Record<string, OperationStyle> = {
-  supply:            { label: "Supply",             color: "", bg: "", badge: false },
-  withdraw:          { label: "Withdraw",           color: "", bg: "", badge: false },
-  borrow:            { label: "Borrow",             color: "", bg: "", badge: false },
-  repay:             { label: "Repay",              color: "", bg: "", badge: false },
-  liquidation:       { label: "Liquidation",        color: "text-foreground/80 dark:text-foreground/60",   bg: "bg-rb-300 dark:bg-rb-700", badge: true },
-  collateral_toggle: { label: "Collateral Toggle",  color: "", bg: "", badge: false },
+  supply: { label: "Supply", color: "", bg: "", badge: false },
+  withdraw: { label: "Withdraw", color: "", bg: "", badge: false },
+  borrow: { label: "Borrow", color: "", bg: "", badge: false },
+  repay: { label: "Repay", color: "", bg: "", badge: false },
+  liquidation: { label: "Liquidation", color: "text-red-400", bg: "bg-red-500/20", badge: true },
+  collateral_toggle: { label: "Collateral Toggle", color: "", bg: "", badge: false },
 };
 
 export interface AaveV4EventHeaderProps {
@@ -49,27 +49,28 @@ export function AaveV4EventHeader({ ctx, timestamp, txGroup, eventNumber }: Aave
   const { showEventNumbers, showInterestRates } = useTimelineDisplay();
 
   // For collateral toggle, show enable/disable
-  const label = ctx.eventType === "collateral_toggle"
-    ? (ctx.enabled ? "Enable Collateral" : "Disable Collateral")
-    : style.label;
+  const label =
+    ctx.eventType === "collateral_toggle" ? (ctx.enabled ? "Enable Collateral" : "Disable Collateral") : style.label;
 
-  const groupChip = txGroup && txGroup.count > 1 ? (
-    <span
-      className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wide bg-sunken text-rb-500"
-      title={`Operation ${txGroup.index} of ${txGroup.count} in this transaction`}
-    >
-      {txGroup.index} of {txGroup.count}
-    </span>
-  ) : null;
+  const groupChip =
+    txGroup && txGroup.count > 1 ? (
+      <span
+        className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wide bg-sunken text-rb-500"
+        title={`Operation ${txGroup.index} of ${txGroup.count} in this transaction`}
+      >
+        {txGroup.index} of {txGroup.count}
+      </span>
+    ) : null;
 
-  const counter = eventNumber != null && showEventNumbers ? (
-    <span
-      className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] bg-sunken text-rb-500"
-      aria-label={`Event ${eventNumber}`}
-    >
-      {eventNumber}
-    </span>
-  ) : null;
+  const counter =
+    eventNumber != null && showEventNumbers ? (
+      <span
+        className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] bg-sunken text-rb-500"
+        aria-label={`Event ${eventNumber}`}
+      >
+        {eventNumber}
+      </span>
+    ) : null;
 
   return (
     <div className="px-5 pt-4 pb-3">
@@ -77,11 +78,15 @@ export function AaveV4EventHeader({ ctx, timestamp, txGroup, eventNumber }: Aave
         {groupChip}
         {ctx.alsoToggledCollateral ? (
           <>
-            <span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold bg-rb-300 dark:bg-rb-700 text-foreground/80 dark:text-foreground/60">Enable Collateral</span>
+            <span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400">
+              Enable Collateral
+            </span>
             <span className="text-sm text-rb-500">Supply</span>
           </>
         ) : style.badge ? (
-          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${style.bg} ${style.color}`}>
+          <span
+            className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${style.bg} ${style.color}`}
+          >
             {label}
           </span>
         ) : (
@@ -101,17 +106,21 @@ export function AaveV4EventHeader({ ctx, timestamp, txGroup, eventNumber }: Aave
         )}
         {showInterestRates && (ctx.supplyAPR || ctx.borrowAPR) && (
           <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-rb-300/60 dark:bg-rb-800/60 ">
-            {((parseFloat(ctx.supplyAPR ?? ctx.borrowAPR ?? "0")) * 100).toFixed(2)}%
+            {(parseFloat(ctx.supplyAPR ?? ctx.borrowAPR ?? "0") * 100).toFixed(2)}%
           </span>
         )}
         {ctx.eventType === "liquidation" && ctx.debtToCover && (
-          <span className="inline-flex items-center gap-1.5 text-xs text-rb-500">
-            <span>Debt covered: {formatNum(ctx.debtToCover)} {aaveV4DisplaySymbol(ctx.reserveSymbol)}</span>
+          <span className="inline-flex items-center gap-1.5 text-xs text-red-400">
+            <span>
+              Debt covered: {formatNum(ctx.debtToCover)} {aaveV4DisplaySymbol(ctx.reserveSymbol)}
+            </span>
           </span>
         )}
         {ctx.eventType === "liquidation" && ctx.liquidatedCollateralAmount && ctx.collateralSymbol && (
-          <span className="inline-flex items-center gap-1.5 text-xs text-rb-500">
-            <span>Seized: {formatNum(ctx.liquidatedCollateralAmount)} {ctx.collateralSymbol}</span>
+          <span className="inline-flex items-center gap-1.5 text-xs text-red-400">
+            <span>
+              Seized: {formatNum(ctx.liquidatedCollateralAmount)} {ctx.collateralSymbol}
+            </span>
           </span>
         )}
         <span className="ml-auto inline-flex items-center gap-2">

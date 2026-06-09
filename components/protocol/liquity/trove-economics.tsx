@@ -21,10 +21,11 @@ import {
 } from "@/components/shared/economics-chart-primitives";
 import { FilterDropdown, DisplaySettingsIcon, type FilterOption } from "@/components/shared/filter-dropdown";
 import { usePreferences } from "@/lib/shared/preferences-context";
-import { TrovePriceAxis, trovePriceRunwayExplanation } from "@/components/protocol/liquity/trove-price-axis";
+import { trovePriceRunwayExplanation } from "@/components/protocol/liquity/trove-price-axis";
+import { PriceRunway } from "@/components/shared/price-runway";
 import { InfoDisclosure } from "@/components/shared/info-disclosure";
 import { getLiquidationThreshold } from "@/lib/utils/liquidation-utils";
-import { formatRatio, ratioLabel, useLiquityRatioColorClass, resolveLiquityBranch } from "@/lib/shared/ratio-format";
+import { formatRatio, ratioLabel, useLiquityRatioColorClass } from "@/lib/shared/ratio-format";
 // ---- Types ----
 
 /** Minimal event shape — works with both BaseActivityEvent and TimelineEvent */
@@ -1175,22 +1176,9 @@ export function TroveEconomicsSummary({ events, currentPrice, hideHeader }: Trov
                   const liqPrice = (meta.currentDebt * (mcr / 100)) / meta.collateralAmount;
                   if (!(liqPrice > 0)) return null;
 
-                  // Translate the user's Conservative CR threshold into the
-                  // single price at which the Conservative→Caution boundary
-                  // sits: priceAtConservativeMin = liqPrice × consMin / mcr.
-                  const branchKey = resolveLiquityBranch(meta.collateralType);
-                  const branchThresholds = prefs.liquityV2.byBranch[branchKey];
-                  const thresholdPrice = liqPrice * (branchThresholds.crConservativeMin / mcr);
-
                   return (
                     <div className="mt-4">
-                      <TrovePriceAxis
-                        collateralSymbol={collateralSymbol}
-                        debtSymbol={stableSymbol}
-                        oraclePrice={effectivePrice}
-                        liquidationPrice={liqPrice}
-                        thresholdPrice={thresholdPrice}
-                      />
+                      <PriceRunway currentPrice={effectivePrice} liqPrice={liqPrice} />
                     </div>
                   );
                 })()}

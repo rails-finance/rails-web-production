@@ -17,7 +17,10 @@ import { upsertSession } from "@/lib/shared/sessions";
 import { fetchAaveV4AssetUniverse } from "@/lib/api/fetch-aave-v4-asset-universe";
 
 export type AaveV4Debt = "all" | "withDebt" | "noDebt";
-export type AaveV4Health = "all" | "atRisk" | "underwater";
+// "underwater" = HF < 1.0 (liquidatable — a factual on-chain state, not a risk
+// opinion). No "at risk" band: Rails doesn't editorialize where a still-healthy
+// position sits; the HF value carries that.
+export type AaveV4Health = "all" | "underwater";
 /** Tri-state liquidation filter. "with" → positions liquidated at least
  *  once, "without" → positions never liquidated, "all" → no restriction. */
 export type AaveV4Liquidations = "all" | "with" | "without";
@@ -321,7 +324,6 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
                     {(
                       [
                         { v: "all", l: "Any" },
-                        { v: "atRisk", l: "At risk" },
                         { v: "underwater", l: "Underwater" },
                       ] as { v: AaveV4Health; l: string }[]
                     ).map(({ v, l }) => (
@@ -332,9 +334,7 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
                           filters.health === v
                             ? v === "all"
                               ? "bg-selected text-foreground font-semibold"
-                              : v === "atRisk"
-                                ? "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
-                                : "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
+                              : "bg-rb-300 dark:bg-rb-700 text-foreground font-semibold"
                             : "text-rb-500 hover:text-foreground"
                         }`}
                         aria-pressed={filters.health === v}
@@ -374,7 +374,6 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
                     ))}
                   </div>
                 </div>
-
               </div>
             )}
           </div>
