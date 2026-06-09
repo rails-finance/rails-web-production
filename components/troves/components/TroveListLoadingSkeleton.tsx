@@ -5,9 +5,8 @@
 // predicate is set (the resting wallet-view state is quiet).
 //
 // Filter row mirrors TroveListFilters at rest: the Status / Collateral /
-// Redemptions / Delegation / Zombies section dropdowns, then the address search
-// (flex-1), then the sort order toggle + sort menu. Heights match the live h-8
-// controls.
+// Redemptions / Delegation section dropdowns, then the address search (flex-1),
+// then the sort order toggle + sort menu. Heights match the live h-8 controls.
 
 export function TroveListLoadingSkeleton() {
   return (
@@ -19,7 +18,6 @@ export function TroveListLoadingSkeleton() {
             <div className="h-8 w-24 rounded-md bg-skeleton" />
             <div className="h-8 w-28 rounded-md bg-skeleton" />
             <div className="h-8 w-24 rounded-md bg-skeleton" />
-            <div className="h-8 w-20 rounded-md bg-skeleton" />
           </div>
           <div className="h-8 w-full lg:flex-1 rounded-md bg-skeleton" />
           <div className="flex items-center gap-1">
