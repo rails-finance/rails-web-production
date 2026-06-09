@@ -17,7 +17,7 @@ import { fmtPrice } from "@/components/shared/price-pill";
  * asset visibly sits closer to the red than a 24% one, and the rows stay
  * comparable without any single shared scale.
  *
- * The bar is three distinct rounded segments laid side-by-side on the card
+ * The bar is three distinct pill-capped segments laid side-by-side on the card
  * surface (not painted inside a recessed track), separated by hairline gaps.
  * What reads off it:
  *   • **Collateral fill** — collateral-blue (the tower chart's structural
@@ -57,28 +57,16 @@ import { fmtPrice } from "@/components/shared/price-pill";
 //                valence (red stays the only valence colour).
 //   • HEADROOM — neutral, live price → liquidation line (how far it can fall).
 //   • LIQ      — red liquidation zone, beyond the liquidation line.
-// Only the two OUTER ends of the whole bar are pill caps (the left end of the
-// leftmost segment, the right end of the liquidation zone); every internal
-// segment-to-segment edge gets a small radius so the gaps read as crisp seams
-// rather than a string of pills. Radii are inline border-radius shorthand.
-//
-// R_FULL is exactly HALF the bar height — NOT a huge value like 9999px. An
-// oversized radius on one corner makes the browser scale *every* corner of that
-// element down by the same factor (the CSS corner-overlap rule), which silently
-// flattened the R_SM corners on the same element to ~0 (square). A half-height
-// radius caps the end as a clean semicircle while leaving the small corners
-// intact.
+// At this bar height every segment is fully pill-capped (`rounded-full`) on all
+// four corners — no per-corner caps to distinguish outer ends from internal
+// seams, since a 10px-tall segment reads as rounded either way. The hairline
+// gaps still draw the seams between segments.
 const FILL = "bg-blue-500";
 const HEADROOM = "bg-rb-200 dark:bg-rb-700";
 const LIQ = "bg-red-400/60 dark:bg-red-500/40";
 const LIQ_ACTIVE = "bg-red-500 dark:bg-red-500";
-const H_BAR = 20; // bar height in px
+const H_BAR = 10; // bar height in px (h-2.5)
 const SEG_GAP_PX = 1; // hairline gap between adjacent segments
-const R_SM = "4px"; // internal segment-to-segment corners
-const R_FULL = `${H_BAR / 2}px`; // outer end caps = half height → semicircle, no down-scaling
-// border-radius shorthand order: top-left, top-right, bottom-right, bottom-left.
-const CAP_LEFT = `${R_FULL} ${R_SM} ${R_SM} ${R_FULL}`; // left end capped, right small
-const CAP_RIGHT = `${R_SM} ${R_FULL} ${R_FULL} ${R_SM}`; // right end capped, left small
 
 // Window bounds as multiples of the liquidation price.
 const WINDOW_TOP_MULT = 2.0; // left edge — 100% above liquidation
@@ -136,25 +124,21 @@ export function PriceRunway({ currentPrice, liqPrice }: PriceRunwayProps) {
           share of the price window, the flex gap drawing the hairline seams.
           Widths are proportional, not pixel-exact — close enough to read. */}
       <div className="flex" style={{ height: H_BAR, gap: SEG_GAP_PX }}>
-        {/* Collateral fill — window top → live price. Left end caps the bar;
-            right end is the internal live-price marker (small radius). */}
-        {fillEnd > 0 && <div className={FILL} style={{ flexGrow: fillEnd, flexBasis: 0, borderRadius: CAP_LEFT }} />}
-        {/* Headroom — live price → liquidation line. The neutral distance the
-            price can still fall; absent once at / inside the zone. Caps the bar's
-            left end only when no blue fill precedes it (price above the window);
-            otherwise both edges are internal (small radius). */}
-        {headroomW > 0 && (
-          <div
-            className={HEADROOM}
-            style={{ flexGrow: headroomW, flexBasis: 0, borderRadius: fillEnd > 0 ? R_SM : CAP_LEFT }}
-          />
+        {/* Collateral fill — window top → live price. Its rounded right cap is
+            the live-price marker. */}
+        {fillEnd > 0 && (
+          <div className={`${FILL} rounded-full`} style={{ flexGrow: fillEnd, flexBasis: 0 }} />
         )}
-        {/* Liquidation zone — from the liquidation line to the right edge. Left
-            edge internal (small radius); right end caps the bar. Deepens once the
-            live price is inside it. */}
+        {/* Headroom — live price → liquidation line. The neutral distance the
+            price can still fall; absent once at / inside the zone. */}
+        {headroomW > 0 && (
+          <div className={`${HEADROOM} rounded-full`} style={{ flexGrow: headroomW, flexBasis: 0 }} />
+        )}
+        {/* Liquidation zone — from the liquidation line to the right edge.
+            Deepens once the live price is inside it. */}
         <div
-          className={`transition-colors ${underwater ? LIQ_ACTIVE : LIQ}`}
-          style={{ flexGrow: 100 - liqPos, flexBasis: 0, borderRadius: CAP_RIGHT }}
+          className={`rounded-full transition-colors ${underwater ? LIQ_ACTIVE : LIQ}`}
+          style={{ flexGrow: 100 - liqPos, flexBasis: 0 }}
         />
       </div>
 
