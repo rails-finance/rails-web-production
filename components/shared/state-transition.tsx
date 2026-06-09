@@ -21,14 +21,24 @@ export function ClosedLabel() {
   return <span className="text-sm font-semibold ">CLOSED</span>;
 }
 
-export function StateMetric({ label, children }: { label: string; children: ReactNode }) {
+/** Equal-size surfaced stat card — the shared building block of the
+ *  event-detail snapshot grid across protocols. Each section (Collateral,
+ *  Debt, LTV, Interest/Borrow Rate) renders as one of these, all sharing a
+ *  single CSS grid so they balance in width and — via `sm:auto-rows-fr` on the
+ *  grid plus `h-full` here — match the tallest card's height per row. */
+export function StatCard({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div>
-      <div className="text-xs text-rb-500 font-semibold mb-1">{label}</div>
+    <div className="flex h-full flex-col rounded-xl bg-background px-4 py-3">
+      <div className="mb-1.5 text-xs font-semibold text-rb-500">{label}</div>
       {children}
     </div>
   );
 }
+
+/** Back-compat alias — Liquity's metric components label themselves with
+ *  `StateMetric`; it now renders the same boxed `StatCard` as Aave V4 so both
+ *  rails share one visual grammar. */
+export const StateMetric = StatCard;
 
 export function StateTransition({ children }: { children: ReactNode }) {
   return <div className="flex items-center space-x-1">{children}</div>;

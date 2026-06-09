@@ -316,9 +316,9 @@ export function LiquityEventDetail({ ctx, txHash, previousEvent, currentEvent }:
     <>
       {/* 2×2 State Grid — rails-web pattern */}
       {showGrid && (
-        <div className="px-4 pt-3 pb-3">
+        <div className="px-5 py-2">
           {isBatchManagerOp ? (
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-2.5 sm:auto-rows-fr sm:grid-cols-2">
               <InterestRateMetric
                 before={beforeInterestRate}
                 after={stateAfter.annualInterestRate}
@@ -328,7 +328,7 @@ export function LiquityEventDetail({ ctx, txHash, previousEvent, currentEvent }:
               />
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-2.5 sm:auto-rows-fr sm:grid-cols-2">
               <CollateralMetric
                 collateralType={ctx.collateralType}
                 before={beforeColl}
@@ -438,7 +438,7 @@ export function LiquityEventDetail({ ctx, txHash, previousEvent, currentEvent }:
           )}
           {collPrice > 0 && (
             <span
-              className="ml-auto inline-flex items-center gap-1.5 text-xs font-bold text-rb-500 bg-rb-200/60 dark:bg-rb-800/60 px-2 py-1 rounded-md"
+              className="ml-auto inline-flex items-center gap-1.5 text-xs font-bold text-rb-500 bg-background px-2 py-1 rounded-md"
               title={`${ctx.collateralType} price at the time of this event`}
             >
               {formatUsd(collPrice)}

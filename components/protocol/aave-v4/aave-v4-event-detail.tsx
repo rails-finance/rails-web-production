@@ -6,7 +6,7 @@ import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import { shortAddr } from "@/lib/shared/format-event";
 import { usePreferences } from "@/lib/shared/preferences-context";
 import { formatRatio, ratioLabel, ratioColorClass } from "@/lib/shared/ratio-format";
-import { TransitionArrow as SharedTransitionArrow } from "@/components/shared/state-transition";
+import { TransitionArrow as SharedTransitionArrow, StatCard } from "@/components/shared/state-transition";
 import { resolvePrice } from "@/lib/aave/prices";
 import { usePrices } from "@/lib/shared/prices-context";
 import { useTimelineDisplay } from "@/components/shared/timeline-display-context";
@@ -60,21 +60,6 @@ function PricePill({ symbol, usd, source }: { symbol: string; usd: number; sourc
       {formatUsd(usd)}
       <TokenChipIcon symbol={symbol} size={14} />
     </span>
-  );
-}
-
-/** Equal-size surfaced stat card — the building block of the event-detail
- *  snapshot grid. Every section (Collateral, Debt, LTV, Borrow Rate) renders as
- *  one of these, all sharing a single CSS grid so they balance in width and —
- *  via `sm:auto-rows-fr` on the grid plus `h-full` here — match the tallest
- *  card's height per row. Cards keep a uniform half-width even when the count is
- *  odd; the trailing slot is simply left empty rather than stretched. */
-function StatCard({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="flex h-full flex-col rounded-xl bg-background px-4 py-3">
-      <div className="mb-1.5 text-xs font-semibold text-rb-500">{label}</div>
-      {children}
-    </div>
   );
 }
 
