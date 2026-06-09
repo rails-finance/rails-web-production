@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Check } from "lucide-react";
-import { CTRL_GHOST, CTRL_OFF, CTRL_ON, COUNT_BADGE, RESET_LINK } from "@/lib/shared/ui-grammar";
+import { CTRL_GHOST, CTRL_OFF, CTRL_ON, COUNT_BADGE, RESET_LINK, OVERLAY_HEADING } from "@/lib/shared/ui-grammar";
 
 // Lucide list-filter icon
 function ListFilterIcon({ size = 14 }: { size?: number }) {
@@ -214,7 +214,7 @@ export function FilterDropdown({
           className={`absolute top-full ${align === "right" ? "right-0" : "left-0"} mt-1 z-50 min-w-[220px] max-h-[320px] overflow-y-auto overlay-panel`}
         >
           <div className="flex items-center justify-between px-4 py-3">
-            {label && <span className="text-xs uppercase tracking-wider font-bold">{label}</span>}
+            {label && <span className={OVERLAY_HEADING}>{label}</span>}
             {!isAll && !minimal && !noClear && (
               <button onClick={() => handleClear()} className={RESET_LINK}>
                 Reset

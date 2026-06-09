@@ -11,7 +11,7 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { ChevronDown, Search, X, ArrowUp, ArrowDown } from "lucide-react";
-import { CTRL_GHOST, CTRL_OFF, CTRL_ON } from "@/lib/shared/ui-grammar";
+import { CTRL_GHOST, CTRL_OFF, CTRL_ON, OVERLAY_HEADING } from "@/lib/shared/ui-grammar";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import { WalletHistoryDropdown } from "@/components/shared/wallet-history-dropdown";
@@ -214,7 +214,7 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
                 role="menu"
               >
                 <div className="flex items-center px-4 py-3">
-                  <span className="text-xs uppercase tracking-wider font-bold">Sort</span>
+                  <span className={OVERLAY_HEADING}>Sort</span>
                 </div>
                 <div className="my-1 mx-3 border-t border-rb-300 dark:border-rb-700" />
                 {SORT_OPTIONS.map((o) => (

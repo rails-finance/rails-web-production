@@ -1,13 +1,19 @@
 "use client";
 
 /**
- * FilterSections — one dropdown per dimension group (Risk / Market / Assets /
- * View), shown up top alongside search + sort. Each group button opens a single
+ * FilterSections — one dropdown per dimension group (Risk / Market / Supply /
+ * …), shown up top alongside search + sort. Each group button opens a single
  * panel listing every dimension in that group with its options inline (radio for
  * single-select, checkbox for multi) — no second-level drill-in. A group whose
- * any dimension is active reads as "on" (the active control styling) so you can
- * see which sections carry filters at a glance; the removable chips live
+ * any dimension is active reads as "on" (the active control styling + a dot) so
+ * you can see which sections carry filters at a glance; the removable chips live
  * separately in <FilterChips>.
+ *
+ * The panel follows the shared dropdown grammar (see ui-grammar OVERLAY_HEADING
+ * + components/shared/filter-dropdown.tsx): an OVERLAY_HEADING title row with a
+ * trailing RESET_LINK, a divider, then `overlay-item` rows — identical to the
+ * sort menu and every other overlay-panel. Multi-dimension groups insert an
+ * OVERLAY_SUBHEADING before each dimension's options.
  *
  * Like the rest of the filter grammar this holds no filter state — it reads and
  * writes the rail's URL-backed param object through the dimension registry
@@ -16,7 +22,14 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronDown, Check } from "lucide-react";
-import { CTRL_GHOST, CTRL_OFF, CTRL_ON, RESET_LINK } from "@/lib/shared/ui-grammar";
+import {
+  CTRL_GHOST,
+  CTRL_OFF,
+  CTRL_ON,
+  RESET_LINK,
+  OVERLAY_HEADING,
+  OVERLAY_SUBHEADING,
+} from "@/lib/shared/ui-grammar";
 import { type FilterDimension, type FilterOptionDef, isDimensionActive } from "@/components/shared/filter-bar/types";
 
 interface FilterSectionsProps<F> {
@@ -82,7 +95,13 @@ export function FilterSections<F>({ dimensions, filters, onChange }: FilterSecti
     }
   };
 
-  const clearDim = (dim: FilterDimension<F>) => onChange(dim.set(filters, dim.defaultValues?.(filters) ?? []));
+  // Reset every dimension in a group back to its default (the panel-header
+  // RESET_LINK affordance — one verb, "Reset", per the grammar).
+  const resetGroup = (group: Group<F>) => {
+    let next = filters;
+    for (const dim of group.dims) next = dim.set(next, dim.defaultValues?.(next) ?? []);
+    onChange(next);
+  };
 
   const groups = groupDimensions(dimensions, filters);
 
@@ -91,6 +110,7 @@ export function FilterSections<F>({ dimensions, filters, onChange }: FilterSecti
       {groups.map((group) => {
         const open = openGroup === group.name;
         const groupActive = group.dims.some((d) => isDimensionActive(d, filters));
+        const multiDim = group.dims.length > 1;
         return (
           <div key={group.name} className="relative">
             <button
@@ -109,36 +129,29 @@ export function FilterSections<F>({ dimensions, filters, onChange }: FilterSecti
 
             {open && (
               <div
-                className="absolute top-full left-0 mt-2 z-50 min-w-[220px] max-h-[420px] overflow-y-auto overlay-panel py-1"
+                className="absolute top-full left-0 mt-2 z-50 min-w-[220px] max-h-[420px] overflow-y-auto overlay-panel"
                 role="menu"
               >
-                {group.dims.map((dim, i) => {
+                {/* Canonical dropdown header: title + Reset, then a divider. */}
+                <div className="flex items-center justify-between px-4 py-3">
+                  <span className={OVERLAY_HEADING}>{group.name}</span>
+                  {groupActive && (
+                    <button type="button" onClick={() => resetGroup(group)} className={RESET_LINK}>
+                      Reset
+                    </button>
+                  )}
+                </div>
+                <div className="my-1 mx-3 border-t border-rb-300 dark:border-rb-700" />
+
+                {group.dims.map((dim) => {
                   const selected = new Set(dim.get(filters));
-                  const active = isDimensionActive(dim, filters);
-                  // A single-dimension group is already named by its button, so
-                  // its label header is redundant — drop it, keeping the row only
-                  // to host the Clear link when active.
-                  const showLabel = group.dims.length > 1;
                   return (
-                    // flex-col so the inset overlay-item rows stretch to the
-                    // panel width (align-items: stretch) rather than shrinking to
-                    // their content — matching the sort menu's direct flex rows.
                     <div key={dim.id} className="flex flex-col">
-                      {i > 0 && <div className="my-1 mx-3 border-t border-rb-300 dark:border-rb-700" />}
-                      {(showLabel || active) && (
-                        <div className="flex items-center justify-between px-4 pt-2 pb-1">
-                          {showLabel ? (
-                            <span className="text-[10px] uppercase tracking-wider font-bold text-rb-500">
-                              {dim.label}
-                            </span>
-                          ) : (
-                            <span />
-                          )}
-                          {active && (
-                            <button type="button" onClick={() => clearDim(dim)} className={RESET_LINK}>
-                              Clear
-                            </button>
-                          )}
+                      {/* Per-dimension sub-header only when the group holds more
+                          than one dimension — otherwise the panel title names it. */}
+                      {multiDim && (
+                        <div className="px-4 pt-2 pb-1">
+                          <span className={OVERLAY_SUBHEADING}>{dim.label}</span>
                         </div>
                       )}
                       {dim.options.map((opt) => (
@@ -173,19 +186,28 @@ function OptionRow({
   checked: boolean;
   onClick: () => void;
 }): ReactNode {
-  // Mirror the sort dropdown: inset, rounded `overlay-item` rows, the selected
-  // state carried by `overlay-item-active` plus a trailing check.
+  // Item chrome matches components/shared/filter-dropdown.tsx exactly: multi gets
+  // a leading circular checkbox; single carries selection via overlay-item-active.
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`overlay-item ${checked ? "overlay-item-active" : ""} focus:outline-none focus:ring-2 focus:ring-blue-500`}
+      className={`overlay-item ${!multi && checked ? "overlay-item-active text-foreground" : ""} focus:outline-none focus:ring-2 focus:ring-blue-500`}
       role={multi ? "menuitemcheckbox" : "menuitemradio"}
       aria-checked={checked}
     >
+      {multi && (
+        <span
+          className={`inline-flex items-center justify-center w-5 h-5 rounded-full transition-colors shrink-0 ${
+            checked ? "bg-rb-500" : "border-2 border-rb-400 dark:border-rb-600"
+          }`}
+          aria-hidden="true"
+        >
+          {checked && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+        </span>
+      )}
       {opt.icon && <span className="shrink-0 flex items-center">{opt.icon}</span>}
       <span className="flex-1 text-left truncate">{opt.label}</span>
-      {checked && <Check className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />}
     </button>
   );
 }

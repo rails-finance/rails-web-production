@@ -64,8 +64,26 @@ export const CTRL_ON_ACCENT = "bg-amber-500/15 text-amber-500 dark:text-amber-40
  * (danger) or green (positive), so per the one-meaning-per-colour rule a teal
  * link always reads as "reset/utility", not a status or a nav target.
  */
-export const RESET_LINK =
-  "text-xs font-semibold text-teal-600 hover:text-teal-500 transition-colors cursor-pointer";
+export const RESET_LINK = "text-xs font-semibold text-teal-600 hover:text-teal-500 transition-colors cursor-pointer";
+
+/**
+ * Dropdown / overlay-panel title — the heading row at the top of every
+ * `overlay-panel` (sort menu, filter dropdown, filter-section dropdown, …). One
+ * token so every dropdown opens with the same title treatment. Canonical
+ * structure: this heading sits in a `flex items-center justify-between px-4 py-3`
+ * row (with an optional trailing RESET_LINK), immediately followed by a
+ * `my-1 mx-3 border-t border-rb-300 dark:border-rb-700` divider, then the
+ * `overlay-item` rows. See components/shared/filter-dropdown.tsx for the
+ * reference panel.
+ */
+export const OVERLAY_HEADING = "text-xs uppercase tracking-wider font-bold";
+
+/**
+ * Subordinate section label inside a multi-section overlay panel (e.g. the
+ * per-dimension headers in a grouped filter-section dropdown). Smaller + muted
+ * so it reads one clear level below OVERLAY_HEADING.
+ */
+export const OVERLAY_SUBHEADING = "text-[10px] uppercase tracking-wider font-bold text-rb-500";
 
 /**
  * Passive metadata pill — a soft, always-on chip that labels (duration, "ago",
