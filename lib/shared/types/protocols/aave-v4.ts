@@ -20,6 +20,12 @@ export interface AaveV4SnapshotItem {
   symbol: string;
   amount: string;
   price?: { usd: number; source: AaveV4PriceSource };
+  /** Variable borrow rate for this asset at the event's block, as a decimal
+   *  string (e.g. "0.0371" = 3.71% APR). Present on debt items only — it lets a
+   *  card show the borrow rate of debt the position already holds even on events
+   *  (supply/withdraw) where the debt leg didn't move. Sourced server-side from
+   *  the reserve's per-block rate; absent when the backend hasn't enriched it. */
+  borrowAPR?: string;
 }
 
 export interface AaveV4Context {

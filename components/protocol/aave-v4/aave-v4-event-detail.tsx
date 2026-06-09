@@ -290,13 +290,25 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
       ),
     });
   }
-  if (ctx.supplyAPR || ctx.borrowAPR) {
+  if (ctx.supplyAPR) {
     snapshotCards.push({
-      key: "rate",
-      label: ctx.supplyAPR ? "Supply Rate" : "Borrow Rate",
-      body: (
-        <div className="text-sm font-bold">{(parseFloat(ctx.supplyAPR ?? ctx.borrowAPR ?? "0") * 100).toFixed(2)}%</div>
-      ),
+      key: "supply-rate",
+      label: "Supply Rate",
+      body: <div className="text-sm font-bold">{(parseFloat(ctx.supplyAPR) * 100).toFixed(2)}%</div>,
+    });
+  }
+  // Borrow rate of the debt the position holds. Prefer the event's own
+  // moved-asset rate (present on borrow/repay); otherwise fall back to the
+  // per-debt-item rate the backend attaches to the snapshot — so the rate also
+  // shows on supply/withdraw events that never touched the debt leg. Pick the
+  // moved asset's debt row first, else any debt row carrying a rate.
+  const debtBorrowAPR =
+    ctx.borrowAPR ?? debts.find(d => d.symbol === token)?.borrowAPR ?? debts.find(d => d.borrowAPR != null)?.borrowAPR;
+  if (debtBorrowAPR) {
+    snapshotCards.push({
+      key: "borrow-rate",
+      label: "Borrow Rate",
+      body: <div className="text-sm font-bold">{(parseFloat(debtBorrowAPR) * 100).toFixed(2)}%</div>,
     });
   }
 
