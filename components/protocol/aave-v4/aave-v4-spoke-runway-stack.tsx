@@ -3,7 +3,8 @@
 import { AaveV4PriceRunway } from "./aave-v4-price-runway";
 import type { AaveSpokeCardInfo } from "@/lib/aave-v4/spoke-cards";
 import { TOKEN_ADDR } from "@/lib/aave/prices";
-import { usePreferences } from "@/lib/shared/preferences-context";
+import { TokenChipIcon } from "@/components/shared/token-chip-icon";
+import { fmtPrice } from "@/components/shared/price-pill";
 
 /**
  * Stacked price-runway view for the active Aave V4 spoke. One runway row per
@@ -12,40 +13,32 @@ import { usePreferences } from "@/lib/shared/preferences-context";
  * no simulator inputs in this pass; that's gated behind a future "Simulate"
  * toggle.
  *
- * The Conservative→Caution boundary is driven by the user's global Aave V4
- * headroom preference (`aaveV4.headroomConservativeMin`) — the per-row
- * threshold is `liqPrice × (1 + headroom/100)`. Update the value via the cog
- * on the Aave V4 entry in the protocol menu; the runway recolours as you
- * tune it.
- *
- * Hidden when the spoke has no debt (no liquidation risk to plot) or no
- * priced collateral assets reach a finite liq price.
+ * Each bar is anchored on its asset's liquidation price (see
+ * `AaveV4PriceRunway`). Hidden when the spoke has no debt (no liquidation risk
+ * to plot) or no priced collateral assets reach a finite liq price.
  */
 export function AaveV4SpokeRunwayStack({ spoke }: { spoke: AaveSpokeCardInfo }) {
-  const { prefs } = usePreferences();
-  const headroomPct = prefs.aaveV4.headroomConservativeMin;
-
   if (spoke.totalDebtUsd <= 0) return null;
   const rows = spoke.assetLiqPrices.filter((a) => a.usdShare > 1 && a.currentPrice > 0);
   if (rows.length === 0) return null;
 
   return (
-    <div className="mt-4 p-4">
+    <div className="mt-2">
+      <div className="mb-3 text-[11px] uppercase tracking-wider text-rb-500">Collateral price runways</div>
+
       <div className="flex flex-col gap-3">
-        {rows.map((row, idx) => {
-          const thresholdPrice = row.liqPrice && row.liqPrice > 0 ? row.liqPrice * (1 + headroomPct / 100) : undefined;
-          return (
-            <AaveV4PriceRunway
-              key={row.symbol}
-              collateralSymbol={row.symbol}
-              collateralAddress={TOKEN_ADDR[row.symbol]}
-              currentPrice={row.currentPrice}
-              liqPrice={row.liqPrice}
-              thresholdPrice={thresholdPrice}
-              showZoneLabels={idx === rows.length - 1}
-            />
-          );
-        })}
+        {rows.map((row) => (
+          <div key={row.symbol} className="grid grid-cols-[110px_1fr] items-center gap-4">
+            <div className="flex flex-col gap-0.5">
+              <span className="flex items-center gap-1.5 text-[13px] font-medium text-foreground">
+                <TokenChipIcon symbol={row.symbol} address={TOKEN_ADDR[row.symbol]} size={18} filterable={false} />
+                {row.symbol}
+              </span>
+              <span className="text-[12px] tabular-nums text-rb-500">{fmtPrice(row.currentPrice)}</span>
+            </div>
+            <AaveV4PriceRunway currentPrice={row.currentPrice} liqPrice={row.liqPrice} />
+          </div>
+        ))}
       </div>
     </div>
   );

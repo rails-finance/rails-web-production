@@ -696,7 +696,7 @@ function AaveV4SpokeEconomicsBand({
   }, [runwayCard]);
 
   return (
-    <div className="rounded-lg p-3 border border-transparent space-y-3">
+    <div className="space-y-3">
       <AaveV4TowerChart
         reserves={reserves}
         prices={prices}
@@ -716,6 +716,13 @@ function AaveV4SpokeEconomicsBand({
                 <span>{r.node}</span>
               </div>
             ))}
+            <div className="flex items-start gap-2 leading-relaxed">
+              <span className="select-none text-rb-500">•</span>
+              <span>
+                Outstanding debt already includes accrued borrow interest — it&apos;s the live on-chain balance, so
+                there&apos;s no separate fee to add on top.
+              </span>
+            </div>
           </div>
         </InfoDisclosure>
       )}

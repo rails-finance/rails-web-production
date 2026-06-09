@@ -1,163 +1,134 @@
 "use client";
 
-import { fmtPrice, niceReferencePrice } from "@/components/shared/price-pill";
-import { TokenChipIcon } from "@/components/shared/token-chip-icon";
+import { fmtPrice } from "@/components/shared/price-pill";
 
 /**
  * Per-asset price runway for an Aave V4 spoke.
  *
- * A single neutral bar that turns red at the liquidation point (b1), mirroring
- * the shape used on Liquity V2's trove pages. Three bar positions anchor the
- * scale internally: a rounded reference price (b0), the live price (the moving
- * caret), and the liquidation price (b1, where the red begins). The b0 anchor
- * comes from a global "headroom %" preference: thresholdPrice =
- * liqPrice × (1 + headroom/100), snapped to a clean round number for display.
+ * The bar is a price axis anchored on the liquidation price: it spans from
+ * `2 × liqPrice` (left, 100% above liquidation) down to `0.8 × liqPrice` (right,
+ * 20% under water — a realistic floor, since liquidators close a position near
+ * its liquidation price rather than letting it sink arbitrarily far). Because
+ * the window is a fixed *multiple* of the liquidation price, the liquidation
+ * line lands at the SAME horizontal position on every row — so a 9%-from-liq
+ * asset visibly sits closer to the red than a 24% one, and the rows stay
+ * comparable without any single shared scale.
  *
- * Marker placement uses one of two modes:
- *   • **Threshold-based** (preferred) — caller passes `thresholdPrice`. Caret
- *     pins to 0% while price ≥ the reference, slides between reference (b0) and
- *     liqPrice (b1), then pushes past b1 into the red if underwater.
- *   • **Linear fallback** — when `thresholdPrice` is omitted, the caret maps
- *     linearly between currentPrice (0%) and liqPrice (b1). Used by callsites
- *     that haven't wired up a threshold yet.
+ * What reads off the bar:
+ *   • **Neutral fill** — from the left edge to the current price; its rounded
+ *     cap is the live-price marker. As price falls, the cap slides right toward
+ *     the red. The price itself is labelled in the row's meta column, not on the
+ *     bar — nothing is drawn twice.
+ *   • **Liquidation zone** — red, from the liquidation price to the right edge.
+ *     The one deliberate colour: being at/below the liquidation price is a hard
+ *     on-chain fact, not an opinion. It deepens once the live price is in it.
+ *   • **Ruler** — a dot + "% from liquidation" label every 10%, fading out
+ *     toward the safe side (crisp at 0% / the liquidation line, faintest at 50%);
+ *     the fade echoes the unbounded — and so un-drawable — safe upside. Revealed
+ *     only on hover, and only on hover-capable (desktop) pointers — touch /
+ *     mobile never shows it, so the resting readouts can't be crowded there. The
+ *     resting "% from liquidation" / "liquidation $" readouts stay put under the
+ *     ruler (desktop has the width). The reveal waits a beat then fades up slowly.
  *
- * Read-only — renders current oracle-derived state. Hypothetical price
- * simulation deferred per the truth principle (see migration/phase-2-mono-explorers.md).
+ * Positions safer than the window top (`offscreen`) leave the bar empty; the
+ * "% from liquidation" number — with the price in the row label — carries the
+ * magnitude. That empty bar is the honest picture of an unbounded upside.
+ *
+ * Everything else stays uneditorialised (no safe/caution colour gradient) per
+ * the no-opinionated-colour principle; the numbers around the bar state the
+ * facts. Read-only — renders current oracle-derived state.
  */
 
-// Bar styling. The bar is a single neutral track that turns red at the
-// liquidation point — Rails doesn't editorialize the "safe → worrying" gradient
-// before that (a personal risk-tolerance call, deferred to a future
-// user-defined risk-profile feature). The red is the one deliberate exception:
-// being at or below the liquidation price is a hard on-chain fact, not an
-// opinion. It stays muted until the live price is actually in it, then deepens.
-// The boundary prices and the "% from liquidation" readout state the facts
-// numerically around the bar.
-const BAR_FILL_NEUTRAL = "bg-rb-200 dark:bg-rb-800";
-const BAR_FILL_LIQ = "bg-red-400/60 dark:bg-red-500/40";
-const BAR_FILL_LIQ_ACTIVE = "bg-red-500 dark:bg-red-500";
+// Neutral track + fill; red reserved for the liquidation zone (see above). The
+// track is a rounded-full pill; the inner fill/red bars use a small radius so
+// their caps read as crisp markers rather than pill ends.
+const TRACK = "bg-rb-100 dark:bg-rb-900";
+const FILL = "bg-rb-300 dark:bg-rb-600";
+const LIQ = "bg-red-400/60 dark:bg-red-500/40";
+const LIQ_ACTIVE = "bg-red-500 dark:bg-red-500";
+const INNER_RADIUS = "rounded-sm"; // smaller than the track's rounded-full
+
+// Window bounds as multiples of the liquidation price.
+const WINDOW_TOP_MULT = 2.0; // left edge — 100% above liquidation
+const WINDOW_BOTTOM_MULT = 0.8; // right edge — 20% below liquidation
+const RULER_MAX_PCT = 50; // last labelled increment
+const RULER_FADE_DENOM = 60; // opacity = 1 − pct/denom; >MAX so 50% stays faintly visible
 
 export interface AaveV4PriceRunwayProps {
-  collateralSymbol: string;
-  collateralAddress?: string;
   currentPrice: number;
   liqPrice: number | null;
-  /** Conservative→Caution boundary price. Activates the piecewise marker
-   *  mapping; price ≥ this → Conservative (marker pins at 0%). Defaults to
-   *  `liqPrice × 1.25` when omitted — matches the global default headroom. */
-  thresholdPrice?: number;
-  showZoneLabels?: boolean;
-  /** Bar-position (% from left) at which each zone ends. Last value is also
-   *  where the liquidation marker sits. Default = [25, 75] — Conservative
-   *  and Liquidation caps each take 25%, Caution interior takes 50%. */
-  zoneBoundaries?: [number, number];
 }
 
-export function AaveV4PriceRunway({
-  collateralSymbol,
-  collateralAddress,
-  currentPrice,
-  liqPrice,
-  thresholdPrice,
-  showZoneLabels = true,
-  zoneBoundaries = [25, 75],
-}: AaveV4PriceRunwayProps) {
+export function AaveV4PriceRunway({ currentPrice, liqPrice }: AaveV4PriceRunwayProps) {
   const hasLiq = liqPrice != null && liqPrice > 0;
+  if (!hasLiq) return null; // no debt / fully covered — nothing to plot
 
-  const liqBoundary = zoneBoundaries[1];
-  // Upper gridline price — a clean round number near the headroom-derived
-  // threshold (e.g. 4,706 → 5,000) so it reads as a scale mark, not a derived
-  // "caution" figure. Doubles as the Conservative→Caution anchor for the marker.
-  const rawThreshold = hasLiq ? (thresholdPrice && thresholdPrice > liqPrice! ? thresholdPrice : liqPrice! * 1.25) : 0;
-  const effectiveThreshold = hasLiq ? niceReferencePrice(rawThreshold, liqPrice!) : 0;
-  const usePiecewise = hasLiq && effectiveThreshold > liqPrice!;
+  // Geometry: left = high/safe price, right = low price (toward & past liq).
+  const windowTop = liqPrice! * WINDOW_TOP_MULT;
+  const windowBottom = liqPrice! * WINDOW_BOTTOM_MULT;
+  const range = windowTop - windowBottom;
+  const posFromLeft = (p: number) => Math.max(0, Math.min(100, ((windowTop - p) / range) * 100));
 
-  const priceToPct = (p: number): number => {
-    if (!hasLiq) return 0;
-    if (usePiecewise) {
-      const pCons = effectiveThreshold;
-      const pLiq = liqPrice!;
-      const [b0, b1] = zoneBoundaries;
-      if (p >= pCons) return 0;
-      if (p >= pLiq) return b0 + ((pCons - p) / (pCons - pLiq)) * (b1 - b0);
-      const t = Math.min(1, (pLiq - p) / pLiq);
-      return Math.min(100, b1 + t * (100 - b1));
-    }
-    // Linear fallback — currentPrice anchors 0%, liqPrice anchors liqBoundary.
-    const consumedFrac = (currentPrice - p) / (currentPrice - liqPrice!);
-    return Math.max(0, Math.min(100, consumedFrac * liqBoundary));
-  };
+  const liqPos = posFromLeft(liqPrice!); // constant across every row
+  const offscreen = currentPrice > windowTop;
+  const fillPct = offscreen ? 0 : posFromLeft(currentPrice);
+  const underwater = currentPrice <= liqPrice!;
+  const pctFromLiq = Math.round(((currentPrice - liqPrice!) / liqPrice!) * 100);
 
-  const oraclePct = hasLiq ? priceToPct(currentPrice) : 0;
-  const activeZoneIdx = oraclePct < zoneBoundaries[0] ? 0 : oraclePct < zoneBoundaries[1] ? 1 : 2;
+  // Ruler increments, fading out toward the safe side (50% stays faintly visible).
+  const rulerTicks = [];
+  for (let n = 0; n <= RULER_MAX_PCT; n += 10) {
+    rulerTicks.push({ pct: n, pos: posFromLeft(liqPrice! * (1 + n / 100)), opacity: Math.max(0, 1 - n / RULER_FADE_DENOM) });
+  }
 
-  const H_BAR = 28; // taller bar — holds the in-bar reference + liquidation prices
-  const H_PILL_TOP = 0; // live-price tooltip pill, above the bar
-  const H_BAR_TOP = 30; // bar top — room for the pill + its down-tail above
-  const H_TOTAL = H_BAR_TOP + H_BAR;
+  const H_BAR = 20;
 
-  // The live-price pill tracks the marker; flip its anchor near the ends so it
-  // never overflows the bar, and put the tail near the matching edge so it still
-  // points at the marker.
-  const markerLeft = Math.max(0, Math.min(100, oraclePct));
-  const markerXform = markerLeft < 14 ? "translateX(0)" : markerLeft > 86 ? "translateX(-100%)" : "translateX(-50%)";
-  const tailClass = markerLeft < 14 ? "left-2" : markerLeft > 86 ? "right-2" : "left-1/2 -translate-x-1/2";
+  // Ruler reveal: hidden at rest; fades up after a short delay over a slow
+  // duration, but only on hover-capable pointers AND wide enough viewports — the
+  // `(hover: hover)` gate keeps it off touch / mobile, and the `min-width` gate
+  // keeps the labels from colliding with the readouts on narrow runways.
+  const REVEAL =
+    "opacity-0 transition-opacity duration-500 [@media(hover:hover)_and_(min-width:1024px)]:group-hover/runway:opacity-100 [@media(hover:hover)_and_(min-width:1024px)]:group-hover/runway:delay-200";
 
   return (
-    <div>
-      <div className="flex items-start gap-3">
-        <div className="relative flex-1 min-w-[220px]" style={{ height: H_TOTAL }}>
-          {/* Live price — tooltip pill above the bar, tail pointing down at the
-              marker. The distance-to-liquidation lives in the (i) info panel. */}
+    <div className="group/runway relative" style={{ paddingTop: 6 }}>
+      <div className="relative" style={{ height: H_BAR }}>
+        {/* Track (rounded-full pill) holding the small-radius fill + red zone */}
+        <div className={`absolute inset-0 overflow-hidden rounded-full ${TRACK}`}>
+          <div className={`absolute bottom-0 left-0 top-0 ${INNER_RADIUS} ${FILL}`} style={{ width: `${fillPct}%` }} />
+          {/* Liquidation zone — its left edge is a straight vertical line sitting
+              exactly at the liquidation price (and so at the 0% ruler dot). Only the
+              right corners are rounded (they tuck into the track's pill anyway); the
+              left stays square so the boundary reads as a crisp threshold. */}
           <div
-            className="absolute pointer-events-none"
-            style={{ left: `${markerLeft}%`, transform: markerXform, top: H_PILL_TOP }}
-          >
-            <div className="relative inline-flex items-center gap-1 whitespace-nowrap rounded-md border border-rb-200 bg-white px-1.5 py-0.5 shadow-sm dark:border-rb-700 dark:bg-rb-800">
-              <TokenChipIcon symbol={collateralSymbol} address={collateralAddress} size={14} filterable={false} />
-              <span className="text-[12px] font-semibold tabular-nums text-foreground">{fmtPrice(currentPrice)}</span>
-              <span
-                className={`absolute top-full h-0 w-0 border-x-4 border-x-transparent border-t-4 border-t-white dark:border-t-rb-800 ${tailClass}`}
-              />
-            </div>
-          </div>
+            className={`absolute bottom-0 right-0 top-0 rounded-r-sm transition-colors ${underwater ? LIQ_ACTIVE : LIQ}`}
+            style={{ left: `${liqPos}%` }}
+          />
+        </div>
 
-          {/* Tall bar — neutral up to the liquidation point, red beyond it. The
-              reference and liquidation prices live inside the bar, each with a
-              small dot marker at its exact position. */}
-          <div className="absolute left-0 right-0 rounded-md overflow-hidden" style={{ top: H_BAR_TOP, height: H_BAR }}>
-            <div className={`absolute inset-0 ${BAR_FILL_NEUTRAL}`} />
-            {hasLiq && (
-              <div
-                className={`absolute bottom-0 right-0 top-0 transition-colors ${
-                  activeZoneIdx === 2 ? BAR_FILL_LIQ_ACTIVE : BAR_FILL_LIQ
-                }`}
-                style={{ left: `${liqBoundary}%` }}
-              />
-            )}
-            {usePiecewise && (
-              <div
-                className="absolute flex -translate-y-1/2 items-center gap-1 whitespace-nowrap"
-                style={{ left: `${zoneBoundaries[0]}%`, top: "50%" }}
-              >
-                <span className="h-[5px] w-[5px] rounded-full bg-foreground/50" />
-                <span className="text-[12px] font-semibold tabular-nums text-foreground/70">
-                  {fmtPrice(effectiveThreshold)}
-                </span>
-              </div>
-            )}
-            {hasLiq && (
-              <div
-                className="absolute flex -translate-y-1/2 items-center gap-1 whitespace-nowrap"
-                style={{ left: `${liqBoundary}%`, top: "50%" }}
-              >
-                <span className="h-[5px] w-[5px] rounded-full bg-red-700 dark:bg-red-300" />
-                <span className="text-[12px] font-semibold tabular-nums text-red-900 dark:text-red-50">
-                  {fmtPrice(liqPrice!)}
-                </span>
-              </div>
-            )}
-          </div>
+        {/* Ruler dots — hover only, aligned to the bottom of the bar, fading toward safe */}
+        <div className={`pointer-events-none absolute inset-0 ${REVEAL}`}>
+          {rulerTicks.map((t) => (
+            <span
+              key={t.pct}
+              className="absolute bottom-0 h-[3px] w-[3px] -translate-x-1/2 rounded-full bg-foreground/40"
+              style={{ left: `${t.pos}%`, opacity: t.opacity }}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Label strip: the resting "% from liquidation" + "liquidation $" readouts
+          stay put; on hover (desktop) the faded % ruler reveals across the same row. */}
+      <div className="relative mt-2 h-4 text-[11px] tabular-nums text-rb-500">
+        <span className="absolute left-0">{pctFromLiq}% from liquidation</span>
+        <span className="absolute right-0">liquidation {fmtPrice(liqPrice!)}</span>
+        <div className={`pointer-events-none absolute inset-0 ${REVEAL}`}>
+          {rulerTicks.map((t) => (
+            <span key={t.pct} className="absolute -translate-x-1/2" style={{ left: `${t.pos}%`, opacity: t.opacity }}>
+              {t.pct}%
+            </span>
+          ))}
         </div>
       </div>
     </div>

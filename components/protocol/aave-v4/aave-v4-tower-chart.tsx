@@ -9,7 +9,7 @@
 // segments so the chart tells the lifetime story; the Display dropdown collapses
 // back to current-state-only.
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import {
@@ -21,11 +21,7 @@ import {
   REPAID_PATTERN,
   WITHDRAWN_PATTERN,
 } from "@/components/shared/economics-chart-primitives";
-import {
-  FilterDropdown,
-  DisplaySettingsIcon,
-  type FilterOption,
-} from "@/components/shared/filter-dropdown";
+import { FilterDropdown, DisplaySettingsIcon, type FilterOption } from "@/components/shared/filter-dropdown";
 import { resolvePrice, type PriceEntry } from "@/lib/aave/prices";
 import type { ReserveStats } from "@/lib/aave-v4/spoke-cards";
 import { aaveV4DisplaySymbol } from "@/lib/aave-v4/pt-tokens";
@@ -72,6 +68,9 @@ function AaveChartDisplayMenu({
   hideSurplus,
   onToggleHideSurplus,
   hasSurplus,
+  grouped,
+  onToggleGroup,
+  canGroup,
 }: {
   hideHistorical: boolean;
   onToggleHistorical: () => void;
@@ -81,13 +80,18 @@ function AaveChartDisplayMenu({
   hideSurplus?: boolean;
   onToggleHideSurplus?: () => void;
   hasSurplus?: boolean;
+  grouped?: boolean;
+  onToggleGroup?: () => void;
+  canGroup?: boolean;
 }) {
   const options: FilterOption[] = [
+    ...(canGroup ? [{ key: "group-assets", label: "Group assets" }] : []),
     { key: "hide-usd-values", label: "Hide USD values" },
     ...(hasHistory ? [{ key: "hide-historical", label: "Hide inactive / repaid" }] : []),
     ...(hasSurplus ? [{ key: "hide-surplus", label: "Hide surplus collateral" }] : []),
   ];
   const visible = new Set<string>();
+  if (grouped) visible.add("group-assets");
   if (hideUsd) visible.add("hide-usd-values");
   if (hideHistorical) visible.add("hide-historical");
   if (hideSurplus) visible.add("hide-surplus");
@@ -103,6 +107,7 @@ function AaveChartDisplayMenu({
       variant="ghost"
       triggerIcon={<DisplaySettingsIcon size={14} />}
       onToggle={(key) => {
+        if (key === "group-assets") onToggleGroup?.();
         if (key === "hide-historical") onToggleHistorical();
         if (key === "hide-usd-values") onToggleHideUsd();
         if (key === "hide-surplus") onToggleHideSurplus?.();
@@ -131,6 +136,9 @@ export function AaveV4TowerChart({
 }: AaveV4TowerChartProps) {
   const [hideHistorical, setHideHistorical] = useState(false);
   const [hideUsd, setHideUsd] = useState(true);
+  // null = follow the auto-default (group when there's anything to merge); once
+  // the reader toggles "Group assets" this pins their choice.
+  const [groupOverride, setGroupOverride] = useState<boolean | null>(null);
 
   const allRows: AssetRow[] = reserves
     .filter(
@@ -145,10 +153,8 @@ export function AaveV4TowerChart({
     .map((r) => {
       // Current state from chain truth when available; otherwise reconcile
       // lifetime flows including liquidation seizures / debt clears.
-      const netSupply =
-        r.currentSupplied ?? Math.max(0, r.supplied - r.withdrawn - r.liquidatedCollateral);
-      const netDebt =
-        r.currentBorrowed ?? Math.max(0, r.borrowed - r.repaid - r.liquidatedDebt);
+      const netSupply = r.currentSupplied ?? Math.max(0, r.supplied - r.withdrawn - r.liquidatedCollateral);
+      const netDebt = r.currentBorrowed ?? Math.max(0, r.borrowed - r.repaid - r.liquidatedDebt);
       const price = resolvePrice(r.symbol, prices) ?? 1;
       const hasHistoricActivity =
         r.supplied > 0 ||
@@ -182,27 +188,17 @@ export function AaveV4TowerChart({
   const supplyAssetsAll = activeRows
     .filter((r) => r.netSupplyUsd > 0.01)
     .sort((a, b) => b.netSupplyUsd - a.netSupplyUsd);
-  const debtAssets = activeRows
-    .filter((r) => r.netDebtUsd > 0.01)
-    .sort((a, b) => b.netDebtUsd - a.netDebtUsd);
+  const debtAssets = activeRows.filter((r) => r.netDebtUsd > 0.01).sort((a, b) => b.netDebtUsd - a.netDebtUsd);
 
   const isSurplus = (sym: string) => surplusSymbols?.has(sym) ?? false;
-  const supplyAssets = hideSurplus
-    ? supplyAssetsAll.filter((r) => !isSurplus(r.symbol))
-    : supplyAssetsAll;
+  const supplyAssets = hideSurplus ? supplyAssetsAll.filter((r) => !isSurplus(r.symbol)) : supplyAssetsAll;
 
   const totalSupplyUsd = supplyAssets.reduce((s, r) => s + r.netSupplyUsd, 0);
   const totalDebtUsd = debtAssets.reduce((s, r) => s + r.netDebtUsd, 0);
   const totalWithdrawnUsd = allRows.reduce((s, r) => s + r.withdrawn * r.price, 0);
   const totalRepaidUsd = allRows.reduce((s, r) => s + r.repaid * r.price, 0);
-  const totalLiquidatedCollUsd = allRows.reduce(
-    (s, r) => s + r.liquidatedCollateral * r.price,
-    0,
-  );
-  const totalLiquidatedDebtUsd = allRows.reduce(
-    (s, r) => s + r.liquidatedDebt * r.price,
-    0,
-  );
+  const totalLiquidatedCollUsd = allRows.reduce((s, r) => s + r.liquidatedCollateral * r.price, 0);
+  const totalLiquidatedDebtUsd = allRows.reduce((s, r) => s + r.liquidatedDebt * r.price, 0);
   // Lifetime side-bar totals = current balance + everything that has left the
   // position (withdrawn / repaid / liquidated). Anchor to the chain-truth
   // `netSupply` / `netDebt` rather than the event-derived gross `r.supplied` /
@@ -217,10 +213,7 @@ export function AaveV4TowerChart({
     (s, r) => s + (r.netSupply + r.withdrawn + r.liquidatedCollateral) * r.price,
     0,
   );
-  const totalBorrowedUsd = allRows.reduce(
-    (s, r) => s + (r.netDebt + r.repaid + r.liquidatedDebt) * r.price,
-    0,
-  );
+  const totalBorrowedUsd = allRows.reduce((s, r) => s + (r.netDebt + r.repaid + r.liquidatedDebt) * r.price, 0);
 
   const withdrawnAssets = allRows
     .map((r) => ({ symbol: r.symbol, amount: r.withdrawn, usd: r.withdrawn * r.price }))
@@ -251,22 +244,45 @@ export function AaveV4TowerChart({
   // means no current debt; in historical view it means no debt-side activity
   // ever (raw token amounts, so an unresolved price for the borrow asset
   // doesn't collapse a liquidated position back to a "supply only" chart).
-  const hasHistoricDebt = allRows.some(
-    (r) => r.borrowed > 0 || r.repaid > 0 || r.liquidatedDebt > 0,
-  );
-  const supplyOnly = isLiveView
-    ? debtAssets.length === 0
-    : !hasHistoricDebt && debtAssets.length === 0;
+  const hasHistoricDebt = allRows.some((r) => r.borrowed > 0 || r.repaid > 0 || r.liquidatedDebt > 0);
+  const supplyOnly = isLiveView ? debtAssets.length === 0 : !hasHistoricDebt && debtAssets.length === 0;
+
+  // Asset grouping: collapse any single category (active collateral, active
+  // debt, withdrawn, repaid, liquidated) that holds ≥2 assets into one block,
+  // so multi-asset spokes stop fragmenting into a noisy stack. The merge is
+  // per-category — a category with one asset still renders per-asset (keeping
+  // its icon + native amount), so single-asset positions and the "one repaid +
+  // one still-collateral" shape look identical whether grouped or not. Active
+  // collateral keeps its surplus / risk-bearing split (≤2 blocks) since that's
+  // the one risk-relevant distinction. Auto-on whenever anything is mergeable;
+  // the Display menu's "Group assets" flips back to the full per-asset view.
+  const nonSurplusSupply = supplyAssets.filter((r) => !isSurplus(r.symbol));
+  const surplusSupply = supplyAssets.filter((r) => isSurplus(r.symbol));
+  const categoryCounts = isLiveView
+    ? [nonSurplusSupply.length, surplusSupply.length, debtAssets.length]
+    : [
+        nonSurplusSupply.length,
+        surplusSupply.length,
+        debtAssets.length,
+        withdrawnAssets.length,
+        liquidatedCollAssets.length,
+        repaidAssets.length,
+        liquidatedDebtAssets.length,
+      ];
+  const canGroup = categoryCounts.some((c) => c >= 2);
+  const grouped = canGroup && (groupOverride ?? true);
 
   // Direction arrow: → for assets moving into the protocol (supply, repay,
   // debt-cleared); ← for assets moving out (withdraw, borrow, coll-liquidated).
   // Replaces explicit "supplied/withdrawn/borrowed/repaid" wording.
-  const dirArrow = (dir: 'in' | 'out') =>
-    dir === 'in'
-      ? <ArrowRight className="w-3 h-3 text-rb-500 shrink-0" />
-      : <ArrowLeft className="w-3 h-3 text-rb-500 shrink-0" />;
+  const dirArrow = (dir: "in" | "out") =>
+    dir === "in" ? (
+      <ArrowRight className="w-3 h-3 text-rb-500 shrink-0" />
+    ) : (
+      <ArrowLeft className="w-3 h-3 text-rb-500 shrink-0" />
+    );
 
-  const tipBody = (symbol: string | undefined, usd: number, dir: 'in' | 'out') => (
+  const tipBody = (symbol: string | undefined, usd: number, dir: "in" | "out") => (
     <div className="flex items-center gap-1.5">
       {symbol && <TokenChipIcon symbol={symbol} size={14} filterable={false} />}
       {symbol && <span>{aaveV4DisplaySymbol(symbol)}</span>}
@@ -275,64 +291,103 @@ export function AaveV4TowerChart({
     </div>
   );
 
-  const collSegments: TowerSegment[] = [
-    ...supplyAssets.map((r) => ({
-      key: `coll-${r.symbol}`,
+  // Tooltip for a merged block: the category total, then the per-asset
+  // constituents that were folded in (capped, with an "+N more" overflow).
+  const mergedTip = (items: { symbol: string; usd: number }[], total: number, dir: "in" | "out") => (
+    <div className="space-y-1">
+      <div className="flex items-center gap-1.5 font-medium">
+        {dirArrow(dir)}
+        <span className="ml-auto tabular-nums">{fmtUsd(total).title}</span>
+      </div>
+      {items.slice(0, 6).map((i) => (
+        <div key={i.symbol} className="flex items-center gap-1.5 text-rb-500">
+          <TokenChipIcon symbol={i.symbol} size={12} filterable={false} />
+          <span>{aaveV4DisplaySymbol(i.symbol)}</span>
+          <span className="ml-auto tabular-nums">{fmtUsd(i.usd).title}</span>
+        </div>
+      ))}
+      {items.length > 6 && <div className="text-rb-500">+{items.length - 6} more</div>}
+    </div>
+  );
+
+  // Active collateral / debt: one merged block when grouped & ≥2, else per-asset.
+  const activeSegs = (
+    assets: AssetRow[],
+    usdOf: (r: AssetRow) => number,
+    colorClass: string,
+    keyPrefix: string,
+    mergedLabel: string,
+    dir: "in" | "out",
+  ): TowerSegment[] => {
+    if (grouped && assets.length >= 2) {
+      const total = assets.reduce((s, r) => s + usdOf(r), 0);
+      return [
+        {
+          key: `${keyPrefix}-grp`,
+          label: mergedLabel,
+          value: total,
+          colorClass,
+          tooltip: mergedTip(
+            assets.map((r) => ({ symbol: r.symbol, usd: usdOf(r) })),
+            total,
+            dir,
+          ),
+        },
+      ];
+    }
+    return assets.map((r) => ({
+      key: `${keyPrefix}-${r.symbol}`,
       label: aaveV4DisplaySymbol(r.symbol),
-      value: r.netSupplyUsd,
-      colorClass: isSurplus(r.symbol) ? "bg-blue-500/60" : "bg-blue-500",
-      tooltip: tipBody(r.symbol, r.netSupplyUsd, 'in'),
-    })),
-    ...(!isLiveView
-      ? [...liquidatedCollAssets].reverse().map((l) => ({
-          key: `coll-liquidated-${l.symbol}`,
-          label: `${aaveV4DisplaySymbol(l.symbol)} liquidated`,
-          value: l.usd,
+      value: usdOf(r),
+      colorClass,
+      tooltip: tipBody(r.symbol, usdOf(r), dir),
+    }));
+  };
+
+  // Lifetime-flow (withdrawn / repaid / liquidated) hatched segments: one merged
+  // block when grouped & ≥2, else one hatched segment per asset (reversed so the
+  // largest sits nearest the active segments, as before).
+  const flowSegs = (
+    items: { symbol: string; amount: number; usd: number }[],
+    pattern: CSSProperties,
+    keyPrefix: string,
+    mergedLabel: string,
+    dir: "in" | "out",
+  ): TowerSegment[] => {
+    if (grouped && items.length >= 2) {
+      const total = items.reduce((s, i) => s + i.usd, 0);
+      return [
+        {
+          key: `${keyPrefix}-grp`,
+          label: mergedLabel,
+          value: total,
           colorClass: "",
-          patternStyle: LIQUIDATION_PATTERN,
-          tooltip: tipBody(l.symbol, l.usd, 'out'),
-        }))
-      : []),
-    ...(!isLiveView
-      ? [...withdrawnAssets].reverse().map((w) => ({
-          key: `coll-withdrawn-${w.symbol}`,
-          label: `${aaveV4DisplaySymbol(w.symbol)} withdrawn`,
-          value: w.usd,
-          colorClass: "",
-          patternStyle: WITHDRAWN_PATTERN,
-          tooltip: tipBody(w.symbol, w.usd, 'out'),
-        }))
-      : []),
+          patternStyle: pattern,
+          tooltip: mergedTip(items, total, dir),
+        },
+      ];
+    }
+    return [...items].reverse().map((i) => ({
+      key: `${keyPrefix}-${i.symbol}`,
+      label: `${aaveV4DisplaySymbol(i.symbol)} ${mergedLabel.toLowerCase()}`,
+      value: i.usd,
+      colorClass: "",
+      patternStyle: pattern,
+      tooltip: tipBody(i.symbol, i.usd, dir),
+    }));
+  };
+
+  const collSegments: TowerSegment[] = [
+    ...activeSegs(nonSurplusSupply, (r) => r.netSupplyUsd, "bg-blue-500", "coll", "Collateral", "in"),
+    ...activeSegs(surplusSupply, (r) => r.netSupplyUsd, "bg-blue-500/60", "coll-surplus", "Surplus collateral", "in"),
+    ...(!isLiveView ? flowSegs(liquidatedCollAssets, LIQUIDATION_PATTERN, "coll-liquidated", "Liquidated", "out") : []),
+    ...(!isLiveView ? flowSegs(withdrawnAssets, WITHDRAWN_PATTERN, "coll-withdrawn", "Withdrawn", "out") : []),
   ];
 
   const debtSegments: TowerSegment[] = [
-    ...debtAssets.map((r) => ({
-      key: `debt-${r.symbol}`,
-      label: aaveV4DisplaySymbol(r.symbol),
-      value: r.netDebtUsd,
-      colorClass: "bg-emerald-400",
-      tooltip: tipBody(r.symbol, r.netDebtUsd, 'out'),
-    })),
-    ...(!isLiveView
-      ? [...liquidatedDebtAssets].reverse().map((l) => ({
-          key: `debt-liquidated-${l.symbol}`,
-          label: `${aaveV4DisplaySymbol(l.symbol)} liquidated`,
-          value: l.usd,
-          colorClass: "",
-          patternStyle: LIQUIDATION_PATTERN,
-          tooltip: tipBody(l.symbol, l.usd, 'in'),
-        }))
-      : []),
-    ...(!isLiveView
-      ? [...repaidAssets].reverse().map((rA) => ({
-          key: `debt-repaid-${rA.symbol}`,
-          label: `${aaveV4DisplaySymbol(rA.symbol)} repaid`,
-          value: rA.usd,
-          colorClass: "",
-          patternStyle: REPAID_PATTERN,
-          tooltip: tipBody(rA.symbol, rA.usd, 'in'),
-        }))
-      : []),
+    ...activeSegs(debtAssets, (r) => r.netDebtUsd, "bg-emerald-400", "debt", "Debt", "out"),
+    ...(!isLiveView ? flowSegs(liquidatedDebtAssets, LIQUIDATION_PATTERN, "debt-liquidated", "Liquidated", "in") : []),
+    ...(!isLiveView ? flowSegs(repaidAssets, REPAID_PATTERN, "debt-repaid", "Repaid", "in") : []),
   ];
 
   const collPeak = collSegments.reduce((s, seg) => s + Math.max(0, seg.value), 0);
@@ -354,6 +409,50 @@ export function AaveV4TowerChart({
       ? { heightPct: (totalBorrowedUsd / towerMax) * CHART_HEIGHT, color: DEBT_GREEN_FADED }
       : undefined;
 
+  // Breakdown-row counterparts to the segment builders: merge a category into a
+  // single USD row when grouped & ≥2 (no icon — the row is a sum across assets),
+  // else per-asset rows with the native amount + icon as before.
+  const flowRows = (
+    items: { symbol: string; amount: number; usd: number }[],
+    pattern: CSSProperties,
+    mergedLabel: string,
+  ): BreakdownRow[] => {
+    if (grouped && items.length >= 2) {
+      const total = items.reduce((s, i) => s + i.usd, 0);
+      return [{ sign: "−", label: mergedLabel, amount: fmtUsd(total).display, swatchStyle: pattern }];
+    }
+    return items.map((i) => ({
+      sign: "−",
+      label:
+        mergedLabel === "Liquidated" ? `${aaveV4DisplaySymbol(i.symbol)} liquidated` : aaveV4DisplaySymbol(i.symbol),
+      amount: fmt(i.amount),
+      usdHint: hideUsd ? undefined : fmtUsd(i.usd).display,
+      swatchStyle: pattern,
+      icon: <TokenChipIcon symbol={i.symbol} size={14} filterable={false} />,
+    }));
+  };
+
+  const currentRows = (
+    assets: AssetRow[],
+    nativeOf: (r: AssetRow) => number,
+    usdOf: (r: AssetRow) => number,
+    swatchClass: string,
+    mergedLabel: string,
+  ): BreakdownRow[] => {
+    if (grouped && assets.length >= 2) {
+      const total = assets.reduce((s, r) => s + usdOf(r), 0);
+      return [{ sign: "", label: mergedLabel, amount: fmtUsd(total).display, swatchClass }];
+    }
+    return [...assets].reverse().map((r) => ({
+      sign: "",
+      label: aaveV4DisplaySymbol(r.symbol),
+      amount: fmt(nativeOf(r)),
+      usdHint: hideUsd ? undefined : fmtUsd(usdOf(r)).display,
+      swatchClass,
+      icon: <TokenChipIcon symbol={r.symbol} size={14} filterable={false} />,
+    }));
+  };
+
   const collRows: BreakdownRow[] = [
     ...(!isLiveView
       ? [
@@ -365,43 +464,16 @@ export function AaveV4TowerChart({
           } as BreakdownRow,
         ]
       : []),
-    ...(!isLiveView
-      ? withdrawnAssets.map((w) => ({
-          sign: "−",
-          label: aaveV4DisplaySymbol(w.symbol),
-          amount: fmt(w.amount),
-          usdHint: hideUsd ? undefined : fmtUsd(w.usd).display,
-          swatchStyle: WITHDRAWN_PATTERN,
-          icon: <TokenChipIcon symbol={w.symbol} size={14} filterable={false} />,
-        })) as BreakdownRow[]
-      : []),
-    ...(!isLiveView
-      ? liquidatedCollAssets.map((l) => ({
-          sign: "−",
-          label: `${aaveV4DisplaySymbol(l.symbol)} liquidated`,
-          amount: fmt(l.amount),
-          usdHint: hideUsd ? undefined : fmtUsd(l.usd).display,
-          swatchStyle: LIQUIDATION_PATTERN,
-          icon: <TokenChipIcon symbol={l.symbol} size={14} filterable={false} />,
-        })) as BreakdownRow[]
-      : []),
-    ...[...supplyAssets].reverse().map(
-      (r) =>
-        ({
-          sign: "",
-          label: aaveV4DisplaySymbol(r.symbol),
-          amount: fmt(r.netSupply),
-          usdHint: hideUsd ? undefined : fmtUsd(r.netSupplyUsd).display,
-          swatchClass: "bg-blue-500",
-          icon: <TokenChipIcon symbol={r.symbol} size={14} filterable={false} />,
-        }) as BreakdownRow,
+    ...(!isLiveView ? flowRows(withdrawnAssets, WITHDRAWN_PATTERN, "Withdrawn") : []),
+    ...(!isLiveView ? flowRows(liquidatedCollAssets, LIQUIDATION_PATTERN, "Liquidated") : []),
+    ...currentRows(
+      supplyAssets,
+      (r) => r.netSupply,
+      (r) => r.netSupplyUsd,
+      "bg-blue-500",
+      "Collateral",
     ),
-    {
-      sign: "",
-      label: isLiveView ? "Total" : "In Protocol",
-      amount: fmtUsd(totalSupplyUsd).display,
-      isResult: true,
-    },
+    { sign: "", label: isLiveView ? "Total" : "In Protocol", amount: fmtUsd(totalSupplyUsd).display, isResult: true },
   ];
 
   const debtRows: BreakdownRow[] = [
@@ -415,43 +487,16 @@ export function AaveV4TowerChart({
           } as BreakdownRow,
         ]
       : []),
-    ...(!isLiveView
-      ? repaidAssets.map((rA) => ({
-          sign: "−",
-          label: aaveV4DisplaySymbol(rA.symbol),
-          amount: fmt(rA.amount),
-          usdHint: hideUsd ? undefined : fmtUsd(rA.usd).display,
-          swatchStyle: REPAID_PATTERN,
-          icon: <TokenChipIcon symbol={rA.symbol} size={14} filterable={false} />,
-        })) as BreakdownRow[]
-      : []),
-    ...(!isLiveView
-      ? liquidatedDebtAssets.map((l) => ({
-          sign: "−",
-          label: `${aaveV4DisplaySymbol(l.symbol)} liquidated`,
-          amount: fmt(l.amount),
-          usdHint: hideUsd ? undefined : fmtUsd(l.usd).display,
-          swatchStyle: LIQUIDATION_PATTERN,
-          icon: <TokenChipIcon symbol={l.symbol} size={14} filterable={false} />,
-        })) as BreakdownRow[]
-      : []),
-    ...[...debtAssets].reverse().map(
-      (r) =>
-        ({
-          sign: "",
-          label: aaveV4DisplaySymbol(r.symbol),
-          amount: fmt(r.netDebt),
-          usdHint: hideUsd ? undefined : fmtUsd(r.netDebtUsd).display,
-          swatchClass: "bg-emerald-400",
-          icon: <TokenChipIcon symbol={r.symbol} size={14} filterable={false} />,
-        }) as BreakdownRow,
+    ...(!isLiveView ? flowRows(repaidAssets, REPAID_PATTERN, "Repaid") : []),
+    ...(!isLiveView ? flowRows(liquidatedDebtAssets, LIQUIDATION_PATTERN, "Liquidated") : []),
+    ...currentRows(
+      debtAssets,
+      (r) => r.netDebt,
+      (r) => r.netDebtUsd,
+      "bg-emerald-400",
+      "Debt",
     ),
-    {
-      sign: "",
-      label: "Outstanding",
-      amount: fmtUsd(totalDebtUsd).display,
-      isResult: true,
-    },
+    { sign: "", label: "Outstanding", amount: fmtUsd(totalDebtUsd).display, isResult: true },
   ];
 
   const placeholderClass =
@@ -461,10 +506,7 @@ export function AaveV4TowerChart({
   // for the absent debt side, with a faded "No debt" so the emptiness reads as
   // intentional rather than a loading gap.
   const ghostDebtTower = (
-    <div
-      className={`${placeholderClass} flex items-center justify-center`}
-      style={{ height: CHART_HEIGHT }}
-    >
+    <div className={`${placeholderClass} flex items-center justify-center`} style={{ height: CHART_HEIGHT }}>
       <span className="text-[11px] font-medium text-rb-500/60 select-none">No debt</span>
     </div>
   );
@@ -484,6 +526,9 @@ export function AaveV4TowerChart({
             hideSurplus={hideSurplus}
             onToggleHideSurplus={onToggleHideSurplus}
             hasSurplus={(surplusSymbols?.size ?? 0) > 0}
+            grouped={grouped}
+            onToggleGroup={() => setGroupOverride(!grouped)}
+            canGroup={canGroup}
           />
         </div>
       )}
@@ -496,7 +541,7 @@ export function AaveV4TowerChart({
           sideBarTooltip: collSideBar ? (
             <div className="flex items-center gap-1.5">
               <span>Total</span>
-              {dirArrow('in')}
+              {dirArrow("in")}
               <span className="ml-auto tabular-nums">{fmtUsd(totalDepositedUsd).title}</span>
             </div>
           ) : undefined,
@@ -519,7 +564,7 @@ export function AaveV4TowerChart({
                 sideBarTooltip: debtSideBar ? (
                   <div className="flex items-center gap-1.5">
                     <span>Total</span>
-                    {dirArrow('out')}
+                    {dirArrow("out")}
                     <span className="ml-auto tabular-nums">{fmtUsd(totalBorrowedUsd).title}</span>
                   </div>
                 ) : undefined,
