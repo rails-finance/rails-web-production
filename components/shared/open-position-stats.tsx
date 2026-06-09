@@ -28,7 +28,7 @@ export interface OpenPositionStatsProps {
    *  status-line companion rather than a top-right tag. */
   leadingIdentity?: ReactNode;
   /** Override the leading status pill. Used by Aave V4 surfaces to render the
-   *  HF-bucket pill (NO DEBT / OPEN / CAUTIOUS / AT RISK / UNDERWATER) in
+   *  HF-bucket pill (NO DEBT / OPEN / UNDERWATER) in
    *  place of the default ACTIVE pill, so the detail card speaks the same
    *  vocabulary as the listing card. */
   statusPill?: ReactNode;
@@ -51,29 +51,27 @@ export function OpenPositionStats({ columns, icons, identity, leadingIdentity, s
   const count = columns.length;
   // When any column carries its own asset cluster, drop the leading icons
   // slot — the cluster moves into the column it describes.
-  const hasInColumnAssets = columns.some(c => c?.assetIcons != null);
+  const hasInColumnAssets = columns.some((c) => c?.assetIcons != null);
   const useLeadingIcons = !!icons && !hasInColumnAssets;
   const gridClass = useLeadingIcons
-    ? GRID_WITH_ICONS[count] ?? GRID_WITH_ICONS[3]
-    : GRID_WITHOUT_ICONS[count] ?? GRID_WITHOUT_ICONS[3];
+    ? (GRID_WITH_ICONS[count] ?? GRID_WITH_ICONS[3])
+    : (GRID_WITHOUT_ICONS[count] ?? GRID_WITHOUT_ICONS[3]);
   const visibleCount = columns.filter(Boolean).length;
   return (
     <div>
       <div className="flex items-center justify-between gap-2 flex-wrap mb-3">
         <span className="flex items-center gap-2">
           {statusPill ?? (
-            <span className="font-bold tracking-wider px-2 py-0.5 bg-rb-300 dark:bg-rb-700 text-foreground/80 dark:text-foreground/60 rounded-xs text-xs">ACTIVE</span>
+            <span className="font-bold tracking-wider px-2 py-0.5 bg-rb-300 dark:bg-rb-700 text-foreground/80 dark:text-foreground/60 rounded-xs text-xs">
+              ACTIVE
+            </span>
           )}
           {leadingIdentity}
         </span>
         {identity}
       </div>
       <div className={gridClass}>
-        {useLeadingIcons && (
-          <div className="hidden sm:flex items-center self-stretch">
-            {icons}
-          </div>
-        )}
+        {useLeadingIcons && <div className="hidden sm:flex items-center self-stretch">{icons}</div>}
         {columns.map((col, i) => {
           if (!col) return <div key={`empty-${i}`} className="hidden sm:block" />;
           // Single-visible-column 3-col layouts span both mobile cells so the

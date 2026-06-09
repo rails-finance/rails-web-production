@@ -6,7 +6,7 @@
 // "About this position" layout, as a standalone panel above the stats card.
 
 import type { AaveSpokeCardInfo } from "@/lib/aave-v4/spoke-cards";
-import { fmtUsd, hfLabel, hfColorClass, fmtLiqPrice } from "@/lib/aave-v4/format";
+import { fmtUsd, hfLabel, fmtLiqPrice } from "@/lib/aave-v4/format";
 import { aaveV4DisplaySymbol } from "@/lib/aave-v4/pt-tokens";
 import { LearnMore } from "@/components/shared/learn-more-modal";
 import { aaveV4SpokeContent } from "@/lib/shared/learn-more-content";
@@ -35,7 +35,13 @@ function buildSpokePositionItems(spoke: AaveSpokeCardInfo): React.ReactNode[] {
     items.push(
       <span key="composition">
         Supplies <strong className="text-foreground">{fmtUsd(spoke.totalSupplyUsd).display}</strong>
-        {supplyStr && <> across <span className="text-foreground/90 font-medium">{supplyStr}</span></>} with no debt drawn.
+        {supplyStr && (
+          <>
+            {" "}
+            across <span className="text-foreground/90 font-medium">{supplyStr}</span>
+          </>
+        )}{" "}
+        with no debt drawn.
       </span>,
     );
     items.push(
@@ -54,8 +60,8 @@ function buildSpokePositionItems(spoke: AaveSpokeCardInfo): React.ReactNode[] {
     if (spoke.netApy != null) {
       items.push(
         <span key="apy">
-          The supplied balance earns roughly <strong className="text-foreground">{spoke.netApy.toFixed(2)}%</strong> APY at
-          the most recent supply rate.
+          The supplied balance earns roughly <strong className="text-foreground">{spoke.netApy.toFixed(2)}%</strong> APY
+          at the most recent supply rate.
         </span>,
       );
     }
@@ -63,25 +69,38 @@ function buildSpokePositionItems(spoke: AaveSpokeCardInfo): React.ReactNode[] {
     items.push(
       <span key="composition">
         <strong className="text-foreground">{fmtUsd(spoke.totalSupplyUsd).display}</strong> of collateral
-        {supplyStr && <> in <span className="text-foreground/90 font-medium">{supplyStr}</span></>} backs{" "}
-        <strong className="text-foreground">{fmtUsd(spoke.totalDebtUsd).display}</strong> of debt
-        {borrowStr && <> in <span className="text-foreground/90 font-medium">{borrowStr}</span></>}.
+        {supplyStr && (
+          <>
+            {" "}
+            in <span className="text-foreground/90 font-medium">{supplyStr}</span>
+          </>
+        )}{" "}
+        backs <strong className="text-foreground">{fmtUsd(spoke.totalDebtUsd).display}</strong> of debt
+        {borrowStr && (
+          <>
+            {" "}
+            in <span className="text-foreground/90 font-medium">{borrowStr}</span>
+          </>
+        )}
+        .
       </span>,
     );
     if (spoke.healthFactor != null) {
       items.push(
         <span key="hf">
-          Health factor of <strong className={hfColorClass(spoke.healthFactor)}>{hfLabel(spoke.healthFactor)}</strong>:
-          the risk-adjusted collateral is worth {hfLabel(spoke.healthFactor)}× the outstanding debt, and the position
-          becomes liquidatable if it falls to 1.00.
+          Health factor of <strong className="text-foreground">{hfLabel(spoke.healthFactor)}</strong>: the risk-adjusted
+          collateral is worth {hfLabel(spoke.healthFactor)}× the outstanding debt, and the position becomes liquidatable
+          if it falls to 1.00. This figure is read straight from Aave&rsquo;s own on-chain health-factor calculation, so
+          it matches what Aave&rsquo;s interface shows.
         </span>,
       );
     }
     if (spoke.liqPrice) {
       items.push(
         <span key="liq">
-          Liquidation tracks <span className="text-foreground/90 font-medium">{aaveV4DisplaySymbol(spoke.liqPrice.symbol)}</span>:
-          from today&rsquo;s <strong className="text-foreground">{fmtLiqPrice(spoke.liqPrice.currentPrice)}</strong> it would
+          Liquidation tracks{" "}
+          <span className="text-foreground/90 font-medium">{aaveV4DisplaySymbol(spoke.liqPrice.symbol)}</span>: from
+          today&rsquo;s <strong className="text-foreground">{fmtLiqPrice(spoke.liqPrice.currentPrice)}</strong> it would
           have to fall to <strong className="text-foreground">{fmtLiqPrice(spoke.liqPrice.liqPrice)}</strong> — about{" "}
           {spoke.liqPrice.headroomPct.toFixed(0)}% below — to trigger one.
         </span>,
@@ -104,8 +123,8 @@ function buildSpokePositionItems(spoke: AaveSpokeCardInfo): React.ReactNode[] {
           </span>
         ) : (
           <span key="apy">
-            Borrow cost outweighs supply yield, for a net <strong className="text-foreground">{spoke.netApy.toFixed(2)}%</strong>{" "}
-            APY on equity.
+            Borrow cost outweighs supply yield, for a net{" "}
+            <strong className="text-foreground">{spoke.netApy.toFixed(2)}%</strong> APY on equity.
           </span>
         ),
       );
@@ -127,8 +146,12 @@ function buildSpokePositionItems(spoke: AaveSpokeCardInfo): React.ReactNode[] {
         Across <strong className="text-foreground">{spoke.eventCount}</strong> event{spoke.eventCount === 1 ? "" : "s"},
         supply peaked at <strong className="text-foreground">{fmtUsd(spoke.peakSupplyUsd).display}</strong>
         {spoke.peakDebtUsd > 1 && (
-          <> and debt at <strong className="text-foreground">{fmtUsd(spoke.peakDebtUsd).display}</strong></>
-        )}.
+          <>
+            {" "}
+            and debt at <strong className="text-foreground">{fmtUsd(spoke.peakDebtUsd).display}</strong>
+          </>
+        )}
+        .
       </span>,
     );
   }

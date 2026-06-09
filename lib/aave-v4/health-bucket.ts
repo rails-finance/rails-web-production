@@ -1,12 +1,15 @@
 // Shared health-factor → status-pill bucketing for Aave V4 position cards.
 // Both the listing card and the detail card consume this so their status
-// pills speak the same vocabulary (NO DEBT / OPEN / CAUTIOUS / AT RISK /
-// UNDERWATER).
+// pills speak the same vocabulary (NO DEBT / OPEN / UNDERWATER).
 //
-// Color is intentionally neutral across every bucket: Rails does not
-// editorialize a position's risk with red/amber/green valence — the word
-// ("CAUTIOUS", "UNDERWATER") and the numbers (HF value, headroom %) carry the
-// meaning. Every pill renders in the same neutral surface token; the value
+// The vocabulary is deliberately limited to factual states, not risk
+// judgements: NO DEBT (nothing borrowed), OPEN (active, above the liquidation
+// threshold), UNDERWATER (HF < 1 — liquidatable, a hard on-chain fact). Rails
+// does not editorialize where within the open band a position sits with words
+// like "cautious" or "at risk"; the HF value and headroom % carry that meaning.
+//
+// Color is intentionally neutral across every bucket too — no red/amber/green
+// valence. Every pill renders in the same neutral surface token; the value
 // color is plain foreground.
 
 export interface HealthBucket {
@@ -23,14 +26,8 @@ export function bucketForHealth(hf: number | null): HealthBucket {
   if (hf == null) {
     return { pillLabel: "NO DEBT", pillClass: NEUTRAL_PILL, valueColor: "text-rb-500" };
   }
-  if (hf >= 1.5) {
-    return { pillLabel: "OPEN", pillClass: NEUTRAL_PILL, valueColor: "text-foreground/80" };
-  }
-  if (hf >= 1.1) {
-    return { pillLabel: "CAUTIOUS", pillClass: NEUTRAL_PILL, valueColor: "text-foreground/80" };
-  }
   if (hf >= 1.0) {
-    return { pillLabel: "AT RISK", pillClass: NEUTRAL_PILL, valueColor: "text-foreground/80" };
+    return { pillLabel: "OPEN", pillClass: NEUTRAL_PILL, valueColor: "text-foreground/80" };
   }
   return { pillLabel: "UNDERWATER", pillClass: NEUTRAL_PILL, valueColor: "text-foreground/80" };
 }
