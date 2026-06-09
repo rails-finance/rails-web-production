@@ -30,10 +30,20 @@ export function aaveV4RunwayExplanation({
   const headroomPct = hasLiq && currentPrice > 0 ? ((currentPrice - liqPrice!) / currentPrice) * 100 : null;
 
   if (underwater) {
+    const recoverPct = currentPrice > 0 ? ((liqPrice! - currentPrice) / currentPrice) * 100 : null;
     return (
       <>
-        <span className="font-semibold text-foreground">{collateralSymbol} is below its liquidation price.</span>{" "}
-        On-chain, this position would be liquidatable.
+        <span className="font-semibold text-foreground">{collateralSymbol} is below its liquidation price</span> (
+        {fmtPrice(liqPrice!)}) — on-chain, this position is liquidatable now.
+        {recoverPct != null && (
+          <>
+            {" "}
+            It would take roughly a <span className="font-semibold text-foreground">
+              +{recoverPct.toFixed(0)}%
+            </span>{" "}
+            move in {collateralSymbol} to clear the threshold.
+          </>
+        )}
       </>
     );
   }

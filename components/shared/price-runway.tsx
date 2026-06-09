@@ -44,6 +44,13 @@ import { fmtPrice } from "@/components/shared/price-pill";
  * "% from liquidation" number — with the price shown alongside — carries the
  * exact (and unbounded) upside the fixed window can't draw.
  *
+ * Underwater (live price at / below the liquidation line) the runway is spent,
+ * so the whole bar flips to the factual-liquidation red: lighter red for the
+ * now-out-of-reach prices above the line, the deep-red breach from the line to
+ * the live-price marker, lighter red for any downside below it. The readouts
+ * drop the headroom ruler and instead state "Liquidatable now" plus the price
+ * rise needed to clear the line (`recoverPct`, denominated in the live price).
+ *
  * No safe/caution gradient (per the no-opinionated-colour principle): blue is a
  * structural collateral cue, red is the one factual liquidation colour, and the
  * numbers around the bar state the rest. Read-only — current oracle state.
@@ -94,6 +101,10 @@ export function PriceRunway({ currentPrice, liqPrice }: PriceRunwayProps) {
   const fillPct = offscreen ? 0 : posFromLeft(currentPrice);
   const underwater = currentPrice <= liqPrice!;
   const pctFromLiq = Math.round(((currentPrice - liqPrice!) / liqPrice!) * 100);
+  // Once underwater the runway is spent — the only figure that matters is how
+  // far the price must RISE to clear liquidation, denominated in the live price
+  // (not the liq price). E.g. $7.81 vs a $9.30 line → +19% to recover.
+  const recoverPct = underwater ? Math.round(((liqPrice! - currentPrice) / currentPrice) * 100) : 0;
 
   // Segment extents (% from left). Blue never extends past the liquidation line;
   // headroom is the gap between the live-price marker and that line (zero once
@@ -124,36 +135,69 @@ export function PriceRunway({ currentPrice, liqPrice }: PriceRunwayProps) {
           share of the price window, the flex gap drawing the hairline seams.
           Widths are proportional, not pixel-exact — close enough to read. */}
       <div className="flex" style={{ height: H_BAR, gap: SEG_GAP_PX }}>
-        {/* Collateral fill — window top → live price. Its rounded right cap is
-            the live-price marker. */}
-        {fillEnd > 0 && (
-          <div className={`${FILL} rounded-full`} style={{ flexGrow: fillEnd, flexBasis: 0 }} />
+        {underwater ? (
+          // Underwater: the runway is gone, so the whole bar reads in the
+          // factual-liquidation red (the one sanctioned colour). The hairline
+          // seam at the liquidation line keeps the breach legible: prices above
+          // the line — now out of reach — sit in lighter red on the left; the
+          // deep-red breach runs from the line to the live-price marker (its
+          // rounded cap), with any remaining downside trailing in lighter red.
+          <>
+            {liqPos > 0 && <div className={`${LIQ} rounded-full`} style={{ flexGrow: liqPos, flexBasis: 0 }} />}
+            <div
+              className={`${LIQ_ACTIVE} rounded-full`}
+              style={{ flexGrow: Math.max(0.5, fillPct - liqPos), flexBasis: 0 }}
+            />
+            {fillPct < 100 && (
+              <div className={`${LIQ} rounded-full`} style={{ flexGrow: 100 - fillPct, flexBasis: 0 }} />
+            )}
+          </>
+        ) : (
+          <>
+            {/* Collateral fill — window top → live price. Its rounded right cap
+                is the live-price marker. */}
+            {fillEnd > 0 && <div className={`${FILL} rounded-full`} style={{ flexGrow: fillEnd, flexBasis: 0 }} />}
+            {/* Headroom — live price → liquidation line. The neutral distance the
+                price can still fall; absent once at / inside the zone. */}
+            {headroomW > 0 && (
+              <div className={`${HEADROOM} rounded-full`} style={{ flexGrow: headroomW, flexBasis: 0 }} />
+            )}
+            {/* Liquidation zone — from the liquidation line to the right edge. */}
+            <div className={`${LIQ} rounded-full`} style={{ flexGrow: 100 - liqPos, flexBasis: 0 }} />
+          </>
         )}
-        {/* Headroom — live price → liquidation line. The neutral distance the
-            price can still fall; absent once at / inside the zone. */}
-        {headroomW > 0 && (
-          <div className={`${HEADROOM} rounded-full`} style={{ flexGrow: headroomW, flexBasis: 0 }} />
-        )}
-        {/* Liquidation zone — from the liquidation line to the right edge.
-            Deepens once the live price is inside it. */}
-        <div
-          className={`rounded-full transition-colors ${underwater ? LIQ_ACTIVE : LIQ}`}
-          style={{ flexGrow: 100 - liqPos, flexBasis: 0 }}
-        />
       </div>
 
       {/* Label strip: the resting "% from liquidation" + "liquidation $" readouts
           stay put; on hover (desktop) the faded % ruler reveals across the same row. */}
       <div className="relative mt-2 h-4 text-[11px] tabular-nums text-rb-500">
-        <span className="absolute left-0">{pctFromLiq}% from liquidation</span>
-        <span className="absolute right-0">liquidation {fmtPrice(liqPrice!)}</span>
-        <div className={`pointer-events-none absolute inset-0 ${REVEAL}`}>
-          {rulerTicks.map((t) => (
-            <span key={t.pct} className="absolute -translate-x-1/2" style={{ left: `${t.pos}%`, opacity: t.opacity }}>
-              {t.pct}%
+        {underwater ? (
+          // Past the liquidation line the "% from liquidation" ruler is
+          // meaningless — replace it with the factual state and the rise the
+          // price needs to clear the line.
+          <>
+            <span className="absolute left-0 font-semibold text-red-600 dark:text-red-400">Liquidatable now</span>
+            <span className="absolute right-0">
+              recovers at {fmtPrice(liqPrice!)} (+{recoverPct}%)
             </span>
-          ))}
-        </div>
+          </>
+        ) : (
+          <>
+            <span className="absolute left-0">{pctFromLiq}% from liquidation</span>
+            <span className="absolute right-0">liquidation {fmtPrice(liqPrice!)}</span>
+            <div className={`pointer-events-none absolute inset-0 ${REVEAL}`}>
+              {rulerTicks.map((t) => (
+                <span
+                  key={t.pct}
+                  className="absolute -translate-x-1/2"
+                  style={{ left: `${t.pos}%`, opacity: t.opacity }}
+                >
+                  {t.pct}%
+                </span>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -62,7 +62,13 @@ function AaveV4SpokeCard({
   // static detail card, or a non-selected card in a hoverless selector.
   const showInfo = !isClosed && ((noHover && !isSelected) || !!staticCard);
   const [infoOpen, setInfoOpen] = useState(false);
-  const supplyOnly = spoke.peakDebtUsd < 1 && spoke.totalDebtUsd < 1;
+  // A sub-$1 debt position normally reads as supply-only (dust debt is noise
+  // beside a real supply — e.g. after a near-full repay). The exception is an
+  // underwater position: HF < 1 is a liquidatable on-chain fact at any size, so
+  // it must keep the full risk readout (HF / Net APY / Debt / Liq Price) rather
+  // than collapse to a lone "Supplied" stat that contradicts its UNDERWATER pill.
+  const underwater = spoke.healthFactor != null && spoke.healthFactor < 1;
+  const supplyOnly = spoke.peakDebtUsd < 1 && spoke.totalDebtUsd < 1 && !underwater;
   const bucket = bucketForHealth(spoke.healthFactor);
   const walletPill = wallet ? <WalletPill wallet={wallet} ensName={ensName ?? null} href={walletHref} /> : null;
   return (
