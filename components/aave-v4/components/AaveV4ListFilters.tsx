@@ -1,11 +1,13 @@
 "use client";
 
-// Aave V4 list filters — a quiet-at-rest predicate FilterBar (+ Filter → chips)
-// alongside the wallet search and sort controls. The filter predicates (health,
+// Aave V4 list filters — per-section filter dropdowns (Risk / Market / Assets /
+// View) up top beside the wallet search and sort controls, with the active
+// predicates as removable chips in a row beneath. The filter predicates (health,
 // debt, liquidations, hubs, spokes, supply/borrow assets, visibility) are
 // declared as a dimension registry in lib/aave-v4/list-filter-dimensions and
-// rendered by the shared <FilterBar>; this component only owns search + sort and
-// the async asset universe that feeds the asset dimensions.
+// rendered by the shared <FilterSections> + <FilterChips>; this component only
+// owns search + sort and the async asset universe that feeds the asset
+// dimensions.
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { ChevronDown, Search, X, ArrowUp, ArrowDown } from "lucide-react";
@@ -15,7 +17,8 @@ import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import { WalletHistoryDropdown } from "@/components/shared/wallet-history-dropdown";
 import { upsertSession } from "@/lib/shared/sessions";
 import { fetchAaveV4AssetUniverse } from "@/lib/api/fetch-aave-v4-asset-universe";
-import { FilterBar } from "@/components/shared/filter-bar/filter-bar";
+import { FilterSections } from "@/components/shared/filter-bar/filter-sections";
+import { FilterChips } from "@/components/shared/filter-bar/filter-chips";
 import type { FilterOptionDef } from "@/components/shared/filter-bar/types";
 import { aaveV4FilterDimensions } from "@/lib/aave-v4/list-filter-dimensions";
 
@@ -144,9 +147,10 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
 
   return (
     <div className="mb-6 flex flex-col gap-3">
-      {/* Top row: wallet search (primary — the listing doubles as a wallet view)
-          and sort. */}
+      {/* Top row: per-section filter dropdowns (preceding the address), then the
+          wallet search (primary — the listing doubles as a wallet view) and sort. */}
       <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+        <FilterSections dimensions={dimensions} filters={filters} onChange={onFiltersChange} />
         <div ref={searchRef} className="relative w-full lg:flex-1">
           <input
             type="text"
@@ -234,8 +238,9 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
         </div>
       </div>
 
-      {/* Predicate bar: quiet `+ Filter` at rest, removable chips when engaged. */}
-      <FilterBar dimensions={dimensions} filters={filters} onChange={onFiltersChange} />
+      {/* Active predicates as removable chips — renders nothing when none are
+          set, so the wallet-view resting state stays quiet. */}
+      <FilterChips dimensions={dimensions} filters={filters} onChange={onFiltersChange} />
     </div>
   );
 }

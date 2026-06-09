@@ -1,23 +1,28 @@
-// Mirrors the structure of AaveV4ListPageContent: a filter row of pill
-// placeholders on top, then a stack of card placeholders with decaying
-// opacity. No page-title heading — the filled page doesn't render one
-// either, so the skeleton shouldn't conjure phantom chrome.
+// Mirrors the structure of AaveV4ListPageContent: the resting filter row on
+// top, then a stack of card placeholders with decaying opacity. No page-title
+// heading — the filled page doesn't render one either, so the skeleton
+// shouldn't conjure phantom chrome. No chip row, since chips only appear once a
+// predicate is set (the resting wallet-view state is quiet).
 
 export function AaveV4ListLoadingSkeleton() {
   return (
     <main className="min-h-screen">
       <div className="max-w-7xl mx-auto py-8">
-        {/* Filter row — mirrors AaveV4ListFilters: search input + filter
-            button + hubs/spokes/supplying/borrowing pills + sort on right. */}
-        <div className="mb-6 animate-pulse">
+        {/* Filter row — mirrors AaveV4ListFilters at rest: the Risk / Market /
+            Assets / View section dropdowns, then the address search (flex-1),
+            then the sort order toggle + sort menu. Heights match the live h-8
+            controls. */}
+        <div className="mb-6 animate-pulse flex flex-col lg:flex-row lg:items-center gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="h-10 w-full max-w-xs rounded-lg bg-skeleton" />
-            <div className="h-10 w-24 rounded-lg bg-skeleton" />
-            <div className="h-10 w-28 rounded-lg bg-skeleton" />
-            <div className="h-10 w-28 rounded-lg bg-skeleton" />
-            <div className="h-10 w-32 rounded-lg bg-skeleton" />
-            <div className="h-10 w-32 rounded-lg bg-skeleton" />
-            <div className="ml-auto h-10 w-32 rounded-lg bg-skeleton" />
+            <div className="h-8 w-16 rounded-md bg-skeleton" />
+            <div className="h-8 w-20 rounded-md bg-skeleton" />
+            <div className="h-8 w-20 rounded-md bg-skeleton" />
+            <div className="h-8 w-16 rounded-md bg-skeleton" />
+          </div>
+          <div className="h-8 w-full lg:flex-1 rounded-md bg-skeleton" />
+          <div className="flex items-center gap-1">
+            <div className="h-8 w-8 rounded-md bg-skeleton" />
+            <div className="h-8 w-40 rounded-md bg-skeleton" />
           </div>
         </div>
         {/* Card stack — same 24px gap and lg radius as the live grid. */}
