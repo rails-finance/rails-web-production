@@ -29,6 +29,9 @@ export interface LiquityEventCardProps {
   previousEvent?: BaseActivityEvent;
   /** 1-based chronological position; threaded through to the header chip. */
   eventNumber?: number;
+  /** Live oracle price for this collateral — drives the "today" leg of the
+   *  redemption P/L in the header and explainer. */
+  currentPrice?: number;
 }
 
 export function LiquityEventCard({
@@ -42,6 +45,7 @@ export function LiquityEventCard({
   avatarOverride,
   previousEvent,
   eventNumber,
+  currentPrice,
 }: LiquityEventCardProps) {
   const ctx = event.context.data;
   const wallet = event.wallet;
@@ -96,7 +100,10 @@ export function LiquityEventCard({
   const iconSlot = isPassive ? (
     <SpineColumn
       icon="warning"
-      warningTone={ctx.operation === "liquidate" ? "red" : "amber"}
+      warningTone={ctx.operation === "liquidate" ? "red" : ctx.operation === "redeemCollateral" ? "orange" : "amber"}
+      warningLabel={
+        ctx.operation === "liquidate" ? "Liquidation" : ctx.operation === "redeemCollateral" ? "Redemption" : undefined
+      }
       spine="dotted"
       isFirst={isFirst}
       isLast={!!isLast}
@@ -155,10 +162,25 @@ export function LiquityEventCard({
     <EventCard
       avatar={avatarOverride ?? avatarSlot}
       iconColumn={iconSlot}
-      header={<LiquityEventHeader ctx={ctx} timestamp={event.timestamp} eventNumber={eventNumber} />}
+      header={
+        <LiquityEventHeader
+          ctx={ctx}
+          timestamp={event.timestamp}
+          eventNumber={eventNumber}
+          currentPrice={currentPrice}
+        />
+      }
       headerBars={<TroveBarsSlot eventId={event.id} />}
       detail={<LiquityEventDetail ctx={ctx} txHash={event.txHash} previousEvent={previousEvent} currentEvent={event} />}
-      explainer={<LiquityEventExplainer ctx={ctx} previousEvent={previousEvent} currentEvent={event} skipFirst />}
+      explainer={
+        <LiquityEventExplainer
+          ctx={ctx}
+          previousEvent={previousEvent}
+          currentEvent={event}
+          currentPrice={currentPrice}
+          skipFirst
+        />
+      }
       explainerTeaser={liquityTeaser}
       txHash={event.txHash}
       wallet={wallet}

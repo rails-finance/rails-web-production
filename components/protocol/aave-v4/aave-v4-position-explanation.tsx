@@ -216,9 +216,12 @@ export function AaveV4PositionExplanation({
   return (
     <div
       className={
+        // Muted body prose (text-rb-500) so the text-foreground highlights on
+        // key figures actually pop — matches Liquity's muted+highlighted mix
+        // rather than a flat single brightness.
         embedded
-          ? "text-sm text-foreground/90 space-y-3"
-          : "rounded-lg bg-rb-100 dark:bg-rb-950 px-4 py-3 text-sm text-foreground/90 space-y-3"
+          ? "text-sm text-rb-500 space-y-3"
+          : "rounded-lg bg-rb-100 dark:bg-rb-950 px-4 py-3 text-sm text-rb-500 space-y-3"
       }
     >
       {positionItems.length > 0 && (

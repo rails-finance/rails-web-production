@@ -154,7 +154,9 @@ function InterestRateMetric({
   const hasBeforeValue = before > 0;
   const hasAfterValue = after > 0;
   const hasChange = hasBeforeValue && before !== after;
-  const yearlyCost = afterDebt && hasAfterValue ? afterDebt * after : 0;
+  // annualInterestRate is in percent units (3.4 = 3.4% APR), so divide by 100
+  // to get the fractional rate for the BOLD/year cost.
+  const yearlyCost = afterDebt && hasAfterValue ? afterDebt * (after / 100) : 0;
 
   return (
     <StateMetric label="Interest Rate">
@@ -162,7 +164,7 @@ function InterestRateMetric({
         {hasChange && (
           <>
             <span className="text-sm font-bold ">
-              {(before * 100).toFixed(1)}
+              {before.toFixed(1)}
               <span className="ml-0.5">%</span>
             </span>
             <TransitionArrow />
@@ -174,7 +176,7 @@ function InterestRateMetric({
           <span className="text-sm font-bold ">N/A</span>
         ) : (
           <span className="text-sm font-bold ">
-            {(after * 100).toFixed(1)}
+            {after.toFixed(1)}
             <span className="ml-0.5">%</span>
           </span>
         )}
@@ -375,19 +377,14 @@ export function LiquityEventDetail({ ctx, txHash, previousEvent, currentEvent }:
         </div>
       )}
 
-      {/* Redemption counterparty info */}
-      {isRedemption && (ctx.troveOwner || ctx.redeemer) && (
-        <div className="px-4 py-2 flex items-center gap-3 flex-wrap">
-          {ctx.troveOwner && (
-            <span className="text-xs ">
-              Owner: <LinkedAddress address={ctx.troveOwner} />
-            </span>
-          )}
-          {ctx.redeemer && (
-            <span className="text-xs ">
-              Redeemed by: <LinkedAddress address={ctx.redeemer} />
-            </span>
-          )}
+      {/* Redemption counterparty — claimable + P/L now live inline in the
+          header; only the redeemer link remains here (when present). The
+          redemption-wide totals and fee detail live in the explainer. */}
+      {isRedemption && ctx.redeemer && (
+        <div className="px-5 py-2">
+          <span className="text-xs text-rb-500">
+            Redeemed by: <LinkedAddress address={ctx.redeemer} />
+          </span>
         </div>
       )}
 
@@ -434,68 +431,18 @@ export function LiquityEventDetail({ ctx, txHash, previousEvent, currentEvent }:
         </div>
       )}
 
-      {/* Redemption breakdown */}
-      {redemption && (
-        <div className="px-4 py-2">
-          <span className="text-sm font-semibold text-foreground">Redemption Breakdown</span>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
-            {redemption.attemptedBoldAmount !== redemption.actualBoldAmount && (
-              <Stat
-                label="Attempted"
-                value={`${toLocaleStringHelper(redemption.attemptedBoldAmount)} ${ctx.assetType ?? "BOLD"}`}
-              />
-            )}
-            <Stat
-              label={`${ctx.assetType ?? "BOLD"} redeemed`}
-              value={`${toLocaleStringHelper(redemption.actualBoldAmount)} ${ctx.assetType ?? "BOLD"}`}
-            />
-            <Stat
-              label="Coll taken"
-              value={`${formatColl(redemption.ETHSent)} ${ctx.collateralType} (${formatUsd(redemption.ETHSent * redemption.price)})`}
-            />
-            {redemption.ETHFee && Number(redemption.ETHFee) > 0 && (
-              <Stat
-                label="Fee retained"
-                value={`${formatColl(Number(redemption.ETHFee))} ${ctx.collateralType}`}
-                className="text-foreground"
-              />
-            )}
-            <Stat label="Price" value={formatUsd(redemption.price)} />
-            {(() => {
-              const collValue = redemption.ETHSent * redemption.price;
-              const pl = redemption.actualBoldAmount - collValue;
-              return Math.abs(pl) > 0.01 ? (
-                <Stat
-                  label="Borrower P/L"
-                  value={`${pl > 0 ? "+" : ""}${formatUsd(Math.abs(pl))}`}
-                  className="text-foreground"
-                />
-              ) : null;
-            })()}
-          </div>
-        </div>
-      )}
-
-      {/* Zombie + batch badges + historic collateral price pill */}
-      {(ctx.isZombieTrove || ctx.isInBatch || collPrice > 0) && (
+      {/* Historic collateral price pill. (Batch membership is conveyed by the
+          "Delegate" treatment on interest-rate events, so no standalone
+          "Batched" badge here.) */}
+      {collPrice > 0 && (
         <div className="flex items-center gap-2 px-4 py-2">
-          {ctx.isZombieTrove && (
-            <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold">
-              Zombie Trove
-            </span>
-          )}
-          {ctx.isInBatch && (
-            <span className="text-xs px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-400 font-bold">Batched</span>
-          )}
-          {collPrice > 0 && (
-            <span
-              className="ml-auto inline-flex items-center gap-1.5 text-xs font-bold text-rb-500 bg-background px-2 py-1 rounded-md"
-              title={`${ctx.collateralType} price at the time of this event`}
-            >
-              {formatUsd(collPrice)}
-              <TokenChipIcon symbol={ctx.collateralType} size={14} />
-            </span>
-          )}
+          <span
+            className="ml-auto inline-flex items-center gap-1.5 text-xs font-bold text-rb-500 bg-background px-2 py-1 rounded-md"
+            title={`${ctx.collateralType} price at the time of this event`}
+          >
+            {formatUsd(collPrice)}
+            <TokenChipIcon symbol={ctx.collateralType} size={14} />
+          </span>
         </div>
       )}
     </>

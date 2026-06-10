@@ -38,7 +38,14 @@ export function AaveV4EventCard({ event, isFirst, isLast, txGroup, eventNumber }
   const sym = ctx.reserveSymbol ?? "?";
 
   const iconSlot = isLiquidation ? (
-    <SpineColumn icon="warning" warningTone="red" spine="dotted" isFirst={isFirst} isLast={!!isLast} />
+    <SpineColumn
+      icon="warning"
+      warningTone="red"
+      warningLabel="Liquidation"
+      spine="dotted"
+      isFirst={isFirst}
+      isLast={!!isLast}
+    />
   ) : isCollateralToggle ? (
     <SpineColumn
       tokens={[{ symbol: sym, badge: ctx.enabled ? "check" : "cross" }]}

@@ -580,6 +580,7 @@ export default function TrovePage() {
                         isLast={idx === displayedEvents.length - 1}
                         previousEvent={previousEvent}
                         eventNumber={tempIdx + 1}
+                        currentPrice={prices?.[troveData.collateralType.toLowerCase() as keyof OraclePricesData]}
                       />
                     </EventDateContext.Provider>
                   );

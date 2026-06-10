@@ -80,6 +80,12 @@ function formatNumber(n: number): string {
   return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
+function formatUsd(value: number): string {
+  if (value < 0.01) return "< $0.01";
+  if (value < 1) return `$${value.toFixed(2)}`;
+  return "$" + value.toLocaleString(undefined, { maximumFractionDigits: 0 });
+}
+
 // Actor role (owner / redeemer / liquidator / batch_manager) is still threaded
 // through ctx.actorRole — the bars provider and other downstream logic depend
 // on it — but the trove view no longer renders a pill for it; the row's
@@ -94,9 +100,12 @@ export interface LiquityEventHeaderProps {
    * Stable regardless of asc/desc display order — event #1 is always the
    * trove's openTrove. */
   eventNumber?: number;
+  /** Live oracle price for this collateral — drives the "today" leg of the
+   * redemption P/L. */
+  currentPrice?: number;
 }
 
-export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEventHeaderProps) {
+export function LiquityEventHeader({ ctx, timestamp, eventNumber, currentPrice }: LiquityEventHeaderProps) {
   const style = getOperationStyle(ctx.operation, ctx);
   const { stateBefore, stateAfter, troveOperation } = ctx;
   const { showTimestamps, showEventNumbers } = useTimelineDisplay();
@@ -190,7 +199,7 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
               </span>
               {ctx.batchUpdate?.annualManagementFee != null && ctx.batchUpdate.annualManagementFee > 0 && (
                 <span className="inline-block px-2 py-0.5 rounded-full border border-rb-400 dark:border-rb-600  text-xs font-medium">
-                  + {ctx.batchUpdate.annualManagementFee.toFixed(1)} %
+                  + {ctx.batchUpdate.annualManagementFee.toFixed(2)} %
                 </span>
               )}
               {ctx.batchManager && <span className="text-sm ">{getBatchManagerName(ctx.batchManager)}</span>}
@@ -220,7 +229,7 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
               )}
               {ctx.batchUpdate?.annualManagementFee != null && ctx.batchUpdate.annualManagementFee > 0 && (
                 <span className="inline-block px-2 py-0.5 rounded-full border border-rb-400 dark:border-rb-600  text-xs font-medium">
-                  + {ctx.batchUpdate.annualManagementFee.toFixed(1)} %
+                  + {ctx.batchUpdate.annualManagementFee.toFixed(2)} %
                 </span>
               )}
               {ctx.batchManager && <span className="text-sm ">{getBatchManagerName(ctx.batchManager)}</span>}
@@ -247,9 +256,35 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
                 </span>
               )}
             </>
+          ) : ctx.operation === "redeemCollateral" ? (
+            // The dotted spine carries a "REDEMPTION" pill on desktop, so the
+            // header badge is mobile-only here. The freed space lets the two
+            // facts that matter read with labels — collateral cleared, debt
+            // reduced — mirroring the Aave liquidation header grammar.
+            <>
+              <span
+                className={`sm:hidden inline-block px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${style.bg} ${style.color}`}
+              >
+                {style.label}
+              </span>
+              {hasCollChange && (
+                <span className="inline-flex items-center gap-1.5 text-sm">
+                  <span className="text-rb-500">Cleared</span>
+                  <span className={`font-bold text-foreground ${hideVal}`}>{formatNumber(Math.abs(collChange))}</span>
+                  <TokenChipIcon symbol={ctx.collateralType} size={16} />
+                </span>
+              )}
+              {hasDebtChange && (
+                <span className="inline-flex items-center gap-1.5 text-sm">
+                  <span className="text-rb-500">Reduced</span>
+                  <span className={`font-bold text-foreground ${hideVal}`}>{formatNumber(Math.abs(debtChange))}</span>
+                  <TokenChipIcon symbol={ctx.assetType ?? "BOLD"} size={16} />
+                </span>
+              )}
+            </>
           ) : style.badge ? (
             <span
-              className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${style.bg} ${style.color}`}
+              className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${style.bg} ${style.color} ${ctx.operation === "liquidate" ? "sm:hidden" : ""}`}
             >
               {style.label}
             </span>
@@ -282,39 +317,29 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
             <span className="text-sm text-rb-500">{style.label}</span>
           )}
 
-          {/* Debt change (skip for open trove and combined — already shown inline) */}
+          {/* Debt change (skip for open trove, redemption, delegate, and combined — shown inline or n/a) */}
           {hasDebtChange &&
             !style.label.includes(" + ") &&
             ctx.operation !== "openTrove" &&
-            ctx.operation !== "openTroveAndJoinBatch" && (
+            ctx.operation !== "openTroveAndJoinBatch" &&
+            ctx.operation !== "redeemCollateral" &&
+            ctx.operation !== "setInterestBatchManager" && (
               <span className="inline-flex items-center gap-1.5 text-sm">
                 <span className={`font-bold text-foreground ${hideVal}`}>{formatNumber(Math.abs(debtChange))}</span>
                 <TokenChipIcon symbol={ctx.assetType ?? "BOLD"} size={16} />
               </span>
             )}
 
-          {/* Collateral change (skip for open trove and combined) */}
+          {/* Collateral change (skip for open trove, redemption, delegate, and combined) */}
           {hasCollChange &&
             !style.label.includes(" + ") &&
             ctx.operation !== "openTrove" &&
-            ctx.operation !== "openTroveAndJoinBatch" && (
+            ctx.operation !== "openTroveAndJoinBatch" &&
+            ctx.operation !== "redeemCollateral" &&
+            ctx.operation !== "setInterestBatchManager" && (
               <span className="inline-flex items-center gap-1.5 text-sm">
                 <span className={`font-bold text-foreground ${hideVal}`}>{formatNumber(Math.abs(collChange))}</span>
                 <TokenChipIcon symbol={ctx.collateralType} size={16} />
-              </span>
-            )}
-
-          {/* Zombie claimable collateral — when a redemption fully clears
-              the debt of a zombie trove, the leftover coll is unlocked for
-              the owner. Mirrors the legacy "claimable" pill. */}
-          {ctx.operation === "redeemCollateral" &&
-            ctx.isZombieTrove &&
-            stateAfter.debt === 0 &&
-            stateAfter.coll > 0 && (
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium bg-rb-200 dark:bg-rb-800 text-foreground">
-                <span className="font-bold tabular-nums">{stateAfter.coll.toFixed(4)}</span>
-                <TokenChipIcon symbol={ctx.collateralType} size={14} />
-                claimable
               </span>
             )}
 
@@ -323,9 +348,12 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
             <span className="text-sm font-bold text-foreground">{stateAfter.annualInterestRate.toFixed(1)}%</span>
           )}
 
-          {/* Right side: CR (rate only on rate-change operations) */}
+          {/* Right side: CR (rate only on rate-change operations). The delegate
+              row keeps its header minimal (Delegate · rate · fee · manager),
+              so the trailing CR/LTV + APR are suppressed there — the rate
+              already shows in the delegate pill and CR lives in the grid. */}
           <span className="inline-flex items-center gap-1.5">
-            {stateAfter.collateralRatio > 0 && (
+            {stateAfter.collateralRatio > 0 && ctx.operation !== "setInterestBatchManager" && (
               <span className={`text-xs ${crColor(stateAfter.collateralRatio, ctx.collateralType)}`}>
                 {formatRatio(stateAfter.collateralRatio, ratioMode, 0)} {ratioLabelShort(ratioMode)}
               </span>
@@ -333,7 +361,6 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
             {rateChanged &&
               (ctx.operation === "adjustTroveInterestRate" ||
                 ctx.operation === "setBatchManagerAnnualInterestRate" ||
-                ctx.operation === "setInterestBatchManager" ||
                 ctx.operation === "removeFromBatch") && (
                 <span className="text-sm ">{stateAfter.annualInterestRate.toFixed(1)}% APR</span>
               )}
@@ -360,6 +387,50 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
             {counter}
           </span>
         </div>
+
+        {/* Second row (redemptions) — claimable collateral + P/L (net
+            outcome), sitting quietly beneath the Cleared / Reduced action
+            line. P/L reconciles with those figures: debt cleared minus the
+            value of collateral given up, shown at the redemption-time price
+            and (when available) at today's price. */}
+        {ctx.operation === "redeemCollateral" &&
+          (() => {
+            const showClaimable = ctx.isZombieTrove && stateAfter.debt === 0 && stateAfter.coll > 0;
+            const histPrice = ctx.collateralPrice ?? 0;
+            const debtCleared = Math.abs(debtChange);
+            const collLost = Math.abs(collChange);
+            const plHistoric = debtCleared - collLost * histPrice;
+            const plToday = currentPrice ? debtCleared - collLost * currentPrice : null;
+            const showPl = histPrice > 0 && debtCleared > 0.01;
+            // Only surface "today" when it diverges from the historic figure.
+            const showToday = plToday != null && Math.abs(plToday - plHistoric) > 0.01;
+            const plStr = (n: number) => `${n >= 0 ? "+" : "−"}${formatUsd(Math.abs(n))}`;
+            if (!showClaimable && !showPl) return null;
+            return (
+              <div className="flex items-center gap-4 flex-wrap mt-1.5 text-xs">
+                {showClaimable && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className={`font-bold text-foreground ${hideVal}`}>{stateAfter.coll.toFixed(4)}</span>
+                    <TokenChipIcon symbol={ctx.collateralType} size={14} />
+                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">claimable</span>
+                  </span>
+                )}
+                {showPl && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="text-rb-500">P/L</span>
+                    <span className={`font-bold text-foreground ${hideVal}`}>{plStr(plHistoric)}</span>
+                    {showToday && (
+                      <>
+                        <span className="text-rb-500">or</span>
+                        <span className={`font-bold text-foreground ${hideVal}`}>{plStr(plToday!)}</span>
+                        <span className="text-rb-500">today</span>
+                      </>
+                    )}
+                  </span>
+                )}
+              </div>
+            );
+          })()}
       </div>
     </>
   );

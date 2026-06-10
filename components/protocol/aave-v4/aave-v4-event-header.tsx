@@ -85,8 +85,10 @@ export function AaveV4EventHeader({ ctx, timestamp, txGroup, eventNumber }: Aave
             <span className="text-sm text-rb-500">Supply</span>
           </>
         ) : style.badge ? (
+          // The dotted spine now carries a "LIQUIDATION" pill on desktop, so the
+          // header badge is redundant there — keep it only on mobile (no spine).
           <span
-            className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${style.bg} ${style.color}`}
+            className={`sm:hidden inline-block px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${style.bg} ${style.color}`}
           >
             {label}
           </span>

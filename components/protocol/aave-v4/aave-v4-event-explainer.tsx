@@ -21,6 +21,15 @@ function fmt(v: string | number): string {
   return n.toLocaleString(undefined, { maximumFractionDigits: decimals });
 }
 
+// HIGHLIGHT RULE (codified — mirrors the Liquity `V` helper): wrap a value in
+// <H> (bold + foreground) ONLY when that same value is also surfaced on the
+// card's header or details grid; prose and any unreferenced figure stays in
+// the muted body tone, so a bold figure always maps to one the reader can find
+// above it.
+function H({ children }: { children: ReactNode }) {
+  return <strong className="font-semibold text-foreground">{children}</strong>;
+}
+
 export interface AaveV4EventExplainerProps {
   ctx: AaveV4Context;
 }
@@ -41,65 +50,187 @@ export function AaveV4EventExplainer({ ctx }: AaveV4EventExplainerProps) {
     case "supply":
       if (ctx.alsoToggledCollateral) {
         items.push(
-          `Supplied ${amount} ${token} to the Aave V4 ${market} market and enabled it as collateral in the same transaction.`,
+          <span>
+            Supplied{" "}
+            <H>
+              {amount} {token}
+            </H>{" "}
+            to the Aave V4 <H>{market}</H> market and enabled it as collateral in the same transaction.
+          </span>,
         );
         items.push(
-          `This ${token} now earns variable interest from borrowers and backs borrows — it can be seized in a liquidation.`,
+          <span>
+            This {token} now earns variable interest from borrowers and backs borrows — it can be seized in a
+            liquidation.
+          </span>,
         );
       } else {
-        items.push(`Supplied ${amount} ${token} to the Aave V4 ${market} market.`);
         items.push(
-          `This ${token} earns variable interest from borrowers and can be enabled as collateral to back borrows.`,
+          <span>
+            Supplied{" "}
+            <H>
+              {amount} {token}
+            </H>{" "}
+            to the Aave V4 <H>{market}</H> market.
+          </span>,
+        );
+        items.push(
+          <span>
+            This {token} earns variable interest from borrowers and can be enabled as collateral to back borrows.
+          </span>,
         );
       }
-      if (supplyAfter > 0) items.push(`Running supply balance in this reserve is now ${fmt(supplyAfter)} ${token}.`);
+      if (supplyAfter > 0)
+        items.push(
+          <span>
+            Running supply balance in this reserve is now{" "}
+            <H>
+              {fmt(supplyAfter)} {token}
+            </H>
+            .
+          </span>,
+        );
       items.push(
-        `Aave V4 isolates this supply to the ${market} market — it is not shared with other markets, limiting contagion risk.`,
+        <span>
+          Aave V4 isolates this supply to the <H>{market}</H> market — it is not shared with other markets, limiting
+          contagion risk.
+        </span>,
       );
       break;
 
     case "withdraw":
-      items.push(`Withdrew ${amount} ${token} from Aave V4 ${market} market back to the wallet.`);
+      items.push(
+        <span>
+          Withdrew{" "}
+          <H>
+            {amount} {token}
+          </H>{" "}
+          from Aave V4 <H>{market}</H> market back to the wallet.
+        </span>,
+      );
       if (supplyAfter > 0) {
-        items.push(`Remaining supply balance: ${fmt(supplyAfter)} ${token}.`);
+        items.push(
+          <span>
+            Remaining supply balance:{" "}
+            <H>
+              {fmt(supplyAfter)} {token}
+            </H>
+            .
+          </span>,
+        );
       } else {
-        items.push(`This fully exits the ${token} supply position on the ${market} market.`);
+        items.push(
+          <span>
+            This fully exits the {token} supply position on the <H>{market}</H> market.
+          </span>,
+        );
       }
       items.push(
-        `Withdrawals reduce available collateral. If this asset was enabled as collateral, the health factor may have decreased.`,
+        <span>
+          Withdrawals reduce available collateral. If this asset was enabled as collateral, the health factor may have
+          decreased.
+        </span>,
       );
       break;
 
     case "borrow":
-      items.push(`Borrowed ${amount} ${token} from Aave V4 ${market} market.`);
       items.push(
-        `This creates a variable-rate debt position. Interest accrues continuously and must be repaid to avoid liquidation.`,
+        <span>
+          Borrowed{" "}
+          <H>
+            {amount} {token}
+          </H>{" "}
+          from Aave V4 <H>{market}</H> market.
+        </span>,
+      );
+      items.push(
+        <span>
+          This creates a variable-rate debt position. Interest accrues continuously and must be repaid to avoid
+          liquidation.
+        </span>,
       );
       if (borrowAPR)
-        items.push(`Effective borrow rate at this point: ${(parseFloat(borrowAPR) * 100).toFixed(2)}% APR.`);
-      if (debtAfter > 0) items.push(`Outstanding ${token} debt is now ${fmt(debtAfter)} ${token}.`);
+        items.push(
+          <span>
+            Effective borrow rate at this point: <H>{(parseFloat(borrowAPR) * 100).toFixed(2)}% APR</H>.
+          </span>,
+        );
+      if (debtAfter > 0)
+        items.push(
+          <span>
+            Outstanding {token} debt is now{" "}
+            <H>
+              {fmt(debtAfter)} {token}
+            </H>
+            .
+          </span>,
+        );
       items.push(
-        `If the health factor drops below 1.0 (collateral value insufficient to cover debt), the position can be partially liquidated.`,
+        <span>
+          If the health factor drops below 1.0 (collateral value insufficient to cover debt), the position can be
+          partially liquidated.
+        </span>,
       );
       break;
 
     case "repay":
-      items.push(`Repaid ${amount} ${token} of debt to Aave V4 ${market} market.`);
+      items.push(
+        <span>
+          Repaid{" "}
+          <H>
+            {amount} {token}
+          </H>{" "}
+          of debt to Aave V4 <H>{market}</H> market.
+        </span>,
+      );
       if (borrowAPR)
-        items.push(`Effective borrow rate at this point: ${(parseFloat(borrowAPR) * 100).toFixed(2)}% APR.`);
+        items.push(
+          <span>
+            Effective borrow rate at this point: <H>{(parseFloat(borrowAPR) * 100).toFixed(2)}% APR</H>.
+          </span>,
+        );
       if (debtAfter > 0) {
-        items.push(`Remaining debt: ${fmt(debtAfter)} ${token}. This improves the health factor.`);
+        items.push(
+          <span>
+            Remaining debt:{" "}
+            <H>
+              {fmt(debtAfter)} {token}
+            </H>
+            . This improves the health factor.
+          </span>,
+        );
       } else {
-        items.push(`This fully repays the ${token} debt on the ${market} market.`);
+        items.push(
+          <span>
+            This fully repays the {token} debt on the <H>{market}</H> market.
+          </span>,
+        );
       }
       break;
 
     case "liquidation": {
-      items.push(`This position was liquidated on Aave V4 ${market} market — the health factor dropped below 1.0.`);
-      if (ctx.debtToCover) items.push(`${fmt(ctx.debtToCover)} ${token} of debt was repaid by the liquidator.`);
+      items.push(
+        <span>
+          This position was liquidated on Aave V4 <H>{market}</H> market — the health factor dropped below 1.0.
+        </span>,
+      );
+      if (ctx.debtToCover)
+        items.push(
+          <span>
+            <H>
+              {fmt(ctx.debtToCover)} {token}
+            </H>{" "}
+            of debt was repaid by the liquidator.
+          </span>,
+        );
       if (ctx.liquidatedCollateralAmount && ctx.collateralSymbol)
         items.push(
-          `${fmt(ctx.liquidatedCollateralAmount)} ${ctx.collateralSymbol} collateral was seized (includes liquidation penalty).`,
+          <span>
+            <H>
+              {fmt(ctx.liquidatedCollateralAmount)} {ctx.collateralSymbol}
+            </H>{" "}
+            collateral was seized (includes liquidation penalty).
+          </span>,
         );
       if (ctx.liquidator)
         items.push(
@@ -117,25 +248,44 @@ export function AaveV4EventExplainer({ ctx }: AaveV4EventExplainerProps) {
           </span>,
         );
       items.push(
-        `To avoid future liquidations, maintain a health factor well above 1.0 by keeping debt low relative to collateral.`,
+        <span>
+          To avoid future liquidations, maintain a health factor well above 1.0 by keeping debt low relative to
+          collateral.
+        </span>,
       );
       break;
     }
 
     case "collateral_toggle":
       if (ctx.enabled) {
-        items.push(`Enabled ${token} as collateral on Aave V4 ${market} market.`);
         items.push(
-          `This asset now backs borrows — it increases borrowing capacity but means it can be seized in a liquidation.`,
+          <span>
+            Enabled <H>{token}</H> as collateral on Aave V4 <H>{market}</H> market.
+          </span>,
+        );
+        items.push(
+          <span>
+            This asset now backs borrows — it increases borrowing capacity but means it can be seized in a liquidation.
+          </span>,
         );
       } else {
-        items.push(`Disabled ${token} as collateral on Aave V4 ${market} market.`);
-        items.push(`This asset no longer backs borrows and cannot be liquidated, but borrowing capacity is reduced.`);
+        items.push(
+          <span>
+            Disabled <H>{token}</H> as collateral on Aave V4 <H>{market}</H> market.
+          </span>,
+        );
+        items.push(
+          <span>This asset no longer backs borrows and cannot be liquidated, but borrowing capacity is reduced.</span>,
+        );
       }
       break;
 
     default:
-      items.push(`Aave V4 ${token} event on ${market} market.`);
+      items.push(
+        <span>
+          Aave V4 <H>{token}</H> event on <H>{market}</H> market.
+        </span>,
+      );
   }
 
   const learnMore = ctx.eventType === "liquidation" ? aaveV4LiquidationContent(ctx.spokeName) : null;

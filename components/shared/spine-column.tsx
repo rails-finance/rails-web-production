@@ -20,7 +20,7 @@ export type SpineIcon =
 export type SpineVariant = "solid" | "dotted";
 
 /** Optional spine color tint — encodes subsystem or event category */
-export type SpineColor = "default" | "blue" | "emerald" | "violet" | "amber" | "red";
+export type SpineColor = "default" | "blue" | "emerald" | "violet" | "amber" | "orange" | "red";
 
 const SPINE_COLORS: Record<SpineColor, string> = {
   default: "rgb(101 115 140)", // rb-500
@@ -28,6 +28,7 @@ const SPINE_COLORS: Record<SpineColor, string> = {
   emerald: "rgb(16 185 129)", // emerald-500
   violet: "rgb(139 92 246)", // violet-500
   amber: "rgb(245 158 11)", // amber-500
+  orange: "rgb(249 115 22)", // orange-500
   red: "rgb(239 68 68)", // red-500
 };
 
@@ -38,7 +39,15 @@ const DOT_COLORS: Record<SpineColor, string> = {
   emerald: "bg-emerald-400",
   violet: "bg-violet-400",
   amber: "bg-amber-400",
+  orange: "bg-orange-400",
   red: "bg-red-400",
+};
+
+/** Pill classes for the warning label, keyed by warning tone */
+const WARNING_PILL_CLASSES: Record<"amber" | "orange" | "red", string> = {
+  amber: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
+  orange: "bg-orange-500/15 text-orange-600 dark:text-orange-400",
+  red: "bg-red-500/15 text-red-600 dark:text-red-400",
 };
 
 // ── Token row descriptor ────────────────────────────────────────────────────
@@ -70,9 +79,13 @@ export interface SpineColumnProps {
   tokens?: SpineTokenRow[];
   /** Semantic icon override — replaces token icons entirely */
   icon?: SpineIcon;
-  /** Tone for the "warning" triangle — amber for recoverable events (redemption),
-   *  red for terminal ones (liquidation). Defaults to amber. */
-  warningTone?: "amber" | "red";
+  /** Tone for the "warning" triangle — amber for routine warnings, orange for
+   *  redemption, red for terminal events (liquidation). When set, the dotted
+   *  spine + lead-in dot inherit this tone too. Defaults to amber. */
+  warningTone?: "amber" | "orange" | "red";
+  /** Optional short label rendered in a tinted pill beneath the warning
+   *  triangle (e.g. "Redemption", "Liquidation"). Only used with icon="warning". */
+  warningLabel?: string;
   /** Direction for rate-change arrow or delegate badge */
   iconDirection?: "up" | "down";
   /** Token symbol for icon types that show a token (e.g. "unlock") */
@@ -154,6 +167,53 @@ function DirectionArrow({ direction, size }: { direction: "up" | "down"; size: n
         </>
       )}
     </svg>
+  );
+}
+
+/** Two-person glyph for delegation (batch manager join/leave) events */
+function UsersIcon({ size, color = "var(--color-rb-500)" }: { size: number; color?: string }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+
+/** +/− badge overlaid bottom-right of the delegate glyph — fuchsia, matching
+ *  the purple "Delegate" branding. Plus for a batch-manager join, minus for a
+ *  leave. */
+function DelegateBadge({ size, join }: { size: number; join: boolean }) {
+  const r = Math.round(size * 0.5);
+  return (
+    <div
+      className="absolute -bottom-0.5 -right-0.5 rounded-full flex items-center justify-center"
+      style={{ width: r, height: r, backgroundColor: "#D946EF", border: "2px solid var(--background)" }}
+    >
+      <svg
+        width={r * 0.6}
+        height={r * 0.6}
+        viewBox="0 0 12 12"
+        fill="none"
+        stroke="white"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      >
+        {join && <path d="M6 2.5v7" />}
+        <path d="M2.5 6h7" />
+      </svg>
+    </div>
   );
 }
 
@@ -273,6 +333,7 @@ export function SpineColumn({
   tokens,
   icon,
   warningTone = "amber",
+  warningLabel,
   iconDirection,
   tokenSymbol,
   spine = "solid",
@@ -284,8 +345,11 @@ export function SpineColumn({
   const scale = useTimelineScale();
   const { showTimelineValues } = useTimelineDisplay();
 
-  const spineRgb = SPINE_COLORS[color];
-  const dotClass = DOT_COLORS[color];
+  // For warning events the spine + lead-in dot inherit the warning tone so the
+  // whole dotted segment reads as redemption (orange) / liquidation (red).
+  const effectiveColor: SpineColor = icon === "warning" ? warningTone : color;
+  const spineRgb = SPINE_COLORS[effectiveColor];
+  const dotClass = DOT_COLORS[effectiveColor];
   const isDotted = spine === "dotted";
   const spineStyle = isDotted
     ? { backgroundImage: `linear-gradient(to bottom, ${spineRgb} 50%, transparent 50%)`, backgroundSize: "1px 6px" }
@@ -326,18 +390,24 @@ export function SpineColumn({
       switch (icon) {
         case "warning":
           return (
-            <div
-              className="grid grid-rows-1 items-center justify-items-center"
-              style={{ gridTemplateColumns: scale.gridCols }}
-            >
-              <span />
-              <span />
-              <WarningIcon
-                size={scale.tokenSize}
-                color={warningTone === "red" ? SPINE_COLORS.red : SPINE_COLORS.amber}
-              />
-              <span />
-              <span />
+            <div className="flex flex-col items-center gap-1">
+              <div
+                className="grid grid-rows-1 items-center justify-items-center"
+                style={{ gridTemplateColumns: scale.gridCols }}
+              >
+                <span />
+                <span />
+                <WarningIcon size={scale.tokenSize} color={SPINE_COLORS[warningTone]} />
+                <span />
+                <span />
+              </div>
+              {warningLabel && (
+                <span
+                  className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wide leading-none whitespace-nowrap ${WARNING_PILL_CLASSES[warningTone]}`}
+                >
+                  {warningLabel}
+                </span>
+              )}
             </div>
           );
         case "rate-change":
@@ -355,17 +425,21 @@ export function SpineColumn({
           );
         case "delegate":
           return (
-            // Mirrors the rate-change row: % glyph + up/down direction arrow.
-            // Tinted purple to match the "Delegate"/batch-manager pill colour
-            // used elsewhere in the trove header.
+            // A delegation is a people event, not a rate tweak — render a
+            // person glyph with a join (+) / leave (−) badge so it reads
+            // distinctly from the rate-change "%↑". iconDirection up = join
+            // (setInterestBatchManager), down = leave (removeFromBatch).
             <div
               className="grid grid-rows-1 items-center justify-items-center"
               style={{ gridTemplateColumns: scale.gridCols }}
             >
               <span />
               <span />
-              <RateIcon size={scale.tokenSize} color="#A78BFA" />
-              <DirectionArrow direction={iconDirection ?? "up"} size={Math.round(scale.arrowSize * 0.7)} />
+              <div className="relative">
+                <UsersIcon size={scale.tokenSize} />
+                <DelegateBadge size={scale.tokenSize} join={iconDirection !== "down"} />
+              </div>
+              <span />
               <span />
             </div>
           );
