@@ -30,6 +30,40 @@ const SPOKE_OPTIONS: FilterOptionDef[] = [
   { value: "lombard", label: "Lombard BTC" },
 ];
 
+/** Each spoke belongs to exactly one hub — Aave V4 market topology, fixed at
+ *  deployment (mirrors the backend's SPOKE_BY_KEY `hub` field). This is the
+ *  hub→spoke layer of the same parent-scopes-child logic the asset pills use;
+ *  unlike asset availability it's static structure, not chain config. */
+const SPOKE_HUB: Record<string, string> = {
+  main: "core",
+  forex: "core",
+  gold: "core",
+  bluechip: "prime",
+  ethena_corr: "plus",
+  ethena_eco: "plus",
+  etherfi: "plus",
+  kelp: "plus",
+  lido: "plus",
+  lombard: "plus",
+};
+
+/** Spoke options scoped to the selected hubs — all spokes when no hub is
+ *  selected, else only the members of those hubs. */
+export function spokeOptionsForHubs(hubs: string[]): FilterOptionDef[] {
+  if (hubs.length === 0) return SPOKE_OPTIONS;
+  const set = new Set(hubs);
+  return SPOKE_OPTIONS.filter((o) => set.has(SPOKE_HUB[o.value]));
+}
+
+/** Drop selected spokes that don't belong to the selected hubs. Keeps the
+ *  hub ∩ spoke filter from silently going empty when a hub change orphans a
+ *  previously-picked spoke. */
+export function pruneSpokesForHubs(spokes: string[], hubs: string[]): string[] {
+  if (hubs.length === 0) return spokes;
+  const set = new Set(hubs);
+  return spokes.filter((s) => set.has(SPOKE_HUB[s]));
+}
+
 /** Chip label that uses the option labels verbatim (no `Dimension:` prefix) —
  *  for self-describing single-select states like "Underwater" / "With debt". */
 function bareLabel(values: string[], options: FilterOptionDef[]): string {
@@ -71,9 +105,11 @@ function enumDim<K extends string>(args: {
 export function aaveV4FilterDimensions({
   supplyOptions,
   borrowOptions,
+  spokeOptions,
 }: {
   supplyOptions: FilterOptionDef[];
   borrowOptions: FilterOptionDef[];
+  spokeOptions: FilterOptionDef[];
 }): Dim[] {
   const health: Dim = {
     id: "health",
@@ -115,7 +151,9 @@ export function aaveV4FilterDimensions({
     cardinality: "multi",
     options: HUB_OPTIONS,
     get: (f) => f.hubs,
-    set: (f, values) => ({ ...f, hubs: values }),
+    // Selecting/changing hubs prunes any now-orphaned spoke selections so the
+    // hub ∩ spoke intersection never silently empties.
+    set: (f, values) => ({ ...f, hubs: values, spokes: pruneSpokesForHubs(f.spokes, values) }),
     chipLabel: (vals, opts) => `Hub: ${joinOptionLabels(vals, opts)}`,
   };
 
@@ -124,7 +162,7 @@ export function aaveV4FilterDimensions({
     label: "Spoke",
     group: "Market",
     cardinality: "multi",
-    options: SPOKE_OPTIONS,
+    options: spokeOptions,
     get: (f) => f.spokes,
     set: (f, values) => ({ ...f, spokes: values }),
     chipLabel: (vals, opts) => `Spoke: ${joinOptionLabels(vals, opts)}`,

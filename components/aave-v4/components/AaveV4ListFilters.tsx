@@ -20,7 +20,7 @@ import { fetchAaveV4AssetUniverse, type AaveV4AssetUniverseEntry } from "@/lib/a
 import { FilterSections } from "@/components/shared/filter-bar/filter-sections";
 import { FilterChips } from "@/components/shared/filter-bar/filter-chips";
 import type { FilterOptionDef } from "@/components/shared/filter-bar/types";
-import { aaveV4FilterDimensions } from "@/lib/aave-v4/list-filter-dimensions";
+import { aaveV4FilterDimensions, spokeOptionsForHubs } from "@/lib/aave-v4/list-filter-dimensions";
 
 // Re-export the param shape + visibility helpers (moved to list-filter-types so
 // the dimension registry can import them without a cycle) for existing callers.
@@ -168,9 +168,13 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
     };
   }, [assetUniverse]);
 
+  // Spoke options narrow to the selected hub(s) — the hub→spoke layer of the
+  // same parent-scopes-child logic the asset pills use.
+  const spokeOptions = useMemo(() => spokeOptionsForHubs(hubsKey ? hubsKey.split(",") : []), [hubsKey]);
+
   const dimensions = useMemo(
-    () => aaveV4FilterDimensions({ supplyOptions, borrowOptions }),
-    [supplyOptions, borrowOptions],
+    () => aaveV4FilterDimensions({ supplyOptions, borrowOptions, spokeOptions }),
+    [supplyOptions, borrowOptions, spokeOptions],
   );
 
   return (
