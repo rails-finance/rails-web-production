@@ -63,18 +63,12 @@ function DebtMetric({
               <TransitionArrow />
             </>
           )}
-          {isClose ? (
-            <ClosedLabel />
-          ) : (
-            <span className="text-sm font-bold ">{toLocaleStringHelper(after)}</span>
-          )}
+          {isClose ? <ClosedLabel /> : <span className="text-sm font-bold ">{toLocaleStringHelper(after)}</span>}
           <TokenChipIcon symbol={stablecoinSymbol} size={16} />
         </StateTransition>
         {((upfrontFee !== undefined && upfrontFee > 0) || totalAccruedFees > 0.01) && (
           <div className="text-xs  mt-0.5">
-            {totalAccruedFees > 0.01 && (
-              <span>incl. +{totalAccruedFees.toFixed(2)} interest</span>
-            )}
+            {totalAccruedFees > 0.01 && <span>incl. +{totalAccruedFees.toFixed(2)} interest</span>}
             {upfrontFee !== undefined && upfrontFee > 0 && (
               <>
                 {totalAccruedFees > 0.01 && <span> +</span>}
@@ -130,9 +124,7 @@ function CollateralMetric({
         {isClose ? (
           <ClosedLabel />
         ) : (
-          <span className="text-sm font-bold ">
-            {after === 0 ? "0" : formatColl(after)}
-          </span>
+          <span className="text-sm font-bold ">{after === 0 ? "0" : formatColl(after)}</span>
         )}
         <TokenChipIcon symbol={collateralType} size={16} />
         {showUsdValues && !isClose && after > 0 && (
@@ -141,11 +133,7 @@ function CollateralMetric({
           </span>
         )}
       </StateTransition>
-      {hasSurplus && (
-        <div className="text-xs text-foreground mt-0.5">
-          +{formatColl(collSurplus)} claimable surplus
-        </div>
-      )}
+      {hasSurplus && <div className="text-xs text-foreground mt-0.5">+{formatColl(collSurplus)} claimable surplus</div>}
     </StateMetric>
   );
 }
@@ -174,7 +162,8 @@ function InterestRateMetric({
         {hasChange && (
           <>
             <span className="text-sm font-bold ">
-              {(before * 100).toFixed(1)}<span className="ml-0.5">%</span>
+              {(before * 100).toFixed(1)}
+              <span className="ml-0.5">%</span>
             </span>
             <TransitionArrow />
           </>
@@ -185,7 +174,8 @@ function InterestRateMetric({
           <span className="text-sm font-bold ">N/A</span>
         ) : (
           <span className="text-sm font-bold ">
-            {(after * 100).toFixed(1)}<span className="ml-0.5">%</span>
+            {(after * 100).toFixed(1)}
+            <span className="ml-0.5">%</span>
           </span>
         )}
       </StateTransition>
@@ -198,7 +188,19 @@ function InterestRateMetric({
   );
 }
 
-function CollateralRatioMetric({ before, after, afterDebt, isClose, collateralType }: { before: number; after: number; afterDebt: number; isClose: boolean; collateralType: string }) {
+function CollateralRatioMetric({
+  before,
+  after,
+  afterDebt,
+  isClose,
+  collateralType,
+}: {
+  before: number;
+  after: number;
+  afterDebt: number;
+  isClose: boolean;
+  collateralType: string;
+}) {
   const { prefs } = usePreferences();
   const mode = prefs.ratioMode;
   const crColor = useLiquityRatioColorClass();
@@ -220,9 +222,7 @@ function CollateralRatioMetric({ before, after, afterDebt, isClose, collateralTy
         ) : afterDebt === 0 ? (
           <span className="text-sm font-bold ">N/A</span>
         ) : (
-          <span className={`text-sm font-bold ${crColor(after, collateralType)}`}>
-            {formatRatio(after, mode, 2)}
-          </span>
+          <span className={`text-sm font-bold ${crColor(after, collateralType)}`}>{formatRatio(after, mode, 2)}</span>
         )}
       </StateTransition>
     </StateMetric>
@@ -258,7 +258,10 @@ export function LiquityEventDetail({ ctx, txHash, previousEvent, currentEvent }:
 
   const isClose = ctx.operation === "closeTrove";
   const isLiquidation = ctx.operation === "liquidate";
-  const isRedemption = ctx.operation === "redeemCollateral" || ctx.operation === "adjustZombieTrove" || ctx.operation === "adjustUnredeemableZombieTrove";
+  const isRedemption =
+    ctx.operation === "redeemCollateral" ||
+    ctx.operation === "adjustZombieTrove" ||
+    ctx.operation === "adjustUnredeemableZombieTrove";
   const isBatchManagerOp = ctx.operation === "setBatchManagerAnnualInterestRate";
   const collPrice = ctx.collateralPrice ?? 0;
 
@@ -289,7 +292,11 @@ export function LiquityEventDetail({ ctx, txHash, previousEvent, currentEvent }:
 
   if (isLiquidation && liquidation) {
     beforeDebt = liquidation.debtOffsetBySP + liquidation.debtRedistributed;
-    beforeColl = liquidation.collSentToSP + liquidation.collRedistributed + liquidation.collSurplus + liquidation.collGasCompensation;
+    beforeColl =
+      liquidation.collSentToSP +
+      liquidation.collRedistributed +
+      liquidation.collSurplus +
+      liquidation.collGasCompensation;
     beforeCollInUsd = beforeColl * liquidation.price;
     if (beforeCollInUsd > 0 && beforeDebt > 0) {
       beforeCollRatio = (beforeCollInUsd / beforeDebt) * 100;
@@ -349,7 +356,13 @@ export function LiquityEventDetail({ ctx, txHash, previousEvent, currentEvent }:
                 accruedManagementFees={accruedManagementFees}
                 stablecoinSymbol={ctx.assetType}
               />
-              <CollateralRatioMetric before={beforeCollRatio} after={stateAfter.collateralRatio} afterDebt={stateAfter.debt} isClose={isClose} collateralType={ctx.collateralType} />
+              <CollateralRatioMetric
+                before={beforeCollRatio}
+                after={stateAfter.collateralRatio}
+                afterDebt={stateAfter.debt}
+                isClose={isClose}
+                collateralType={ctx.collateralType}
+              />
               <InterestRateMetric
                 before={beforeInterestRate}
                 after={stateAfter.annualInterestRate}
@@ -383,20 +396,39 @@ export function LiquityEventDetail({ ctx, txHash, previousEvent, currentEvent }:
         <div className="px-4 py-2">
           <span className="text-sm font-semibold text-foreground">Liquidation Breakdown</span>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
-            <Stat label="Debt offset by SP" value={`${toLocaleStringHelper(liquidation.debtOffsetBySP)} ${ctx.assetType ?? "BOLD"}`} />
+            <Stat
+              label="Debt offset by SP"
+              value={`${toLocaleStringHelper(liquidation.debtOffsetBySP)} ${ctx.assetType ?? "BOLD"}`}
+            />
             {liquidation.debtRedistributed > 0 && (
-              <Stat label="Debt redistributed" value={`${toLocaleStringHelper(liquidation.debtRedistributed)} ${ctx.assetType ?? "BOLD"}`} />
+              <Stat
+                label="Debt redistributed"
+                value={`${toLocaleStringHelper(liquidation.debtRedistributed)} ${ctx.assetType ?? "BOLD"}`}
+              />
             )}
-            <Stat label="Coll to SP" value={`${formatColl(liquidation.collSentToSP)} ${ctx.collateralType} (${formatUsd(liquidation.collSentToSP * liquidation.price)})`} />
+            <Stat
+              label="Coll to SP"
+              value={`${formatColl(liquidation.collSentToSP)} ${ctx.collateralType} (${formatUsd(liquidation.collSentToSP * liquidation.price)})`}
+            />
             {liquidation.collRedistributed > 0 && (
-              <Stat label="Coll redistributed" value={`${formatColl(liquidation.collRedistributed)} ${ctx.collateralType}`} />
+              <Stat
+                label="Coll redistributed"
+                value={`${formatColl(liquidation.collRedistributed)} ${ctx.collateralType}`}
+              />
             )}
             {liquidation.collSurplus > 0 && (
-              <Stat label="Surplus returned" value={`${formatColl(liquidation.collSurplus)} ${ctx.collateralType} (${formatUsd(liquidation.collSurplus * liquidation.price)})`} className="text-foreground" />
+              <Stat
+                label="Surplus returned"
+                value={`${formatColl(liquidation.collSurplus)} ${ctx.collateralType} (${formatUsd(liquidation.collSurplus * liquidation.price)})`}
+                className="text-foreground"
+              />
             )}
             <Stat label="Price" value={formatUsd(liquidation.price)} />
             {liquidation.boldGasCompensation > 0 && (
-              <Stat label="Gas Compensation" value={`${toLocaleStringHelper(liquidation.boldGasCompensation)} ${ctx.assetType ?? "BOLD"} + ${formatColl(liquidation.collGasCompensation)} ${ctx.collateralType}`} />
+              <Stat
+                label="Gas Compensation"
+                value={`${toLocaleStringHelper(liquidation.boldGasCompensation)} ${ctx.assetType ?? "BOLD"} + ${formatColl(liquidation.collGasCompensation)} ${ctx.collateralType}`}
+              />
             )}
           </div>
         </div>
@@ -408,19 +440,36 @@ export function LiquityEventDetail({ ctx, txHash, previousEvent, currentEvent }:
           <span className="text-sm font-semibold text-foreground">Redemption Breakdown</span>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
             {redemption.attemptedBoldAmount !== redemption.actualBoldAmount && (
-              <Stat label="Attempted" value={`${toLocaleStringHelper(redemption.attemptedBoldAmount)} ${ctx.assetType ?? "BOLD"}`} />
+              <Stat
+                label="Attempted"
+                value={`${toLocaleStringHelper(redemption.attemptedBoldAmount)} ${ctx.assetType ?? "BOLD"}`}
+              />
             )}
-            <Stat label={`${ctx.assetType ?? "BOLD"} redeemed`} value={`${toLocaleStringHelper(redemption.actualBoldAmount)} ${ctx.assetType ?? "BOLD"}`} />
-            <Stat label="Coll taken" value={`${formatColl(redemption.ETHSent)} ${ctx.collateralType} (${formatUsd(redemption.ETHSent * redemption.price)})`} />
+            <Stat
+              label={`${ctx.assetType ?? "BOLD"} redeemed`}
+              value={`${toLocaleStringHelper(redemption.actualBoldAmount)} ${ctx.assetType ?? "BOLD"}`}
+            />
+            <Stat
+              label="Coll taken"
+              value={`${formatColl(redemption.ETHSent)} ${ctx.collateralType} (${formatUsd(redemption.ETHSent * redemption.price)})`}
+            />
             {redemption.ETHFee && Number(redemption.ETHFee) > 0 && (
-              <Stat label="Fee retained" value={`${formatColl(Number(redemption.ETHFee))} ${ctx.collateralType}`} className="text-foreground" />
+              <Stat
+                label="Fee retained"
+                value={`${formatColl(Number(redemption.ETHFee))} ${ctx.collateralType}`}
+                className="text-foreground"
+              />
             )}
             <Stat label="Price" value={formatUsd(redemption.price)} />
             {(() => {
               const collValue = redemption.ETHSent * redemption.price;
               const pl = redemption.actualBoldAmount - collValue;
               return Math.abs(pl) > 0.01 ? (
-                <Stat label="Borrower P/L" value={`${pl > 0 ? '+' : ''}${formatUsd(Math.abs(pl))}`} className="text-foreground" />
+                <Stat
+                  label="Borrower P/L"
+                  value={`${pl > 0 ? "+" : ""}${formatUsd(Math.abs(pl))}`}
+                  className="text-foreground"
+                />
               ) : null;
             })()}
           </div>
@@ -431,7 +480,9 @@ export function LiquityEventDetail({ ctx, txHash, previousEvent, currentEvent }:
       {(ctx.isZombieTrove || ctx.isInBatch || collPrice > 0) && (
         <div className="flex items-center gap-2 px-4 py-2">
           {ctx.isZombieTrove && (
-            <span className="text-xs px-2 py-0.5 rounded-full bg-rb-200 dark:bg-rb-800 text-foreground font-bold">Zombie Trove</span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold">
+              Zombie Trove
+            </span>
           )}
           {ctx.isInBatch && (
             <span className="text-xs px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-400 font-bold">Batched</span>
@@ -447,7 +498,6 @@ export function LiquityEventDetail({ ctx, txHash, previousEvent, currentEvent }:
           )}
         </div>
       )}
-
     </>
   );
 }

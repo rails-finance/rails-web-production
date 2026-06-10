@@ -3,7 +3,6 @@
 import type { ReactNode } from "react";
 import type { AaveV4Context, AaveV4PriceSource } from "@/lib/shared/types/protocols/aave-v4";
 import { TokenChipIcon } from "@/components/shared/token-chip-icon";
-import { shortAddr } from "@/lib/shared/format-event";
 import { usePreferences } from "@/lib/shared/preferences-context";
 import { formatRatio, ratioLabel, ratioColorClass } from "@/lib/shared/ratio-format";
 import { TransitionArrow as SharedTransitionArrow, StatCard } from "@/components/shared/state-transition";
@@ -118,9 +117,7 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
   const prices = usePrices();
   // `token` stays the raw on-chain symbol — it threads through `allSupplies`
   // / `allDebts` rows whose `symbol` field is the chip's icon-lookup key.
-  // Narrative copy uses the augmented display form via `tokenLabel`.
   const token = ctx.reserveSymbol ?? "???";
-  const tokenLabel = aaveV4DisplaySymbol(ctx.reserveSymbol) || "???";
   const isLiq = ctx.eventType === "liquidation";
   const isToggle = ctx.eventType === "collateral_toggle";
 
@@ -305,41 +302,15 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
         </div>
       )}
 
-      {/* Liquidation breakdown */}
-      {isLiq && (
-        <div className="grid grid-cols-2 gap-2 px-5 py-2 text-sm">
-          {ctx.debtToCover && (
-            <div className="flex flex-col">
-              <span className="text-rb-500 text-xs font-semibold">Debt Covered</span>
-              <span className="font-bold text-red-400">
-                {fmt(ctx.debtToCover)} {tokenLabel}
-              </span>
-            </div>
-          )}
-          {ctx.liquidatedCollateralAmount && ctx.collateralSymbol && (
-            <div className="flex flex-col">
-              <span className="text-rb-500 text-xs font-semibold">Collateral Seized</span>
-              <span className="font-bold text-red-400">
-                {fmt(ctx.liquidatedCollateralAmount)} {ctx.collateralSymbol}
-              </span>
-            </div>
-          )}
-          {ctx.liquidator && (
-            <div className="flex flex-col col-span-2">
-              <span className="">Liquidator</span>
-              <span className="font-mono  text-xs">{shortAddr(ctx.liquidator)}</span>
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Full position snapshot — one equal-size card per section (Collateral,
-          Debt, LTV, Borrow Rate), all in a single grid so they balance in width
-          and match heights per row. Replaces the earlier two-grid +
-          border-divider layout. */}
+          Debt, LTV, Borrow Rate). Rows size to their own content (no
+          `auto-rows-fr`) so the single-line LTV / Borrow-Rate cards don't
+          stretch to match the tall multi-asset Collateral / Debt cards; cards
+          within a row still align via `h-full`. Mirrors the Liquity V2 detail
+          grid that leads its card. */}
       {snapshotCards.length > 0 && (
         <div className="px-5 py-2">
-          <div className="grid grid-cols-1 gap-2.5 sm:auto-rows-fr sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
             {snapshotCards.map((c) => (
               <StatCard key={c.key} label={c.label}>
                 {c.body}

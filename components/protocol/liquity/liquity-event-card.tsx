@@ -47,37 +47,38 @@ export function LiquityEventCard({
   const wallet = event.wallet;
 
   // Column 1 — Avatar
-  const avatarSlot = addressDisplay === "hidden" ? (
-    <div className="hidden sm:block" />
-  ) : addressDisplay === "compact" ? (
-    <div className="flex items-center justify-center pt-4">
-      <Link
-        href={`/address/${wallet}`}
-        onClick={(e) => e.stopPropagation()}
-        onMouseEnter={() => setHoveredAddress?.(wallet.toLowerCase())}
-        onMouseLeave={() => setHoveredAddress?.(null)}
-        className={`inline-flex items-center justify-center rounded-full border-2 p-1.5 bg-sunken transition-colors ${hoveredAddress === wallet.toLowerCase() ? "border-rb-500 dark:border-rb-500" : "border-rb-300 dark:border-rb-700"} hover:border-rb-500 dark:hover:border-rb-500`}
-        title={ensName || wallet}
-      >
-        <Facehash address={wallet} size={20} />
-      </Link>
-    </div>
-  ) : (
-    <div className="flex items-center pt-4">
-      <Link
-        href={`/address/${wallet}`}
-        onClick={(e) => e.stopPropagation()}
-        onMouseEnter={() => setHoveredAddress?.(wallet.toLowerCase())}
-        onMouseLeave={() => setHoveredAddress?.(null)}
-        className={`flex items-center rounded-full bg-sunken px-3 py-2 transition-colors ${hoveredAddress === wallet.toLowerCase() ? "text-blue-300 border-rb-500 dark:border-rb-500" : "text-blue-400"} hover:text-blue-500 hover:border-rb-500 dark:hover:border-rb-500`}
-      >
-        <span className="inline-flex items-center gap-1.5 w-[140px]">
-          <Facehash address={wallet} size={16} />
-          <span className="truncate font-mono text-xs">{ensName || shortenAddress(wallet)}</span>
-        </span>
-      </Link>
-    </div>
-  );
+  const avatarSlot =
+    addressDisplay === "hidden" ? (
+      <div className="hidden sm:block" />
+    ) : addressDisplay === "compact" ? (
+      <div className="flex items-center justify-center pt-4">
+        <Link
+          href={`/address/${wallet}`}
+          onClick={(e) => e.stopPropagation()}
+          onMouseEnter={() => setHoveredAddress?.(wallet.toLowerCase())}
+          onMouseLeave={() => setHoveredAddress?.(null)}
+          className={`inline-flex items-center justify-center rounded-full border-2 p-1.5 bg-sunken transition-colors ${hoveredAddress === wallet.toLowerCase() ? "border-rb-500 dark:border-rb-500" : "border-rb-300 dark:border-rb-700"} hover:border-rb-500 dark:hover:border-rb-500`}
+          title={ensName || wallet}
+        >
+          <Facehash address={wallet} size={20} />
+        </Link>
+      </div>
+    ) : (
+      <div className="flex items-center pt-4">
+        <Link
+          href={`/address/${wallet}`}
+          onClick={(e) => e.stopPropagation()}
+          onMouseEnter={() => setHoveredAddress?.(wallet.toLowerCase())}
+          onMouseLeave={() => setHoveredAddress?.(null)}
+          className={`flex items-center rounded-full bg-sunken px-3 py-2 transition-colors ${hoveredAddress === wallet.toLowerCase() ? "text-blue-300 border-rb-500 dark:border-rb-500" : "text-blue-400"} hover:text-blue-500 hover:border-rb-500 dark:hover:border-rb-500`}
+        >
+          <span className="inline-flex items-center gap-1.5 w-[140px]">
+            <Facehash address={wallet} size={16} />
+            <span className="truncate font-mono text-xs">{ensName || shortenAddress(wallet)}</span>
+          </span>
+        </Link>
+      </div>
+    );
 
   // Column 2 — Spine column with semantic icon modes
   const PASSIVE_ACTIONS = new Set(["redeemCollateral", "liquidate", "applyPendingDebt"]);
@@ -87,24 +88,55 @@ export function LiquityEventCard({
   const isRateChange = RATE_ACTIONS.has(ctx.operation);
   const isDelegate = DELEGATE_ACTIONS.has(ctx.operation);
 
-  const rateUp = isRateChange ? (ctx.stateAfter?.annualInterestRate ?? 0) >= (ctx.stateBefore?.annualInterestRate ?? 0) : false;
+  const rateUp = isRateChange
+    ? (ctx.stateAfter?.annualInterestRate ?? 0) >= (ctx.stateBefore?.annualInterestRate ?? 0)
+    : false;
   const isJoin = isDelegate ? ctx.operation === "setInterestBatchManager" : false;
 
   const iconSlot = isPassive ? (
-    <SpineColumn icon="warning" spine="dotted" isFirst={isFirst} isLast={!!isLast} />
+    <SpineColumn
+      icon="warning"
+      warningTone={ctx.operation === "liquidate" ? "red" : "amber"}
+      spine="dotted"
+      isFirst={isFirst}
+      isLast={!!isLast}
+    />
   ) : isDelegate ? (
-    <SpineColumn icon="delegate" iconDirection={isJoin ? "up" : "down"} spine="dotted" isFirst={isFirst} isLast={!!isLast} />
+    <SpineColumn
+      icon="delegate"
+      iconDirection={isJoin ? "up" : "down"}
+      spine="dotted"
+      isFirst={isFirst}
+      isLast={!!isLast}
+    />
   ) : isRateChange ? (
-    <SpineColumn icon="rate-change" iconDirection={rateUp ? "up" : "down"} spine="dotted" isFirst={isFirst} isLast={!!isLast} />
+    <SpineColumn
+      icon="rate-change"
+      iconDirection={rateUp ? "up" : "down"}
+      spine="dotted"
+      isFirst={isFirst}
+      isLast={!!isLast}
+    />
   ) : (
     (() => {
       const debtOp = ctx.troveOperation?.debtChangeFromOperation ?? 0;
       const collOp = ctx.troveOperation?.collChangeFromOperation ?? 0;
-      const boldDir = debtOp < 0 ? "right" as const : "left" as const;
-      const collDir = collOp < 0 ? "left" as const : "right" as const;
+      const boldDir = debtOp < 0 ? ("right" as const) : ("left" as const);
+      const collDir = collOp < 0 ? ("left" as const) : ("right" as const);
       const showBold = ctx.operation === "closeTrove" || Math.abs(debtOp) >= 0.01 || !ctx.troveOperation;
       const showColl = ctx.operation === "closeTrove" || Math.abs(collOp) >= 0.01 || !ctx.troveOperation;
-      const isActiveOp = !["redeemCollateral", "adjustZombieTrove", "adjustUnredeemableZombieTrove", "liquidate", "applyPendingDebt", "adjustTroveInterestRate", "setBatchManagerAnnualInterestRate", "setInterestBatchManager", "removeFromBatch", "transferTrove"].includes(ctx.operation);
+      const isActiveOp = ![
+        "redeemCollateral",
+        "adjustZombieTrove",
+        "adjustUnredeemableZombieTrove",
+        "liquidate",
+        "applyPendingDebt",
+        "adjustTroveInterestRate",
+        "setBatchManagerAnnualInterestRate",
+        "setInterestBatchManager",
+        "removeFromBatch",
+        "transferTrove",
+      ].includes(ctx.operation);
       const collVal = isActiveOp ? Math.abs(collOp) : undefined;
       const debtVal = isActiveOp ? Math.abs(debtOp) : undefined;
 

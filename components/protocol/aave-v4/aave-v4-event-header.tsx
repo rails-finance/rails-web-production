@@ -93,36 +93,48 @@ export function AaveV4EventHeader({ ctx, timestamp, txGroup, eventNumber }: Aave
         ) : (
           <span className="text-sm text-rb-500">{label}</span>
         )}
-        {amount > 0 && (
-          <span className="inline-flex items-center gap-1.5 text-sm">
-            <span className={`font-bold text-foreground ${hideVal}`}>{formatNum(amount)}</span>
-            <TokenChipIcon symbol={ctx.reserveSymbol ?? "???"} size={16} />
-          </span>
-        )}
-        {ctx.eventType === "collateral_toggle" && ctx.reserveSymbol && (
-          <span className="inline-flex items-center gap-1.5 text-sm">
-            <TokenChipIcon symbol={ctx.reserveSymbol} size={16} />
-            <span className="">{aaveV4DisplaySymbol(ctx.reserveSymbol)}</span>
-          </span>
-        )}
-        {showInterestRates && effectiveBorrowAPR(ctx) && (
-          <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-rb-300/60 dark:bg-rb-800/60 ">
-            {(parseFloat(effectiveBorrowAPR(ctx) ?? "0") * 100).toFixed(2)}%
-          </span>
-        )}
-        {ctx.eventType === "liquidation" && ctx.debtToCover && (
-          <span className="inline-flex items-center gap-1.5 text-xs text-red-400">
-            <span>
-              Debt covered: {formatNum(ctx.debtToCover)} {aaveV4DisplaySymbol(ctx.reserveSymbol)}
-            </span>
-          </span>
-        )}
-        {ctx.eventType === "liquidation" && ctx.liquidatedCollateralAmount && ctx.collateralSymbol && (
-          <span className="inline-flex items-center gap-1.5 text-xs text-red-400">
-            <span>
-              Seized: {formatNum(ctx.liquidatedCollateralAmount)} {ctx.collateralSymbol}
-            </span>
-          </span>
+        {ctx.eventType === "liquidation" ? (
+          // Liquidation reads like Liquity's redemption header: the two facts
+          // that matter — collateral cleared and debt reduced — each as
+          // value + token icon. Mirrors "Cleared X ◊ Reduced Y ⬡".
+          <>
+            {ctx.liquidatedCollateralAmount && ctx.collateralSymbol && (
+              <span className="inline-flex items-center gap-1.5 text-sm">
+                <span className="text-rb-500">Cleared</span>
+                <span className={`font-bold text-foreground ${hideVal}`}>
+                  {formatNum(ctx.liquidatedCollateralAmount)}
+                </span>
+                <TokenChipIcon symbol={ctx.collateralSymbol} size={16} />
+              </span>
+            )}
+            {ctx.debtToCover && (
+              <span className="inline-flex items-center gap-1.5 text-sm">
+                <span className="text-rb-500">Reduced</span>
+                <span className={`font-bold text-foreground ${hideVal}`}>{formatNum(ctx.debtToCover)}</span>
+                <TokenChipIcon symbol={ctx.reserveSymbol ?? "???"} size={16} />
+              </span>
+            )}
+          </>
+        ) : (
+          <>
+            {amount > 0 && (
+              <span className="inline-flex items-center gap-1.5 text-sm">
+                <span className={`font-bold text-foreground ${hideVal}`}>{formatNum(amount)}</span>
+                <TokenChipIcon symbol={ctx.reserveSymbol ?? "???"} size={16} />
+              </span>
+            )}
+            {ctx.eventType === "collateral_toggle" && ctx.reserveSymbol && (
+              <span className="inline-flex items-center gap-1.5 text-sm">
+                <TokenChipIcon symbol={ctx.reserveSymbol} size={16} />
+                <span className="">{aaveV4DisplaySymbol(ctx.reserveSymbol)}</span>
+              </span>
+            )}
+            {showInterestRates && effectiveBorrowAPR(ctx) && (
+              <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-rb-300/60 dark:bg-rb-800/60 ">
+                {(parseFloat(effectiveBorrowAPR(ctx) ?? "0") * 100).toFixed(2)}%
+              </span>
+            )}
+          </>
         )}
         <span className="ml-auto inline-flex items-center gap-2">
           {timestamp > 0 && (

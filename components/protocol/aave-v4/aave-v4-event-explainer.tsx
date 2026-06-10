@@ -1,7 +1,10 @@
 "use client";
 
+import type { ReactNode } from "react";
 import type { AaveV4Context } from "@/lib/shared/types/protocols/aave-v4";
 import { ExplainerList } from "@/components/shared/explainer-list";
+import { LearnMore } from "@/components/shared/learn-more-modal";
+import { aaveV4LiquidationContent } from "@/lib/shared/learn-more-content";
 import { shortAddr } from "@/lib/shared/format-event";
 import { aaveV4DisplaySymbol } from "@/lib/aave-v4/pt-tokens";
 import { effectiveBorrowAPR } from "@/lib/aave-v4/borrow-rate";
@@ -32,7 +35,7 @@ export function AaveV4EventExplainer({ ctx }: AaveV4EventExplainerProps) {
   // keep this consistent with the rate card + header chip.
   const borrowAPR = effectiveBorrowAPR(ctx);
 
-  const items: string[] = [];
+  const items: ReactNode[] = [];
 
   switch (ctx.eventType) {
     case "supply":
@@ -98,7 +101,21 @@ export function AaveV4EventExplainer({ ctx }: AaveV4EventExplainerProps) {
         items.push(
           `${fmt(ctx.liquidatedCollateralAmount)} ${ctx.collateralSymbol} collateral was seized (includes liquidation penalty).`,
         );
-      if (ctx.liquidator) items.push(`Liquidator: ${shortAddr(ctx.liquidator)}.`);
+      if (ctx.liquidator)
+        items.push(
+          <span>
+            Cleared by a third-party liquidator (typically an automated bot) that repaid the debt in exchange for the
+            discounted collateral:{" "}
+            <a
+              href={`https://etherscan.io/address/${ctx.liquidator}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-400 hover:text-blue-500 font-mono transition-colors"
+            >
+              {shortAddr(ctx.liquidator)} ↗
+            </a>
+          </span>,
+        );
       items.push(
         `To avoid future liquidations, maintain a health factor well above 1.0 by keeping debt low relative to collateral.`,
       );
@@ -121,5 +138,7 @@ export function AaveV4EventExplainer({ ctx }: AaveV4EventExplainerProps) {
       items.push(`Aave V4 ${token} event on ${market} market.`);
   }
 
-  return <ExplainerList items={items} />;
+  const learnMore = ctx.eventType === "liquidation" ? aaveV4LiquidationContent(ctx.spokeName) : null;
+
+  return <ExplainerList items={items}>{learnMore && <LearnMore content={learnMore} />}</ExplainerList>;
 }

@@ -28,10 +28,14 @@ export function ClosedSummaryCard({ trove, compact = false, showActivityMeta = t
             <span className="font-bold tracking-wider px-2 py-0.5 bg-rb-500 dark:bg-rb-700 text-white rounded-xs text-xs">
               CLOSED
             </span>
-            <span className="text-xs font-bold uppercase tracking-wide text-foreground/80">
-              {trove.collateralType}
-            </span>
-            <TroveIdentityRow troveId={trove.id} collateralType={trove.collateralType} owner={trove.owner} lastOwner={trove.lastOwner} ownerEns={trove.ownerEns} />
+            <span className="text-xs font-bold uppercase tracking-wide text-foreground/80">{trove.collateralType}</span>
+            <TroveIdentityRow
+              troveId={trove.id}
+              collateralType={trove.collateralType}
+              owner={trove.owner}
+              lastOwner={trove.lastOwner}
+              ownerEns={trove.ownerEns}
+            />
           </span>
           {showActivityMeta && (
             <span className="flex items-center gap-2 text-xs text-rb-500">
@@ -40,7 +44,7 @@ export function ClosedSummaryCard({ trove, compact = false, showActivityMeta = t
                 {formatDuration(trove.activity.lastActivityAt, new Date())} ago
               </span>
               {trove.activity.redemptionCount > 0 && (
-                <span className="inline-flex items-center text-rb-500">
+                <span className="inline-flex items-center text-orange-400">
                   <Icon name="triangle" size={12} />
                   <span className="ml-1">{trove.activity.redemptionCount}</span>
                 </span>
@@ -61,7 +65,13 @@ export function ClosedSummaryCard({ trove, compact = false, showActivityMeta = t
             <div className="text-xs text-rb-500 font-semibold mb-1">Highest recorded Collateral</div>
             <div className="flex items-center gap-1.5">
               <span className="text-2xl lg:text-3xl font-bold">
-                <HighlightableValue type="peakCollateral" state="after" value={trove.collateral.peakAmount} variant="card" className="text-rb-500">
+                <HighlightableValue
+                  type="peakCollateral"
+                  state="after"
+                  value={trove.collateral.peakAmount}
+                  variant="card"
+                  className="text-rb-500"
+                >
                   {formatPrice(trove.collateral.peakAmount)}
                 </HighlightableValue>
               </span>
@@ -72,7 +82,13 @@ export function ClosedSummaryCard({ trove, compact = false, showActivityMeta = t
             <div className="text-xs text-rb-500 font-semibold mb-1">Highest recorded Debt</div>
             <div className="flex items-center gap-1.5">
               <span className="text-2xl lg:text-3xl font-bold">
-                <HighlightableValue type="peakDebt" state="after" value={trove.debt.peak} variant="card" className="text-rb-500">
+                <HighlightableValue
+                  type="peakDebt"
+                  state="after"
+                  value={trove.debt.peak}
+                  variant="card"
+                  className="text-rb-500"
+                >
                   {compact ? formatApproximate(trove.debt.peak) : formatPrice(trove.debt.peak)}
                 </HighlightableValue>
               </span>

@@ -57,7 +57,7 @@ function getOperationStyle(operation: string, ctx?: LiquityContext): OperationSt
     case "applyPendingDebt":
       return { label: "Apply debt", color: "text-pink-700 dark:text-pink-400", bg: "bg-pink-500/20", badge: true };
     case "redeemCollateral":
-      return { label: "Redemption", color: "text-foreground", bg: "bg-rb-200 dark:bg-rb-800", badge: true };
+      return { label: "Redemption", color: "text-white", bg: "bg-orange-500", badge: true };
     case "adjustZombieTrove":
     case "adjustUnredeemableZombieTrove":
       return { label: "Redeemed", color: "text-foreground", bg: "bg-rb-200 dark:bg-rb-800", badge: true };
@@ -113,28 +113,29 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
     </span>
   ) : null;
 
-  const counter = eventNumber != null && showEventNumbers ? (
-    <span
-      className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] bg-sunken text-rb-500"
-      aria-label={`Event ${eventNumber}`}
-    >
-      {eventNumber}
-    </span>
-  ) : null;
+  const counter =
+    eventNumber != null && showEventNumbers ? (
+      <span
+        className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] bg-sunken text-rb-500"
+        aria-label={`Event ${eventNumber}`}
+      >
+        {eventNumber}
+      </span>
+    ) : null;
 
   if (!stateAfter || !stateBefore) {
     return (
       <div className="flex items-center gap-2">
         {groupChip}
         {style.badge ? (
-          <span className={`text-xs font-bold uppercase px-2 py-0.5 rounded-full ${style.bg} ${style.color}`}>{style.label}</span>
+          <span className={`text-xs font-bold uppercase px-2 py-0.5 rounded-full ${style.bg} ${style.color}`}>
+            {style.label}
+          </span>
         ) : (
-          <span className={`text-sm font-medium ${style.color || 'text-rb-500'}`}>{style.label}</span>
+          <span className={`text-sm font-medium ${style.color || "text-rb-500"}`}>{style.label}</span>
         )}
         <span className="ml-auto inline-flex items-center gap-2">
-          {showTimestamps && (
-            <span className="text-xs ">{new Date(timestamp * 1000).toLocaleDateString()}</span>
-          )}
+          {showTimestamps && <span className="text-xs ">{new Date(timestamp * 1000).toLocaleDateString()}</span>}
           {counter}
         </span>
       </div>
@@ -142,7 +143,9 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
   }
 
   const debtChange = troveOperation
-    ? troveOperation.debtChangeFromOperation + troveOperation.debtIncreaseFromRedist + troveOperation.debtIncreaseFromUpfrontFee
+    ? troveOperation.debtChangeFromOperation +
+      troveOperation.debtIncreaseFromRedist +
+      troveOperation.debtIncreaseFromUpfrontFee
     : stateAfter.debt - stateBefore.debt;
   const collChange = troveOperation
     ? troveOperation.collChangeFromOperation + troveOperation.collIncreaseFromRedist
@@ -151,7 +154,13 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
   const hasDebtChange = Math.abs(debtChange) >= 0.01;
   const hasCollChange = Math.abs(collChange) >= 0.01;
   const rateChanged = Math.abs(stateAfter.annualInterestRate - stateBefore.annualInterestRate) >= 0.0001;
-  const PASSIVE_OPS = new Set(["liquidate", "redeemCollateral", "applyPendingDebt", "adjustZombieTrove", "adjustUnredeemableZombieTrove"]);
+  const PASSIVE_OPS = new Set([
+    "liquidate",
+    "redeemCollateral",
+    "applyPendingDebt",
+    "adjustZombieTrove",
+    "adjustUnredeemableZombieTrove",
+  ]);
   const hideVal = useHeaderValueHideClass({ isPassive: PASSIVE_OPS.has(ctx.operation) });
 
   return (
@@ -162,39 +171,65 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
           {ctx.operation === "setBatchManagerAnnualInterestRate" && stateAfter ? (
             <>
               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-700 dark:text-purple-400 text-xs font-bold">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-                {(stateAfter.annualInterestRate).toFixed(1)}%
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+                {stateAfter.annualInterestRate.toFixed(1)}%
               </span>
               {ctx.batchUpdate?.annualManagementFee != null && ctx.batchUpdate.annualManagementFee > 0 && (
                 <span className="inline-block px-2 py-0.5 rounded-full border border-rb-400 dark:border-rb-600  text-xs font-medium">
-                  + {(ctx.batchUpdate.annualManagementFee).toFixed(1)} %
+                  + {ctx.batchUpdate.annualManagementFee.toFixed(1)} %
                 </span>
               )}
-              {ctx.batchManager && (
-                <span className="text-sm ">{getBatchManagerName(ctx.batchManager)}</span>
-              )}
+              {ctx.batchManager && <span className="text-sm ">{getBatchManagerName(ctx.batchManager)}</span>}
             </>
           ) : ctx.operation === "setInterestBatchManager" ? (
             <>
               <span className="text-sm text-rb-500">{style.label}</span>
               {stateAfter.annualInterestRate > 0 && (
                 <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-700 dark:text-purple-400 text-xs font-bold">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-                  {(stateAfter.annualInterestRate).toFixed(2)}%
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>
+                  {stateAfter.annualInterestRate.toFixed(2)}%
                 </span>
               )}
               {ctx.batchUpdate?.annualManagementFee != null && ctx.batchUpdate.annualManagementFee > 0 && (
                 <span className="inline-block px-2 py-0.5 rounded-full border border-rb-400 dark:border-rb-600  text-xs font-medium">
-                  + {(ctx.batchUpdate.annualManagementFee).toFixed(1)} %
+                  + {ctx.batchUpdate.annualManagementFee.toFixed(1)} %
                 </span>
               )}
-              {ctx.batchManager && (
-                <span className="text-sm ">{getBatchManagerName(ctx.batchManager)}</span>
-              )}
+              {ctx.batchManager && <span className="text-sm ">{getBatchManagerName(ctx.batchManager)}</span>}
             </>
-          ) : (ctx.operation === "openTrove" || ctx.operation === "openTroveAndJoinBatch") ? (
+          ) : ctx.operation === "openTrove" || ctx.operation === "openTroveAndJoinBatch" ? (
             <>
-              <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${style.bg} ${style.color}`}>
+              <span
+                className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${style.bg} ${style.color}`}
+              >
                 {style.label}
               </span>
               {hasCollChange && (
@@ -213,7 +248,9 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
               )}
             </>
           ) : style.badge ? (
-            <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${style.bg} ${style.color}`}>
+            <span
+              className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${style.bg} ${style.color}`}
+            >
               {style.label}
             </span>
           ) : style.label.includes(" + ") ? (
@@ -225,12 +262,16 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
                   <span className="inline-flex items-center gap-1.5 text-sm">
                     <span className="text-rb-500">{collAction}</span>
                     {hasCollChange && (
-                      <span className={`font-bold text-foreground ${hideVal}`}>{formatNumber(Math.abs(collChange))}</span>
+                      <span className={`font-bold text-foreground ${hideVal}`}>
+                        {formatNumber(Math.abs(collChange))}
+                      </span>
                     )}
                     <TokenChipIcon symbol={ctx.collateralType} size={16} />
                     <span className="text-rb-500">{debtAction}</span>
                     {hasDebtChange && (
-                      <span className={`font-bold text-foreground ${hideVal}`}>{formatNumber(Math.abs(debtChange))}</span>
+                      <span className={`font-bold text-foreground ${hideVal}`}>
+                        {formatNumber(Math.abs(debtChange))}
+                      </span>
                     )}
                     <TokenChipIcon symbol={ctx.assetType ?? "BOLD"} size={16} />
                   </span>
@@ -238,47 +279,48 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
               })()}
             </>
           ) : (
-            <span className="text-sm text-rb-500">
-              {style.label}
-            </span>
+            <span className="text-sm text-rb-500">{style.label}</span>
           )}
 
           {/* Debt change (skip for open trove and combined — already shown inline) */}
-          {hasDebtChange && !style.label.includes(" + ") && ctx.operation !== "openTrove" && ctx.operation !== "openTroveAndJoinBatch" && (
-            <span className="inline-flex items-center gap-1.5 text-sm">
-              <span className={`font-bold text-foreground ${hideVal}`}>
-                {formatNumber(Math.abs(debtChange))}
+          {hasDebtChange &&
+            !style.label.includes(" + ") &&
+            ctx.operation !== "openTrove" &&
+            ctx.operation !== "openTroveAndJoinBatch" && (
+              <span className="inline-flex items-center gap-1.5 text-sm">
+                <span className={`font-bold text-foreground ${hideVal}`}>{formatNumber(Math.abs(debtChange))}</span>
+                <TokenChipIcon symbol={ctx.assetType ?? "BOLD"} size={16} />
               </span>
-              <TokenChipIcon symbol={ctx.assetType ?? "BOLD"} size={16} />
-            </span>
-          )}
+            )}
 
           {/* Collateral change (skip for open trove and combined) */}
-          {hasCollChange && !style.label.includes(" + ") && ctx.operation !== "openTrove" && ctx.operation !== "openTroveAndJoinBatch" && (
-            <span className="inline-flex items-center gap-1.5 text-sm">
-              <span className={`font-bold text-foreground ${hideVal}`}>
-                {formatNumber(Math.abs(collChange))}
+          {hasCollChange &&
+            !style.label.includes(" + ") &&
+            ctx.operation !== "openTrove" &&
+            ctx.operation !== "openTroveAndJoinBatch" && (
+              <span className="inline-flex items-center gap-1.5 text-sm">
+                <span className={`font-bold text-foreground ${hideVal}`}>{formatNumber(Math.abs(collChange))}</span>
+                <TokenChipIcon symbol={ctx.collateralType} size={16} />
               </span>
-              <TokenChipIcon symbol={ctx.collateralType} size={16} />
-            </span>
-          )}
+            )}
 
           {/* Zombie claimable collateral — when a redemption fully clears
               the debt of a zombie trove, the leftover coll is unlocked for
               the owner. Mirrors the legacy "claimable" pill. */}
-          {ctx.operation === "redeemCollateral" && ctx.isZombieTrove && stateAfter.debt === 0 && stateAfter.coll > 0 && (
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium bg-rb-200 dark:bg-rb-800 text-foreground">
-              <span className="font-bold tabular-nums">{stateAfter.coll.toFixed(4)}</span>
-              <TokenChipIcon symbol={ctx.collateralType} size={14} />
-              claimable
-            </span>
-          )}
+          {ctx.operation === "redeemCollateral" &&
+            ctx.isZombieTrove &&
+            stateAfter.debt === 0 &&
+            stateAfter.coll > 0 && (
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium bg-rb-200 dark:bg-rb-800 text-foreground">
+                <span className="font-bold tabular-nums">{stateAfter.coll.toFixed(4)}</span>
+                <TokenChipIcon symbol={ctx.collateralType} size={14} />
+                claimable
+              </span>
+            )}
 
           {/* Rate change value for interest rate operations */}
           {rateChanged && !hasDebtChange && !hasCollChange && ctx.operation !== "setBatchManagerAnnualInterestRate" && (
-            <span className="text-sm font-bold text-foreground">
-              {(stateAfter.annualInterestRate).toFixed(1)}%
-            </span>
+            <span className="text-sm font-bold text-foreground">{stateAfter.annualInterestRate.toFixed(1)}%</span>
           )}
 
           {/* Right side: CR (rate only on rate-change operations) */}
@@ -288,23 +330,23 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
                 {formatRatio(stateAfter.collateralRatio, ratioMode, 0)} {ratioLabelShort(ratioMode)}
               </span>
             )}
-            {rateChanged && (ctx.operation === "adjustTroveInterestRate" || ctx.operation === "setBatchManagerAnnualInterestRate" || ctx.operation === "setInterestBatchManager" || ctx.operation === "removeFromBatch") && (
-              <span className="text-sm ">
-                {(stateAfter.annualInterestRate).toFixed(1)}% APR
-              </span>
-            )}
+            {rateChanged &&
+              (ctx.operation === "adjustTroveInterestRate" ||
+                ctx.operation === "setBatchManagerAnnualInterestRate" ||
+                ctx.operation === "setInterestBatchManager" ||
+                ctx.operation === "removeFromBatch") && (
+                <span className="text-sm ">{stateAfter.annualInterestRate.toFixed(1)}% APR</span>
+              )}
           </span>
           <span className="ml-auto inline-flex items-center gap-2">
             {ctx.operation === "redeemCollateral" && ctx.isZombieTrove && (
               <span
-                className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-bold rounded ${
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-bold rounded bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                title={
                   stateAfter.debt === 0
-                    ? "bg-rb-200 dark:bg-rb-800 text-foreground"
-                    : "bg-rb-200 dark:bg-rb-800 text-foreground"
-                }`}
-                title={stateAfter.debt === 0
-                  ? "Zombie trove fully redeemed — debt cleared, collateral now claimable"
-                  : "Zombie trove — debt below the minimum, redeemable until restored"}
+                    ? "Zombie trove fully redeemed — debt cleared, collateral now claimable"
+                    : "Zombie trove — debt below the minimum, redeemable until restored"
+                }
               >
                 <AlertTriangle className="w-3 h-3" />
                 <span className="hidden md:inline">Zombie</span>

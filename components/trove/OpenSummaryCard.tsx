@@ -15,7 +15,8 @@ import { OraclePricesData } from "@/types/api/oracle";
 import { FadeNumber } from "@/components/ui/FadeNumber";
 import { formatDuration } from "@/lib/date";
 
-const ARM_DEPRECATION_ANNOUNCEMENT = "https://discord.com/channels/700620821198143498/711975093940519012/1487025900208783530";
+const ARM_DEPRECATION_ANNOUNCEMENT =
+  "https://discord.com/channels/700620821198143498/711975093940519012/1487025900208783530";
 
 // OpenSummaryCard is rendered inside Link-wrapped cards on listing/umbrella
 // pages, so an inner <a> would nest anchors (invalid HTML, React hydration
@@ -84,7 +85,15 @@ function fmtLiqPrice(p: number): string {
   return "$" + (p / 1_000_000).toFixed(2) + "M";
 }
 
-export function OpenSummaryCard({ trove, liveState, prices, loadingStatus, expectsLiveState = false, compact = false, showActivityMeta = true }: OpenSummaryCardProps) {
+export function OpenSummaryCard({
+  trove,
+  liveState,
+  prices,
+  loadingStatus,
+  expectsLiveState = false,
+  compact = false,
+  showActivityMeta = true,
+}: OpenSummaryCardProps) {
   const batchManagerInfo = getBatchManagerByAddress(trove.batch.manager);
   const deprecation = getBatchManagerDeprecation(trove.batch.manager);
 
@@ -101,29 +110,41 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus, expec
   const animateValues = expectsLiveState;
 
   const mcr = getLiquidationThreshold(trove.collateralType);
-  const liqPrice = displayCollateral > 0 && displayDebt > 0
-    ? (displayDebt * (mcr / 100)) / displayCollateral
-    : null;
-  const headroomPct = liqPrice !== null && currentPrice && currentPrice > 0
-    ? Math.max(0, ((currentPrice - liqPrice) / currentPrice) * 100)
-    : null;
+  const liqPrice = displayCollateral > 0 && displayDebt > 0 ? (displayDebt * (mcr / 100)) / displayCollateral : null;
+  const headroomPct =
+    liqPrice !== null && currentPrice && currentPrice > 0
+      ? Math.max(0, ((currentPrice - liqPrice) / currentPrice) * 100)
+      : null;
 
   const txCount = trove.activity.transactionCount - trove.activity.redemptionCount;
 
   return (
     <div>
       {deprecation && (
-        <div className={`flex items-start gap-2 rounded-lg p-3 mb-2 text-sm ${
-          deprecation.isPast
-            ? "bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900"
-            : "bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900"
-        }`}>
+        <div
+          className={`flex items-start gap-2 rounded-lg p-3 mb-2 text-sm ${
+            deprecation.isPast
+              ? "bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900"
+              : "bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900"
+          }`}
+        >
           <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
           <p>
             {deprecation.isPast ? (
-              <>The {batchManagerInfo?.name} delegate is no longer maintained and has been removed from the frontend. Please move your position to a new delegate. <AnnouncementLink /></>
+              <>
+                The {batchManagerInfo?.name} delegate is no longer maintained and has been removed from the frontend.
+                Please move your position to a new delegate. <AnnouncementLink />
+              </>
             ) : (
-              <>The {batchManagerInfo?.name} delegate will no longer be maintained after {new Date(deprecation.deprecatedDate + "T00:00:00Z").toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}. Please move your position to a new delegate before this date. <AnnouncementLink /></>
+              <>
+                The {batchManagerInfo?.name} delegate will no longer be maintained after{" "}
+                {new Date(deprecation.deprecatedDate + "T00:00:00Z").toLocaleDateString("en-US", {
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+                . Please move your position to a new delegate before this date. <AnnouncementLink />
+              </>
             )}
           </p>
         </div>
@@ -135,10 +156,14 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus, expec
             <span className="font-bold tracking-wider px-2 py-0.5 bg-rb-300 dark:bg-rb-700 text-foreground/80 dark:text-foreground/60 rounded-xs text-xs">
               OPEN
             </span>
-            <span className="text-xs font-bold uppercase tracking-wide text-foreground/80">
-              {trove.collateralType}
-            </span>
-            <TroveIdentityRow troveId={trove.id} collateralType={trove.collateralType} owner={trove.owner} lastOwner={trove.lastOwner} ownerEns={trove.ownerEns} />
+            <span className="text-xs font-bold uppercase tracking-wide text-foreground/80">{trove.collateralType}</span>
+            <TroveIdentityRow
+              troveId={trove.id}
+              collateralType={trove.collateralType}
+              owner={trove.owner}
+              lastOwner={trove.lastOwner}
+              ownerEns={trove.ownerEns}
+            />
             {/* Delegate marker — name lives in the row below the card, the
                 fuchsia icon here is just a status flag. */}
             {trove.batch.isMember && (
@@ -160,7 +185,7 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus, expec
                 {formatDuration(trove.activity.lastActivityAt, new Date())} ago
               </span>
               {trove.activity.redemptionCount > 0 && (
-                <span className="inline-flex items-center text-rb-500">
+                <span className="inline-flex items-center text-orange-400">
                   <Icon name="triangle" size={12} />
                   <span className="ml-1">{trove.activity.redemptionCount}</span>
                 </span>
@@ -181,7 +206,12 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus, expec
             <div className="text-xs text-rb-500 font-semibold mb-1">Collateral</div>
             <div className="flex items-center gap-1.5">
               <span className="text-2xl lg:text-3xl font-bold">
-                <HighlightableValue type="collateral" state="after" value={displayCollateral} className="text-foreground/80">
+                <HighlightableValue
+                  type="collateral"
+                  state="after"
+                  value={displayCollateral}
+                  className="text-foreground/80"
+                >
                   <FadeNumber value={displayCollateral} animateOnMount={animateValues} />
                 </HighlightableValue>
               </span>
@@ -206,7 +236,11 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus, expec
             <div className="flex items-center gap-1.5">
               <span className="text-2xl lg:text-3xl font-bold">
                 <HighlightableValue type="debt" state="after" value={displayDebt} className="text-foreground/80">
-                  <FadeNumber value={displayDebt} formatFn={compact ? formatApproximate : formatPrice} animateOnMount={animateValues} />
+                  <FadeNumber
+                    value={displayDebt}
+                    formatFn={compact ? formatApproximate : formatPrice}
+                    animateOnMount={animateValues}
+                  />
                 </HighlightableValue>
               </span>
               <TokenIcon assetSymbol="BOLD" className="inline-block w-7 h-7" />
@@ -214,8 +248,8 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus, expec
             <div className="text-xs mt-0.5 text-rb-500">
               <HighlightableValue type="interestRate" state="after" value={displayInterestRate}>
                 <FadeNumber value={displayInterestRate} decimals={2} animateOnMount={animateValues} />%
-              </HighlightableValue>
-              {" "}interest rate
+              </HighlightableValue>{" "}
+              interest rate
             </div>
           </div>
 
@@ -224,7 +258,12 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus, expec
             <div className="text-xs text-rb-500 font-semibold mb-1">Collateral Ratio</div>
             {currentPrice && collateralRatio !== null && collateralRatio > 0 ? (
               <div className="text-2xl lg:text-3xl font-bold">
-                <HighlightableValue type="collRatio" state="after" value={parseFloat(collateralRatio.toFixed(1))} className="text-foreground/80">
+                <HighlightableValue
+                  type="collRatio"
+                  state="after"
+                  value={parseFloat(collateralRatio.toFixed(1))}
+                  className="text-foreground/80"
+                >
                   <FadeNumber value={collateralRatio} decimals={1} animateOnMount={animateValues} />%
                 </HighlightableValue>
               </div>
@@ -238,9 +277,7 @@ export function OpenSummaryCard({ trove, liveState, prices, loadingStatus, expec
 
           {/* Liq Price */}
           <div>
-            <div className="text-xs text-rb-500 font-semibold mb-1">
-              Liq Price ({trove.collateralType})
-            </div>
+            <div className="text-xs text-rb-500 font-semibold mb-1">Liq Price ({trove.collateralType})</div>
             {liqPrice !== null ? (
               <div className="flex items-center gap-1.5">
                 <span className="text-2xl lg:text-3xl font-bold text-foreground/80">{fmtLiqPrice(liqPrice)}</span>
