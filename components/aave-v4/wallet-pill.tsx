@@ -41,12 +41,12 @@ export function WalletPill({
           <Link
             href={href}
             onClick={(e) => e.stopPropagation()}
-            className="font-mono text-foreground/80 hover:text-foreground transition-colors"
+            className="font-mono text-rb-500 hover:text-foreground transition-colors"
           >
             {label}
           </Link>
         ) : (
-          <span className="font-mono text-foreground/80">{label}</span>
+          <span className="font-mono text-rb-500">{label}</span>
         )}
         <button
           type="button"

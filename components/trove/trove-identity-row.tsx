@@ -4,10 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Image as ImageIcon, Link2 } from "lucide-react";
 import { Icon } from "@/components/icons/icon";
+import { Facehash } from "@/components/shared/facehash";
 import { getTroveNftUrl } from "@/lib/utils/nft-utils";
 
 /**
- * Trove identifier — Trove ID label + NFT/OpenSea link + owner address,
+ * Trove identifier — owner address + Trove ID label + NFT/OpenSea link,
  * rendered as inline text (no pill chrome) so it sits cleanly next to the
  * status pill in the summary-card header. The owner falls back to the last
  * known owner once a trove is closed/liquidated, and clicking it re-filters
@@ -48,6 +49,39 @@ export function TroveIdentityRow({
 
   return (
     <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-rb-500">
+      {ownerLabel && ownerAddress && (
+        // <button> (not <a>) because this row renders inside cards wrapped in a
+        // Next <Link> on the listing pages; a nested anchor is invalid HTML.
+        // Routing to the owner-filtered listing re-filters in place.
+        <span className="inline-flex items-center gap-1" title={isLastOwner ? "Last owner (trove closed)" : "Owner"}>
+          <Facehash address={ownerAddress} size={16} />
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              router.push(`/liquity-v2?ownerAddress=${ownerAddress}`);
+            }}
+            className={`font-mono hover:text-foreground transition-colors cursor-pointer ${isLastOwner ? "opacity-70" : ""}`}
+            aria-label={`Filter troves by owner ${ownerLabel}`}
+          >
+            {ownerLabel}
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              copy(ownerAddress, setCopiedOwner);
+            }}
+            aria-label={copiedOwner ? "Copied owner address" : "Copy owner address"}
+            title={copiedOwner ? "Copied!" : "Copy"}
+            className="text-rb-500 hover:text-foreground cursor-pointer"
+          >
+            <Icon name={copiedOwner ? "check" : "copy"} size={12} />
+          </button>
+        </span>
+      )}
       {troveLabel && troveId && (
         <span className="inline-flex items-center gap-1">
           <Icon name="trove-id" size={12} />
@@ -86,42 +120,6 @@ export function TroveIdentityRow({
           <ImageIcon size={12} />
           <Link2 size={12} className="-rotate-45" />
         </button>
-      )}
-      {ownerLabel && ownerAddress && (
-        // <button> (not <a>) because this row renders inside cards wrapped in a
-        // Next <Link> on the listing pages; a nested anchor is invalid HTML.
-        // Routing to the owner-filtered listing re-filters in place.
-        <span
-          className="inline-flex items-center gap-1"
-          title={isLastOwner ? "Last owner (trove closed)" : "Owner"}
-        >
-          <Icon name="user" size={12} />
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              router.push(`/liquity-v2?ownerAddress=${ownerAddress}`);
-            }}
-            className={`font-mono hover:text-foreground transition-colors cursor-pointer ${isLastOwner ? "opacity-70" : ""}`}
-            aria-label={`Filter troves by owner ${ownerLabel}`}
-          >
-            {ownerLabel}
-          </button>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              copy(ownerAddress, setCopiedOwner);
-            }}
-            aria-label={copiedOwner ? "Copied owner address" : "Copy owner address"}
-            title={copiedOwner ? "Copied!" : "Copy"}
-            className="text-rb-500 hover:text-foreground cursor-pointer"
-          >
-            <Icon name={copiedOwner ? "check" : "copy"} size={12} />
-          </button>
-        </span>
       )}
     </span>
   );

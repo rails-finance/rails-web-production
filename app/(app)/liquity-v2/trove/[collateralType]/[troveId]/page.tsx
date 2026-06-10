@@ -382,15 +382,17 @@ export default function TrovePage() {
   const lastEventTs = sortedEvents.length > 0 ? sortedEvents[sortedEvents.length - 1].timestamp : null;
 
   if (loading) {
+    // Real back button (so the nav chrome doesn't pop in) above two
+    // card-shaped blocks that pulse in place — one for the position card, one
+    // for the economics panel. They share the `bg-raised` card surface, so
+    // they read as the cards themselves fading in.
     return (
       <>
         <FeedbackButton />
-        <div className="py-8 space-y-6">
-          <div className="bg-raised rounded-lg h-48 animate-pulse" />
-          <div className="space-y-4">
-            <div className="h-8 bg-raised rounded w-1/4 animate-pulse" />
-            <div className="h-32 bg-raised rounded animate-pulse" />
-          </div>
+        <div className="space-y-6 py-8">
+          <SmartBackButton walletFilterHref="/liquity-v2" />
+          <div className="h-44 rounded-2xl bg-raised animate-pulse" />
+          <div className="h-72 rounded-2xl bg-raised animate-pulse" />
         </div>
       </>
     );

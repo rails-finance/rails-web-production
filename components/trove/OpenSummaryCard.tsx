@@ -224,8 +224,8 @@ export function OpenSummaryCard({
                     <FadeNumber value={collateralUsd} formatFn={formatUsdValue} animateOnMount={animateValues} />
                   </HighlightableValue>
                 </span>
-              ) : expectsLiveState ? (
-                <span className="inline-block h-3 w-16 bg-skeleton rounded animate-pulse" />
+              ) : expectsLiveState && !prices && displayCollateral > 0 ? (
+                <span className="inline-block h-3 w-16 rounded-md bg-rb-200 dark:bg-rb-700 animate-pulse" />
               ) : null}
             </div>
           </div>
@@ -267,8 +267,8 @@ export function OpenSummaryCard({
                   <FadeNumber value={collateralRatio} decimals={1} animateOnMount={animateValues} />%
                 </HighlightableValue>
               </div>
-            ) : expectsLiveState ? (
-              <div className="h-9 w-20 bg-skeleton rounded animate-pulse" />
+            ) : expectsLiveState && !prices && displayDebt > 0 ? (
+              <div className="h-9 w-20 rounded-md bg-rb-200 dark:bg-rb-700 animate-pulse" />
             ) : (
               <div className="text-2xl lg:text-3xl font-bold text-rb-500">—</div>
             )}
@@ -289,8 +289,8 @@ export function OpenSummaryCard({
             <div className="text-xs mt-0.5 text-rb-500 min-h-[1rem]">
               {headroomPct !== null ? (
                 <>{headroomPct.toFixed(0)}% headroom</>
-              ) : expectsLiveState ? (
-                <span className="inline-block h-3 w-20 bg-skeleton rounded animate-pulse" />
+              ) : expectsLiveState && !prices && displayDebt > 0 && displayCollateral > 0 ? (
+                <span className="inline-block h-3 w-20 rounded-md bg-rb-200 dark:bg-rb-700 animate-pulse" />
               ) : null}
             </div>
           </div>

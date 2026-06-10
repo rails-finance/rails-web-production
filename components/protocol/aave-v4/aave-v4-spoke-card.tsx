@@ -236,7 +236,7 @@ function AaveV4SpokeCard({
                         <StatValue color="text-foreground/80">
                           <span className="inline-flex items-center gap-1.5">
                             {fmtLiqPrice(spoke.liqPrice.liqPrice)}
-                            <TokenChipIcon symbol={spoke.liqPrice.symbol} size={18} />
+                            <TokenChipIcon symbol={spoke.liqPrice.symbol} size={28} />
                           </span>
                         </StatValue>
                       ) : (

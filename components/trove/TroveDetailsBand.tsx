@@ -70,14 +70,10 @@ export function TroveDetailsBand({
               Highest recorded Collateral
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-foreground font-semibold tabular-nums">
-                {formatPrice(peakCollateral)}
-              </span>
+              <span className="text-foreground font-semibold tabular-nums">{formatPrice(peakCollateral)}</span>
               <TokenIcon assetSymbol={trove.collateralType} className="inline-block w-4 h-4" />
             </div>
-            {peakCollateralUsd !== null && (
-              <div className="text-rb-500">≈ {formatUsdValue(peakCollateralUsd)}</div>
-            )}
+            {peakCollateralUsd !== null && <div className="text-rb-500">≈ {formatUsdValue(peakCollateralUsd)}</div>}
           </>
         ) : null}
       </div>
@@ -86,9 +82,7 @@ export function TroveDetailsBand({
       <div className="space-y-1">
         {displayAccruedInterest !== undefined ? (
           <>
-            <div className="text-rb-500/70 font-semibold uppercase tracking-wide text-[10px]">
-              Debt Breakdown
-            </div>
+            <div className="text-rb-500/70 font-semibold uppercase tracking-wide text-[10px]">Debt Breakdown</div>
             <div className="text-foreground/80 tabular-nums">
               <FadeNumber value={displayRecordedDebt} formatFn={formatPrice} animateOnMount={true} />{" "}
               <span className="text-rb-500">principal</span>
@@ -106,12 +100,10 @@ export function TroveDetailsBand({
           </>
         ) : (
           <>
-            <div className="text-rb-500/70 font-semibold uppercase tracking-wide text-[10px]">
-              Debt Breakdown
-            </div>
+            <div className="text-rb-500/70 font-semibold uppercase tracking-wide text-[10px]">Debt Breakdown</div>
             <div className="space-y-1">
-              <div className="h-3 w-32 bg-skeleton rounded animate-pulse" />
-              <div className="h-3 w-28 bg-skeleton rounded animate-pulse" />
+              <div className="h-3 w-32 rounded-md bg-rb-200 dark:bg-rb-700 animate-pulse" />
+              <div className="h-3 w-28 rounded-md bg-rb-200 dark:bg-rb-700 animate-pulse" />
             </div>
           </>
         )}
@@ -124,9 +116,7 @@ export function TroveDetailsBand({
 
       {/* Column 3 — under Collateral Ratio */}
       <div className="space-y-1">
-        <div className="text-rb-500/70 font-semibold uppercase tracking-wide text-[10px]">
-          Interest Cost
-        </div>
+        <div className="text-rb-500/70 font-semibold uppercase tracking-wide text-[10px]">Interest Cost</div>
         <div className="text-foreground/80 tabular-nums">
           ~ <FadeNumber value={dailyInterestCost} formatFn={formatPrice} animateOnMount={true} />{" "}
           <span className="text-rb-500">/ day</span>
@@ -155,13 +145,11 @@ export function TroveDetailsBand({
 
       {/* Column 4 — under Liq Price */}
       <div className="space-y-1">
-        <div className="text-rb-500/70 font-semibold uppercase tracking-wide text-[10px]">
-          Debt in Front
-        </div>
+        <div className="text-rb-500/70 font-semibold uppercase tracking-wide text-[10px]">Debt in Front</div>
         {debtInFrontLoading ? (
           <div className="space-y-1">
-            <div className="h-3 w-24 bg-skeleton rounded animate-pulse" />
-            <div className="h-3 w-32 bg-skeleton rounded animate-pulse" />
+            <div className="h-3 w-24 rounded-md bg-rb-200 dark:bg-rb-700 animate-pulse" />
+            <div className="h-3 w-32 rounded-md bg-rb-200 dark:bg-rb-700 animate-pulse" />
           </div>
         ) : debtInFront !== null && debtInFront !== undefined ? (
           <>

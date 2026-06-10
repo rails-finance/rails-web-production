@@ -35,10 +35,7 @@ import { SPOKE_HUB } from "@/components/protocol/aave-v4/aave-v4-spoke-constants
 import { LiquidatedBadge } from "@/components/aave-v4/LiquidatedBadge";
 import { WalletPill } from "@/components/aave-v4/wallet-pill";
 import { fmtUsd, hfLabel, fmtLiqPrice } from "@/lib/aave-v4/format";
-import {
-  simulateAaveV4Position,
-  type SimPositionInputs,
-} from "@/lib/aave-v4/utils/simulate";
+import { simulateAaveV4Position, type SimPositionInputs } from "@/lib/aave-v4/utils/simulate";
 
 export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow }) {
   // Build sim inputs from the server's chain-truth reserves[]. Same inputs the
@@ -121,8 +118,11 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
 
   const collateralValue = (() => {
     const v = fmtUsd(sim.totalCollateralUsd);
+    // Supply-only positions are still OPEN — render the value bright like any
+    // active position. The muted (text-rb-500) tone is reserved for genuinely
+    // closed positions, so using it here would falsely read as "closed."
     return (
-      <StatValue color={supplyOnly ? "text-rb-500" : "text-foreground"} title={v.title}>
+      <StatValue color="text-foreground/80" title={v.title}>
         {v.display}
       </StatValue>
     );
@@ -155,7 +155,7 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
       <StatValue color="text-foreground/80">
         <span className="inline-flex items-center gap-1.5">
           {fmtLiqPrice(sim.liqPrice.liqPrice)}
-          <TokenChipIcon symbol={sim.liqPrice.symbol} size={18} filterable={false} />
+          <TokenChipIcon symbol={sim.liqPrice.symbol} size={28} filterable={false} />
         </span>
       </StatValue>
     );
@@ -164,9 +164,7 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
   return (
     <OpenPositionStats
       statusPill={
-        <span
-          className={`font-bold tracking-wider px-2 py-0.5 rounded-xs text-xs ${bucket.pillClass}`}
-        >
+        <span className={`font-bold tracking-wider px-2 py-0.5 rounded-xs text-xs ${bucket.pillClass}`}>
           {bucket.pillLabel}
         </span>
       }
@@ -190,9 +188,7 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
         {
           label: supplyOnly ? "Supplied" : "Collateral",
           assetIcons:
-            sim.supplyingSymbols.length > 0 ? (
-              <InlineAssetCluster symbols={sim.supplyingSymbols} />
-            ) : undefined,
+            sim.supplyingSymbols.length > 0 ? <InlineAssetCluster symbols={sim.supplyingSymbols} /> : undefined,
           value: collateralValue,
         },
         {
@@ -202,9 +198,7 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
               <InlineAssetCluster symbols={sim.borrowingSymbols} />
             ) : undefined,
           value: debtValue,
-          footnote: supplyOnly ? (
-            <div className="text-xs mt-0.5 text-rb-500">Supply only</div>
-          ) : undefined,
+          footnote: supplyOnly ? <div className="text-xs mt-0.5 text-rb-500">Supply only</div> : undefined,
         },
         {
           label: "Health Factor",
@@ -220,10 +214,7 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
           value: hfValue,
           footnote:
             !supplyOnly && borrowingPowerUsd > 0.01 ? (
-              <div
-                className="text-xs mt-0.5 text-rb-500"
-                title={fmtUsd(borrowingPowerUsd).title}
-              >
+              <div className="text-xs mt-0.5 text-rb-500" title={fmtUsd(borrowingPowerUsd).title}>
                 {fmtUsd(borrowingPowerUsd).display} borrowing power
               </div>
             ) : undefined,
@@ -232,9 +223,7 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
           label: sim.liqPrice ? `Liq Price (${sim.liqPrice.symbol})` : "Liq Price",
           value: liqPriceValue,
           footnote: sim.liqPrice ? (
-            <div className="text-xs mt-0.5 text-rb-500">
-              {sim.liqPrice.headroomPct.toFixed(0)}% headroom
-            </div>
+            <div className="text-xs mt-0.5 text-rb-500">{sim.liqPrice.headroomPct.toFixed(0)}% headroom</div>
           ) : undefined,
         },
       ]}

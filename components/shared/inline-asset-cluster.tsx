@@ -10,7 +10,7 @@ export interface InlineAssetClusterProps {
   overlap?: number;
 }
 
-export function InlineAssetCluster({ symbols, size = 32, overlap = 9 }: InlineAssetClusterProps) {
+export function InlineAssetCluster({ symbols, size = 28, overlap = 9 }: InlineAssetClusterProps) {
   if (symbols.length === 0) return null;
   return (
     <span className="inline-flex items-center">
