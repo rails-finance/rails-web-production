@@ -16,7 +16,7 @@ import { useDebounce } from "@/lib/hooks/useDebounce";
 import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import { WalletHistoryDropdown } from "@/components/shared/wallet-history-dropdown";
 import { upsertSession } from "@/lib/shared/sessions";
-import { fetchAaveV4AssetUniverse } from "@/lib/api/fetch-aave-v4-asset-universe";
+import { fetchAaveV4AssetUniverse, type AaveV4AssetUniverseEntry } from "@/lib/api/fetch-aave-v4-asset-universe";
 import { FilterSections } from "@/components/shared/filter-bar/filter-sections";
 import { FilterChips } from "@/components/shared/filter-bar/filter-chips";
 import type { FilterOptionDef } from "@/components/shared/filter-bar/types";
@@ -54,17 +54,25 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
   const [searchInput, setSearchInput] = useState<string>(initialSearch);
   const [searchFocused, setSearchFocused] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
-  // Asset universe — fetched once on mount, drives the Supplying / Borrowing
-  // dimension option lists. Empty until the network call returns; the dimensions
-  // still render, just with no asset options to pick yet. Failure is non-fatal.
-  const [assetUniverse, setAssetUniverse] = useState<string[]>([]);
+  // Asset universe — drives the Supplying / Borrowing dimension option lists.
+  // Refetched whenever the selected market (spokes/hubs) changes: with a market
+  // selected the response carries config-truthful canSupply/canBorrow so the
+  // pills can hide assets that market doesn't offer; unscoped it's the global
+  // empirical list. Empty until the network call returns; failure is non-fatal.
+  const [assetUniverse, setAssetUniverse] = useState<AaveV4AssetUniverseEntry[]>([]);
+  // Stable primitive deps so the effect only refires on actual market changes,
+  // not on every parent re-render handing us a fresh array identity.
+  const spokesKey = filters.spokes.join(",");
+  const hubsKey = filters.hubs.join(",");
 
   useEffect(() => {
     let cancelled = false;
-    fetchAaveV4AssetUniverse()
+    const spokes = spokesKey ? spokesKey.split(",") : [];
+    const hubs = hubsKey ? hubsKey.split(",") : [];
+    fetchAaveV4AssetUniverse({ spokes, hubs })
       .then((r) => {
         if (cancelled) return;
-        setAssetUniverse(r.assets.map((a) => a.symbol));
+        setAssetUniverse(r.assets);
       })
       .catch(() => {
         // Non-fatal — leave the asset dimensions empty.
@@ -72,7 +80,7 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [spokesKey, hubsKey]);
 
   const searchRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
@@ -132,18 +140,38 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
   };
 
   // Asset options carry a small token chip; "???" falls through to the unknown
-  // placeholder inside TokenChipIcon.
-  const assetOptions = useMemo<FilterOptionDef[]>(
-    () =>
-      assetUniverse.map((symbol) => ({
-        value: symbol,
-        label: symbol === "???" ? "Unknown" : symbol,
-        icon: <TokenChipIcon symbol={symbol} size={18} filterable={false} />,
-      })),
-    [assetUniverse],
-  );
+  // placeholder inside TokenChipIcon. Each side gets its own list:
+  //   - Market selected (config-truthful canSupply/canBorrow present): HIDE
+  //     assets the market doesn't offer on that side — a collateral-only asset
+  //     drops out of the Borrowing pill entirely. Within the available set,
+  //     mute assets not empirically seen on that side ("rare here").
+  //   - No market (global, no canSupply/canBorrow): show everything, muting by
+  //     the empirical flags only — globally almost everything is borrowable in
+  //     *some* market, so there's nothing honest to hide.
+  const { supplyOptions, borrowOptions } = useMemo(() => {
+    const toOption = (e: AaveV4AssetUniverseEntry, dimmed: boolean): FilterOptionDef => ({
+      value: e.symbol,
+      label: e.symbol === "???" ? "Unknown" : e.symbol,
+      icon: <TokenChipIcon symbol={e.symbol} size={18} filterable={false} />,
+      dimmed,
+    });
+    const scoped = assetUniverse.some((e) => e.canSupply !== undefined || e.canBorrow !== undefined);
+    if (scoped) {
+      return {
+        supplyOptions: assetUniverse.filter((e) => e.canSupply).map((e) => toOption(e, !e.asSupply)),
+        borrowOptions: assetUniverse.filter((e) => e.canBorrow).map((e) => toOption(e, !e.asDebt)),
+      };
+    }
+    return {
+      supplyOptions: assetUniverse.map((e) => toOption(e, !e.asSupply)),
+      borrowOptions: assetUniverse.map((e) => toOption(e, !e.asDebt)),
+    };
+  }, [assetUniverse]);
 
-  const dimensions = useMemo(() => aaveV4FilterDimensions({ assetOptions }), [assetOptions]);
+  const dimensions = useMemo(
+    () => aaveV4FilterDimensions({ supplyOptions, borrowOptions }),
+    [supplyOptions, borrowOptions],
+  );
 
   return (
     <div className="mb-6 flex flex-col gap-3">

@@ -5,28 +5,34 @@ import type { AaveV4AssetUniverseResponse } from "@/lib/api/fetch-aave-v4-asset-
 const RAILS_API_URL = process.env.RAILS_API_URL;
 
 /**
- * Proxy to rails-server-mig's `/api/aave-v4/asset-universe`. Returns the
- * distinct set of token symbols ever seen with a non-zero balance across
- * mv_aave_v4_spoke_positions. Powers the Supplying / Borrowing multi-select
- * pills on /aave-v4. The Express handler short-TTL-caches (5 min) since the
- * universe shifts only when reserves enter or leave usage.
+ * Proxy to rails-server-mig's `/api/aave-v4/asset-universe`. Powers the
+ * Supplying / Borrowing multi-select pills on /aave-v4.
+ *
+ * Forwards the optional `spokes` / `spoke` / `hubs` query params: with a market
+ * filter the backend returns config-truthful per-market availability
+ * (canSupply / canBorrow from the on-chain reserve config), without one it
+ * returns the global empirical universe. The Express handler short-TTL-caches
+ * (5 min) since both the universe and reserve config shift rarely.
  */
-export async function GET() {
+export async function GET(request: Request) {
   if (!RAILS_API_URL) {
     console.error("RAILS_API_URL environment variable is not set");
     return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
   }
 
   try {
-    const url = `${RAILS_API_URL}/api/aave-v4/asset-universe`;
+    const incoming = new URL(request.url).searchParams;
+    const forwarded = new URLSearchParams();
+    for (const key of ["spokes", "spoke", "hubs"]) {
+      for (const value of incoming.getAll(key)) forwarded.append(key, value);
+    }
+    const qs = forwarded.toString();
+    const url = `${RAILS_API_URL}/api/aave-v4/asset-universe${qs ? `?${qs}` : ""}`;
     const response = await fetch(url, createAuthFetchOptions());
 
     if (!response.ok) {
       console.error(`Backend API error: ${response.status} ${response.statusText}`);
-      return NextResponse.json(
-        { error: `Backend error: ${response.statusText}` },
-        { status: response.status },
-      );
+      return NextResponse.json({ error: `Backend error: ${response.statusText}` }, { status: response.status });
     }
 
     const data: AaveV4AssetUniverseResponse = await response.json();

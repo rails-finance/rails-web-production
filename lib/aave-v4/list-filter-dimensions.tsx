@@ -62,10 +62,19 @@ function enumDim<K extends string>(args: {
 
 /**
  * Aave V4 listing filter dimensions. Asset options are injected (the supply /
- * borrow universe is fetched async) so this stays a pure builder. Order here is
- * the order of the + Filter menu; `group` inserts the section headers.
+ * borrow universe is fetched async) so this stays a pure builder. The Supplying
+ * and Borrowing pills take separate option lists so each can mute assets never
+ * seen on its side (asSupply / asDebt) — advisory dimming, not removal, since
+ * the flags are empirical. Order here is the order of the + Filter menu; `group`
+ * inserts the section headers.
  */
-export function aaveV4FilterDimensions({ assetOptions }: { assetOptions: FilterOptionDef[] }): Dim[] {
+export function aaveV4FilterDimensions({
+  supplyOptions,
+  borrowOptions,
+}: {
+  supplyOptions: FilterOptionDef[];
+  borrowOptions: FilterOptionDef[];
+}): Dim[] {
   const health: Dim = {
     id: "health",
     label: "Health",
@@ -126,7 +135,7 @@ export function aaveV4FilterDimensions({ assetOptions }: { assetOptions: FilterO
     label: "Supplying",
     group: "Supply",
     cardinality: "multi",
-    options: assetOptions,
+    options: supplyOptions,
     get: (f) => f.supplyAssets,
     set: (f, values) => ({ ...f, supplyAssets: values }),
     chipLabel: (vals, opts) => `Supplying: ${joinOptionLabels(vals, opts)}`,
@@ -137,7 +146,7 @@ export function aaveV4FilterDimensions({ assetOptions }: { assetOptions: FilterO
     label: "Borrowing",
     group: "Borrow",
     cardinality: "multi",
-    options: assetOptions,
+    options: borrowOptions,
     get: (f) => f.borrowAssets,
     set: (f, values) => ({ ...f, borrowAssets: values }),
     chipLabel: (vals, opts) => `Borrowing: ${joinOptionLabels(vals, opts)}`,

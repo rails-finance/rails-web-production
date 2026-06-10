@@ -19,6 +19,10 @@ export interface FilterOptionDef {
   label: string;
   /** Optional leading glyph (e.g. a token chip for asset dimensions). */
   icon?: ReactNode;
+  /** Render muted to mark the option as unusual-but-allowed for this dimension
+   *  (e.g. an asset never seen borrowed, shown in the Borrowing pill). Advisory
+   *  only — the row stays selectable; the query just may return zero rows. */
+  dimmed?: boolean;
 }
 
 export interface FilterDimension<F> {

@@ -206,8 +206,10 @@ function OptionRow({
           {checked && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
         </span>
       )}
-      {opt.icon && <span className="shrink-0 flex items-center">{opt.icon}</span>}
-      <span className="flex-1 text-left truncate">{opt.label}</span>
+      {opt.icon && (
+        <span className={`shrink-0 flex items-center ${opt.dimmed && !checked ? "opacity-40" : ""}`}>{opt.icon}</span>
+      )}
+      <span className={`flex-1 text-left truncate ${opt.dimmed && !checked ? "text-rb-500" : ""}`}>{opt.label}</span>
     </button>
   );
 }
