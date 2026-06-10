@@ -34,7 +34,8 @@ export function aaveV4RunwayExplanation({
     return (
       <>
         <span className="font-semibold text-foreground">{collateralSymbol} is below its liquidation price</span> (
-        {fmtPrice(liqPrice!)}) — on-chain, this position is liquidatable now.
+        <span className="font-semibold text-foreground">{fmtPrice(liqPrice!)}</span>) — on-chain, this position is
+        liquidatable now.
         {recoverPct != null && (
           <>
             {" "}
@@ -59,8 +60,9 @@ export function aaveV4RunwayExplanation({
     return (
       <>
         {collateralSymbol} would need to drop{" "}
-        <span className="font-semibold text-foreground">{headroomPct.toFixed(1)}%</span> (to {fmtPrice(liqPrice!)})
-        before this spoke&apos;s health factor reaches 1 — holding every other asset at its current state.
+        <span className="font-semibold text-foreground">{headroomPct.toFixed(1)}%</span> (to{" "}
+        <span className="font-semibold text-foreground">{fmtPrice(liqPrice!)}</span>) before this spoke&apos;s health
+        factor reaches 1.0 — holding every other asset at its current state.
       </>
     );
   }

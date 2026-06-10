@@ -717,13 +717,34 @@ function AaveV4SpokeEconomicsBand({
 
       {runwayInfo.length > 0 && (
         <InfoDisclosure open={runwayInfoOpen} onToggle={setRunwayInfoOpen} label="liquidation runway">
-          <div className="space-y-2 text-sm text-foreground/90">
+          {/* Muted body (text-rb-500) so the foreground highlights on
+              card-referenced figures — each asset's headroom % and liq price,
+              both surfaced on the runway bars and the Liq Price stat — stand
+              out. Distinct from the "This position" panel: this one explains
+              how to *read* the runways, not the headline HF / borrowing-power
+              numbers that panel already states. */}
+          <div className="space-y-2 text-sm text-rb-500">
+            <div className="flex items-start gap-2 leading-relaxed">
+              <span className="select-none text-rb-500">•</span>
+              <span>
+                Each runway is an independent shock: it shows how far that one asset&apos;s price could fall — with
+                every other asset held at today&apos;s value — before this spoke&apos;s health factor reaches 1.0 and
+                the position turns liquidatable.
+              </span>
+            </div>
             {runwayInfo.map((r) => (
               <div key={r.symbol} className="flex items-start gap-2 leading-relaxed">
                 <span className="select-none text-rb-500">•</span>
                 <span>{r.node}</span>
               </div>
             ))}
+            <div className="flex items-start gap-2 leading-relaxed">
+              <span className="select-none text-rb-500">•</span>
+              <span>
+                The whole spoke shares one health factor, so a broad drop across several collaterals at once would trip
+                liquidation sooner than any single asset&apos;s runway implies.
+              </span>
+            </div>
             <div className="flex items-start gap-2 leading-relaxed">
               <span className="select-none text-rb-500">•</span>
               <span>
