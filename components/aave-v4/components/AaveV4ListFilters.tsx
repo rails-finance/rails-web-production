@@ -82,6 +82,26 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
     };
   }, [spokesKey, hubsKey]);
 
+  // Prune downward: once the (market-scoped) universe loads, drop any selected
+  // supply/borrow asset that no longer has positions on that side in scope —
+  // it's now absent from its own dropdown (we only list assets with positions),
+  // so without this it'd be an invisible active predicate guaranteeing zero
+  // results with no way to clear it but the chip. Mirrors the hub→spoke
+  // pruning, completing the Hub ⊃ Spoke ⊃ Asset scope flow. Guard on a loaded
+  // universe so an empty pre-fetch state can't wipe URL-provided selections;
+  // keyed on universe change so toggling an asset within a valid scope can't loop.
+  useEffect(() => {
+    if (assetUniverse.length === 0) return;
+    const supplyAvail = new Set(assetUniverse.filter((e) => e.asSupply).map((e) => e.symbol));
+    const borrowAvail = new Set(assetUniverse.filter((e) => e.asDebt).map((e) => e.symbol));
+    const nextSupply = filters.supplyAssets.filter((s) => supplyAvail.has(s));
+    const nextBorrow = filters.borrowAssets.filter((s) => borrowAvail.has(s));
+    if (nextSupply.length !== filters.supplyAssets.length || nextBorrow.length !== filters.borrowAssets.length) {
+      onFiltersChange({ ...filters, supplyAssets: nextSupply, borrowAssets: nextBorrow });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assetUniverse]);
+
   const searchRef = useRef<HTMLDivElement>(null);
   const sortRef = useRef<HTMLDivElement>(null);
 
@@ -140,31 +160,23 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
   };
 
   // Asset options carry a small token chip; "???" falls through to the unknown
-  // placeholder inside TokenChipIcon. Each side gets its own list:
-  //   - Market selected (config-truthful canSupply/canBorrow present): HIDE
-  //     assets the market doesn't offer on that side — a collateral-only asset
-  //     drops out of the Borrowing pill entirely. Within the available set,
-  //     mute assets not empirically seen on that side ("rare here").
-  //   - No market (global, no canSupply/canBorrow): show everything, muting by
-  //     the empirical flags only — globally almost everything is borrowable in
-  //     *some* market, so there's nothing honest to hide.
+  // placeholder inside TokenChipIcon. A filter exists to narrow positions that
+  // exist, so each side lists exactly the assets that actually HAVE positions
+  // on that side in the current scope (asSupply / asDebt, market-scoped by the
+  // fetch above). Assets with no positions are omitted — selecting one is
+  // guaranteed zero results (the empirical flag and the server-side position
+  // filter read the same MV balances), so offering it would be a dead choice.
+  // Note this is empirical, not protocol-config: a frozen reserve that still
+  // holds existing debt correctly stays filterable.
   const { supplyOptions, borrowOptions } = useMemo(() => {
-    const toOption = (e: AaveV4AssetUniverseEntry, dimmed: boolean): FilterOptionDef => ({
+    const toOption = (e: AaveV4AssetUniverseEntry): FilterOptionDef => ({
       value: e.symbol,
       label: e.symbol === "???" ? "Unknown" : e.symbol,
       icon: <TokenChipIcon symbol={e.symbol} size={18} filterable={false} />,
-      dimmed,
     });
-    const scoped = assetUniverse.some((e) => e.canSupply !== undefined || e.canBorrow !== undefined);
-    if (scoped) {
-      return {
-        supplyOptions: assetUniverse.filter((e) => e.canSupply).map((e) => toOption(e, !e.asSupply)),
-        borrowOptions: assetUniverse.filter((e) => e.canBorrow).map((e) => toOption(e, !e.asDebt)),
-      };
-    }
     return {
-      supplyOptions: assetUniverse.map((e) => toOption(e, !e.asSupply)),
-      borrowOptions: assetUniverse.map((e) => toOption(e, !e.asDebt)),
+      supplyOptions: assetUniverse.filter((e) => e.asSupply).map(toOption),
+      borrowOptions: assetUniverse.filter((e) => e.asDebt).map(toOption),
     };
   }, [assetUniverse]);
 

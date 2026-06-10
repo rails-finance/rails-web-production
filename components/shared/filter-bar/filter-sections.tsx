@@ -186,8 +186,10 @@ function OptionRow({
   checked: boolean;
   onClick: () => void;
 }): ReactNode {
-  // Item chrome matches components/shared/filter-dropdown.tsx exactly: multi gets
-  // a leading circular checkbox; single carries selection via overlay-item-active.
+  // Item chrome matches components/shared/filter-dropdown.tsx: multi gets a
+  // leading circular checkbox, single gets a radio dot. Both carry a leading
+  // control glyph so checkbox and radio dimensions read consistently in the
+  // same panel; single additionally keeps the overlay-item-active highlight.
   return (
     <button
       type="button"
@@ -196,7 +198,7 @@ function OptionRow({
       role={multi ? "menuitemcheckbox" : "menuitemradio"}
       aria-checked={checked}
     >
-      {multi && (
+      {multi ? (
         <span
           className={`inline-flex items-center justify-center w-5 h-5 rounded-full transition-colors shrink-0 ${
             checked ? "bg-rb-500" : "border-2 border-rb-400 dark:border-rb-600"
@@ -205,11 +207,18 @@ function OptionRow({
         >
           {checked && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
         </span>
+      ) : (
+        <span
+          className={`inline-flex items-center justify-center w-5 h-5 rounded-full border-2 transition-colors shrink-0 ${
+            checked ? "border-rb-500" : "border-rb-400 dark:border-rb-600"
+          }`}
+          aria-hidden="true"
+        >
+          {checked && <span className="w-2 h-2 rounded-full bg-rb-500" aria-hidden="true" />}
+        </span>
       )}
-      {opt.icon && (
-        <span className={`shrink-0 flex items-center ${opt.dimmed && !checked ? "opacity-40" : ""}`}>{opt.icon}</span>
-      )}
-      <span className={`flex-1 text-left truncate ${opt.dimmed && !checked ? "text-rb-500" : ""}`}>{opt.label}</span>
+      {opt.icon && <span className="shrink-0 flex items-center">{opt.icon}</span>}
+      <span className="flex-1 text-left truncate">{opt.label}</span>
     </button>
   );
 }

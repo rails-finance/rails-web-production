@@ -114,7 +114,7 @@ export function aaveV4FilterDimensions({
   const health: Dim = {
     id: "health",
     label: "Health",
-    group: "Risk",
+    group: "Status",
     cardinality: "single",
     options: [{ value: "underwater", label: "Underwater" }],
     get: (f) => (f.health === "underwater" ? ["underwater"] : []),
@@ -125,7 +125,7 @@ export function aaveV4FilterDimensions({
   const debt = enumDim<AaveV4Debt>({
     id: "debt",
     label: "Debt",
-    group: "Risk",
+    group: "Status",
     field: "debt",
     options: [
       { value: "withDebt", label: "With debt" },
@@ -136,7 +136,7 @@ export function aaveV4FilterDimensions({
   const liquidations = enumDim<AaveV4Liquidations>({
     id: "liquidations",
     label: "Liquidations",
-    group: "Risk",
+    group: "Status",
     field: "liquidations",
     options: [
       { value: "with", label: "Liquidated" },
@@ -200,10 +200,13 @@ export function aaveV4FilterDimensions({
     label: "Visibility",
     group: "View",
     cardinality: "single",
+    // One monotonic strictness ladder, not three independent toggles:
+    // all ⊃ active ⊃ nodust (nodust already hides closed). Labels read as
+    // escalating levels so the single-select radio makes sense.
     options: [
-      { value: "all", label: "Include closed" },
-      { value: "active", label: "Hide closed" },
-      { value: "nodust", label: "Hide dust" },
+      { value: "all", label: "Show all" },
+      { value: "active", label: "Active only" },
+      { value: "nodust", label: "Active, no dust" },
     ],
     get: (f) => [effectiveAaveV4Show(f)],
     set: (f, values) => ({ ...f, show: (values[0] as AaveV4Show) ?? undefined }),
@@ -211,5 +214,6 @@ export function aaveV4FilterDimensions({
     chipLabel: bareLabel,
   };
 
-  return [health, debt, liquidations, hubs, spokes, supplying, borrowing, visibility];
+  // Within Status, Health (Underwater) sits last — Debt and Liquidations first.
+  return [debt, liquidations, health, hubs, spokes, supplying, borrowing, visibility];
 }
