@@ -131,11 +131,18 @@ export function AaveV4EventHeader({ ctx, timestamp, txGroup, eventNumber }: Aave
                 <span className="">{aaveV4DisplaySymbol(ctx.reserveSymbol)}</span>
               </span>
             )}
-            {showInterestRates && effectiveBorrowAPR(ctx) && (
-              <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-rb-300/60 dark:bg-rb-800/60 ">
-                {(parseFloat(effectiveBorrowAPR(ctx) ?? "0") * 100).toFixed(2)}%
-              </span>
-            )}
+            {/* Rate pill only on borrow/repay — there it sits right after the
+                moved asset's icon, so the number is unambiguously that asset's
+                rate. On supply/withdraw it would float free as a held-debt rate
+                with no asset context (the confusing case); the expanded card's
+                asset-labelled Borrow Rate rows carry that instead. */}
+            {showInterestRates &&
+              (ctx.eventType === "borrow" || ctx.eventType === "repay") &&
+              effectiveBorrowAPR(ctx) && (
+                <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-rb-300/60 dark:bg-rb-800/60 ">
+                  {(parseFloat(effectiveBorrowAPR(ctx) ?? "0") * 100).toFixed(2)}%
+                </span>
+              )}
           </>
         )}
         <span className="ml-auto inline-flex items-center gap-2">

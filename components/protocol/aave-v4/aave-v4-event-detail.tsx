@@ -10,7 +10,7 @@ import { resolvePrice } from "@/lib/aave/prices";
 import { usePrices } from "@/lib/shared/prices-context";
 import { useTimelineDisplay } from "@/components/shared/timeline-display-context";
 import { aaveV4DisplaySymbol } from "@/lib/aave-v4/pt-tokens";
-import { effectiveBorrowAPR } from "@/lib/aave-v4/borrow-rate";
+import { borrowRatesByDebt } from "@/lib/aave-v4/borrow-rate";
 
 function fmt(v: string | number | undefined): string {
   if (!v) return "0";
@@ -58,6 +58,20 @@ function PricePill({ symbol, usd, source }: { symbol: string; usd: number; sourc
       {source === "stablecoin" ? "≈" : ""}
       {formatUsd(usd)}
       <TokenChipIcon symbol={symbol} size={14} />
+    </span>
+  );
+}
+
+/** A single held-debt asset's borrow rate — `4.35% [icon] USDC`. Mirrors the
+ *  Debt card's `PositionRow` grammar so a multi-debt position reads its rates
+ *  the same way it reads its balances: one labelled row per asset. */
+function BorrowRateRow({ symbol, apr }: { symbol: string; apr: string }) {
+  const { showTickerLabels } = useTimelineDisplay();
+  return (
+    <span className="inline-flex items-center gap-1.5 text-sm">
+      <span className="font-bold">{(parseFloat(apr) * 100).toFixed(2)}%</span>
+      <TokenChipIcon symbol={symbol} size={16} />
+      {showTickerLabels && <span className="text-xs">{aaveV4DisplaySymbol(symbol)}</span>}
     </span>
   );
 }
@@ -280,14 +294,21 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
   // rates we can stand behind on-chain — see the borrow rate below.
   //
   // Borrow rate of the debt the position holds — the true per-block on-chain
-  // rate, consistent across adjacent events (see effectiveBorrowAPR for why the
-  // MV's inferred ctx.borrowAPR is only a fallback).
-  const debtBorrowAPR = effectiveBorrowAPR(ctx);
-  if (debtBorrowAPR) {
+  // rate. Asset-aware: one row per held-debt asset, since a position carrying
+  // both USDC and USDT debt has two distinct rates and a single number would
+  // silently switch between them event to event (see borrowRatesByDebt).
+  const debtRates = borrowRatesByDebt(ctx);
+  if (debtRates.length > 0) {
     snapshotCards.push({
       key: "borrow-rate",
-      label: "Borrow Rate",
-      body: <div className="text-sm font-bold">{(parseFloat(debtBorrowAPR) * 100).toFixed(2)}%</div>,
+      label: debtRates.length > 1 ? "Borrow Rates" : "Borrow Rate",
+      body: (
+        <div className="flex flex-col gap-1">
+          {debtRates.map((r) => (
+            <BorrowRateRow key={r.symbol} symbol={r.symbol} apr={r.apr} />
+          ))}
+        </div>
+      ),
     });
   }
 
