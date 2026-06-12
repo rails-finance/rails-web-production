@@ -39,10 +39,15 @@ import { fmtPrice } from "@/components/shared/price-pill";
  *     resting "% from liquidation" / "liquidation $" readouts stay put under the
  *     ruler (desktop has the width). The reveal waits a beat then fades up slowly.
  *
- * Positions safer than the window top (`offscreen`) push the live-price marker
- * off the left edge, so the bar is all headroom up to the liquidation line; the
- * "% from liquidation" number — with the price shown alongside — carries the
- * exact (and unbounded) upside the fixed window can't draw.
+ * Positions safer than the window top (`offscreen`) sit off the left edge, where
+ * a precise fill can't be drawn. Rather than vanish — leaving an apparently empty
+ * track whose only occupant is the red zone — the marker clamps to the left edge
+ * as a small blue nub (the collateral fill is off-scale that way); headroom then
+ * runs from the nub to the liquidation line, fading out toward the nub so the
+ * unbounded safe runway reads as continuing off-scale rather than hard-edged.
+ * The "% from liquidation" number — with the price shown alongside — carries the
+ * exact (and unbounded) upside the fixed window can't draw, so the clamped nub is
+ * an honest "off this way" affordance, not a measurement.
  *
  * Underwater (live price at / below the liquidation line) the runway is spent,
  * so the whole bar flips to the factual-liquidation red: lighter red for the
@@ -69,7 +74,17 @@ import { fmtPrice } from "@/components/shared/price-pill";
 // seams, since a 10px-tall segment reads as rounded either way. The hairline
 // gaps still draw the seams between segments.
 const FILL = "bg-blue-500";
-const HEADROOM = "bg-rb-200 dark:bg-rb-700";
+// Headroom is neutral but must stay legible on the dark card: the old
+// `dark:bg-rb-700` (rgb 25 28 38) sat ~5 units off the rb-800 surface (rgb 20 22
+// 30) and read as empty — fatal for offscreen rows where headroom is the bar's
+// whole left ~83%. rb-500 (the brand blue-grey) at low alpha lifts it to a clear
+// but subordinate neutral that doesn't compete with the blue fill.
+const HEADROOM = "bg-rb-200 dark:bg-rb-500/30";
+// Offscreen, the live price is >100% above liquidation and the true safe runway
+// extends unbounded off the left edge. Fade the headroom out toward the nub
+// (solid near the liquidation line → transparent toward the left) so the bar
+// reads as "runway continues off-scale this way" rather than a hard-edged fill.
+const HEADROOM_OFFSCREEN = "bg-gradient-to-l from-rb-200 to-transparent dark:from-rb-500/30";
 const LIQ = "bg-red-400/60 dark:bg-red-500/40";
 const LIQ_ACTIVE = "bg-red-500 dark:bg-red-500";
 const H_BAR = 10; // bar height in px (h-2.5)
@@ -80,6 +95,7 @@ const WINDOW_TOP_MULT = 2.0; // left edge — 100% above liquidation
 const WINDOW_BOTTOM_MULT = 0.8; // right edge — 20% below liquidation
 const RULER_MAX_PCT = 50; // last labelled increment
 const RULER_FADE_DENOM = 60; // opacity = 1 − pct/denom; >MAX so 50% stays faintly visible
+const OFFSCREEN_STUB = 5; // width (% of window) of the pinned blue nub when the live price is offscreen
 
 export interface PriceRunwayProps {
   currentPrice: number;
@@ -109,8 +125,11 @@ export function PriceRunway({ currentPrice, liqPrice }: PriceRunwayProps) {
   // Segment extents (% from left). Blue never extends past the liquidation line;
   // headroom is the gap between the live-price marker and that line (zero once
   // the price is at / inside the zone). Red runs from the line to the right edge.
-  const fillEnd = Math.min(fillPct, liqPos);
-  const headroomW = Math.max(0, liqPos - fillPct);
+  // Offscreen, the fill clamps to a fixed nub at the left edge and headroom takes
+  // the rest up to the line — so the row shows a marker + headroom + zone like any
+  // other, instead of an all-headroom (and so apparently empty) track.
+  const fillEnd = offscreen ? OFFSCREEN_STUB : Math.min(fillPct, liqPos);
+  const headroomW = Math.max(0, liqPos - fillEnd);
 
   // Ruler increments, fading out toward the safe side (50% stays faintly visible).
   const rulerTicks = [];
@@ -155,12 +174,16 @@ export function PriceRunway({ currentPrice, liqPrice }: PriceRunwayProps) {
         ) : (
           <>
             {/* Collateral fill — window top → live price. Its rounded right cap
-                is the live-price marker. */}
+                is the live-price marker. Offscreen, it's the clamped left-edge nub
+                (OFFSCREEN_STUB wide) marking "off-scale this way". */}
             {fillEnd > 0 && <div className={`${FILL} rounded-full`} style={{ flexGrow: fillEnd, flexBasis: 0 }} />}
             {/* Headroom — live price → liquidation line. The neutral distance the
                 price can still fall; absent once at / inside the zone. */}
             {headroomW > 0 && (
-              <div className={`${HEADROOM} rounded-full`} style={{ flexGrow: headroomW, flexBasis: 0 }} />
+              <div
+                className={`${offscreen ? HEADROOM_OFFSCREEN : HEADROOM} rounded-full`}
+                style={{ flexGrow: headroomW, flexBasis: 0 }}
+              />
             )}
             {/* Liquidation zone — from the liquidation line to the right edge. */}
             <div className={`${LIQ} rounded-full`} style={{ flexGrow: 100 - liqPos, flexBasis: 0 }} />
