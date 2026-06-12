@@ -5,6 +5,7 @@ import { useTimelineScale, useSingleWallet } from "@/components/shared/activity-
 import { ExpandChevron } from "@/components/shared/expand-chevron";
 import { EventCardFooter } from "@/components/shared/event-card-footer";
 import { InfoDisclosure } from "@/components/shared/info-disclosure";
+import { isCardOpen, setCardOpen } from "@/lib/shared/card-open-store";
 import type { GasCost } from "@/lib/shared/types/activity";
 
 export interface EventCardProps {
@@ -43,6 +44,10 @@ export interface EventCardProps {
    *  affordance. Used by the simulator shell where detail is always open and
    *  the only dismiss action is an explicit close button. */
   hideDetailChevron?: boolean;
+  /** Stable, globally-unique id for this card. When set (and the detail panel
+   *  is uncontrolled), the expanded/collapsed state is persisted to
+   *  localStorage and restored on reload / back-navigation. */
+  persistKey?: string;
 }
 
 /* ── EventCard ───────────────────────────────────────────────────────── */
@@ -68,6 +73,7 @@ export function EventCard({
   gas,
   footerExtra,
   hideDetailChevron,
+  persistKey,
 }: EventCardProps) {
   const scale = useTimelineScale();
   const singleWallet = useSingleWallet();
@@ -80,14 +86,23 @@ export function EventCard({
   const showDetail = isControlled ? detailOpenProp : detailOpenInternal;
   const isExplainerOpen = explainerOpenProp !== undefined ? explainerOpenProp : explainerOpenInternal;
 
+  // Restore persisted open state after mount (SSR-safe — no hydration mismatch:
+  // first render is always closed, matching the server, then this opens it).
+  useEffect(() => {
+    if (persistKey && !isControlled && isCardOpen(persistKey)) {
+      setDetailOpenInternal(true);
+    }
+  }, [persistKey, isControlled]);
+
   const toggleDetail = useCallback(() => {
     const next = !showDetail;
     if (isControlled) {
       onDetailToggle?.(next);
     } else {
       setDetailOpenInternal(next);
+      if (persistKey) setCardOpen(persistKey, next);
     }
-  }, [showDetail, isControlled, onDetailToggle]);
+  }, [showDetail, isControlled, onDetailToggle, persistKey]);
 
   const toggleExplainer = useCallback(() => {
     const next = !isExplainerOpen;

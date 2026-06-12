@@ -79,6 +79,7 @@ export function AaveV4EventCard({ event, isFirst, isLast, txGroup, eventNumber }
       txHash={event.txHash}
       wallet={event.wallet}
       gas={event.gas}
+      persistKey={`aave-v4:${event.id}`}
     />
   );
 }
