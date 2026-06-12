@@ -108,7 +108,7 @@ export interface LiquityEventHeaderProps {
 export function LiquityEventHeader({ ctx, timestamp, eventNumber, currentPrice }: LiquityEventHeaderProps) {
   const style = getOperationStyle(ctx.operation, ctx);
   const { stateBefore, stateAfter, troveOperation } = ctx;
-  const { showTimestamps, showEventNumbers } = useTimelineDisplay();
+  const { showTimestamps, showEventNumbers, showCollateralRatio } = useTimelineDisplay();
   const { prefs } = usePreferences();
   const ratioMode = prefs.ratioMode;
   const crColor = useLiquityRatioColorClass();
@@ -353,7 +353,7 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber, currentPrice }
               so the trailing CR/LTV + APR are suppressed there — the rate
               already shows in the delegate pill and CR lives in the grid. */}
           <span className="inline-flex items-center gap-1.5">
-            {stateAfter.collateralRatio > 0 && ctx.operation !== "setInterestBatchManager" && (
+            {showCollateralRatio && stateAfter.collateralRatio > 0 && ctx.operation !== "setInterestBatchManager" && (
               <span className={`text-xs ${crColor(stateAfter.collateralRatio, ctx.collateralType)}`}>
                 {formatRatio(stateAfter.collateralRatio, ratioMode, 0)} {ratioLabelShort(ratioMode)}
               </span>

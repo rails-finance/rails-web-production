@@ -50,8 +50,7 @@ export function AaveV4EventHeader({ ctx, timestamp, txGroup, eventNumber }: Aave
   const { showEventNumbers, showInterestRates } = useTimelineDisplay();
 
   // For collateral toggle, show enable/disable
-  const label =
-    ctx.eventType === "collateral_toggle" ? (ctx.enabled ? "Enable Collateral" : "Disable Collateral") : style.label;
+  const label = ctx.eventType === "collateral_toggle" ? (ctx.enabled ? "Enable" : "Disable") : style.label;
 
   const groupChip =
     txGroup && txGroup.count > 1 ? (
@@ -80,7 +79,7 @@ export function AaveV4EventHeader({ ctx, timestamp, txGroup, eventNumber }: Aave
         {ctx.alsoToggledCollateral ? (
           <>
             <span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400">
-              Enable Collateral
+              Enable
             </span>
             <span className="text-sm text-rb-500">Supply</span>
           </>

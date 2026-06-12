@@ -26,6 +26,8 @@ import { LiquityEventCard } from "@/components/protocol/liquity/liquity-event-ca
 import { EventDateContext } from "@/components/shared/event-time";
 import { dayKey, shortDate, shortDateYear } from "@/lib/shared/format-event";
 import { TimelineDisplayProvider, useTimelineDisplay } from "@/components/shared/timeline-display-context";
+import { usePreferences } from "@/lib/shared/preferences-context";
+import { ratioLabel } from "@/lib/shared/ratio-format";
 import { CsvDownloadButton, ENABLE_CSV_EXPORT } from "@/components/shared/csv-download-button";
 import { NAV_BUTTON, CTRL_GHOST, CTRL_OFF, CTRL_ON, CTRL_ON_ACCENT, PILL_META } from "@/lib/shared/ui-grammar";
 import { LiquityTroveBarsProvider } from "@/lib/liquity/use-trove-bars";
@@ -39,13 +41,23 @@ import { PriceStrip, type PriceStripAsset } from "@/components/shared/price-stri
  * have no Liquity render path yet (USD-at-time would need upstream price
  * enrichment in the /timeline transformer). */
 function TimelineDisplayToggle() {
-  const { showTimestamps, showTimelineValues, showChangeBars, showBalanceBars, showEventNumbers, toggle } =
-    useTimelineDisplay();
+  const {
+    showTimestamps,
+    showTimelineValues,
+    showChangeBars,
+    showBalanceBars,
+    showEventNumbers,
+    showCollateralRatio,
+    toggle,
+  } = useTimelineDisplay();
+  const { prefs } = usePreferences();
+  const ratioMode = prefs.ratioMode;
   const options: FilterOption[] = [
     { key: "timestamps", label: "Timestamps" },
     { key: "timeline-values", label: "Timeline values" },
     { key: "change-bars", label: "Change bars" },
     { key: "balance-bars", label: "Balance bars" },
+    { key: "collateral-ratio", label: ratioLabel(ratioMode) },
     { key: "event-numbers", label: "Event numbers" },
   ];
   const visible = new Set<string>();
@@ -53,6 +65,7 @@ function TimelineDisplayToggle() {
   if (showTimelineValues) visible.add("timeline-values");
   if (showChangeBars) visible.add("change-bars");
   if (showBalanceBars) visible.add("balance-bars");
+  if (showCollateralRatio) visible.add("collateral-ratio");
   if (showEventNumbers) visible.add("event-numbers");
   return (
     <FilterDropdown
@@ -70,6 +83,7 @@ function TimelineDisplayToggle() {
         else if (key === "timeline-values") toggle("showTimelineValues");
         else if (key === "change-bars") toggle("showChangeBars");
         else if (key === "balance-bars") toggle("showBalanceBars");
+        else if (key === "collateral-ratio") toggle("showCollateralRatio");
         else if (key === "event-numbers") toggle("showEventNumbers");
       }}
     />

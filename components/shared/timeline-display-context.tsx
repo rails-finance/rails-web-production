@@ -2,7 +2,16 @@
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 
-export type TimelineDisplayKey = "showTimestamps" | "showChangeBars" | "showBalanceBars" | "showTimelineValues" | "showTickerLabels" | "showUsdValues" | "showEventNumbers" | "showInterestRates";
+export type TimelineDisplayKey =
+  | "showTimestamps"
+  | "showChangeBars"
+  | "showBalanceBars"
+  | "showTimelineValues"
+  | "showTickerLabels"
+  | "showUsdValues"
+  | "showEventNumbers"
+  | "showInterestRates"
+  | "showCollateralRatio";
 
 export interface TimelineDisplayState {
   showTimestamps: boolean;
@@ -24,12 +33,25 @@ export interface TimelineDisplayState {
    * (stable across asc/desc display). */
   showEventNumbers: boolean;
   /** When true, event-card headers show the per-event interest-rate badge
-   * (supply/borrow APR). On by default. */
+   * (Aave supply/borrow APR). Off by default — surfaced on demand. */
   showInterestRates: boolean;
+  /** When true, Liquity event-card headers show the trailing collateral-ratio
+   * (CR / LTV) chip. Off by default — surfaced on demand. */
+  showCollateralRatio: boolean;
   toggle: (key: TimelineDisplayKey) => void;
 }
 
-const DEFAULTS = { showTimestamps: false, showChangeBars: false, showBalanceBars: false, showTimelineValues: true, showTickerLabels: false, showUsdValues: false, showEventNumbers: false, showInterestRates: true };
+const DEFAULTS = {
+  showTimestamps: false,
+  showChangeBars: false,
+  showBalanceBars: false,
+  showTimelineValues: true,
+  showTickerLabels: false,
+  showUsdValues: false,
+  showEventNumbers: false,
+  showInterestRates: false,
+  showCollateralRatio: false,
+};
 const STORAGE_KEY = "timeline-display-v2";
 
 const Ctx = createContext<TimelineDisplayState>({
@@ -45,23 +67,21 @@ export function TimelineDisplayProvider({ children }: { children: ReactNode }) {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
       const parsed = JSON.parse(raw) as Partial<typeof DEFAULTS>;
-      setState(s => ({ ...s, ...parsed }));
+      setState((s) => ({ ...s, ...parsed }));
     } catch {}
   }, []);
 
   const toggle = useCallback((key: TimelineDisplayKey) => {
-    setState(prev => {
+    setState((prev) => {
       const next = { ...prev, [key]: !prev[key] };
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)); } catch {}
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      } catch {}
       return next;
     });
   }, []);
 
-  return (
-    <Ctx.Provider value={{ ...state, toggle }}>
-      {children}
-    </Ctx.Provider>
-  );
+  return <Ctx.Provider value={{ ...state, toggle }}>{children}</Ctx.Provider>;
 }
 
 export function useTimelineDisplay(): TimelineDisplayState {
