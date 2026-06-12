@@ -112,7 +112,7 @@ function PositionRow({
           <span className="font-bold">{fmt(amount)}</span>
         </>
       ) : (
-        <span className="font-bold">{fmt(amount)}</span>
+        <span className="text-rb-500">{fmt(amount)}</span>
       )}
       <TokenChipIcon symbol={symbol} size={16} />
       {showTickerLabels && <span className="text-xs">{aaveV4DisplaySymbol(symbol)}</span>}

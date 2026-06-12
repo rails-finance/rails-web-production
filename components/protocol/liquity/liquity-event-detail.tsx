@@ -63,7 +63,13 @@ function DebtMetric({
               <TransitionArrow />
             </>
           )}
-          {isClose ? <ClosedLabel /> : <span className="text-sm font-bold ">{toLocaleStringHelper(after)}</span>}
+          {isClose ? (
+            <ClosedLabel />
+          ) : (
+            <span className={hasChange ? "text-sm font-bold" : "text-sm text-rb-500"}>
+              {toLocaleStringHelper(after)}
+            </span>
+          )}
           <TokenChipIcon symbol={stablecoinSymbol} size={16} />
         </StateTransition>
         {((upfrontFee !== undefined && upfrontFee > 0) || totalAccruedFees > 0.01) && (
@@ -124,7 +130,9 @@ function CollateralMetric({
         {isClose ? (
           <ClosedLabel />
         ) : (
-          <span className="text-sm font-bold ">{after === 0 ? "0" : formatColl(after)}</span>
+          <span className={hasChange ? "text-sm font-bold" : "text-sm text-rb-500"}>
+            {after === 0 ? "0" : formatColl(after)}
+          </span>
         )}
         <TokenChipIcon symbol={collateralType} size={16} />
         {showUsdValues && !isClose && after > 0 && (
@@ -173,9 +181,9 @@ function InterestRateMetric({
         {isClose ? (
           <ClosedLabel />
         ) : !hasAfterValue ? (
-          <span className="text-sm font-bold ">N/A</span>
+          <span className="text-sm text-rb-500">N/A</span>
         ) : (
-          <span className="text-sm font-bold ">
+          <span className={hasChange ? "text-sm font-bold" : "text-sm text-rb-500"}>
             {after.toFixed(1)}
             <span className="ml-0.5">%</span>
           </span>
@@ -222,9 +230,11 @@ function CollateralRatioMetric({
         {isClose ? (
           <ClosedLabel />
         ) : afterDebt === 0 ? (
-          <span className="text-sm font-bold ">N/A</span>
+          <span className="text-sm text-rb-500">N/A</span>
         ) : (
-          <span className={`text-sm font-bold ${crColor(after, collateralType)}`}>{formatRatio(after, mode, 2)}</span>
+          <span className={hasChange ? `text-sm font-bold ${crColor(after, collateralType)}` : "text-sm text-rb-500"}>
+            {formatRatio(after, mode, 2)}
+          </span>
         )}
       </StateTransition>
     </StateMetric>
