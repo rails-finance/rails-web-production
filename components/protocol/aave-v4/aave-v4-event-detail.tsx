@@ -69,7 +69,7 @@ function BorrowRateRow({ symbol, apr }: { symbol: string; apr: string }) {
   const { showTickerLabels } = useTimelineDisplay();
   return (
     <span className="inline-flex items-center gap-1.5 text-sm">
-      <span className="font-bold">{(parseFloat(apr) * 100).toFixed(2)}%</span>
+      <span className="font-semibold">{(parseFloat(apr) * 100).toFixed(2)}%</span>
       <TokenChipIcon symbol={symbol} size={16} />
       {showTickerLabels && <span className="text-xs">{aaveV4DisplaySymbol(symbol)}</span>}
     </span>
@@ -107,12 +107,12 @@ function PositionRow({
     <span className="inline-flex items-center gap-1.5 text-sm">
       {isChanged && before != null ? (
         <>
-          <span className="text-rb-500">{fmt(before)}</span>
+          <span className="font-semibold text-rb-500">{fmt(before)}</span>
           <TransitionArrow />
-          <span className="font-bold">{fmt(amount)}</span>
+          <span className="font-semibold">{fmt(amount)}</span>
         </>
       ) : (
-        <span className="text-rb-500">{fmt(amount)}</span>
+        <span className="font-semibold text-rb-500">{fmt(amount)}</span>
       )}
       <TokenChipIcon symbol={symbol} size={16} />
       {showTickerLabels && <span className="text-xs">{aaveV4DisplaySymbol(symbol)}</span>}
@@ -275,7 +275,7 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
       label: ratioLabel(ratioMode),
       body: (
         <div
-          className={`text-sm font-bold ${ratioColorClass(collRatio * 100, {
+          className={`text-sm font-semibold ${ratioColorClass(collRatio * 100, {
             danger: 120,
             warn: 150,
             warnClass: "text-foreground",

@@ -59,14 +59,14 @@ function DebtMetric({
         <StateTransition>
           {hasChange && (
             <>
-              <span className="text-sm font-bold text-rb-500">{toLocaleStringHelper(before)}</span>
+              <span className="text-sm font-semibold text-rb-500">{toLocaleStringHelper(before)}</span>
               <TransitionArrow />
             </>
           )}
           {isClose ? (
             <ClosedLabel />
           ) : (
-            <span className={hasChange ? "text-sm font-bold" : "text-sm text-rb-500"}>
+            <span className={hasChange ? "text-sm font-semibold" : "text-sm font-semibold text-rb-500"}>
               {toLocaleStringHelper(after)}
             </span>
           )}
@@ -117,7 +117,7 @@ function CollateralMetric({
         {hasChange && (
           <>
             <div className="flex items-center space-x-1">
-              <span className="text-sm font-bold text-rb-500">{formatColl(before)}</span>
+              <span className="text-sm font-semibold text-rb-500">{formatColl(before)}</span>
               {showUsdValues && isLiquidation && beforeInUsd > 0 && (
                 <span className="text-xs flex font-bold items-center text-rb-500 border-l-2 border-r-2 ml-2 border-rb-500 rounded-sm px-1 py-0">
                   {formatUsd(beforeInUsd)}
@@ -130,7 +130,7 @@ function CollateralMetric({
         {isClose ? (
           <ClosedLabel />
         ) : (
-          <span className={hasChange ? "text-sm font-bold" : "text-sm text-rb-500"}>
+          <span className={hasChange ? "text-sm font-semibold" : "text-sm font-semibold text-rb-500"}>
             {after === 0 ? "0" : formatColl(after)}
           </span>
         )}
@@ -171,7 +171,7 @@ function InterestRateMetric({
       <StateTransition>
         {hasChange && (
           <>
-            <span className="text-sm font-bold ">
+            <span className="text-sm font-semibold">
               {before.toFixed(1)}
               <span className="ml-0.5">%</span>
             </span>
@@ -181,9 +181,9 @@ function InterestRateMetric({
         {isClose ? (
           <ClosedLabel />
         ) : !hasAfterValue ? (
-          <span className="text-sm text-rb-500">N/A</span>
+          <span className="text-sm font-semibold text-rb-500">N/A</span>
         ) : (
-          <span className={hasChange ? "text-sm font-bold" : "text-sm text-rb-500"}>
+          <span className={hasChange ? "text-sm font-semibold" : "text-sm font-semibold text-rb-500"}>
             {after.toFixed(1)}
             <span className="ml-0.5">%</span>
           </span>
@@ -221,7 +221,7 @@ function CollateralRatioMetric({
       <StateTransition>
         {hasChange && (
           <>
-            <span className={`text-sm font-bold ${crColor(before, collateralType)}`}>
+            <span className={`text-sm font-semibold ${crColor(before, collateralType)}`}>
               {formatRatio(before, mode, 2)}
             </span>
             <TransitionArrow />
@@ -230,9 +230,15 @@ function CollateralRatioMetric({
         {isClose ? (
           <ClosedLabel />
         ) : afterDebt === 0 ? (
-          <span className="text-sm text-rb-500">N/A</span>
+          <span className="text-sm font-semibold text-rb-500">N/A</span>
         ) : (
-          <span className={hasChange ? `text-sm font-bold ${crColor(after, collateralType)}` : "text-sm text-rb-500"}>
+          <span
+            className={
+              hasChange
+                ? `text-sm font-semibold ${crColor(after, collateralType)}`
+                : "text-sm font-semibold text-rb-500"
+            }
+          >
             {formatRatio(after, mode, 2)}
           </span>
         )}
