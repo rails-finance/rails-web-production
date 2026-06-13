@@ -54,6 +54,7 @@ import { AaveV4EventCard } from "@/components/protocol/aave-v4/aave-v4-event-car
 import type { AaveV4TxGroup } from "@/components/protocol/aave-v4/aave-v4-event-header";
 import { AaveV4SpokeCardSelector } from "@/components/protocol/aave-v4/aave-v4-spoke-card";
 import { AaveV4SpokeRunwayStack } from "@/components/protocol/aave-v4/aave-v4-spoke-runway-stack";
+import { AaveV4PositionExposure } from "@/components/protocol/aave-v4/aave-v4-position-exposure";
 import { aaveV4RunwayExplanation } from "@/components/protocol/aave-v4/aave-v4-price-runway";
 import { InfoDisclosure } from "@/components/shared/info-disclosure";
 import { AaveV4TowerChart } from "@/components/protocol/aave-v4/aave-v4-tower-chart";
@@ -741,6 +742,8 @@ function AaveV4SpokeEconomicsBand({
         hideSurplus={hideSurplus}
         onToggleHideSurplus={() => setHideSurplus((v) => !v)}
       />
+
+      <AaveV4PositionExposure reserves={reserves} prices={prices} />
 
       {runwayCard && <AaveV4SpokeRunwayStack spoke={runwayCard} />}
 
