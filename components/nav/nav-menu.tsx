@@ -41,10 +41,10 @@ export function NavMenu() {
       if (rootRef.current && !rootRef.current.contains(e.target as Node)) setIsOpen(false);
     };
     window.addEventListener("keydown", onKey);
-    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("pointerdown", onPointerDown);
     return () => {
       window.removeEventListener("keydown", onKey);
-      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("pointerdown", onPointerDown);
     };
   }, [isOpen]);
 

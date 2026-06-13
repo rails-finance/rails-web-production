@@ -83,11 +83,11 @@ export function FloatingPanel({
       if (closeOnScroll) onClose();
     };
     window.addEventListener("keydown", onKey);
-    const t = setTimeout(() => window.addEventListener("mousedown", onClick), 0);
+    const t = setTimeout(() => window.addEventListener("pointerdown", onClick), 0);
     window.addEventListener("scroll", onScroll, true);
     return () => {
       window.removeEventListener("keydown", onKey);
-      window.removeEventListener("mousedown", onClick);
+      window.removeEventListener("pointerdown", onClick);
       window.removeEventListener("scroll", onScroll, true);
       clearTimeout(t);
     };

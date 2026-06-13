@@ -146,10 +146,10 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") setIsSortOpen(false);
     };
-    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("pointerdown", handleClick);
     document.addEventListener("keydown", handleEsc);
     return () => {
-      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("pointerdown", handleClick);
       document.removeEventListener("keydown", handleEsc);
     };
   }, []);

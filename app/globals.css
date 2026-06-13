@@ -501,9 +501,15 @@ body {
      panel minus its margins, so mx-1 insets it without overflow. */
   @apply flex items-center gap-3 mx-1 my-0.5 px-4 py-2 rounded-lg text-left text-sm transition-colors cursor-pointer;
   color: var(--text-muted);
-  &:hover {
-    background: var(--surface-hover);
-    color: var(--text-muted-hover);
+  /* Gate hover behind a real hover-capable pointer. On touch (iOS Safari esp.)
+     an ungated :hover makes the first tap resolve to "apply hover" and swallow
+     the activation, so a row needs a second tap. Tailwind v4 already gates its
+     hover: utilities this way; this hand-written rule must match. */
+  @media (hover: hover) {
+    &:hover {
+      background: var(--surface-hover);
+      color: var(--text-muted-hover);
+    }
   }
 }
 .overlay-item-active {
@@ -514,8 +520,10 @@ body {
    near-black dark panel above — so items lift with an alpha instead. Tinted
    with rb-400 (196 205 217, the light end of the brand blue-grey) rather than
    pure white, so the lift reads as rb rather than neutral grey. */
-:is(.dark) .overlay-item:hover {
-  background: rgba(196, 205, 217, 0.08);
+@media (hover: hover) {
+  :is(.dark) .overlay-item:hover {
+    background: rgba(196, 205, 217, 0.08);
+  }
 }
 :is(.dark) .overlay-item-active {
   background: rgba(196, 205, 217, 0.12);
