@@ -216,3 +216,56 @@ export function buildHubViews(
 export function hubUnderlyings(data: AaveV4HubsResponse): string[] {
   return [...new Set(data.lines.map((l) => l.underlying.toLowerCase()))];
 }
+
+/**
+ * A neutral, plain-language synthesis of a hub's supply: the dominant asset
+ * class(es), how concentrated supply is across assets, and the supply-weighted
+ * liquidation threshold. Adds the two facts the composition bar and per-asset
+ * list don't give at a glance — concentration and a single portfolio LT.
+ *
+ * Strictly descriptive (present, don't rank — see migration/aave-v4-hub-
+ * comparison.md): no "risky"/"safe", no verdict, just stated figures. Returns
+ * null when the hub has no supply to describe.
+ */
+export function hubSummaryText(view: HubView): string | null {
+  if (view.suppliedUsd <= 0 || view.composition.length === 0) return null;
+
+  // Lead class, plus a second only when it's a meaningful share — otherwise the
+  // sentence reads as a single dominant class.
+  const c0 = view.composition[0];
+  const c1 = view.composition[1];
+  const classClause =
+    c1 && c1.pct >= 15
+      ? `${c0.pct}% ${c0.label.toLowerCase()}, ${c1.pct}% ${c1.label.toLowerCase()}`
+      : `${c0.pct}% ${c0.label.toLowerCase()}`;
+  const parts = [`Supply is ${classClause}.`];
+
+  // Concentration — the smallest set of top assets covering ≥80% of supply.
+  // Only worth stating when there are enough assets that it isn't obvious from
+  // the (short) per-asset list itself.
+  const supplied = view.assets.filter((a) => a.suppliedUsd > 0);
+  if (supplied.length > 3) {
+    let cum = 0;
+    let k = 0;
+    for (const a of supplied) {
+      cum += a.suppliedUsd;
+      k += 1;
+      if (cum / view.suppliedUsd >= 0.8) break;
+    }
+    parts.push(`Top ${k} of ${supplied.length} assets hold ${Math.round((cum / view.suppliedUsd) * 100)}% of it.`);
+  }
+
+  // Supply-weighted liquidation threshold across assets that carry one. Weighted
+  // by supplied USD (named so — supply, not strictly collateral; see "Supply
+  // mix"). Uses each asset's LT midpoint when the spokes disagree.
+  let ltUsd = 0;
+  let ltWeighted = 0;
+  for (const a of view.assets) {
+    if (a.suppliedUsd <= 0 || a.ltMin == null || a.ltMax == null) continue;
+    ltWeighted += a.suppliedUsd * ((a.ltMin + a.ltMax) / 2);
+    ltUsd += a.suppliedUsd;
+  }
+  if (ltUsd > 0) parts.push(`Supply-weighted LT ${(ltWeighted / ltUsd).toFixed(2)}.`);
+
+  return parts.join(" ");
+}

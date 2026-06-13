@@ -13,7 +13,7 @@
 import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import { HUB_COLORS, type HubTier } from "@/components/protocol/aave-v4/aave-v4-spoke-constants";
 import { fmtUsd } from "@/lib/aave-v4/format";
-import type { HubView, HubAssetAgg } from "@/lib/aave-v4/hub-view";
+import { hubSummaryText, type HubView, type HubAssetAgg } from "@/lib/aave-v4/hub-view";
 
 const HUB_TIER_LABEL: Record<string, HubTier> = { core: "Core", plus: "Plus", prime: "Prime" };
 
@@ -72,6 +72,7 @@ export function AaveV4HubColumn({ hub }: { hub: HubView }) {
   const borrowed = fmtUsd(hub.borrowedUsd);
   const tier = HUB_TIER_LABEL[hub.hub];
   const tierColor = HUB_COLORS[tier];
+  const summary = hubSummaryText(hub);
 
   return (
     <div className="flex flex-col rounded-lg border border-rb-200 dark:border-rb-800 bg-raised p-5">
@@ -110,6 +111,7 @@ export function AaveV4HubColumn({ hub }: { hub: HubView }) {
         <div className="mb-4">
           <div className="mb-1.5 text-[11px] uppercase tracking-wider text-rb-500">Supply mix</div>
           <CompositionBar composition={hub.composition} />
+          {summary && <p className="mt-2 text-[12px] leading-relaxed text-rb-500">{summary}</p>}
         </div>
       )}
 
