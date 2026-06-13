@@ -79,7 +79,7 @@ const LT_BY_SPOKE: Record<string, SpokeLtTable> = {
   "Ethena Ecosystem": {
     lt: {
       "PT-sUSDE": 0.78,
-      sUSDe:      0,    // borrow-only as of 2026-05 (LT unconfirmed)
+      sUSDe:      0.92, // chain-verified 2026-06-13 (getUserAccountData.avgCollateralFactor @ block 25310523); was wrongly 0/borrow-only
       USDe:       0.80,
       USDC:       0.78,
       USDT:       0.77,
