@@ -23,6 +23,7 @@ import { ArrowUp, ArrowDown, ArrowLeft } from "lucide-react";
 import { fetchAaveV4Timeline, fetchAaveV4Positions, type AaveV4Position } from "@/lib/api/fetch-aave-v4";
 import {
   fetchAaveV4SpokePosition,
+  parseRiskPremiumFraction,
   type AaveV4SpokePositionChainResponse,
 } from "@/lib/api/fetch-aave-v4-spoke-position";
 import { patchReservesWithChain, patchSpokeCardWithChain } from "@/lib/aave-v4/apply-chain-truth";
@@ -472,6 +473,7 @@ function AaveV4SpokePageInner() {
               wallet={wallet}
               walletHref={walletFilterHref}
             />
+            <RiskPremiumNotice raw={chainPosition?.riskPremiumRaw ?? null} spokeName={spokeName} />
           </div>
         )}
 
@@ -644,6 +646,31 @@ function SmartBackButton({ walletFilterHref }: { walletFilterHref: string }) {
       <ArrowLeft size={14} />
       <span>Back</span>
     </button>
+  );
+}
+
+// ── Risk-premium notice ──────────────────────────────────────────────────────
+// V4 prices risk per position: a collateral mix the DAO deems riskier accrues a
+// premium on top of the hub's base borrow rate (see the spoke-meta rateNote).
+// Premiums are zeroed protocol-wide for now and turned on gradually, so this
+// renders NOTHING until a position actually carries one — at which point it
+// surfaces the captured chain value. Neutral styling only: per house rule we
+// never color-code cost/risk, so the number carries the meaning, not a hue.
+//
+// NOTE: the displayed magnitude depends on parseRiskPremiumFraction's wad
+// assumption, which is best-evidence not contract-confirmed (it's 0 everywhere
+// today). Verify against Aave Pro the first time a non-zero premium appears.
+function RiskPremiumNotice({ raw, spokeName }: { raw: string | null; spokeName: string }) {
+  const frac = parseRiskPremiumFraction(raw);
+  if (!frac) return null;
+  return (
+    <div className="px-4 md:px-6 pb-4 -mt-1">
+      <span className={PILL_META}>Risk premium {(frac * 100).toFixed(2)}%</span>
+      <p className="mt-1.5 text-xs text-rb-500 max-w-prose">
+        Aave V4 prices risk per position. The collateral held here carries a risk premium that increases the borrow
+        interest you accrue on top of the {spokeName} hub&rsquo;s base rate.
+      </p>
+    </div>
   );
 }
 
