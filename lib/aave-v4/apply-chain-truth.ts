@@ -63,6 +63,7 @@ export function patchReservesWithChain(
       currentSupplied: scaleChainBalance(c.supplyBalanceRaw, c.decimals),
       currentBorrowed: scaleChainBalance(c.debtBalanceRaw, c.decimals),
       collateralEnabled: c.isCollateral,
+      lt: c.lt ?? undefined,
     };
   });
 
@@ -92,6 +93,7 @@ export function patchReservesWithChain(
       flowEvents: [],
       currentSupplied: live,
       currentBorrowed: debt,
+      lt: c.lt ?? undefined,
     });
   }
 

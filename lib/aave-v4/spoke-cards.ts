@@ -13,7 +13,7 @@ import type { BaseActivityEvent } from "@/lib/shared/types/event-shape";
 import type { AaveV4Context } from "@/lib/shared/types/protocols/aave-v4";
 import { type PriceEntry, resolvePrice } from "@/lib/aave/prices";
 import { SPOKE_HUB, type HubTier } from "@/components/protocol/aave-v4/aave-v4-spoke-constants";
-import { getLiquidationThreshold } from "@/lib/aave-v4/liquidation-thresholds";
+import { AAVE_V4_FALLBACK_LT } from "@/lib/aave-v4/liquidation-thresholds";
 import { simulateAaveV4Position } from "@/lib/aave-v4/utils/simulate";
 import { effectiveBorrowAPR } from "@/lib/aave-v4/borrow-rate";
 
@@ -57,6 +57,11 @@ export interface ReserveStats {
   currentSupplied?: number;
   /** Chain-truth current debt balance for this reserve. See `currentSupplied`. */
   currentBorrowed?: number;
+  /** Chain-truth liquidation threshold for this (spoke, reserve), when an
+   *  on-chain read has been applied (see `patchReservesWithChain`). Undefined
+   *  on purely event-derived reserves — the simulator then falls back to
+   *  `AAVE_V4_FALLBACK_LT`. */
+  lt?: number;
 }
 
 export interface AaveEconomicsResult {
@@ -554,7 +559,9 @@ export function buildSpokeCards(
         const netSupply = Math.max(0, r.supplied - r.withdrawn);
         if (netSupply <= 0.0001) return null;
         const price = resolvePrice(r.symbol, prices) ?? 1;
-        const lt = getLiquidationThreshold(g.name, r.symbol);
+        // Chain-truth LT when the reserve has been chain-patched; otherwise the
+        // conservative fallback (no per-spoke table any more — see liquidation-thresholds).
+        const lt = r.lt ?? AAVE_V4_FALLBACK_LT;
         const collateralEnabled = r.collateralEnabled ?? true;
         return { symbol: r.symbol, amount: netSupply, price, lt, collateralEnabled };
       })

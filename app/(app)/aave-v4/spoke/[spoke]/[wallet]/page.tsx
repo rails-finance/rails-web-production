@@ -58,7 +58,7 @@ import { aaveV4RunwayExplanation } from "@/components/protocol/aave-v4/aave-v4-p
 import { InfoDisclosure } from "@/components/shared/info-disclosure";
 import { AaveV4TowerChart } from "@/components/protocol/aave-v4/aave-v4-tower-chart";
 import { buildAaveV4SpokeCards, groupBySpoke, computeAaveV4InterestPnl } from "@/lib/aave-v4/spoke-cards";
-import { getLiquidationThreshold, isStable } from "@/lib/aave-v4/liquidation-thresholds";
+import { AAVE_V4_FALLBACK_LT, isStable } from "@/lib/aave-v4/liquidation-thresholds";
 import { simulateAaveV4Position, type SimPositionInputs } from "@/lib/aave-v4/utils/simulate";
 import { resolvePrice, type PriceEntry } from "@/lib/aave/prices";
 import { PriceStrip, type PriceStripAsset } from "@/components/shared/price-strip";
@@ -693,7 +693,9 @@ function AaveV4SpokeEconomicsBand({
           const netSupply = r.currentSupplied ?? Math.max(0, r.supplied - r.withdrawn - r.liquidatedCollateral);
           if (netSupply <= 0.0001) return null;
           const price = resolvePrice(r.symbol, prices) ?? 1;
-          const lt = getLiquidationThreshold(activeName, r.symbol);
+          // Chain-truth LT from the chain-patched reserve; conservative fallback
+          // only when no on-chain read was applied (see liquidation-thresholds).
+          const lt = r.lt ?? AAVE_V4_FALLBACK_LT;
           const collateralEnabled = r.collateralEnabled ?? true;
           return { symbol: r.symbol, amount: netSupply, price, lt, collateralEnabled };
         })
