@@ -41,10 +41,10 @@ const SPOKE_HUB: Record<string, string> = {
   bluechip: "prime",
   ethena_corr: "plus",
   ethena_eco: "plus",
-  etherfi: "plus",
-  kelp: "plus",
-  lido: "plus",
-  lombard: "plus",
+  etherfi: "core",
+  kelp: "core",
+  lido: "core",
+  lombard: "core",
 };
 
 /** Spoke options scoped to the selected hubs — all spokes when no hub is

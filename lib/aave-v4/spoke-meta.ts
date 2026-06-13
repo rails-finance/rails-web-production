@@ -181,44 +181,44 @@ export const SPOKE_META: Record<string, SpokeMeta> = {
   EtherFi: {
     name: "EtherFi",
     archetype: "ecosystem",
-    collateralHub: "Plus",
-    borrowHub: "Plus",
+    collateralHub: "Core",
+    borrowHub: "Core",
     // TODO copy: confirm etherfi LRT scope and any cross-hub credit.
     narrative: [
-      "EtherFi Spoke on the Plus Hub.",
+      "EtherFi Spoke on the Core Hub.",
       "Built around weETH / EtherFi liquid-restaking collateral; parameters reflect LRT-specific risk.",
     ],
   },
   Kelp: {
     name: "Kelp",
     archetype: "ecosystem",
-    collateralHub: "Plus",
-    borrowHub: "Plus",
+    collateralHub: "Core",
+    borrowHub: "Core",
     // TODO copy: confirm kelp LRT scope.
     narrative: [
-      "Kelp Spoke on the Plus Hub.",
+      "Kelp Spoke on the Core Hub.",
       "Built around rsETH / Kelp liquid-restaking collateral; parameters reflect LRT-specific risk.",
     ],
   },
   Lido: {
     name: "Lido",
     archetype: "ecosystem",
-    collateralHub: "Plus",
-    borrowHub: "Plus",
+    collateralHub: "Core",
+    borrowHub: "Core",
     // TODO copy: confirm lido LST scope.
     narrative: [
-      "Lido Spoke on the Plus Hub.",
+      "Lido Spoke on the Core Hub.",
       "Built around stETH / wstETH liquid-staking collateral.",
     ],
   },
   Lombard: {
     name: "Lombard",
     archetype: "ecosystem",
-    collateralHub: "Plus",
-    borrowHub: "Plus",
+    collateralHub: "Core",
+    borrowHub: "Core",
     // TODO copy: confirm lombard BTC scope.
     narrative: [
-      "Lombard BTC Spoke on the Plus Hub.",
+      "Lombard BTC Spoke on the Core Hub.",
       "Built around LBTC / Lombard wrapped-BTC collateral; parameters reflect BTC-variant risk.",
     ],
   },

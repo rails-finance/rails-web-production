@@ -17,9 +17,9 @@ export const SPOKE_HUB: Record<string, HubTier> = {
   Gold:                "Core",
   "Ethena Correlated": "Plus",
   "Ethena Ecosystem":  "Plus",
-  EtherFi:             "Plus",
-  Kelp:                "Plus",
-  Lido:                "Plus",
-  Lombard:             "Plus",
+  EtherFi:             "Core",
+  Kelp:                "Core",
+  Lido:                "Core",
+  Lombard:             "Core",
   Bluechip:            "Prime",
 };
