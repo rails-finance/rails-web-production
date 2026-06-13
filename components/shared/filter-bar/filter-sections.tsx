@@ -150,8 +150,9 @@ export function FilterSections<F>({ dimensions, filters, onChange }: FilterSecti
                       {/* Per-dimension sub-header only when the group holds more
                           than one dimension — otherwise the panel title names it. */}
                       {multiDim && (
-                        <div className="px-4 pt-2 pb-1">
+                        <div className="flex items-center justify-between px-4 pt-2 pb-1">
                           <span className={OVERLAY_SUBHEADING}>{dim.label}</span>
+                          {dim.labelAction}
                         </div>
                       )}
                       {dim.options.map((opt) => (

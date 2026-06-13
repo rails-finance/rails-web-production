@@ -43,6 +43,10 @@ export interface FilterDimension<F> {
   chipLabel?: (values: string[], options: FilterOptionDef[]) => string;
   /** Optional grouping header in the + Filter menu (insertion order preserved). */
   group?: string;
+  /** Optional node rendered to the right of this dimension's sub-header inside a
+   *  multi-dimension group panel (e.g. a "compare" link beside the Hub title).
+   *  Only shown when the group holds more than one dimension. */
+  labelAction?: ReactNode;
   /** Hide from the + Filter menu when false (e.g. Borrowing while Supply-only). */
   available?: (f: F) => boolean;
 }

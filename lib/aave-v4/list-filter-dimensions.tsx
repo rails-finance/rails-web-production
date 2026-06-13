@@ -1,5 +1,7 @@
+import Link from "next/link";
 import type { FilterDimension, FilterOptionDef } from "@/components/shared/filter-bar/types";
 import { joinOptionLabels } from "@/components/shared/filter-bar/types";
+import { RESET_LINK } from "@/lib/shared/ui-grammar";
 import {
   type AaveV4ListFilterParams,
   type AaveV4Debt,
@@ -150,6 +152,12 @@ export function aaveV4FilterDimensions({
     group: "Market",
     cardinality: "multi",
     options: HUB_OPTIONS,
+    // Quiet link to the cross-hub comparison surface, beside the Hub title.
+    labelAction: (
+      <Link href="/aave-v4/hubs" className={RESET_LINK} onClick={(e) => e.stopPropagation()}>
+        Compare
+      </Link>
+    ),
     get: (f) => f.hubs,
     // Selecting/changing hubs prunes any now-orphaned spoke selections so the
     // hub ∩ spoke intersection never silently empties.

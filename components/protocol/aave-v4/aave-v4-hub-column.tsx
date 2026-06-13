@@ -108,7 +108,7 @@ export function AaveV4HubColumn({ hub }: { hub: HubView }) {
       {/* Composition */}
       {hub.composition.length > 0 && (
         <div className="mb-4">
-          <div className="mb-1.5 text-[11px] uppercase tracking-wider text-rb-500">Collateral composition</div>
+          <div className="mb-1.5 text-[11px] uppercase tracking-wider text-rb-500">Supply mix</div>
           <CompositionBar composition={hub.composition} />
         </div>
       )}
