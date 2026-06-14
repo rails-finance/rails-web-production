@@ -32,8 +32,8 @@ function buildInterestItems(pnl: AaveV4InterestPnl): React.ReactNode[] {
     const net = fmtSignedUsd(pnl.netUsd);
     items.push(
       <span key="net-interest">
-        Net interest to date: <strong className="text-foreground">{net.display}</strong> — supply interest earned minus
-        borrow interest paid, read from on-chain balances against indexed deposits rather than an annualized rate.
+        Net interest to date: {net.display} — supply interest earned minus borrow interest paid, read from on-chain
+        balances against indexed deposits rather than an annualized rate.
       </span>,
     );
   }
@@ -41,10 +41,7 @@ function buildInterestItems(pnl: AaveV4InterestPnl): React.ReactNode[] {
     if (a.supplyInterest > 0) {
       items.push(
         <span key={`earn-${a.symbol}`}>
-          Earned{" "}
-          <strong className="text-foreground">
-            {fmtTokenAmount(a.supplyInterest)} {aaveV4DisplaySymbol(a.symbol)}
-          </strong>
+          Earned {fmtTokenAmount(a.supplyInterest)} {aaveV4DisplaySymbol(a.symbol)}
           {a.supplyInterestUsd > 0 && <> ({fmtUsd(a.supplyInterestUsd).display})</>} in supply interest.
         </span>,
       );
@@ -52,10 +49,7 @@ function buildInterestItems(pnl: AaveV4InterestPnl): React.ReactNode[] {
     if (a.borrowInterest > 0) {
       items.push(
         <span key={`paid-${a.symbol}`}>
-          Paid{" "}
-          <strong className="text-foreground">
-            {fmtTokenAmount(a.borrowInterest)} {aaveV4DisplaySymbol(a.symbol)}
-          </strong>
+          Paid {fmtTokenAmount(a.borrowInterest)} {aaveV4DisplaySymbol(a.symbol)}
           {a.borrowInterestUsd > 0 && <> ({fmtUsd(a.borrowInterestUsd).display})</>} in borrow interest.
         </span>,
       );
@@ -77,6 +71,15 @@ function buildInterestItems(pnl: AaveV4InterestPnl): React.ReactNode[] {
  * Plain-language read of the *actual* position. Every figure is read from the
  * already-computed AaveSpokeCardInfo (HF, liq price, borrowing power, interest
  * carry, peaks), so this adds depth with no extra fetch or compute.
+ *
+ * BOLD RULE (same as the event explainer's <H> helper): wrap a number in
+ * <strong className="text-foreground"> ONLY when that exact value is also shown
+ * in a stat the reader can find outside this panel — the spoke card's headline
+ * stats / footnotes (collateral, debt, HF, borrowing power, borrow rate, liq
+ * price, current price) or the exposure tower (peak supply/debt). Figures that
+ * exist only inside this prose — the LT-weighted debt ceiling, net interest,
+ * per-asset interest amounts, the event count — stay in the muted body tone, so
+ * a bold figure always maps to one displayed above it.
  */
 function buildSpokePositionItems(spoke: AaveSpokeCardInfo): React.ReactNode[] {
   const items: React.ReactNode[] = [];
@@ -105,8 +108,8 @@ function buildSpokePositionItems(spoke: AaveSpokeCardInfo): React.ReactNode[] {
     if (spoke.borrowingPowerUsd > 1) {
       items.push(
         <span key="power">
-          Up to <strong className="text-foreground">{fmtUsd(spoke.borrowingPowerUsd).display}</strong> could be borrowed
-          against this collateral before reaching the liquidation threshold.
+          Up to {fmtUsd(spoke.borrowingPowerUsd).display} could be borrowed against this collateral before reaching the
+          liquidation threshold.
         </span>,
       );
     }
@@ -138,9 +141,8 @@ function buildSpokePositionItems(spoke: AaveSpokeCardInfo): React.ReactNode[] {
         <span key="collateral-basis">
           Borrowing and the health factor don&rsquo;t credit the full deposit — each asset counts only up to its
           liquidation threshold (about {Math.round((spoke.weightedCollateralUsd / spoke.totalSupplyUsd) * 100)}% of its
-          value here). So this collateral can carry up to{" "}
-          <strong className="text-foreground">{fmtUsd(spoke.weightedCollateralUsd).display}</strong> of debt before the
-          position becomes liquidatable.
+          value here). So this collateral can carry up to {fmtUsd(spoke.weightedCollateralUsd).display} of debt before
+          the position becomes liquidatable.
         </span>,
       );
     }
@@ -190,8 +192,8 @@ function buildSpokePositionItems(spoke: AaveSpokeCardInfo): React.ReactNode[] {
   if (spoke.peakSupplyUsd > 1 || spoke.peakDebtUsd > 1) {
     items.push(
       <span key="peaks">
-        Across <strong className="text-foreground">{spoke.eventCount}</strong> event{spoke.eventCount === 1 ? "" : "s"},
-        supply peaked at <strong className="text-foreground">{fmtUsd(spoke.peakSupplyUsd).display}</strong>
+        Across {spoke.eventCount} event{spoke.eventCount === 1 ? "" : "s"}, supply peaked at{" "}
+        <strong className="text-foreground">{fmtUsd(spoke.peakSupplyUsd).display}</strong>
         {spoke.peakDebtUsd > 1 && (
           <>
             {" "}
