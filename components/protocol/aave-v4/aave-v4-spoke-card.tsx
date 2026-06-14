@@ -32,21 +32,46 @@ function SpokeIdentity({ name, hub }: { name: string; hub: HubTier }) {
   );
 }
 
-/** Chain-faithful net-interest footnote ("+$12 net interest" / "−$46 net
- *  interest"): supply interest earned minus borrow interest paid, computed from
- *  chain-truth balances vs. indexed deposits — no rate involved. Replaces the
- *  old inferred net-APY footnote. Neutral tone: the sign carries the meaning,
- *  per Rails' no-opinionated-color rule. Renders nothing without chain-truth. */
-function InterestFootnote({ spoke }: { spoke: AaveSpokeCardInfo }) {
+/** Supply-side interest earned, shown under the Collateral / Supplied stat.
+ *  Deliberately the supply leg ONLY — it never folds in borrow-interest paid, so
+ *  the collateral footnote can't show a debt-driven negative (mirrors Aave's
+ *  deposit-side "Earnings"). Hidden when it rounds below a cent — dust isn't
+ *  worth a line. Neutral tone; the sign carries the meaning per the
+ *  no-opinionated-color rule. Renders nothing without chain-truth. */
+function SupplyInterestFootnote({ spoke }: { spoke: AaveSpokeCardInfo }) {
   const pnl = spoke.interestPnl;
   if (!pnl || !pnl.hasData) return null;
-  const v = fmtSignedUsd(pnl.netUsd);
+  const earnedUsd = pnl.assets.reduce((sum, a) => sum + a.supplyInterestUsd, 0);
+  if (earnedUsd < 0.01) return null;
+  const v = fmtSignedUsd(earnedUsd);
   return (
     <div
       className="text-xs mt-0.5 font-medium text-rb-500"
-      title={`${v.title} net interest — supply interest earned minus borrow interest paid, from on-chain balances vs. deposits`}
+      title={`${v.title} supply interest earned to date — from on-chain balances vs. indexed deposits`}
     >
-      {v.display} net interest
+      {v.display} supply interest
+    </div>
+  );
+}
+
+/** Debt-stat footnote: the latest borrow rate plus, when non-dust, the borrow
+ *  interest paid to date. The cost lives under the Debt column (not Collateral)
+ *  so each side's economics sit beneath their own stat — the supply side earns,
+ *  the debt side pays. Neutral tone; the sign carries the meaning. */
+function DebtFootnote({ spoke }: { spoke: AaveSpokeCardInfo }) {
+  const rate = spoke.latestBorrowRate;
+  const pnl = spoke.interestPnl;
+  const paidUsd = pnl?.hasData ? pnl.assets.reduce((sum, a) => sum + a.borrowInterestUsd, 0) : 0;
+  const paid = paidUsd >= 0.01 ? fmtSignedUsd(-paidUsd) : null;
+  if (rate === null && !paid) return null;
+  return (
+    <div className="text-xs mt-0.5 text-rb-500 space-y-0.5">
+      {rate !== null && <div>{rate.toFixed(2)}% borrow rate</div>}
+      {paid && (
+        <div title={`${paid.title} borrow interest paid to date — from on-chain balances vs. indexed deposits`}>
+          {paid.display} interest paid
+        </div>
+      )}
     </div>
   );
 }
@@ -166,7 +191,7 @@ function AaveV4SpokeCard({
                           </StatValue>
                         );
                       })(),
-                      footnote: <InterestFootnote spoke={spoke} />,
+                      footnote: <SupplyInterestFootnote spoke={spoke} />,
                     },
                     null,
                     null,
@@ -192,7 +217,7 @@ function AaveV4SpokeCard({
                           </StatValue>
                         );
                       })(),
-                      footnote: <InterestFootnote spoke={spoke} />,
+                      footnote: <SupplyInterestFootnote spoke={spoke} />,
                     },
                     {
                       label: "Debt",
@@ -208,12 +233,7 @@ function AaveV4SpokeCard({
                           </StatValue>
                         );
                       })(),
-                      footnote:
-                        spoke.latestBorrowRate !== null ? (
-                          <div className="text-xs mt-0.5 text-rb-500">
-                            {spoke.latestBorrowRate.toFixed(2)}% borrow rate
-                          </div>
-                        ) : undefined,
+                      footnote: <DebtFootnote spoke={spoke} />,
                     },
                     {
                       label: "Health Factor",

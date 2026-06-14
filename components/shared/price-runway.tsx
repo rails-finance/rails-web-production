@@ -31,10 +31,11 @@ import { fmtPrice } from "@/components/shared/price-pill";
  *   • **Liquidation zone** — red, from the liquidation price to the right edge.
  *     The one deliberate colour: being at/below the liquidation price is a hard
  *     on-chain fact, not an opinion. It deepens once the live price is in it.
- *   • **Ruler** — a "% from liquidation" label every 10%, fading out
- *     toward the safe side (crisp at 0% / the liquidation line, faintest at 50%);
- *     the fade echoes the unbounded — and so un-drawable — safe upside. Revealed
- *     only on hover, and only on hover-capable (desktop) pointers — touch /
+ *   • **Ruler** — an "n% drop from the live price" label every 10% (the same
+ *     basis as the resting "% from liquidation" readout, so the two never
+ *     disagree), brightest at the liquidation line and fading with distance from
+ *     it; the safe upside carries no ticks, reading as unbounded off the left edge.
+ *     Revealed only on hover, and only on hover-capable (desktop) pointers — touch /
  *     mobile never shows it, so the resting readouts can't be crowded there. The
  *     resting "% from liquidation" / "liquidation $" readouts stay put under the
  *     ruler (desktop has the width). The reveal waits a beat then fades up slowly.
@@ -116,7 +117,12 @@ export function PriceRunway({ currentPrice, liqPrice }: PriceRunwayProps) {
   const offscreen = currentPrice > windowTop;
   const fillPct = offscreen ? 0 : posFromLeft(currentPrice);
   const underwater = currentPrice <= liqPrice!;
-  const pctFromLiq = Math.round(((currentPrice - liqPrice!) / liqPrice!) * 100);
+  // Distance to liquidation as a share of the LIVE price — (current − liq) /
+  // current — so this readout matches each rail's "% headroom" stat exactly
+  // (Aave's spoke-card header, Liquity's OpenSummaryCard) instead of dividing by
+  // the liq price and disagreeing with it (a 19% headroom vs a 24% runway for
+  // the same gap). It also shares the live-price basis the recoverPct already uses.
+  const pctFromLiq = Math.round(((currentPrice - liqPrice!) / currentPrice) * 100);
   // Once underwater the runway is spent — the only figure that matters is how
   // far the price must RISE to clear liquidation, denominated in the live price
   // (not the liq price). E.g. $7.81 vs a $9.30 line → +19% to recover.
@@ -131,13 +137,20 @@ export function PriceRunway({ currentPrice, liqPrice }: PriceRunwayProps) {
   const fillEnd = offscreen ? OFFSCREEN_STUB : Math.min(fillPct, liqPos);
   const headroomW = Math.max(0, liqPos - fillEnd);
 
-  // Ruler increments, fading out toward the safe side (50% stays faintly visible).
+  // Ruler increments in the SAME basis as the readout: each tick is an n% drop
+  // from the live price (0% at the price marker, growing toward the liquidation
+  // line), so the marker's "X% from liquidation" label lines up with where the
+  // liq line actually falls on the ruler. Brightest at the liquidation line and
+  // fading with distance from it — the crisp band marks where the runway runs
+  // out. Ticks outside the drawn window are dropped rather than clamped to an edge.
   const rulerTicks = [];
   for (let n = 0; n <= RULER_MAX_PCT; n += 10) {
+    const raw = ((windowTop - currentPrice * (1 - n / 100)) / range) * 100;
+    if (raw < 0 || raw > 100) continue;
     rulerTicks.push({
       pct: n,
-      pos: posFromLeft(liqPrice! * (1 + n / 100)),
-      opacity: Math.max(0, 1 - n / RULER_FADE_DENOM),
+      pos: raw,
+      opacity: Math.max(0, 1 - Math.abs(pctFromLiq - n) / RULER_FADE_DENOM),
     });
   }
 
