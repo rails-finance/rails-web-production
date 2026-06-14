@@ -68,6 +68,7 @@ export function PriceStrip({ assets }: { assets: PriceStripAsset[] }) {
             price={a.price}
             filterable={false}
             title={a.symbol}
+            bare
           />
         ))}
       </div>

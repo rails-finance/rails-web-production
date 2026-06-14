@@ -88,7 +88,6 @@ import { dayKey, shortDate, shortDateYear } from "@/lib/shared/format-event";
 import { formatDate, formatDuration } from "@/lib/date";
 import { Icon } from "@/components/icons/icon";
 import { getEventActionKey, actionLabel, DEMOTED_ACTIONS } from "@/lib/shared/event-filter-helpers";
-import { FeedbackButton } from "@/components/FeedbackButton";
 import { useWalletContext } from "@/components/nav/wallet-context";
 import { upsertSession } from "@/lib/shared/sessions";
 import { shortAddr } from "@/lib/shared/format-event";
@@ -427,26 +426,20 @@ function AaveV4SpokePageInner() {
 
   if (loading) {
     return (
-      <>
-        <FeedbackButton />
-        <div className="py-8 space-y-6">
-          <div className="h-32 bg-raised rounded-lg animate-pulse" />
-          <div className="h-64 bg-raised rounded-lg animate-pulse" />
-        </div>
-      </>
+      <div className="py-8 space-y-6">
+        <div className="h-32 bg-raised rounded-lg animate-pulse" />
+        <div className="h-64 bg-raised rounded-lg animate-pulse" />
+      </div>
     );
   }
 
   if (error) {
     return (
-      <>
-        <FeedbackButton />
-        <div className="py-8">
-          <div className="bg-red-500/10 border border-red-500/40 rounded-lg p-4">
-            <p className="text-red-600 dark:text-red-400">{error}</p>
-          </div>
+      <div className="py-8">
+        <div className="bg-red-500/10 border border-red-500/40 rounded-lg p-4">
+          <p className="text-red-600 dark:text-red-400">{error}</p>
         </div>
-      </>
+      </div>
     );
   }
 
@@ -468,7 +461,6 @@ function AaveV4SpokePageInner() {
   if (!activeCard && !loading) {
     return (
       <>
-        <FeedbackButton />
         <div className="py-8 space-y-6">
           <SpokeBreadcrumb walletFilterHref={walletFilterHref} wallet={wallet} />
           <div className="text-center py-12">
@@ -488,7 +480,6 @@ function AaveV4SpokePageInner() {
 
   return (
     <>
-      <FeedbackButton />
       <div className="py-8 space-y-6">
         {/* Smart back: in-app history → browser back; fresh-tab / direct entry
             → up to the wallet's spokes (never dead-ends or leaves the site). */}

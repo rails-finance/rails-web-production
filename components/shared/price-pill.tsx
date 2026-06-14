@@ -47,13 +47,24 @@ export interface PricePillProps {
   /** Native tooltip — used when the symbol isn't shown inline (price strip) so
    *  hovering still reveals which asset the price is for. */
   title?: string;
+  /** Drop the chip background so the price sits directly on its container
+   *  surface (used by the price strip, which supplies its own dark backing). */
+  bare?: boolean;
 }
 
-export function PricePill({ symbol, address, price, showSymbol = false, filterable = true, title }: PricePillProps) {
+export function PricePill({
+  symbol,
+  address,
+  price,
+  showSymbol = false,
+  filterable = true,
+  title,
+  bare = false,
+}: PricePillProps) {
   return (
     <span
       title={title}
-      className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-sunken text-xs tabular-nums cursor-default"
+      className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs tabular-nums cursor-default${bare ? "" : " bg-sunken"}`}
     >
       <TokenChipIcon symbol={symbol} address={address} size={14} filterable={filterable} />
       {showSymbol && <span className="font-medium text-rb-500">{symbol}</span>}

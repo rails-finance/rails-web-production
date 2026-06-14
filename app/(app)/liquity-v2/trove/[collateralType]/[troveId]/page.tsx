@@ -11,7 +11,6 @@ import { useTroveExplanationItems } from "@/components/trove/use-trove-explanati
 import { TroveEconomicsSummary } from "@/components/protocol/liquity/trove-economics";
 import { formatDate, formatDuration } from "@/lib/date";
 import { Icon } from "@/components/icons/icon";
-import { FeedbackButton } from "@/components/FeedbackButton";
 import { TroveStateData, TroveStateResponse } from "@/types/api/troveState";
 import { OraclePricesData, OraclePricesResponse } from "@/types/api/oracle";
 import { useTroveUiState } from "@/hooks/useTroveUiState";
@@ -401,21 +400,17 @@ export default function TrovePage() {
     // for the economics panel. They share the `bg-raised` card surface, so
     // they read as the cards themselves fading in.
     return (
-      <>
-        <FeedbackButton />
-        <div className="space-y-6 py-8">
-          <SmartBackButton walletFilterHref="/liquity-v2" />
-          <div className="h-44 rounded-2xl bg-raised animate-pulse" />
-          <div className="h-72 rounded-2xl bg-raised animate-pulse" />
-        </div>
-      </>
+      <div className="space-y-6 py-8">
+        <SmartBackButton walletFilterHref="/liquity-v2" />
+        <div className="h-44 rounded-2xl bg-raised animate-pulse" />
+        <div className="h-72 rounded-2xl bg-raised animate-pulse" />
+      </div>
     );
   }
 
   if (error || !troveData) {
     return (
       <>
-        <FeedbackButton />
         <div className="py-8 space-y-6">
           <div className="bg-red-500/10 border border-red-500/40 rounded-lg p-4">
             <p className="text-red-600 dark:text-red-400">{error || "Trove not found"}</p>
@@ -445,7 +440,6 @@ export default function TrovePage() {
 
   return (
     <>
-      <FeedbackButton />
       <div className="space-y-6 py-8">
         {walletFilterHref && <SmartBackButton walletFilterHref={walletFilterHref} />}
         <TroveSummaryStack

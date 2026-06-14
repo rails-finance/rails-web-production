@@ -9,7 +9,6 @@ import { TroveSummary } from "@/types/api/trove";
 import { PaginationControls } from "@/components/troves/components/PaginationControls";
 import { TroveListLoadingSkeleton } from "@/components/troves/components/TroveListLoadingSkeleton";
 import { TroveListError } from "@/components/troves/components/TroveListError";
-import { FeedbackButton } from "@/components/FeedbackButton";
 import { OraclePricesData, OraclePricesResponse } from "@/types/api/oracle";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWalletContext } from "@/components/nav/wallet-context";
@@ -331,7 +330,6 @@ function TrovesPageContent() {
 
   return (
     <main className="min-h-screen">
-      <FeedbackButton />
       <div className="max-w-7xl mx-auto py-8">
         {/* Filters */}
         <TroveListFilters
