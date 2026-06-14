@@ -116,7 +116,7 @@ function buildSpokePositionItems(spoke: AaveSpokeCardInfo): React.ReactNode[] {
   } else {
     items.push(
       <span key="composition">
-        <strong className="text-foreground">{fmtUsd(spoke.totalSupplyUsd).display}</strong> deposited
+        <strong className="text-foreground">{fmtUsd(spoke.totalSupplyUsd).display}</strong> of collateral
         {supplyStr && (
           <>
             {" "}
@@ -136,12 +136,11 @@ function buildSpokePositionItems(spoke: AaveSpokeCardInfo): React.ReactNode[] {
     if (spoke.totalSupplyUsd > 0 && spoke.weightedCollateralUsd > 0) {
       items.push(
         <span key="collateral-basis">
-          The collateral that actually backs the debt is{" "}
-          <strong className="text-foreground">{fmtUsd(spoke.weightedCollateralUsd).display}</strong> — each deposited
-          asset counted at its liquidation threshold, which is what borrowing power and the health factor are measured
-          against. That&rsquo;s about {Math.round((spoke.weightedCollateralUsd / spoke.totalSupplyUsd) * 100)}% of the{" "}
-          <strong className="text-foreground">{fmtUsd(spoke.totalSupplyUsd).display}</strong> full deposited value, the
-          remainder being the threshold haircut.
+          Borrowing and the health factor don&rsquo;t credit the full deposit — each asset counts only up to its
+          liquidation threshold (about {Math.round((spoke.weightedCollateralUsd / spoke.totalSupplyUsd) * 100)}% of its
+          value here). So this collateral can carry up to{" "}
+          <strong className="text-foreground">{fmtUsd(spoke.weightedCollateralUsd).display}</strong> of debt before the
+          position becomes liquidatable.
         </span>,
       );
     }

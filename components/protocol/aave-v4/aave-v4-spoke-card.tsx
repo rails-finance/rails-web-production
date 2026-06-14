@@ -174,38 +174,25 @@ function AaveV4SpokeCard({
                   ]
                 : [
                     {
-                      // "Collateral" is the threshold-weighted value that
-                      // actually backs the debt (Σ coll×price×LT) — what other
-                      // dashboards label Collateral. The full deposited market
-                      // value sits below in the footnote so the headline number
-                      // is the one that drives borrowing power / HF, not the
-                      // larger gross figure that can't all be borrowed against.
+                      // "Collateral" is the full deposited market value — that's
+                      // what the collateral actually is. The liquidation-threshold
+                      // weighting (what can be borrowed against it) is expressed
+                      // by Health Factor + borrowing power, not by shrinking this
+                      // number.
                       label: "Collateral",
                       assetIcons:
                         spoke.supplyingSymbols.length > 0 ? (
                           <InlineAssetCluster symbols={spoke.supplyingSymbols} />
                         ) : undefined,
                       value: (() => {
-                        const v = fmtUsd(spoke.weightedCollateralUsd);
+                        const v = fmtUsd(spoke.totalSupplyUsd);
                         return (
                           <StatValue color="text-foreground/80" title={v.title}>
                             {v.display}
                           </StatValue>
                         );
                       })(),
-                      footnote: (
-                        <>
-                          {(() => {
-                            const v = fmtUsd(spoke.totalSupplyUsd);
-                            return (
-                              <div className="text-xs mt-0.5 text-rb-500" title={v.title}>
-                                {v.display} deposited
-                              </div>
-                            );
-                          })()}
-                          <InterestFootnote spoke={spoke} />
-                        </>
-                      ),
+                      footnote: <InterestFootnote spoke={spoke} />,
                     },
                     {
                       label: "Debt",
