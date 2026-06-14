@@ -21,6 +21,11 @@ function pct(x: number): string {
   return `${Math.round(x * 100)}%`;
 }
 
+// Rates carry two decimals — a borrow/supply APR of 3.71% shouldn't round to 4%.
+function ratePct(x: number): string {
+  return `${(x * 100).toFixed(2)}%`;
+}
+
 function ltDisplay(a: HubAssetAgg): string {
   if (a.ltMin == null || a.ltMax == null) return "—";
   if (Math.abs(a.ltMin - a.ltMax) < 0.0001) return a.ltMin.toFixed(2);
@@ -135,7 +140,14 @@ export function AaveV4HubColumn({ hub }: { hub: HubView }) {
                         </span>
                       )}
                     </div>
-                    <div className="text-[11px] text-rb-500">LT {ltDisplay(a)}</div>
+                    <div className="text-[11px] text-rb-500">
+                      LT {ltDisplay(a)}
+                      {a.supplyApr != null && a.supplyApr > 0 && (
+                        <span title="Supplier yield: borrow rate × utilisation × (1 − liquidity fee)">
+                          {" "}· supply {ratePct(a.supplyApr)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div className="shrink-0 text-right">
@@ -144,6 +156,9 @@ export function AaveV4HubColumn({ hub }: { hub: HubView }) {
                   </div>
                   <div className="tabular-nums text-[11px] text-rb-500" title={`Borrowed ${bUsd.title}`}>
                     borrowed {bUsd.display}
+                    {a.borrowApr != null && a.borrowedUsd > 0 && (
+                      <span title="Current variable borrow rate (the hub's drawnRate)"> · {ratePct(a.borrowApr)}</span>
+                    )}
                   </div>
                   <div className="mt-0.5 flex justify-end" title="Credit-line utilisation (drawn ÷ draw cap)">
                     <UtilBar value={a.drawUtil} />

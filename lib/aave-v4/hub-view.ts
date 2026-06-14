@@ -42,6 +42,15 @@ export interface HubAssetAgg {
   anyHalted: boolean;
   /** bool_or of canBorrow across spokes; null when config not yet indexed. */
   canBorrow: boolean | null;
+  /** Current variable borrow rate (the hub's drawnRate) as a decimal fraction
+   *  (0.05 = 5%); null until the rate pipeline has seen this (hub, asset). */
+  borrowApr: number | null;
+  /** Supplier yield, derived: borrowApr × utilisation × (1 − liquidityFee),
+   *  utilisation = drawn/supplied at hub level. null when borrowApr is unknown
+   *  or nothing is supplied. 0 is legitimate (asset supplied but not drawn). */
+  supplyApr: number | null;
+  /** Liquidity fee (V4 reserve factor) as a decimal fraction (0.10 = 10%). */
+  liquidityFee: number;
 }
 
 export interface HubView {
@@ -116,6 +125,10 @@ function buildHubView(
     let ltMax: number | null = null;
     let anyHalted = false;
     let canBorrow: boolean | null = null;
+    // Borrow rate + liquidity fee are per (hub, asset) — identical across the
+    // group's spokes — so capture the first non-null we see.
+    let borrowRateRay: string | null = null;
+    let liquidityFeeBps = 0;
     const spokes = new Set<string>();
 
     for (const l of group) {
@@ -132,10 +145,21 @@ function buildHubView(
       }
       if (l.halted) anyHalted = true;
       if (l.canBorrow != null) canBorrow = (canBorrow ?? false) || l.canBorrow;
+      if (l.borrowRate != null) borrowRateRay = l.borrowRate;
+      if (l.liquidityFeeBps) liquidityFeeBps = l.liquidityFeeBps;
     }
 
     const addCap = anyAddCapped ? addCapSum : null;
     const drawCap = anyDrawCapped ? drawCapSum : null;
+
+    // Rates. Borrow rate is the hub's drawnRate (ray). Supplier yield is the
+    // standard pool identity: borrowApr × utilisation × (1 − fee), where
+    // utilisation is drawn/supplied at the hub (actual amounts, not caps).
+    const borrowApr = borrowRateRay != null ? Number(borrowRateRay) / 1e27 : null;
+    const liquidityFee = liquidityFeeBps / 10_000;
+    const rateUtil = supplied > 0 ? borrowed / supplied : 0;
+    const supplyApr =
+      borrowApr != null && supplied > 0 ? borrowApr * rateUtil * (1 - liquidityFee) : null;
     assets.push({
       symbol,
       underlying,
@@ -155,6 +179,9 @@ function buildHubView(
       spokeCount: spokes.size,
       anyHalted,
       canBorrow,
+      borrowApr,
+      supplyApr,
+      liquidityFee,
     });
   }
 

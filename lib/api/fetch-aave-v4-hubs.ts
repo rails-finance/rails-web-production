@@ -42,6 +42,12 @@ export interface HubCreditLine {
   /** From reserve-config; null when config isn't yet indexed for this market. */
   canSupply: boolean | null;
   canBorrow: boolean | null;
+  /** Latest variable borrow rate (the hub's `drawnRate`), ray (1e27) as a
+   *  string. null until the rate pipeline has seen this (hub, asset). */
+  borrowRate: string | null;
+  /** Protocol's share of borrow interest (V4 reserve factor), in BPS
+   *  (1000 = 10%). 0 for collateral-only / non-borrowable reserves. */
+  liquidityFeeBps: number;
 }
 
 export interface AaveV4HubsResponse {
