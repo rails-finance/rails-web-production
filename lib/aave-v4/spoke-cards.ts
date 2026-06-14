@@ -89,6 +89,12 @@ export interface AaveSpokeCardInfo {
   name: string;
   hub: HubTier;
   totalSupplyUsd: number;
+  /** Collateral value after each asset is weighted by its liquidation threshold
+   *  — the portion that actually backs borrowing and the health factor (Σ
+   *  coll×price×LT). Always ≤ totalSupplyUsd; the gap is the LT haircut. Other
+   *  dashboards label THIS figure "Collateral"; Rails' headline "Collateral"
+   *  shows the gross totalSupplyUsd, so the explanation panel states both. */
+  weightedCollateralUsd: number;
   totalDebtUsd: number;
   peakSupplyUsd: number;
   peakDebtUsd: number;
@@ -466,6 +472,27 @@ export function calculateAaveEconomics(
   };
 }
 
+/**
+ * Harden a set of reserves for the no-chain-truth fallback (chain RPC overlay
+ * failed → `chainStale`, or the chain fetch was skipped/errored → no
+ * chainPosition at all). In that path the only collateral signal is the
+ * indexed `collateral_toggle` events that set `collateralEnabled`. Aave V4
+ * makes collateral an explicit opt-in that emits a toggle event, so a supplied
+ * reserve we never saw an enable-toggle for (`collateralEnabled === undefined`)
+ * is resolved to NOT collateral rather than assumed-enabled.
+ *
+ * This keeps the fallback HF / borrowing-power / liq-price from crediting
+ * collateral we can't confirm — the conservative direction for a risk read.
+ * Reserves carrying an explicit enable/disable toggle keep that observed value.
+ *
+ * Only the fallback uses this: when chain truth is available, the patch path
+ * overwrites `collateralEnabled` with the on-chain `isCollateral` flag, which
+ * is authoritative.
+ */
+export function resolveFallbackCollateral(reserves: ReserveStats[]): ReserveStats[] {
+  return reserves.map((r) => ({ ...r, collateralEnabled: r.collateralEnabled ?? false }));
+}
+
 // ---- Spoke grouping ----
 
 export function groupBySpoke(
@@ -629,6 +656,7 @@ export function buildSpokeCards(
       name: g.name,
       hub: g.hub,
       totalSupplyUsd: g.totalSupplyUsd,
+      weightedCollateralUsd: simResult.weightedCollateralUsd,
       totalDebtUsd: g.totalDebtUsd,
       peakSupplyUsd,
       peakDebtUsd,

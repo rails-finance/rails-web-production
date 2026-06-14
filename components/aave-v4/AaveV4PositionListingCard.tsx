@@ -117,7 +117,10 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
   const hubTier = SPOKE_HUB[row.spokeName] ?? "Core";
 
   const collateralValue = (() => {
-    const v = fmtUsd(sim.totalCollateralUsd);
+    // With debt, "Collateral" is the threshold-weighted backing (matches the
+    // detail card + HF / borrowing-power, which are already weighted). Supply-
+    // only rows show the gross supplied value under the "Supplied" label.
+    const v = fmtUsd(supplyOnly ? sim.totalCollateralUsd : sim.weightedCollateralUsd);
     // Supply-only positions are still OPEN — render the value bright like any
     // active position. The muted (text-rb-500) tone is reserved for genuinely
     // closed positions, so using it here would falsely read as "closed."
@@ -190,6 +193,18 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
           assetIcons:
             sim.supplyingSymbols.length > 0 ? <InlineAssetCluster symbols={sim.supplyingSymbols} /> : undefined,
           value: collateralValue,
+          // Full deposited market value beneath the weighted headline, so the
+          // gross figure stays visible without redefining "Collateral".
+          footnote: supplyOnly
+            ? undefined
+            : (() => {
+                const v = fmtUsd(sim.totalCollateralUsd);
+                return (
+                  <div className="text-xs mt-0.5 text-rb-500" title={v.title}>
+                    {v.display} deposited
+                  </div>
+                );
+              })(),
         },
         {
           label: "Debt",

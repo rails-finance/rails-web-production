@@ -58,7 +58,13 @@ import { AaveV4PositionExposure } from "@/components/protocol/aave-v4/aave-v4-po
 import { aaveV4RunwayExplanation } from "@/components/protocol/aave-v4/aave-v4-price-runway";
 import { InfoDisclosure } from "@/components/shared/info-disclosure";
 import { AaveV4TowerChart } from "@/components/protocol/aave-v4/aave-v4-tower-chart";
-import { buildAaveV4SpokeCards, groupBySpoke, computeAaveV4InterestPnl } from "@/lib/aave-v4/spoke-cards";
+import {
+  buildAaveV4SpokeCards,
+  buildSpokeCards,
+  groupBySpoke,
+  computeAaveV4InterestPnl,
+  resolveFallbackCollateral,
+} from "@/lib/aave-v4/spoke-cards";
 import { AAVE_V4_FALLBACK_LT, isStable } from "@/lib/aave-v4/liquidation-thresholds";
 import { simulateAaveV4Position, type SimPositionInputs } from "@/lib/aave-v4/utils/simulate";
 import { resolvePrice, type PriceEntry } from "@/lib/aave/prices";
@@ -249,7 +255,21 @@ function AaveV4SpokePageInner() {
   const eventActiveGroup = useMemo(() => spokeGroups.find((g) => g.name === spokeName), [spokeGroups, spokeName]);
   const activeCard = useMemo(() => {
     if (!eventActiveCard) return undefined;
-    if (!chainPosition || chainPosition.chainStale) return eventActiveCard;
+    if (!chainPosition || chainPosition.chainStale) {
+      // No chain truth (skipped/failed fetch or stale RPC overlay). Re-derive
+      // the headline numbers from event data, but resolve un-toggled supplies
+      // to NON-collateral first so HF / borrowing-power / liq-price don't credit
+      // collateral we can't confirm. See resolveFallbackCollateral.
+      if (!eventActiveGroup) return eventActiveCard;
+      const hardenedGroup = {
+        ...eventActiveGroup,
+        result: {
+          ...eventActiveGroup.result,
+          reserves: resolveFallbackCollateral(eventActiveGroup.result.reserves),
+        },
+      };
+      return buildSpokeCards([hardenedGroup], prices)[0] ?? eventActiveCard;
+    }
     const patched = patchSpokeCardWithChain(eventActiveCard, chainPosition, prices);
     // Interest carry needs both legs together: chain-truth current balances and
     // event-derived principal. Patched reserves carry both, so compute here and
@@ -261,7 +281,18 @@ function AaveV4SpokePageInner() {
   }, [eventActiveCard, eventActiveGroup, chainPosition, prices]);
   const activeGroup = useMemo(() => {
     if (!eventActiveGroup) return undefined;
-    if (!chainPosition || chainPosition.chainStale) return eventActiveGroup;
+    if (!chainPosition || chainPosition.chainStale) {
+      // Same fallback as activeCard: resolve un-toggled supplies to
+      // non-collateral so the economics band (tower, exposure, runway) reads
+      // collateral consistently with the hardened headline card.
+      return {
+        ...eventActiveGroup,
+        result: {
+          ...eventActiveGroup.result,
+          reserves: resolveFallbackCollateral(eventActiveGroup.result.reserves),
+        },
+      };
+    }
     return {
       ...eventActiveGroup,
       result: {

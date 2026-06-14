@@ -186,6 +186,7 @@ export function patchSpokeCardWithChain(
   return {
     ...card,
     totalSupplyUsd: sim.totalCollateralUsd,
+    weightedCollateralUsd: sim.weightedCollateralUsd,
     totalDebtUsd: sim.totalDebtUsd,
     collRatio: sim.totalDebtUsd > 0 ? sim.totalCollateralUsd / sim.totalDebtUsd : null,
     supplyingSymbols,

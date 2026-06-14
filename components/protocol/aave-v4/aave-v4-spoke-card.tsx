@@ -174,20 +174,38 @@ function AaveV4SpokeCard({
                   ]
                 : [
                     {
+                      // "Collateral" is the threshold-weighted value that
+                      // actually backs the debt (Σ coll×price×LT) — what other
+                      // dashboards label Collateral. The full deposited market
+                      // value sits below in the footnote so the headline number
+                      // is the one that drives borrowing power / HF, not the
+                      // larger gross figure that can't all be borrowed against.
                       label: "Collateral",
                       assetIcons:
                         spoke.supplyingSymbols.length > 0 ? (
                           <InlineAssetCluster symbols={spoke.supplyingSymbols} />
                         ) : undefined,
                       value: (() => {
-                        const v = fmtUsd(spoke.totalSupplyUsd);
+                        const v = fmtUsd(spoke.weightedCollateralUsd);
                         return (
                           <StatValue color="text-foreground/80" title={v.title}>
                             {v.display}
                           </StatValue>
                         );
                       })(),
-                      footnote: <InterestFootnote spoke={spoke} />,
+                      footnote: (
+                        <>
+                          {(() => {
+                            const v = fmtUsd(spoke.totalSupplyUsd);
+                            return (
+                              <div className="text-xs mt-0.5 text-rb-500" title={v.title}>
+                                {v.display} deposited
+                              </div>
+                            );
+                          })()}
+                          <InterestFootnote spoke={spoke} />
+                        </>
+                      ),
                     },
                     {
                       label: "Debt",

@@ -116,7 +116,7 @@ function buildSpokePositionItems(spoke: AaveSpokeCardInfo): React.ReactNode[] {
   } else {
     items.push(
       <span key="composition">
-        <strong className="text-foreground">{fmtUsd(spoke.totalSupplyUsd).display}</strong> of collateral
+        <strong className="text-foreground">{fmtUsd(spoke.totalSupplyUsd).display}</strong> deposited
         {supplyStr && (
           <>
             {" "}
@@ -133,6 +133,18 @@ function buildSpokePositionItems(spoke: AaveSpokeCardInfo): React.ReactNode[] {
         .
       </span>,
     );
+    if (spoke.totalSupplyUsd > 0 && spoke.weightedCollateralUsd > 0) {
+      items.push(
+        <span key="collateral-basis">
+          The collateral that actually backs the debt is{" "}
+          <strong className="text-foreground">{fmtUsd(spoke.weightedCollateralUsd).display}</strong> — each deposited
+          asset counted at its liquidation threshold, which is what borrowing power and the health factor are measured
+          against. That&rsquo;s about {Math.round((spoke.weightedCollateralUsd / spoke.totalSupplyUsd) * 100)}% of the{" "}
+          <strong className="text-foreground">{fmtUsd(spoke.totalSupplyUsd).display}</strong> full deposited value, the
+          remainder being the threshold haircut.
+        </span>,
+      );
+    }
     if (spoke.healthFactor != null) {
       items.push(
         <span key="hf">
