@@ -28,13 +28,15 @@ function joinSymbols(syms: string[]): string {
  */
 function buildInterestItems(pnl: AaveV4InterestPnl): React.ReactNode[] {
   const items: React.ReactNode[] = [];
-  const net = fmtSignedUsd(pnl.netUsd);
-  items.push(
-    <span key="net-interest">
-      Net interest to date: <strong className="text-foreground">{net.display}</strong> — supply interest earned minus
-      borrow interest paid, read from on-chain balances against indexed deposits rather than an annualized rate.
-    </span>,
-  );
+  if (pnl.hasData) {
+    const net = fmtSignedUsd(pnl.netUsd);
+    items.push(
+      <span key="net-interest">
+        Net interest to date: <strong className="text-foreground">{net.display}</strong> — supply interest earned minus
+        borrow interest paid, read from on-chain balances against indexed deposits rather than an annualized rate.
+      </span>,
+    );
+  }
   for (const a of pnl.assets) {
     if (a.supplyInterest > 0) {
       items.push(
@@ -58,6 +60,15 @@ function buildInterestItems(pnl: AaveV4InterestPnl): React.ReactNode[] {
         </span>,
       );
     }
+  }
+  if (pnl.unattributed) {
+    items.push(
+      <span key="unattributed">
+        {pnl.hasData
+          ? "Part of this position was opened through a swap aggregator, so that share's deposits aren't in the transaction record and its interest isn't included."
+          : "Interest isn't shown — this position was opened through a swap aggregator, so its deposits aren't in the transaction record."}
+      </span>,
+    );
   }
   return items;
 }
@@ -99,7 +110,7 @@ function buildSpokePositionItems(spoke: AaveSpokeCardInfo): React.ReactNode[] {
         </span>,
       );
     }
-    if (spoke.interestPnl?.hasData) {
+    if (spoke.interestPnl?.hasData || spoke.interestPnl?.unattributed) {
       items.push(...buildInterestItems(spoke.interestPnl));
     }
   } else {
@@ -151,7 +162,7 @@ function buildSpokePositionItems(spoke: AaveSpokeCardInfo): React.ReactNode[] {
         </span>,
       );
     }
-    if (spoke.interestPnl?.hasData) {
+    if (spoke.interestPnl?.hasData || spoke.interestPnl?.unattributed) {
       items.push(...buildInterestItems(spoke.interestPnl));
     }
     if (spoke.latestBorrowRate != null) {

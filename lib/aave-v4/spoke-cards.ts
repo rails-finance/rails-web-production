@@ -147,6 +147,13 @@ export interface AaveV4InterestPnl {
   netUsd: number;
   /** True when at least one priced asset produced a usable figure. */
   hasData: boolean;
+  /** True when the position holds a chain-truth balance whose principal isn't in
+   *  the event record — a position opened via a swap aggregator / transfer-in
+   *  (CowSwap / 1inch / Pendle) that skipped the standard Supply/Borrow event.
+   *  Interest can't be computed for that leg; the UI surfaces a one-line reason
+   *  rather than a confusing blank. May be true alongside hasData (a position
+   *  that's partly aggregator-opened, partly indexed). */
+  unattributed: boolean;
 }
 
 // Below this token threshold an interest leg is treated as zero — share-rounding
@@ -209,6 +216,7 @@ export function computeAaveV4InterestPnl(
   const assets: AaveV4AssetInterest[] = [];
   let netUsd = 0;
   let hasData = false;
+  let unattributed = false;
 
   for (const r of reserves) {
     const price = resolvePrice(r.symbol, prices) ?? 0;
@@ -218,6 +226,17 @@ export function computeAaveV4InterestPnl(
 
     const supplyInterest = legInterest(r.currentSupplied, netSupplyPrincipal, r.supplied);
     const borrowInterest = legInterest(r.currentBorrowed, netBorrowPrincipal, r.borrowed);
+
+    // Aggregator / transfer-in open: a chain-truth balance exists on a leg but
+    // we indexed no deposit/borrow for it, so its principal — and thus its
+    // interest — is unknowable. Flag the clear-cut case (zero indexed principal,
+    // non-dust balance) so the UI can explain the gap.
+    if (r.currentSupplied != null && r.currentSupplied > INTEREST_DUST_TOKENS && r.supplied <= INTEREST_DUST_TOKENS) {
+      unattributed = true;
+    }
+    if (r.currentBorrowed != null && r.currentBorrowed > INTEREST_DUST_TOKENS && r.borrowed <= INTEREST_DUST_TOKENS) {
+      unattributed = true;
+    }
 
     if (supplyInterest === 0 && borrowInterest === 0) continue;
 
@@ -229,8 +248,9 @@ export function computeAaveV4InterestPnl(
     assets.push({ symbol: r.symbol, supplyInterest, borrowInterest, supplyInterestUsd, borrowInterestUsd });
   }
 
-  if (assets.length === 0) return null;
-  return { assets, netUsd, hasData };
+  // Nothing reliable to show and no gap to explain → let callers render nothing.
+  if (assets.length === 0 && !unattributed) return null;
+  return { assets, netUsd, hasData, unattributed };
 }
 
 // ---- Guard ----
