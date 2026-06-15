@@ -63,8 +63,10 @@ export interface HubView {
   /** Collateral composition by asset class, descending, ≥1% only. */
   composition: { cls: AssetClass; label: string; pct: number }[];
   assets: HubAssetAgg[];
-  spokeNames: string[];
-  haltedSpokes: string[];
+  /** Member spokes, sorted by display name. `slug` is the listing's `?spokes=`
+   *  param value (e.g. `ethena_corr`), so each pill can link straight into the
+   *  filtered listing. */
+  spokes: { slug: string; name: string; halted: boolean }[];
 }
 
 export const HUB_LABEL: Record<HubTierKey, string> = {
@@ -201,12 +203,15 @@ function buildHubView(
           .sort((a, b) => b.pct - a.pct)
       : [];
 
-  const spokeNamesSet = new Map<string, string>();
-  const haltedSet = new Map<string, string>();
+  // One entry per spoke in this hub. A spoke is "halted" here if any of its
+  // lines in this hub is halted.
+  const spokeMap = new Map<string, { slug: string; name: string; halted: boolean }>();
   for (const l of lines) {
-    spokeNamesSet.set(l.spoke, l.spokeName);
-    if (l.halted) haltedSet.set(l.spoke, l.spokeName);
+    const prev = spokeMap.get(l.spoke);
+    if (prev) prev.halted = prev.halted || l.halted;
+    else spokeMap.set(l.spoke, { slug: l.spoke, name: l.spokeName, halted: l.halted });
   }
+  const spokes = [...spokeMap.values()].sort((a, b) => a.name.localeCompare(b.name));
 
   return {
     hub,
@@ -217,8 +222,7 @@ function buildHubView(
     borrowedUsd,
     composition,
     assets,
-    spokeNames: [...spokeNamesSet.values()].sort(),
-    haltedSpokes: [...haltedSet.values()].sort(),
+    spokes,
   };
 }
 

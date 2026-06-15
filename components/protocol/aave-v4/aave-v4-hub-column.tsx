@@ -4,18 +4,39 @@
 // single hub's identity, size, composition, per-asset breakdown and spoke
 // summary. Strictly descriptive — present, don't rank (see
 // migration/aave-v4-hub-comparison.md):
-//   * Hub name uses the existing categorical HUB_COLORS chip (identity, not
-//     valence) — same treatment as the spoke header badge.
+//   * Hub name renders as a plain title in the app's link color — it drills
+//     into that hub's positions. No categorical color chip (it isn't a verdict).
 //   * Everything else is neutral foreground/rb tones. Utilisation bars use a
 //     single neutral fill (no red-at-high), and the composition bar steps
 //     opacity, never a risk palette.
 
+import Link from "next/link";
 import { TokenChipIcon } from "@/components/shared/token-chip-icon";
-import { HUB_COLORS, type HubTier } from "@/components/protocol/aave-v4/aave-v4-spoke-constants";
 import { fmtUsd } from "@/lib/aave-v4/format";
 import { hubSummaryText, type HubView, type HubAssetAgg } from "@/lib/aave-v4/hub-view";
 
-const HUB_TIER_LABEL: Record<string, HubTier> = { core: "Core", plus: "Plus", prime: "Prime" };
+// App-standard interactive link color (matches the text links used elsewhere in
+// the app). Navigation, not a risk valence — so the no-opinionated-color rule
+// is intact. Used on the hub title, the per-asset figures, and the CTA so they
+// all read as clickable against the surrounding static numbers.
+const LINK = "text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors";
+
+// Spoke pill — an obvious, tappable link into the listing filtered to that
+// spoke. Full set always shown (never truncated): they wrap.
+const SPOKE_PILL =
+  "inline-flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/5 px-2 py-0.5 text-[12px] " +
+  "text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors hover:bg-blue-500/10 hover:border-blue-500/50";
+
+/** Listing URL filtered to one hub (`/aave-v4?hubs=core`), optionally narrowed
+ *  to one asset on a given side. Values match the listing's filter param space:
+ *  `hub.hub` is already the lowercase hub slug, and the asset filters take the
+ *  raw symbol verbatim. */
+function listingHref(hub: string, asset?: { symbol: string; side: "supply" | "borrow" }): string {
+  const base = `/aave-v4?hubs=${hub}`;
+  if (!asset) return base;
+  const key = asset.side === "supply" ? "supplyAssets" : "borrowAssets";
+  return `${base}&${key}=${encodeURIComponent(asset.symbol)}`;
+}
 
 function pct(x: number): string {
   return `${Math.round(x * 100)}%`;
@@ -75,17 +96,21 @@ function CompositionBar({ composition }: { composition: HubView["composition"] }
 export function AaveV4HubColumn({ hub }: { hub: HubView }) {
   const supplied = fmtUsd(hub.suppliedUsd);
   const borrowed = fmtUsd(hub.borrowedUsd);
-  const tier = HUB_TIER_LABEL[hub.hub];
-  const tierColor = HUB_COLORS[tier];
   const summary = hubSummaryText(hub);
+  const haltedCount = hub.spokes.filter((s) => s.halted).length;
 
   return (
     <div className="flex flex-col rounded-lg border border-rb-200 dark:border-rb-800 bg-raised p-5">
-      {/* Identity */}
+      {/* Identity — the hub name is a title link that drills into this hub's
+          positions (the listing filtered to ?hubs=<hub>). */}
       <div className="mb-4">
-        <span className={`inline-block rounded px-2 py-0.5 text-sm font-semibold ${tierColor.bg} ${tierColor.text}`}>
+        <Link
+          href={listingHref(hub.hub)}
+          className={`text-base font-semibold ${LINK}`}
+          title={`View positions in ${hub.label}`}
+        >
           {hub.label}
-        </span>
+        </Link>
         <p className="mt-2 text-[13px] leading-relaxed text-rb-500">{hub.purpose}</p>
       </div>
 
@@ -106,7 +131,13 @@ export function AaveV4HubColumn({ hub }: { hub: HubView }) {
         <div>
           <dt className="text-[11px] uppercase tracking-wider text-rb-500">Positions</dt>
           <dd className="tabular-nums text-base font-semibold text-foreground">
-            {hub.positionCount.toLocaleString()}
+            {hub.positionCount > 0 ? (
+              <Link href={listingHref(hub.hub)} className={LINK} title={`View positions in ${hub.label}`}>
+                {hub.positionCount.toLocaleString()}
+              </Link>
+            ) : (
+              hub.positionCount.toLocaleString()
+            )}
           </dd>
         </div>
       </dl>
@@ -151,11 +182,36 @@ export function AaveV4HubColumn({ hub }: { hub: HubView }) {
                   </div>
                 </div>
                 <div className="shrink-0 text-right">
+                  {/* Each figure drills to the listing filtered to this hub +
+                      this asset on the matching side. Only linked when that
+                      side is non-zero — which also guarantees the listing has
+                      positions to show (it prunes asset filters with none). */}
                   <div className="tabular-nums text-[13px] text-foreground" title={`Supplied ${sUsd.title}`}>
-                    {sUsd.display}
+                    {a.suppliedUsd > 0 ? (
+                      <Link
+                        href={listingHref(hub.hub, { symbol: a.symbol, side: "supply" })}
+                        className={LINK}
+                        title={`View positions supplying ${a.symbol} in ${hub.label}`}
+                      >
+                        {sUsd.display}
+                      </Link>
+                    ) : (
+                      sUsd.display
+                    )}
                   </div>
                   <div className="tabular-nums text-[11px] text-rb-500" title={`Borrowed ${bUsd.title}`}>
-                    borrowed {bUsd.display}
+                    borrowed{" "}
+                    {a.borrowedUsd > 0 ? (
+                      <Link
+                        href={listingHref(hub.hub, { symbol: a.symbol, side: "borrow" })}
+                        className={LINK}
+                        title={`View positions borrowing ${a.symbol} in ${hub.label}`}
+                      >
+                        {bUsd.display}
+                      </Link>
+                    ) : (
+                      bUsd.display
+                    )}
                     {a.borrowApr != null && a.borrowedUsd > 0 && (
                       <span title="Current variable borrow rate (the hub's drawnRate)"> · {ratePct(a.borrowApr)}</span>
                     )}
@@ -171,14 +227,40 @@ export function AaveV4HubColumn({ hub }: { hub: HubView }) {
         </ul>
       </div>
 
-      {/* Spokes summary */}
-      <div className="mt-auto border-t border-rb-200 dark:border-rb-800 pt-3 text-[12px] text-rb-500">
-        <span className="text-foreground/80">{hub.spokeNames.length}</span>{" "}
-        {hub.spokeNames.length === 1 ? "spoke" : "spokes"}
-        {hub.haltedSpokes.length > 0 && <> · {hub.haltedSpokes.length} halted</>}
-        <div className="mt-1 truncate" title={hub.spokeNames.join(", ")}>
-          {hub.spokeNames.join(", ")}
+      {/* Spokes — every member spoke as a link into the listing filtered to that
+          spoke (?spokes=<slug>). The spoke is the most-specific unit, so no hub
+          param is added (a cross-hub spoke like Bluechip would otherwise be
+          ANDed out). Full set, wrapping — never truncated. */}
+      <div className="mt-auto border-t border-rb-200 dark:border-rb-800 pt-3">
+        <div className="mb-2 text-[12px] text-rb-500">
+          <span className="text-foreground/80">{hub.spokes.length}</span>{" "}
+          {hub.spokes.length === 1 ? "spoke" : "spokes"}
+          {haltedCount > 0 && <> · {haltedCount} halted</>}
         </div>
+        <div className="flex flex-wrap gap-1.5">
+          {hub.spokes.map((s) => (
+            <Link
+              key={s.slug}
+              href={`/aave-v4?spokes=${s.slug}`}
+              className={SPOKE_PILL}
+              title={`View ${s.name} positions`}
+            >
+              {s.name}
+              {s.halted && <span className="text-[10px] uppercase tracking-wide text-rb-500">halted</span>}
+            </Link>
+          ))}
+        </div>
+
+        {/* Explicit hub-level drill-down — clearer than the identity pill alone. */}
+        {hub.positionCount > 0 && (
+          <Link
+            href={listingHref(hub.hub)}
+            className={`mt-3 inline-flex items-center gap-1 text-[13px] font-medium ${LINK}`}
+          >
+            View all {hub.positionCount.toLocaleString()} {hub.label} positions
+            <span aria-hidden>→</span>
+          </Link>
+        )}
       </div>
     </div>
   );
