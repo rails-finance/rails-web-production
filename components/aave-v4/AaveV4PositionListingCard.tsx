@@ -113,7 +113,6 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
   // Chain overlay failed for this row → balances are MV-indexed (potentially
   // drifted from on-chain). The card still renders; the indicator warns.
   const hfStale = hasDebt && row.chainHfStale;
-  const borrowingPowerUsd = sim.borrowCapacityUsd;
   const hubTier = SPOKE_HUB[row.spokeName] ?? "Core";
 
   const collateralValue = (() => {
@@ -214,12 +213,10 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
             </span>
           ) : undefined,
           value: hfValue,
-          footnote:
-            !supplyOnly && borrowingPowerUsd > 0.01 ? (
-              <div className="text-xs mt-0.5 text-rb-500" title={fmtUsd(borrowingPowerUsd).title}>
-                {fmtUsd(borrowingPowerUsd).display} borrowing power
-              </div>
-            ) : undefined,
+          // Borrowing power intentionally omitted (matches the detail card): it's
+          // the gap to a 1.00 HF (the liquidation point), not a safe-to-borrow
+          // figure, so it misreads as a stat.
+          footnote: undefined,
         },
         {
           label: sim.liqPrice ? `Liq Price (${sim.liqPrice.symbol})` : "Liq Price",

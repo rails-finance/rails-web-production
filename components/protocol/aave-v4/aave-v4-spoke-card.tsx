@@ -17,7 +17,7 @@ import type { AaveSpokeCardInfo } from "@/lib/aave-v4/spoke-cards";
 import { bucketForHealth } from "@/lib/aave-v4/health-bucket";
 import { LiquidatedBadge } from "@/components/aave-v4/LiquidatedBadge";
 import { WalletPill } from "@/components/aave-v4/wallet-pill";
-import { fmtUsd, hfLabel, hfColorClass, fmtLiqPrice, fmtSignedUsd } from "@/lib/aave-v4/format";
+import { fmtUsd, hfLabel, hfColorClass, fmtLiqPrice } from "@/lib/aave-v4/format";
 import { AaveV4PositionExplanation } from "@/components/protocol/aave-v4/aave-v4-position-explanation";
 import { InfoDisclosure } from "@/components/shared/info-disclosure";
 
@@ -34,42 +34,46 @@ function SpokeIdentity({ name, hub }: { name: string; hub: HubTier }) {
 
 /** Supply-side interest earned, shown under the Collateral / Supplied stat.
  *  Deliberately the supply leg ONLY — it never folds in borrow-interest paid, so
- *  the collateral footnote can't show a debt-driven negative (mirrors Aave's
- *  deposit-side "Earnings"). Hidden when it rounds below a cent — dust isn't
- *  worth a line. Neutral tone; the sign carries the meaning per the
- *  no-opinionated-color rule. Renders nothing without chain-truth. */
+ *  the collateral footnote can't show a debt-driven negative. Earned supply
+ *  interest is already part of the collateral balance shown above (it grew it),
+ *  so it reads as an "incl." figure with no sign rather than a separate signed
+ *  gain — parallel to the debt side. Hidden when it rounds below a cent — dust
+ *  isn't worth a line. Renders nothing without chain-truth. */
 function SupplyInterestFootnote({ spoke }: { spoke: AaveSpokeCardInfo }) {
   const pnl = spoke.interestPnl;
   if (!pnl || !pnl.hasData) return null;
   const earnedUsd = pnl.assets.reduce((sum, a) => sum + a.supplyInterestUsd, 0);
   if (earnedUsd < 0.01) return null;
-  const v = fmtSignedUsd(earnedUsd);
+  const v = fmtUsd(earnedUsd);
   return (
     <div
       className="text-xs mt-0.5 font-medium text-rb-500"
-      title={`${v.title} supply interest earned to date — from on-chain balances vs. indexed deposits`}
+      title={`${v.title} of the collateral is accrued supply interest to date — from on-chain balances vs. indexed deposits`}
     >
-      {v.display} supply interest
+      incl. {v.display} interest
     </div>
   );
 }
 
-/** Debt-stat footnote: the latest borrow rate plus, when non-dust, the borrow
- *  interest paid to date. The cost lives under the Debt column (not Collateral)
- *  so each side's economics sit beneath their own stat — the supply side earns,
- *  the debt side pays. Neutral tone; the sign carries the meaning. */
+/** Debt-stat footnote: the latest borrow rate plus, when non-dust, the accrued
+ *  borrow interest. Accrued interest GREW the debt — it's already part of the
+ *  debt balance shown above — so it reads as "incl. $X interest" with no sign. A
+ *  leading minus here would misread as the debt being reduced (it isn't); the
+ *  cost stays under Debt because that's the balance it accrued into. */
 function DebtFootnote({ spoke }: { spoke: AaveSpokeCardInfo }) {
   const rate = spoke.latestBorrowRate;
   const pnl = spoke.interestPnl;
   const paidUsd = pnl?.hasData ? pnl.assets.reduce((sum, a) => sum + a.borrowInterestUsd, 0) : 0;
-  const paid = paidUsd >= 0.01 ? fmtSignedUsd(-paidUsd) : null;
-  if (rate === null && !paid) return null;
+  const interest = paidUsd >= 0.01 ? fmtUsd(paidUsd) : null;
+  if (rate === null && !interest) return null;
   return (
     <div className="text-xs mt-0.5 text-rb-500 space-y-0.5">
       {rate !== null && <div>{rate.toFixed(2)}% borrow rate</div>}
-      {paid && (
-        <div title={`${paid.title} borrow interest paid to date — from on-chain balances vs. indexed deposits`}>
-          {paid.display} interest paid
+      {interest && (
+        <div
+          title={`${interest.title} of the debt is accrued borrow interest to date — from on-chain balances vs. indexed deposits`}
+        >
+          incl. {interest.display} interest
         </div>
       )}
     </div>
@@ -243,17 +247,11 @@ function AaveV4SpokeCard({
                         ) : (
                           <StatDash>{"∞"}</StatDash>
                         ),
-                      footnote:
-                        spoke.borrowingPowerUsd > 0.01
-                          ? (() => {
-                              const v = fmtUsd(spoke.borrowingPowerUsd);
-                              return (
-                                <div className="text-xs mt-0.5 text-rb-500" title={v.title}>
-                                  {v.display} borrowing power
-                                </div>
-                              );
-                            })()
-                          : undefined,
+                      // Borrowing power intentionally omitted: it's the gap to a
+                      // 1.00 HF (the liquidation point), not a safe-to-borrow
+                      // figure, so it misreads as a stat. The honest framing lives
+                      // in the explanation panel instead.
+                      footnote: undefined,
                     },
                     {
                       label: spoke.liqPrice ? `Liq Price (${spoke.liqPrice.symbol})` : "Liq Price",

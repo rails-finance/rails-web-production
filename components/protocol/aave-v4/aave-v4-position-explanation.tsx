@@ -75,11 +75,11 @@ function buildInterestItems(pnl: AaveV4InterestPnl): React.ReactNode[] {
  * BOLD RULE (same as the event explainer's <H> helper): wrap a number in
  * <strong className="text-foreground"> ONLY when that exact value is also shown
  * in a stat the reader can find outside this panel — the spoke card's headline
- * stats / footnotes (collateral, debt, HF, borrowing power, borrow rate, liq
- * price, current price) or the exposure tower (peak supply/debt). Figures that
- * exist only inside this prose — the LT-weighted debt ceiling, net interest,
- * per-asset interest amounts, the event count — stay in the muted body tone, so
- * a bold figure always maps to one displayed above it.
+ * stats / footnotes (collateral, debt, HF, borrow rate, liq price, current
+ * price) or the exposure tower (peak supply/debt). Figures that exist only
+ * inside this prose — the LT-weighted debt ceiling, borrowing headroom to a 1.00
+ * HF, net interest, per-asset interest amounts, the event count — stay in the
+ * muted body tone, so a bold figure always maps to one displayed above it.
  */
 function buildSpokePositionItems(spoke: AaveSpokeCardInfo): React.ReactNode[] {
   const items: React.ReactNode[] = [];
@@ -108,8 +108,8 @@ function buildSpokePositionItems(spoke: AaveSpokeCardInfo): React.ReactNode[] {
     if (spoke.borrowingPowerUsd > 1) {
       items.push(
         <span key="power">
-          Up to {fmtUsd(spoke.borrowingPowerUsd).display} could be borrowed against this collateral before reaching the
-          liquidation threshold.
+          This collateral could support up to {fmtUsd(spoke.borrowingPowerUsd).display} of debt, but borrowing near that
+          amount would sit the position at a 1.00 health factor — the liquidation point — so a safe borrow is lower.
         </span>,
       );
     }
@@ -170,8 +170,8 @@ function buildSpokePositionItems(spoke: AaveSpokeCardInfo): React.ReactNode[] {
     if (spoke.borrowingPowerUsd > 1) {
       items.push(
         <span key="power">
-          Roughly <strong className="text-foreground">{fmtUsd(spoke.borrowingPowerUsd).display}</strong> of additional
-          borrowing power remains before the liquidation threshold.
+          About {fmtUsd(spoke.borrowingPowerUsd).display} more of debt could be drawn before the position reaches a 1.00
+          health factor — the liquidation point — so a safe additional borrow stays well below that.
         </span>,
       );
     }
