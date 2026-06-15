@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { FilterDimension, FilterOptionDef } from "@/components/shared/filter-bar/types";
 import { joinOptionLabels } from "@/components/shared/filter-bar/types";
-import { RESET_LINK } from "@/lib/shared/ui-grammar";
+import { PAGE_LINK } from "@/lib/shared/ui-grammar";
 import {
   type AaveV4ListFilterParams,
   type AaveV4Debt,
@@ -152,9 +152,10 @@ export function aaveV4FilterDimensions({
     group: "Market",
     cardinality: "multi",
     options: HUB_OPTIONS,
-    // Quiet link to the cross-hub comparison surface, beside the Hub title.
+    // Link to the cross-hub comparison surface, beside the Hub title. Blue
+    // (PAGE_LINK) because it navigates to a page, not a reset action.
     labelAction: (
-      <Link href="/aave-v4/hubs" className={RESET_LINK} onClick={(e) => e.stopPropagation()}>
+      <Link href="/aave-v4/hubs" className={PAGE_LINK} onClick={(e) => e.stopPropagation()}>
         Compare
       </Link>
     ),

@@ -67,6 +67,18 @@ export const CTRL_ON_ACCENT = "bg-amber-500/15 text-amber-500 dark:text-amber-40
 export const RESET_LINK = "text-xs font-semibold text-teal-600 hover:text-teal-500 transition-colors cursor-pointer";
 
 /**
+ * In-panel navigation link — a small link that lives beside a control/section
+ * header but, unlike RESET_LINK, *opens a page* rather than mutating state
+ * (e.g. the "Compare" link beside the Hub filter → /aave-v4/hubs). Same size +
+ * weight as RESET_LINK so the two sit together cleanly; blue per the
+ * one-meaning-per-colour rule (blue = navigation), so it reads as "goes
+ * somewhere", not "resets". The app-wide rule: any link that opens a page is
+ * blue (and a clickable card gets a blue hover border instead).
+ */
+export const PAGE_LINK =
+  "text-xs font-semibold text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors cursor-pointer";
+
+/**
  * Dropdown / overlay-panel title — the heading row at the top of every
  * `overlay-panel` (sort menu, filter dropdown, filter-section dropdown, …). One
  * token so every dropdown opens with the same title treatment. Canonical

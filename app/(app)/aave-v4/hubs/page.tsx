@@ -63,7 +63,10 @@ function HubsContent() {
       <div className="max-w-7xl mx-auto py-8 px-4">
         <header className="mb-6">
           <div className="mb-1 text-[11px] uppercase tracking-wider text-rb-500">
-            <Link href="/aave-v4" className="hover:text-foreground">
+            <Link
+              href="/aave-v4"
+              className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+            >
               Aave V4
             </Link>{" "}
             / Hubs
