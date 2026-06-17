@@ -75,8 +75,8 @@ function EconomicsBody() {
           ))}
         </div>
         <div className="flex flex-1 items-end justify-center gap-4 pb-1">
-          <div className="h-[78%] w-12 rounded-t bg-blue-500/55" />
-          <div className="h-[56%] w-12 rounded-t bg-emerald-500/55" />
+          <div className="h-[78%] w-12 rounded bg-blue-500/55" />
+          <div className="h-[56%] w-12 rounded bg-emerald-500/55" />
         </div>
         {/* Mirrors the left legend (swatch + bar), one row fewer, and bottom-
             aligned to the foot of the towers as it reads IRL. */}
@@ -89,11 +89,11 @@ function EconomicsBody() {
           ))}
         </div>
       </div>
-      {/* Liquidation / price-runway bar: three equal pill segments. */}
+      {/* Liquidation / price-runway bar: short blue lead, long neutral middle, red liquidation tail. */}
       <div className="flex h-2 w-full gap-1">
-        <div className="h-full flex-1 rounded-full bg-emerald-500/55" />
-        <div className="h-full flex-1 rounded-full bg-amber-500/55" />
-        <div className="h-full flex-1 rounded-full bg-red-500/55" />
+        <div className="h-full flex-[0.25] rounded-full bg-blue-500/55" />
+        <div className="h-full flex-[2.25] rounded-full bg-rb-200 dark:bg-rb-500/30" />
+        <div className="h-full flex-[0.5] rounded-full bg-red-500/55" />
       </div>
       {/* breathing room beneath the runway bar */}
       <div className="flex-1" />
