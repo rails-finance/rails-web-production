@@ -53,7 +53,7 @@
      lift would be invisible on a white panel. */
   --background: rgb(249 249 252);
 
-  /* Tinted with rb-500 (88 104 130, the brand blue-grey) rather than pure black,
+  /* Tinted with rb-500 (104 119 144, the brand blue-grey) rather than pure black,
      so hover/active fills on white panels read as rb tones, not neutral grey —
      while still adapting (alpha) to whatever surface they ride. */
   --surface-hover: rgba(88, 104, 130, 0.1);
@@ -163,7 +163,7 @@
   --color-rb-200: rgb(220 225 232);
   --color-rb-300: rgb(213 218 224);
   --color-rb-400: rgb(196 205 217);
-  --color-rb-500: rgb(88 104 130);
+  --color-rb-500: rgb(104 119 144);
   --color-rb-600: rgb(30 33 46);
   --color-rb-700: rgb(25 28 38);
   --color-rb-800: rgb(20 22 30);
@@ -247,7 +247,7 @@ body {
 
 @layer components {
   /* Canonical body copy — one treatment so body text stays in parity across
-     marketing + product. 14px / normal weight / rb-500 (#586882, set back in
+     marketing + product. 14px / normal weight / rb-500 (#687790, set back in
      both themes). Reserve text-foreground for emphasis, text-rb-500 utilities
      for one-off labels. Add layout utilities (max-w-*, mb-*, flex-1) alongside. */
   .body-text {
