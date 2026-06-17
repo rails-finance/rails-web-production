@@ -19,7 +19,7 @@ export function TroveContextRow({ items, isOpen, onToggle }: TroveContextRowProp
   if (items.length === 0) return null;
 
   return (
-    <InfoDisclosure open={isOpen} onToggle={onToggle} label="explanation">
+    <InfoDisclosure open={isOpen} onToggle={onToggle} label="position">
       <div className="text-sm text-foreground/90 space-y-2">
         {items.map((item, i) => (
           <div key={i} className="flex items-start gap-2 leading-relaxed">

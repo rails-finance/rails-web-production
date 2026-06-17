@@ -68,10 +68,12 @@ interface OpenSummaryCardProps {
    *  the full-precision value ("48,148.74") shows. */
   compact?: boolean;
   /** Header right-side cluster (last-activity "X ago" + tx/redemption
-   *  counters). Listing keeps it for at-a-glance scanning; the detail page
-   *  passes false since the activity timeline below already conveys both.
+   *  counters). Listing keeps the full cluster for at-a-glance scanning;
+   *  the detail page passes "counts" to keep just the redemption-triangle +
+   *  tx counters (the timeline header below already says "X ago", so the
+   *  duplicate timestamp is dropped). `false` hides the cluster entirely.
    *  Defaults to true. */
-  showActivityMeta?: boolean;
+  showActivityMeta?: boolean | "counts";
 }
 
 // Liq prices vary widely (BTC ~$100k, USDC ~$1). Match rails-explorer's
@@ -180,10 +182,12 @@ export function OpenSummaryCard({
           </span>
           {showActivityMeta && (
             <span className="flex items-center gap-2 text-xs text-rb-500">
-              <span className="inline-flex items-center gap-1">
-                <Icon name="clock-zap" size={12} />
-                {formatDuration(trove.activity.lastActivityAt, new Date())} ago
-              </span>
+              {showActivityMeta !== "counts" && (
+                <span className="inline-flex items-center gap-1">
+                  <Icon name="clock-zap" size={12} />
+                  {formatDuration(trove.activity.lastActivityAt, new Date())} ago
+                </span>
+              )}
               {trove.activity.redemptionCount > 0 && (
                 <span className="inline-flex items-center text-orange-400">
                   <Icon name="triangle" size={12} />
@@ -219,8 +223,8 @@ export function OpenSummaryCard({
             </div>
             <div className="text-xs mt-0.5 min-h-[1rem]">
               {collateralUsd !== null && collateralUsd > 0 ? (
-                <span className="inline-flex items-center font-bold text-rb-500 border-l-2 border-r-2 border-rb-300 dark:border-rb-700 rounded-sm px-1 py-0">
-                  <HighlightableValue type="collateralUsd" state="after" value={collateralUsd} className="text-rb-500">
+                <span className="inline-flex items-center font-bold text-green-400 border-l-2 border-r-2 border-green-400 rounded-sm px-1 py-0">
+                  <HighlightableValue type="collateralUsd" state="after" value={collateralUsd} className="text-green-400">
                     <FadeNumber value={collateralUsd} formatFn={formatUsdValue} animateOnMount={animateValues} />
                   </HighlightableValue>
                 </span>

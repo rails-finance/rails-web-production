@@ -119,6 +119,25 @@ function AaveV4SpokeCard({
   const supplyOnly = spoke.peakDebtUsd < 1 && spoke.totalDebtUsd < 1 && !underwater;
   const bucket = bucketForHealth(spoke.healthFactor);
   const walletPill = wallet ? <WalletPill wallet={wallet} ensName={ensName ?? null} href={walletHref} /> : null;
+
+  // Collateral USD lags when the supply asset's price is still resolving:
+  // stablecoin debt prices in instantly via the categorical-price fallback, but
+  // WETH / LST collateral comes from the async price provider. Rather than flash
+  // a misleading "< $0.01" and then jolt to the real number, hold a skeleton
+  // until the price lands. A real collateralized position is never worth
+  // sub-cent, and core/plus collateral is always priceable, so
+  // sub-cent-with-supplies reliably means "price still loading". The skeleton
+  // sits inside a StatValue so its line-box matches the real value exactly —
+  // the swap is a fade, not a reflow.
+  const supplyUsdPending = spoke.supplyingSymbols.length > 0 && spoke.totalSupplyUsd < 0.01;
+  const supplyValueSkeleton = (
+    <StatValue color="text-foreground/80">
+      <span
+        className="inline-block h-[0.7em] w-20 rounded-md bg-skeleton animate-pulse align-middle"
+        aria-hidden="true"
+      />
+    </StatValue>
+  );
   return (
     <div
       onClick={onClick}
@@ -187,14 +206,16 @@ function AaveV4SpokeCard({
                         spoke.supplyingSymbols.length > 0 ? (
                           <InlineAssetCluster symbols={spoke.supplyingSymbols} />
                         ) : undefined,
-                      value: (() => {
-                        const v = fmtUsd(spoke.totalSupplyUsd);
-                        return (
-                          <StatValue color="text-foreground/80" title={v.title}>
-                            {v.display}
-                          </StatValue>
-                        );
-                      })(),
+                      value: supplyUsdPending
+                        ? supplyValueSkeleton
+                        : (() => {
+                            const v = fmtUsd(spoke.totalSupplyUsd);
+                            return (
+                              <StatValue color="text-foreground/80" title={v.title}>
+                                {v.display}
+                              </StatValue>
+                            );
+                          })(),
                       footnote: <SupplyInterestFootnote spoke={spoke} />,
                     },
                     null,
@@ -213,14 +234,16 @@ function AaveV4SpokeCard({
                         spoke.supplyingSymbols.length > 0 ? (
                           <InlineAssetCluster symbols={spoke.supplyingSymbols} />
                         ) : undefined,
-                      value: (() => {
-                        const v = fmtUsd(spoke.totalSupplyUsd);
-                        return (
-                          <StatValue color="text-foreground/80" title={v.title}>
-                            {v.display}
-                          </StatValue>
-                        );
-                      })(),
+                      value: supplyUsdPending
+                        ? supplyValueSkeleton
+                        : (() => {
+                            const v = fmtUsd(spoke.totalSupplyUsd);
+                            return (
+                              <StatValue color="text-foreground/80" title={v.title}>
+                                {v.display}
+                              </StatValue>
+                            );
+                          })(),
                       footnote: <SupplyInterestFootnote spoke={spoke} />,
                     },
                     {
@@ -265,10 +288,24 @@ function AaveV4SpokeCard({
                       ) : (
                         <StatDash />
                       ),
+                      // Headroom compares the live collateral price to the liq
+                      // price, so while the collateral price is still resolving
+                      // it reads a false "0% headroom" (looks like imminent
+                      // liquidation). The liq price itself is chain-derived and
+                      // stable, so keep it — only skeleton the headroom line.
                       footnote: spoke.liqPrice ? (
-                        <div className="text-xs mt-0.5 text-rb-500">
-                          {spoke.liqPrice.headroomPct.toFixed(0)}% headroom
-                        </div>
+                        supplyUsdPending ? (
+                          <div className="text-xs mt-0.5">
+                            <span
+                              className="inline-block h-3 w-20 rounded bg-skeleton animate-pulse align-middle"
+                              aria-hidden="true"
+                            />
+                          </div>
+                        ) : (
+                          <div className="text-xs mt-0.5 text-rb-500">
+                            {spoke.liqPrice.headroomPct.toFixed(0)}% headroom
+                          </div>
+                        )
                       ) : undefined,
                     },
                   ]

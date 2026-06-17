@@ -14,7 +14,6 @@ import { getTroveNftUrl } from "@/lib/utils/nft-utils";
 import { HighlightableValue } from "@/components/transaction-timeline/explanation/HighlightableValue";
 import { InfoButton } from "@/components/transaction-timeline/explanation/InfoButton";
 import { FAQ_URLS } from "@/components/transaction-timeline/explanation/shared/faqUrls";
-import { LIQUIDATION_RESERVE_ETH } from "@/components/transaction-timeline/explanation/shared/eventHelpers";
 
 interface UseTroveExplanationItemsArgs {
   trove: TroveSummary;
@@ -48,9 +47,7 @@ export function useTroveExplanationItems({
 function buildLiquidatedItems(trove: TroveSummary): React.ReactNode[] {
   const items: React.ReactNode[] = [];
   const liquidationThreshold = getLiquidationThreshold(trove.collateralType);
-  const truncatedTroveId = trove.id.length > 10
-    ? `${trove.id.slice(0, 6)}...${trove.id.slice(-4)}`
-    : trove.id;
+  const truncatedTroveId = trove.id.length > 10 ? `${trove.id.slice(0, 6)}...${trove.id.slice(-4)}` : trove.id;
   const duration = formatDuration(trove.activity.createdAt, trove.activity.lastActivityAt);
   const dateRange = formatDateRange(trove.activity.createdAt, trove.activity.lastActivityAt);
 
@@ -59,9 +56,9 @@ function buildLiquidatedItems(trove: TroveSummary): React.ReactNode[] {
       Trove ID{" "}
       <HighlightableValue type="troveId" state="after" value={trove.id ? parseInt(trove.id) : undefined}>
         {truncatedTroveId}
-      </HighlightableValue>
-      {" "}was liquidated when the collateral ratio fell below the minimum threshold ({liquidationThreshold}% for {trove.collateralType})
-      {" "}<InfoButton href={FAQ_URLS.LIQUIDATIONS} />
+      </HighlightableValue>{" "}
+      was liquidated when the collateral ratio fell below the minimum threshold ({liquidationThreshold}% for{" "}
+      {trove.collateralType}) <InfoButton href={FAQ_URLS.LIQUIDATIONS} />
     </span>,
   );
 
@@ -84,7 +81,9 @@ function buildLiquidatedItems(trove: TroveSummary): React.ReactNode[] {
     items.push(
       <span key="nft-info" className="text-slate-500">
         The{" "}
-        <HighlightableValue type="nftToken" state="after">NFT</HighlightableValue>{" "}
+        <HighlightableValue type="nftToken" state="after">
+          NFT
+        </HighlightableValue>{" "}
         representing trove{" "}
         <HighlightableValue type="troveId" state="after" value={trove.id ? parseInt(trove.id) : undefined}>
           {`${trove.id.substring(0, 8)}...`}
@@ -157,8 +156,8 @@ function buildClosedItems(trove: TroveSummary): React.ReactNode[] {
 
   items.push(
     <span key="closure" className="text-slate-600 dark:text-slate-500">
-      The trove has been closed and all debt has been repaid. Any collateral above the liquidation reserve was
-      returned to the owner
+      The trove has been closed and all debt has been repaid. Any collateral above the liquidation reserve was returned
+      to the owner
     </span>,
   );
 
@@ -224,14 +223,15 @@ function buildOpenItems({
         <HighlightableValue type="principal" state="after" value={displayRecordedDebt}>
           {formatPrice(displayRecordedDebt)} BOLD
         </HighlightableValue>{" "}
-        principal plus{" "}
+        carried debt plus{" "}
         <HighlightableValue type="interest" state="after" value={displayAccruedInterest}>
           {formatPrice(displayAccruedInterest)} BOLD
         </HighlightableValue>{" "}
-        accrued interest
+        interest accrued since the last event
         {trove.batch.isMember && displayManagementFee !== undefined && displayManagementFee > 0 && (
           <span>
-            {" "}and{" "}
+            {" "}
+            and{" "}
             <HighlightableValue type="managementFee" state="after" value={displayManagementFee}>
               {formatPrice(displayManagementFee)} BOLD
             </HighlightableValue>{" "}
@@ -351,21 +351,17 @@ function buildOpenItems({
         <span className="font-bold">{formatApproximate(debtInFront)} BOLD</span> of debt sits at the same or lower
         interest rate and is exposed to redemption alongside this trove
         {trovesAhead !== null && trovesAhead !== undefined && (
-          <span> ({trovesAhead} other trove{trovesAhead !== 1 ? "s" : ""})</span>
+          <span>
+            {" "}
+            ({trovesAhead} other trove{trovesAhead !== 1 ? "s" : ""})
+          </span>
         )}
       </span>,
     );
   }
 
-  if (LIQUIDATION_RESERVE_ETH > 0) {
-    items.push(
-      <span key="liquidation-reserve" className="text-slate-500">
-        <span className="font-bold">{LIQUIDATION_RESERVE_ETH} ETH</span> liquidation reserve set aside and refunded
-        when the Trove is closed{" "}
-        <InfoButton href={FAQ_URLS.LIQUIDATION_RESERVE} />
-      </span>,
-    );
-  }
+  // Liquidation reserve moved to the economics panel's footnote — it's a
+  // closing-accounting figure, not a headline-stat elaboration.
 
   const nftUrl = getTroveNftUrl(trove.collateralType, trove.id);
   if (nftUrl && trove.owner) {
@@ -373,7 +369,9 @@ function buildOpenItems({
     items.push(
       <span key="nft-info" className="text-slate-500">
         A transferable{" "}
-        <HighlightableValue type="nftToken" state="after">NFT</HighlightableValue>{" "}
+        <HighlightableValue type="nftToken" state="after">
+          NFT
+        </HighlightableValue>{" "}
         representing trove{" "}
         <HighlightableValue
           type="troveId"

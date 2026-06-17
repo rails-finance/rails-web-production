@@ -25,6 +25,7 @@ import { trovePriceRunwayExplanation } from "@/components/protocol/liquity/trove
 import { PriceRunway } from "@/components/shared/price-runway";
 import { InfoDisclosure } from "@/components/shared/info-disclosure";
 import { getLiquidationThreshold } from "@/lib/utils/liquidation-utils";
+import { LIQUIDATION_RESERVE_ETH } from "@/components/transaction-timeline/explanation/shared/eventHelpers";
 import { formatRatio, ratioLabel, useLiquityRatioColorClass } from "@/lib/shared/ratio-format";
 // ---- Types ----
 
@@ -929,6 +930,55 @@ export function TroveEconomicsSummary({ events, currentPrice, hideHeader }: Trov
     });
   })();
 
+  // Plain-language economics footnote. Muted prose; figures that mirror the
+  // breakdown tables above render foreground-bold (the same bold-only-on-
+  // mirrored-values grammar the position panel uses). Covers what the position
+  // panel deliberately doesn't: the lifetime tower decomposition, total costs,
+  // the liquidation reserve, and how to read the price runway.
+  const fig = (n: number) => (
+    <span className="font-semibold text-foreground tabular-nums">
+      {formatPrice(n)} {stableSymbol}
+    </span>
+  );
+  const economicsItems: React.ReactNode[] = [];
+  if (economics.position.totalBorrowed > 0) {
+    economicsItems.push(
+      <span key="debt-tower">
+        Debt started from {fig(economics.position.totalBorrowed)} borrowed
+        {totalCosts > 0 && <> plus {fig(totalCosts)} in costs</>}
+        {economics.position.totalRepaid > 0 && <>, then {fig(economics.position.totalRepaid)} was repaid</>}
+        {redemption && redemption.totalDebtCleared > 0 && (
+          <>
+            {economics.position.totalRepaid > 0 ? " and " : ", then "}
+            {fig(redemption.totalDebtCleared)} redeemed
+          </>
+        )}
+        {liquidation && liquidation.totalDebtCleared > 0 && <> and {fig(liquidation.totalDebtCleared)} liquidated</>},
+        leaving {fig(entireDebt)} owed today.
+      </span>,
+    );
+  }
+  if (interestAccrued > 0 || economics.costs.totalUpfrontFees > 0) {
+    economicsItems.push(
+      <span key="costs">
+        Costs are {fig(interestAccrued)} interest accrued over the trove&apos;s life
+        {economics.costs.totalUpfrontFees > 0 && <> plus {fig(economics.costs.totalUpfrontFees)} in upfront fees</>}
+        {delegateFees > 0 && <> and {fig(delegateFees)} in delegate fees</>}.
+      </span>,
+    );
+  }
+  if (meta.status === "open" && LIQUIDATION_RESERVE_ETH > 0) {
+    economicsItems.push(
+      <span key="liq-reserve">
+        <span className="font-semibold text-foreground tabular-nums">{LIQUIDATION_RESERVE_ETH} ETH</span> is held in
+        reserve and refunded when the trove is closed.
+      </span>,
+    );
+  }
+  if (runwayExplanation) {
+    economicsItems.push(<span key="runway">{runwayExplanation}</span>);
+  }
+
   return (
     <>
       {!hideHeader && (
@@ -1182,6 +1232,22 @@ export function TroveEconomicsSummary({ events, currentPrice, hideHeader }: Trov
                     </div>
                   );
                 })()}
+              {/* Reserve the runway's footprint while the oracle price is still
+                    pending, so the real runway slots in without shifting the
+                    footer/disclosure below. Mirrors the collateral tower's
+                    TowerBarSkeleton — hold the space, don't pop. Heights match
+                    PriceRunway: 6px pad + 10px bar + (8px + 16px) label strip. */}
+              {meta.status === "open" &&
+                meta.collateralAmount > 0 &&
+                meta.currentDebt > 0 &&
+                !(effectivePrice && effectivePrice > 0) && (
+                  <div className="mt-4" aria-hidden="true">
+                    <div style={{ paddingTop: 6 }}>
+                      <div className="rounded-full bg-skeleton animate-pulse" style={{ height: 10 }} />
+                      <div className="mt-2 h-4" />
+                    </div>
+                  </div>
+                )}
             </>
           )}
         </div>
@@ -1215,12 +1281,22 @@ export function TroveEconomicsSummary({ events, currentPrice, hideHeader }: Trov
             </p>
           )}
         </div>
-        {/* Standard bottom-left (i): plain-language liquidation-runway help,
-                relocated here from the price-axis bar. */}
-        {runwayExplanation && (
+        {/* Standard bottom-left (i): plain-language economics help — the tower
+                decomposition, lifetime costs, liquidation reserve, and price
+                runway. Muted prose; foreground figures mirror the breakdown
+                tables. Distinct from the position panel's "position" (i), which
+                explains the headline stats this panel doesn't restate. */}
+        {economicsItems.length > 0 && (
           <div className="mt-3">
-            <InfoDisclosure open={runwayInfoOpen} onToggle={setRunwayInfoOpen} label="liquidation runway">
-              <div className="text-sm text-foreground/90 leading-relaxed">{runwayExplanation}</div>
+            <InfoDisclosure open={runwayInfoOpen} onToggle={setRunwayInfoOpen} label="economics">
+              <div className="space-y-2 text-sm text-rb-500">
+                {economicsItems.map((item, i) => (
+                  <div key={i} className="flex items-start gap-2 leading-relaxed">
+                    <span className="select-none text-rb-500">•</span>
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
             </InfoDisclosure>
           </div>
         )}

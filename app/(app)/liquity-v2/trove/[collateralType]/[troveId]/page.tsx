@@ -154,7 +154,6 @@ function TroveSummaryStack({
               <TroveDetailsBand
                 trove={trove}
                 liveState={liveState}
-                prices={prices}
                 debtInFront={debtInFront}
                 trovesAhead={trovesAhead}
                 debtInFrontLoading={debtInFrontLoading}
@@ -230,9 +229,12 @@ export default function TrovePage() {
     troveData?.status === "open" ? debtInFrontRate : undefined,
     troveData?.status === "open" ? troveId : undefined,
   );
+  // Only the chain trove-state read stays a second-wave enhancement now —
+  // the oracle price is fetched in the initial load (below) so the economics
+  // tower, price runway, and price-derived headline stats all paint complete
+  // when the loading gate clears, instead of popping in a frame later.
   const [enhancementLoading, setEnhancementLoading] = useState({
     blockchain: false,
-    prices: false,
   });
 
   useEffect(() => {
@@ -244,12 +246,21 @@ export default function TrovePage() {
       setLoading(true);
       setError(null);
 
-      const [troveResponse, timelineResult] = await Promise.all([
+      // Price rides along with the initial load (oracle endpoint is SWR-cached
+      // server-side, so it's cheap to wait on) and is best-effort: a failure
+      // resolves to null and the page still paints — price just stays absent.
+      const [troveResponse, timelineResult, pricesResult] = await Promise.all([
         fetch(`/api/troves?troveId=${troveId}&collateralType=${collateralType}`),
         fetchTroveTimeline({ collateralType, troveId, limit: 500 }).catch((err) => {
           console.error("Failed to fetch trove timeline:", err);
           return null;
         }),
+        fetch(`/api/oracle/liquity-v2`)
+          .then((r) => (r.ok ? (r.json() as Promise<OraclePricesResponse>) : null))
+          .catch((err) => {
+            console.error("Failed to fetch oracle prices:", err);
+            return null;
+          }),
       ]);
 
       if (!troveResponse.ok) {
@@ -266,6 +277,9 @@ export default function TrovePage() {
 
       setTroveData(troveDataResp.data[0]);
       setEvents(timelineResult?.events ?? []);
+      if (pricesResult?.success && pricesResult.data) {
+        setPrices(pricesResult.data);
+      }
 
       setLoading(false);
       loadEnhancements();
@@ -277,48 +291,26 @@ export default function TrovePage() {
   };
 
   const loadEnhancements = async () => {
-    setEnhancementLoading({ blockchain: true, prices: true });
+    setEnhancementLoading({ blockchain: true });
 
-    const results = await Promise.allSettled([
-      fetch(`/api/trove/state/${collateralType}/${troveId}`),
-      fetch(`/api/oracle/liquity-v2`),
-    ]);
-
-    if (results[0].status === "fulfilled" && results[0].value.ok) {
-      try {
-        const stateResponse: TroveStateResponse = await results[0].value.json();
+    try {
+      const res = await fetch(`/api/trove/state/${collateralType}/${troveId}`);
+      if (res.ok) {
+        const stateResponse: TroveStateResponse = await res.json();
         if (stateResponse.success && stateResponse.data) {
           setLiveState(stateResponse.data);
         }
-      } catch (err) {
-        console.error("Error parsing blockchain state:", err);
+      } else {
+        console.error("Failed to fetch blockchain state");
       }
-    } else {
-      console.error("Failed to fetch blockchain state");
+    } catch (err) {
+      console.error("Error parsing blockchain state:", err);
     }
-    setEnhancementLoading((prev) => ({ ...prev, blockchain: false }));
-
-    if (results[1].status === "fulfilled" && results[1].value.ok) {
-      try {
-        const pricesResponse: OraclePricesResponse = await results[1].value.json();
-        if (pricesResponse.success && pricesResponse.data) {
-          setPrices(pricesResponse.data);
-        }
-      } catch (err) {
-        console.error("Error parsing oracle prices:", err);
-      }
-    } else {
-      console.error("Failed to fetch oracle prices");
-    }
-    setEnhancementLoading((prev) => ({ ...prev, prices: false }));
+    setEnhancementLoading({ blockchain: false });
   };
 
   const getEnhancementStatus = (): string | null => {
-    const { blockchain, prices } = enhancementLoading;
-    if (!blockchain && !prices) return null;
-    if (blockchain) return "Loading current state...";
-    if (prices) return "Fetching current asset price...";
-    return null;
+    return enhancementLoading.blockchain ? "Loading current state..." : null;
   };
 
   // Events sorted oldest → newest. Tertiary sort on log_index (parsed from

@@ -12,8 +12,10 @@ interface ClosedSummaryCardProps {
    *  notation ("48.1k"); the detail page leaves it false for full precision. */
   compact?: boolean;
   /** Header right-side cluster (last-activity "X ago" + tx/redemption
-   *  counters). Listing keeps it; the detail page passes false. Defaults true. */
-  showActivityMeta?: boolean;
+   *  counters). Listing keeps the full cluster; the detail page passes "counts"
+   *  for just the counters (the timeline header below carries "X ago").
+   *  `false` hides the cluster. Defaults to true. */
+  showActivityMeta?: boolean | "counts";
 }
 
 export function ClosedSummaryCard({ trove, compact = false, showActivityMeta = true }: ClosedSummaryCardProps) {
@@ -39,10 +41,12 @@ export function ClosedSummaryCard({ trove, compact = false, showActivityMeta = t
           </span>
           {showActivityMeta && (
             <span className="flex items-center gap-2 text-xs text-rb-500">
-              <span className="inline-flex items-center gap-1">
-                <Icon name="clock-zap" size={12} />
-                {formatDuration(trove.activity.lastActivityAt, new Date())} ago
-              </span>
+              {showActivityMeta !== "counts" && (
+                <span className="inline-flex items-center gap-1">
+                  <Icon name="clock-zap" size={12} />
+                  {formatDuration(trove.activity.lastActivityAt, new Date())} ago
+                </span>
+              )}
               {trove.activity.redemptionCount > 0 && (
                 <span className="inline-flex items-center text-orange-400">
                   <Icon name="triangle" size={12} />

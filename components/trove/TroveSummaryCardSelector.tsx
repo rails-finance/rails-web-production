@@ -41,21 +41,26 @@ export function TroveSummaryCardSelector({
   // reserves the chevron column slot in both cases, so the position card
   // sits at a consistent inner width and the supplementary stats below
   // (`pl-5 pr-12` in TroveSummaryStack) line up to its grid.
-  const items: TroveItem[] = (ownerTroves && ownerTroves.length > 0)
-    ? ownerTroves.map(t => ({ id: t.id, trove: t }))
-    : [{ id: trove.id, trove }];
+  const items: TroveItem[] =
+    ownerTroves && ownerTroves.length > 0
+      ? ownerTroves.map((t) => ({ id: t.id, trove: t }))
+      : [{ id: trove.id, trove }];
 
   return (
     <CardSelectorShell
       items={items}
       selected={trove.id}
-      onSelect={() => { /* chooser rows navigate via their <Link> wrapper */ }}
-      orderItems={(list) => [...list].sort((a, b) => {
-        const aTs = a.trove.activity?.lastActivityAt ?? a.trove.activity?.createdAt ?? 0;
-        const bTs = b.trove.activity?.lastActivityAt ?? b.trove.activity?.createdAt ?? 0;
-        return bTs - aTs;
-      })}
-      renderCard={(item, props) => (
+      onSelect={() => {
+        /* chooser rows navigate via their <Link> wrapper */
+      }}
+      orderItems={(list) =>
+        [...list].sort((a, b) => {
+          const aTs = a.trove.activity?.lastActivityAt ?? a.trove.activity?.createdAt ?? 0;
+          const bTs = b.trove.activity?.lastActivityAt ?? b.trove.activity?.createdAt ?? 0;
+          return bTs - aTs;
+        })
+      }
+      renderCard={(item, props) =>
         props.isActive ? (
           // Active card — at rest just hover-tints (the chevron signals a
           // chooser is available). When the chooser is expanded we add the
@@ -80,7 +85,7 @@ export function TroveSummaryCardSelector({
               prices={prices}
               loadingStatus={loadingStatus}
               expectsLiveState
-              showActivityMeta={false}
+              showActivityMeta="counts"
             />
           </div>
         ) : (
@@ -94,7 +99,7 @@ export function TroveSummaryCardSelector({
             <TroveSummaryCard trove={item.trove} prices={prices} showActivityMeta={false} />
           </Link>
         )
-      )}
+      }
     />
   );
 }
