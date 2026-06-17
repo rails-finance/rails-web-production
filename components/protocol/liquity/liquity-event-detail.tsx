@@ -265,9 +265,18 @@ export interface LiquityEventDetailProps {
   txHash: string;
   previousEvent?: BaseActivityEvent;
   currentEvent?: BaseActivityEvent;
+  /** Live oracle price for this collateral — drives the "today" leg of the
+   * redemption P/L shown alongside the historic price pill. */
+  currentPrice?: number;
 }
 
-export function LiquityEventDetail({ ctx, txHash, previousEvent, currentEvent }: LiquityEventDetailProps) {
+export function LiquityEventDetail({
+  ctx,
+  txHash,
+  previousEvent,
+  currentEvent,
+  currentPrice,
+}: LiquityEventDetailProps) {
   const { stateBefore, stateAfter, troveOperation, liquidation, redemption } = ctx;
 
   if (!stateBefore || !stateAfter) {
@@ -447,11 +456,61 @@ export function LiquityEventDetail({ ctx, txHash, previousEvent, currentEvent }:
         </div>
       )}
 
-      {/* Historic collateral price pill. (Batch membership is conveyed by the
+      {/* Historic collateral price pill, sharing its row with the redemption
+          P/L (net outcome) on the left. P/L reconciles with the Cleared /
+          Reduced figures in the header: debt cleared minus the value of
+          collateral given up, at the redemption-time price and (when
+          available) at today's price. (Batch membership is conveyed by the
           "Delegate" treatment on interest-rate events, so no standalone
           "Batched" badge here.) */}
       {collPrice > 0 && (
         <div className="flex items-center gap-2 px-4 py-2">
+          {ctx.operation === "redeemCollateral" &&
+            (() => {
+              const debtChange = troveOperation
+                ? troveOperation.debtChangeFromOperation +
+                  troveOperation.debtIncreaseFromRedist +
+                  troveOperation.debtIncreaseFromUpfrontFee
+                : stateAfter.debt - stateBefore.debt;
+              const collChange = troveOperation
+                ? troveOperation.collChangeFromOperation + troveOperation.collIncreaseFromRedist
+                : stateAfter.coll - stateBefore.coll;
+              const showClaimable = ctx.isZombieTrove && stateAfter.debt === 0 && stateAfter.coll > 0;
+              const debtCleared = Math.abs(debtChange);
+              const collLost = Math.abs(collChange);
+              const plHistoric = debtCleared - collLost * collPrice;
+              const plToday = currentPrice ? debtCleared - collLost * currentPrice : null;
+              const showPl = debtCleared > 0.01;
+              // Only surface "today" when it diverges from the historic figure.
+              const showToday = plToday != null && Math.abs(plToday - plHistoric) > 0.01;
+              const plStr = (n: number) => `${n >= 0 ? "+" : "−"}${formatUsd(Math.abs(n))}`;
+              const plColor = (n: number) => (n >= 0 ? "text-green-400" : "text-red-400");
+              if (!showClaimable && !showPl) return null;
+              return (
+                <div className="inline-flex items-center gap-4 flex-wrap text-xs">
+                  {showClaimable && (
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="font-bold text-foreground">{stateAfter.coll.toFixed(4)}</span>
+                      <TokenChipIcon symbol={ctx.collateralType} size={14} />
+                      <span className="font-semibold text-emerald-600 dark:text-emerald-400">claimable</span>
+                    </span>
+                  )}
+                  {showPl && (
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="text-rb-500">P/L</span>
+                      <span className={`font-bold ${plColor(plHistoric)}`}>{plStr(plHistoric)}</span>
+                      {showToday && (
+                        <>
+                          <span className="text-rb-500">or</span>
+                          <span className={`font-bold ${plColor(plToday!)}`}>{plStr(plToday!)}</span>
+                          <span className="text-rb-500">today</span>
+                        </>
+                      )}
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
           <span
             className="ml-auto inline-flex items-center gap-1.5 text-xs font-bold text-rb-500 bg-background px-2 py-1 rounded-md"
             title={`${ctx.collateralType} price at the time of this event`}

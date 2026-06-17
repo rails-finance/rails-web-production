@@ -113,6 +113,7 @@ export function LiquityEventCard({
       icon="delegate"
       iconDirection={isJoin ? "up" : "down"}
       spine="dotted"
+      color="purple"
       isFirst={isFirst}
       isLast={!!isLast}
     />
@@ -121,6 +122,7 @@ export function LiquityEventCard({
       icon="rate-change"
       iconDirection={rateUp ? "up" : "down"}
       spine="dotted"
+      color={ctx.operation === "setBatchManagerAnnualInterestRate" ? "purple" : "default"}
       isFirst={isFirst}
       isLast={!!isLast}
     />
@@ -162,16 +164,17 @@ export function LiquityEventCard({
     <EventCard
       avatar={avatarOverride ?? avatarSlot}
       iconColumn={iconSlot}
-      header={
-        <LiquityEventHeader
+      header={<LiquityEventHeader ctx={ctx} timestamp={event.timestamp} eventNumber={eventNumber} />}
+      headerBars={<TroveBarsSlot eventId={event.id} />}
+      detail={
+        <LiquityEventDetail
           ctx={ctx}
-          timestamp={event.timestamp}
-          eventNumber={eventNumber}
+          txHash={event.txHash}
+          previousEvent={previousEvent}
+          currentEvent={event}
           currentPrice={currentPrice}
         />
       }
-      headerBars={<TroveBarsSlot eventId={event.id} />}
-      detail={<LiquityEventDetail ctx={ctx} txHash={event.txHash} previousEvent={previousEvent} currentEvent={event} />}
       explainer={
         <LiquityEventExplainer
           ctx={ctx}

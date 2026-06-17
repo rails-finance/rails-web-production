@@ -1256,16 +1256,16 @@ export function TroveEconomicsSummary({ events, currentPrice, hideHeader }: Trov
                 need to duplicate it here. */}
         <div className="mt-3 space-y-1">
           {redemption && (
-            <div className="flex flex-wrap items-center gap-1.5 text-xs mb-1 font-semibold">
+            <div className="flex flex-wrap items-center gap-1.5 text-xs mb-1 text-rb-500">
               <span className="">Borrower&apos;s net outcome from redemptions was</span>
-              <span className={`text-foreground`}>
+              <span className={redemption.realizedPL >= 0 ? "text-green-400" : "text-red-400"}>
                 {redemption.realizedPL >= 0 ? "+" : "−"}
                 {formatUsdValue(Math.abs(redemption.realizedPL))}
               </span>
               {opportunityPL !== null && (
                 <>
                   <span className=""> or </span>
-                  <span className={` text-foreground`}>
+                  <span className={opportunityPL >= 0 ? "text-green-400" : "text-red-400"}>
                     {opportunityPL >= 0 ? "+" : "−"}
                     {formatUsdValue(Math.abs(opportunityPL))}
                   </span>
@@ -1275,7 +1275,7 @@ export function TroveEconomicsSummary({ events, currentPrice, hideHeader }: Trov
             </div>
           )}
           {economics.gas.totalGasCostEth > 0 && (
-            <p className="text-xs  flex items-center gap-0.5">
+            <p className="text-xs text-rb-500 flex items-center gap-0.5">
               A total of {economics.gas.totalGasCostEth.toFixed(4)} <TokenChipIcon symbol="ETH" size={16} /> (
               {formatUsdValue(economics.gas.totalGasCostUsd)}) has been spent on gas fees
             </p>

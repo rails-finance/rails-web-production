@@ -216,7 +216,7 @@ export function EventCard({
                     {hasExplainer ? (
                       <div className="text-sm">
                         {explainerTeaser && (
-                          <div className="mb-2 flex items-baseline gap-2">
+                          <div className="mb-2 flex items-baseline gap-2 text-rb-500">
                             <span className="shrink-0">•</span>
                             <div className="min-w-0 flex-1 leading-relaxed">{explainerTeaser}</div>
                           </div>

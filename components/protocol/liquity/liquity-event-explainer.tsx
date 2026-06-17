@@ -5,7 +5,8 @@ import type { BaseActivityEvent } from "@/lib/shared/types/activity";
 import { calculateInterestBetweenTransactions } from "@/lib/liquity/utils/interest-calculator";
 import { LearnMore } from "@/components/shared/learn-more-modal";
 import { LinkedAddress } from "@/components/shared/linked-address";
-import { getBatchManagerName } from "@/lib/liquity/batch-managers";
+import { WalletLink } from "@/components/wallet/wallet-dropdown";
+import { getBatchManagerByAddress } from "@/lib/liquity/batch-managers";
 import {
   liquityRedemptionContent,
   liquityLiquidationContent,
@@ -889,7 +890,6 @@ function generateRedeemItems(ctx: LiquityContext, currentPrice?: number): Explai
           )}
         </span>
       ),
-      type: netHistoric >= 0 ? "success" : "error",
     });
   }
 
@@ -977,23 +977,26 @@ function generateSetBatchManagerItems(ctx: LiquityContext, accruedInterest: numb
   const items: ExplainerItem[] = [];
   const { stateAfter, stateBefore, collateralType } = ctx;
   const managerAddr = ctx.batchUpdate?.interestBatchManager ?? ctx.batchManager;
-  const managerName = managerAddr ? getBatchManagerName(managerAddr) : null;
+  const knownName = managerAddr ? (getBatchManagerByAddress(managerAddr)?.name ?? null) : null;
+  const shortAddr = managerAddr ? `${managerAddr.slice(0, 6)}…${managerAddr.slice(-4)}` : "";
   const debtChanged = Math.abs(stateAfter.debt - stateBefore.debt) >= 0.01;
 
-  // 1. Moved to delegated management, naming the batch manager.
+  // 1. Moved to delegated management — name + truncated address combined into a
+  //    single purple link (folds in the old standalone "Batch manager address"
+  //    bullet).
   items.push({
     content: (
       <span>
-        Moved Trove from individual to delegated
-        {managerName ? (
+        Adjust to delegated interest rate
+        {managerAddr && (
           <>
             {" "}
-            (<V className="text-foreground">{managerName}</V>)
+            with{" "}
+            <WalletLink address={managerAddr} className="text-purple-500 hover:text-purple-600 transition-colors">
+              {knownName ? `${knownName} (${shortAddr})` : shortAddr}
+            </WalletLink>
           </>
-        ) : (
-          ""
-        )}{" "}
-        interest rate management
+        )}
       </span>
     ),
   });
@@ -1050,17 +1053,6 @@ function generateSetBatchManagerItems(ctx: LiquityContext, accruedInterest: numb
       content: (
         <span>
           Collateral ratio: <V className="text-foreground">{stateAfter.collateralRatio.toFixed(1)}%</V>
-        </span>
-      ),
-    });
-  }
-
-  // 6. Batch manager address (always surfaced, copy-able).
-  if (managerAddr) {
-    items.push({
-      content: (
-        <span>
-          Batch manager address: <LinkedAddress address={managerAddr} />
         </span>
       ),
     });

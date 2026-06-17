@@ -20,13 +20,14 @@ export type SpineIcon =
 export type SpineVariant = "solid" | "dotted";
 
 /** Optional spine color tint — encodes subsystem or event category */
-export type SpineColor = "default" | "blue" | "emerald" | "violet" | "amber" | "orange" | "red";
+export type SpineColor = "default" | "blue" | "emerald" | "violet" | "purple" | "amber" | "orange" | "red";
 
 const SPINE_COLORS: Record<SpineColor, string> = {
   default: "rgb(101 115 140)", // rb-500
   blue: "rgb(59 130 246)", // blue-500
   emerald: "rgb(16 185 129)", // emerald-500
   violet: "rgb(139 92 246)", // violet-500
+  purple: "rgb(168 85 247)", // purple-500
   amber: "rgb(245 158 11)", // amber-500
   orange: "rgb(249 115 22)", // orange-500
   red: "rgb(239 68 68)", // red-500
@@ -38,6 +39,7 @@ const DOT_COLORS: Record<SpineColor, string> = {
   blue: "bg-blue-400",
   emerald: "bg-emerald-400",
   violet: "bg-violet-400",
+  purple: "bg-purple-400",
   amber: "bg-amber-400",
   orange: "bg-orange-400",
   red: "bg-red-400",
