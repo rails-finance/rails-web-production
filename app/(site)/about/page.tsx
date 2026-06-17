@@ -82,13 +82,11 @@ export default function AboutPage() {
             <div className="md:col-span-1 self-start">
               <h2 className={`${H2} mb-4`}>The definitive DeFi support platform</h2>
               <p className={`${LEAD} mb-4`}>
-                DeFi is too complex to navigate confidently — the data is on-chain, but it isn't legible. Rails
-                translates that activity into clear, verifiable timelines, positions, and event detail, with no wallet
-                connection, account, or permission.
-              </p>
-              <p className={LEAD}>
-                Our mission is to make DeFi understandable and accessible for everyone — one dedicated, sponsor-anchored
-                explorer at a time.
+                We believe that decentralised finance (DeFi) represents the future of finance, but it's currently too
+                complex for most users to understand and navigate safely. <span className="font-semibold">Rails</span>{" "}
+                provides clear, intuitive explanations
+                of DeFi transactions and protocol events, empowering users with self-service support that keeps them
+                informed and confident in their DeFi activity.
               </p>
             </div>
 
