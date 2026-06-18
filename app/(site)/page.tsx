@@ -34,8 +34,8 @@ export default function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="flex flex-col">
               <div className="flex items-center gap-2 mb-5">
-                <GraduationCap className="h-[18px] w-[18px] marketing shrink-0" aria-hidden="true" />
-                <p className="text-xs font-medium tracking-[0.12em] uppercase marketing">The DeFi Curious</p>
+                <GraduationCap className="h-[18px] w-[18px] text-rb-500 shrink-0" aria-hidden="true" />
+                <p className="text-xs font-medium tracking-[0.12em] uppercase text-rb-500">The DeFi Curious</p>
               </div>
               <h3 className="text-[17px] font-semibold tracking-tight leading-snug mb-3.5 text-foreground">
                 Learn by example
@@ -47,8 +47,8 @@ export default function Home() {
             </div>
             <div className="flex flex-col">
               <div className="flex items-center gap-2 mb-5">
-                <Wallet className="h-[18px] w-[18px] marketing shrink-0" aria-hidden="true" />
-                <p className="text-xs font-medium tracking-[0.12em] uppercase marketing">The Active DeFi User</p>
+                <Wallet className="h-[18px] w-[18px] text-rb-500 shrink-0" aria-hidden="true" />
+                <p className="text-xs font-medium tracking-[0.12em] uppercase text-rb-500">The Active DeFi User</p>
               </div>
               <h3 className="text-[17px] font-semibold tracking-tight leading-snug mb-3.5 text-foreground">
                 Stay on top of positions
@@ -60,8 +60,8 @@ export default function Home() {
             </div>
             <div className="flex flex-col">
               <div className="flex items-center gap-2 mb-5">
-                <Code2 className="h-[18px] w-[18px] marketing shrink-0" aria-hidden="true" />
-                <p className="text-xs font-medium tracking-[0.12em] uppercase marketing">DeFi Teams</p>
+                <Code2 className="h-[18px] w-[18px] text-rb-500 shrink-0" aria-hidden="true" />
+                <p className="text-xs font-medium tracking-[0.12em] uppercase text-rb-500">DeFi Teams</p>
               </div>
               <h3 className="text-[17px] font-semibold tracking-tight leading-snug mb-3.5 text-foreground">
                 Support your community
@@ -73,8 +73,8 @@ export default function Home() {
             </div>
             <div className="flex flex-col">
               <div className="flex items-center gap-2 mb-5">
-                <ShieldAlert className="h-[18px] w-[18px] marketing shrink-0" aria-hidden="true" />
-                <p className="text-xs font-medium tracking-[0.12em] uppercase marketing">Crisis Support</p>
+                <ShieldAlert className="h-[18px] w-[18px] text-rb-500 shrink-0" aria-hidden="true" />
+                <p className="text-xs font-medium tracking-[0.12em] uppercase text-rb-500">Crisis Support</p>
               </div>
               <h3 className="text-[17px] font-semibold tracking-tight leading-snug mb-3.5 text-foreground">
                 When frontends fail

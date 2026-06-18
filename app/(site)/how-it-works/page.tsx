@@ -143,11 +143,11 @@ export default function HowItWorksPage() {
             </p>
 
             <div className={CARD}>
-              <h3 className="text-base font-semibold marketing mb-3">Key Features</h3>
+              <h3 className="text-base font-semibold text-foreground mb-3">Key Features</h3>
               <ul className="space-y-2 text-foreground leading-relaxed">
                 {KEY_FEATURES.map((f) => (
                   <li key={f} className="flex gap-3">
-                    <span className="marketing shrink-0">·</span>
+                    <span className="text-rb-500 shrink-0">·</span>
                     <span>{f}</span>
                   </li>
                 ))}
