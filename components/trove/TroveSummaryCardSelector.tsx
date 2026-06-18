@@ -75,8 +75,7 @@ export function TroveSummaryCardSelector({
               (props.staticCard ? "" : "cursor-pointer ") +
               (props.isSelected
                 ? "border border-blue-500/30 bg-blue-500/5 group-hover/card:bg-blue-500/10"
-                : "border border-transparent " +
-                  (props.staticCard ? "" : "group-hover/card:bg-rb-200/50 dark:group-hover/card:bg-rb-900"))
+                : "border border-transparent " + (props.staticCard ? "" : "group-hover/card:bg-blue-500/10"))
             }
           >
             <TroveSummaryCard
@@ -94,7 +93,7 @@ export function TroveSummaryCardSelector({
           // The <Link> owns navigation; no liveState (snapshot data only).
           <Link
             href={`/liquity-v2/trove/${item.trove.collateralType}/${item.trove.id}`}
-            className="block w-full text-left rounded-lg transition-all cursor-pointer border border-transparent group-hover/card:bg-rb-200/50 dark:group-hover/card:bg-rb-900 hover:border-blue-500 px-5 py-4"
+            className="block w-full text-left rounded-lg transition-all cursor-pointer border border-transparent group-hover/card:bg-blue-500/10 hover:border-blue-500 px-5 py-4"
           >
             <TroveSummaryCard trove={item.trove} prices={prices} showActivityMeta={false} />
           </Link>

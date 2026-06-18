@@ -27,8 +27,8 @@ export function positionCardSurface(
 ): string {
   if (opts.staticCard) return "border border-transparent";
   if (opts.isSelected) return "border border-blue-500/30 bg-blue-500/5 group-hover/card:bg-blue-500/10";
-  if (opts.noHover) return "border border-transparent group-hover/card:bg-rb-200/50 dark:group-hover/card:bg-rb-900";
-  return "border border-transparent hover:bg-rb-200/50 dark:hover:bg-rb-900 hover:border-blue-500";
+  if (opts.noHover) return "border border-transparent group-hover/card:bg-blue-500/10";
+  return "border border-transparent hover:bg-blue-500/10 hover:border-blue-500";
 }
 
 export interface CardSelectorItem {
@@ -66,9 +66,9 @@ export function CardSelectorShell<T extends CardSelectorItem>({
 
   if (items.length === 0) return null;
 
-  const activeItem = items.find(i => i.id === selected) ?? items[0];
+  const activeItem = items.find((i) => i.id === selected) ?? items[0];
   const hasMultiple = items.length > 1;
-  const orderedItems = (orderItems ? orderItems(items) : items).filter(i => i.id !== activeItem.id);
+  const orderedItems = (orderItems ? orderItems(items) : items).filter((i) => i.id !== activeItem.id);
 
   return (
     <div className="group/card flex items-stretch gap-2">
@@ -79,15 +79,17 @@ export function CardSelectorShell<T extends CardSelectorItem>({
             isSelected: expanded,
             noHover: true,
             staticCard: !hasMultiple,
-            onClick: hasMultiple ? () => setExpanded(v => !v) : () => {},
+            onClick: hasMultiple ? () => setExpanded((v) => !v) : () => {},
           })}
         </div>
 
         {hasMultiple && orderedItems.length > 0 && (
-          <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+          <div
+            className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+          >
             <div className="overflow-hidden">
               <div className="space-y-3">
-                {orderedItems.map(item => (
+                {orderedItems.map((item) => (
                   <div key={item.id}>
                     {renderCard(item, {
                       isActive: false,
@@ -109,7 +111,7 @@ export function CardSelectorShell<T extends CardSelectorItem>({
 
       {hasMultiple && (
         <button
-          onClick={() => setExpanded(v => !v)}
+          onClick={() => setExpanded((v) => !v)}
           className="flex flex-col items-center justify-start pt-10 gap-1 shrink-0 cursor-pointer"
           aria-label={expanded ? "Collapse list" : "Expand list"}
         >
