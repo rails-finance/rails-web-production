@@ -1351,7 +1351,7 @@ const TYPE_STYLES: Record<string, string> = {
   warning: "text-foreground",
   success: "text-foreground",
   error: "text-foreground",
-  info: "text-blue-300",
+  info: "text-foreground",
 };
 
 // ── Component ───────────────────────────────────────────────────────

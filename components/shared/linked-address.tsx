@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { WalletLink } from "@/components/wallet/wallet-dropdown";
 
@@ -15,10 +15,7 @@ interface LinkedAddressProps {
 export function LinkedAddress({ address, label, className = "" }: LinkedAddressProps) {
   const short = `${address.slice(0, 6)}…${address.slice(-4)}`;
   return (
-    <WalletLink
-      address={address}
-      className={`text-blue-400 hover:text-blue-500 font-mono text-xs transition-colors ${className}`}
-    >
+    <WalletLink address={address} className={`text-blue-500 hover:underline font-mono text-xs ${className}`}>
       {label || short}
     </WalletLink>
   );

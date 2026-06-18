@@ -247,7 +247,7 @@ export function AaveV4EventExplainer({ ctx }: AaveV4EventExplainerProps) {
               href={`https://etherscan.io/address/${ctx.liquidator}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-400 hover:text-blue-500 font-mono transition-colors"
+              className="text-blue-500 hover:underline font-mono"
             >
               {shortAddr(ctx.liquidator)} ↗
             </a>

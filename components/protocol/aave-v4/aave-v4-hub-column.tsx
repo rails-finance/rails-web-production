@@ -19,13 +19,13 @@ import { hubSummaryText, type HubView, type HubAssetAgg } from "@/lib/aave-v4/hu
 // the app). Navigation, not a risk valence — so the no-opinionated-color rule
 // is intact. Used on the hub title, the per-asset figures, and the CTA so they
 // all read as clickable against the surrounding static numbers.
-const LINK = "text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors";
+const LINK = "text-blue-500 hover:underline";
 
 // Spoke pill — an obvious, tappable link into the listing filtered to that
 // spoke. Full set always shown (never truncated): they wrap.
 const SPOKE_PILL =
   "inline-flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/5 px-2 py-0.5 text-[12px] " +
-  "text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors hover:bg-blue-500/10 hover:border-blue-500/50";
+  "text-blue-500 transition-colors hover:bg-blue-500/10 hover:border-blue-500/50";
 
 /** Listing URL filtered to one hub (`/aave-v4?hubs=core`), optionally narrowed
  *  to one asset on a given side. Values match the listing's filter param space:
@@ -71,7 +71,13 @@ function UtilBar({ value }: { value: number | null }) {
 
 // Composition bar: stepped opacity per class so it reads as proportion, not
 // risk. Labels below carry the class names.
-const CLASS_OPACITY = ["bg-foreground/70", "bg-foreground/50", "bg-foreground/35", "bg-foreground/20", "bg-foreground/10"];
+const CLASS_OPACITY = [
+  "bg-foreground/70",
+  "bg-foreground/50",
+  "bg-foreground/35",
+  "bg-foreground/20",
+  "bg-foreground/10",
+];
 
 function CompositionBar({ composition }: { composition: HubView["composition"] }) {
   if (composition.length === 0) return null;
@@ -79,7 +85,12 @@ function CompositionBar({ composition }: { composition: HubView["composition"] }
     <div className="space-y-1.5">
       <div className="flex h-2 w-full overflow-hidden rounded-full bg-foreground/5">
         {composition.map((c, i) => (
-          <div key={c.cls} className={CLASS_OPACITY[i] ?? "bg-foreground/10"} style={{ width: `${c.pct}%` }} title={`${c.pct}% ${c.label}`} />
+          <div
+            key={c.cls}
+            className={CLASS_OPACITY[i] ?? "bg-foreground/10"}
+            style={{ width: `${c.pct}%` }}
+            title={`${c.pct}% ${c.label}`}
+          />
         ))}
       </div>
       <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-rb-500">
@@ -175,7 +186,8 @@ export function AaveV4HubColumn({ hub }: { hub: HubView }) {
                       LT {ltDisplay(a)}
                       {a.supplyApr != null && a.supplyApr > 0 && (
                         <span title="Supplier yield: borrow rate × utilisation × (1 − liquidity fee)">
-                          {" "}· supply {ratePct(a.supplyApr)}
+                          {" "}
+                          · supply {ratePct(a.supplyApr)}
                         </span>
                       )}
                     </div>
@@ -233,8 +245,7 @@ export function AaveV4HubColumn({ hub }: { hub: HubView }) {
           ANDed out). Full set, wrapping — never truncated. */}
       <div className="mt-auto border-t border-rb-200 dark:border-rb-800 pt-3">
         <div className="mb-2 text-[12px] text-rb-500">
-          <span className="text-foreground/80">{hub.spokes.length}</span>{" "}
-          {hub.spokes.length === 1 ? "spoke" : "spokes"}
+          <span className="text-foreground/80">{hub.spokes.length}</span> {hub.spokes.length === 1 ? "spoke" : "spokes"}
           {haltedCount > 0 && <> · {haltedCount} halted</>}
         </div>
         <div className="flex flex-wrap gap-1.5">

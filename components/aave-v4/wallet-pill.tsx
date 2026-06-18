@@ -41,7 +41,7 @@ export function WalletPill({
           <Link
             href={href}
             onClick={(e) => e.stopPropagation()}
-            className="font-mono text-rb-500 hover:text-foreground transition-colors"
+            className="font-mono text-rb-500 hover:text-blue-500 transition-colors"
           >
             {label}
           </Link>

@@ -86,7 +86,9 @@ export function CollateralBreakdown({ data, loading, mode = "overview" }: Collat
                       <TokenIcon assetSymbol={collateralType.toLowerCase()} className="w-12 h-12 flex-shrink-0" />
                       <div>
                         <div className="mb-1">
-                          <span className="text-xs font-bold uppercase tracking-wider text-rb-500">Total Collateral</span>
+                          <span className="text-xs font-bold uppercase tracking-wider text-rb-500">
+                            Total Collateral
+                          </span>
                         </div>
                         <div className="text-lg font-bold text-foreground">
                           {formatNumber(stats.totalCollateral)} {collateralType}
@@ -99,9 +101,7 @@ export function CollateralBreakdown({ data, loading, mode = "overview" }: Collat
                         <div className="mb-1">
                           <span className="text-xs font-bold uppercase tracking-wider text-rb-500">Total Debt</span>
                         </div>
-                        <div className="text-lg font-bold text-foreground">
-                          ${formatNumber(stats.totalDebt)}
-                        </div>
+                        <div className="text-lg font-bold text-foreground">${formatNumber(stats.totalDebt)}</div>
                       </div>
                     </div>
                   </div>
@@ -120,7 +120,7 @@ export function CollateralBreakdown({ data, loading, mode = "overview" }: Collat
                       target="_blank"
                       rel="noopener noreferrer"
                       title="Liquity Website"
-                      className="inline-flex items-center gap-1 px-2 py-1 hover:bg-blue-50 dark:hover:bg-blue-950 text-foreground hover:text-blue-500 dark:hover:text-blue-400 text-xs font-medium transition-colors"
+                      className="inline-flex items-center gap-1 px-2 py-1 hover:bg-blue-50 dark:hover:bg-blue-950 text-foreground hover:text-blue-500 text-xs font-medium transition-colors"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <Globe className="w-3.5 h-3.5" />
@@ -131,7 +131,7 @@ export function CollateralBreakdown({ data, loading, mode = "overview" }: Collat
                       target="_blank"
                       rel="noopener noreferrer"
                       title="Liquity Docs"
-                      className="inline-flex items-center gap-1 px-2 py-1 hover:bg-blue-50 dark:hover:bg-blue-950 text-foreground hover:text-blue-500 dark:hover:text-blue-400 text-xs font-medium transition-colors"
+                      className="inline-flex items-center gap-1 px-2 py-1 hover:bg-blue-50 dark:hover:bg-blue-950 text-foreground hover:text-blue-500 text-xs font-medium transition-colors"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <BookOpen className="w-3.5 h-3.5" />
@@ -142,7 +142,7 @@ export function CollateralBreakdown({ data, loading, mode = "overview" }: Collat
                       target="_blank"
                       rel="noopener noreferrer"
                       title="Liquity GitHub"
-                      className="inline-flex items-center gap-1 px-2 py-1 hover:bg-blue-50 dark:hover:bg-blue-950 text-foreground hover:text-blue-500 dark:hover:text-blue-400 text-xs font-medium transition-colors"
+                      className="inline-flex items-center gap-1 px-2 py-1 hover:bg-blue-50 dark:hover:bg-blue-950 text-foreground hover:text-blue-500 text-xs font-medium transition-colors"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <Github className="w-3.5 h-3.5" />

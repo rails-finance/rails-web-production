@@ -195,19 +195,13 @@ export default function TermsPage() {
           <ul className="list-none text-rb-500">
             <li>
               Twitter/X:{" "}
-              <a
-                href="https://x.com/rails_finance"
-                className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
-              >
+              <a href="https://x.com/rails_finance" className="text-blue-500 hover:underline">
                 @rails_finance
               </a>
             </li>
             <li>
               GitHub:{" "}
-              <a
-                href="https://github.com/rails-finance"
-                className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
-              >
+              <a href="https://github.com/rails-finance" className="text-blue-500 hover:underline">
                 github.com/rails-finance
               </a>
             </li>

@@ -8,7 +8,7 @@ import { ThemeToggle } from "../ThemeToggle";
 //   hover   → text → blue-500 (blue = "this goes somewhere")
 //   current → text-rb-500 (muted, you can't navigate to where you are) + semibold
 //             for a quiet "you are here" cue, not clickable
-const NAV_LINK_REST = "font-medium text-foreground hover:text-blue-500 dark:hover:text-blue-400";
+const NAV_LINK_REST = "font-medium text-foreground hover:text-blue-500";
 const NAV_LINK_CURRENT = "font-semibold text-rb-500 pointer-events-none";
 
 interface NavigationContentProps {

@@ -60,13 +60,7 @@ export function useSingleWallet() {
   return useContext(SingleWalletContext);
 }
 
-export function SingleWalletProvider({
-  children,
-  value,
-}: {
-  children: React.ReactNode;
-  value: boolean;
-}) {
+export function SingleWalletProvider({ children, value }: { children: React.ReactNode; value: boolean }) {
   return <SingleWalletContext.Provider value={value}>{children}</SingleWalletContext.Provider>;
 }
 
@@ -74,7 +68,7 @@ export function SingleWalletProvider({
 
 /** Compact number for flanking values beside the spine icons */
 export function fmtSpine(v: string | number | undefined): string {
-  const n = typeof v === "string" ? parseFloat(v) : v ?? 0;
+  const n = typeof v === "string" ? parseFloat(v) : (v ?? 0);
   if (!n || !isFinite(n)) return "";
   const a = Math.abs(n);
   if (a >= 1_000_000) return `${(a / 1_000_000).toFixed(1)}M`;
@@ -114,11 +108,7 @@ export function SpineVal({
       </span>
     );
   }
-  return (
-    <span className={`text-base font-semibold whitespace-nowrap ${sideClass}`}>
-      {txt}
-    </span>
-  );
+  return <span className={`text-base font-semibold whitespace-nowrap ${sideClass}`}>{txt}</span>;
 }
 
 function SpineValEditable({
@@ -175,7 +165,7 @@ function SpineValEditable({
         e.stopPropagation();
         startEditing();
       }}
-      className="text-base font-semibold whitespace-nowrap px-1 rounded hover:bg-rb-200 dark:hover:bg-rb-900 transition-colors text-blue-400"
+      className="text-base font-semibold whitespace-nowrap px-1 rounded hover:bg-rb-200 dark:hover:bg-rb-900 transition-colors text-blue-500"
       title="Edit simulated amount"
     >
       {display}

@@ -32,8 +32,8 @@ export function SiteFooter() {
               <h3 className="text-xl font-semibold tracking-wide">Rails</h3>
             </div>
             <p className="body-text mb-4">
-              Dedicated, read-only explorers for DeFi support. On-chain-verifiable positions,
-              timelines, and event detail for the protocols you actually use.
+              Dedicated, read-only explorers for DeFi support. On-chain-verifiable positions, timelines, and event
+              detail for the protocols you actually use.
             </p>
             <div className="flex items-center gap-4">
               <a
@@ -77,42 +77,30 @@ export function SiteFooter() {
             <h4 className="text-sm font-semibold text-foreground mb-3">Platform</h4>
             <ul className="space-y-2">
               <li>
-                <Link
-                  href="/"
-                  className="text-rb-500 hover:text-blue-500 dark:hover:text-blue-400 text-sm transition-colors duration-150"
-                >
+                <Link href="/" className="text-rb-500 hover:text-blue-500 text-sm transition-colors duration-150">
                   Home
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/about"
-                  className="text-rb-500 hover:text-blue-500 dark:hover:text-blue-400 text-sm transition-colors duration-150"
-                >
+                <Link href="/about" className="text-rb-500 hover:text-blue-500 text-sm transition-colors duration-150">
                   About
                 </Link>
               </li>
               <li>
                 <Link
                   href="/how-it-works"
-                  className="text-rb-500 hover:text-blue-500 dark:hover:text-blue-400 text-sm transition-colors duration-150"
+                  className="text-rb-500 hover:text-blue-500 text-sm transition-colors duration-150"
                 >
                   How It Works
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/pulse"
-                  className="text-rb-500 hover:text-blue-500 dark:hover:text-blue-400 text-sm transition-colors duration-150"
-                >
+                <Link href="/pulse" className="text-rb-500 hover:text-blue-500 text-sm transition-colors duration-150">
                   Pulse
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/blog"
-                  className="text-rb-500 hover:text-blue-500 dark:hover:text-blue-400 text-sm transition-colors duration-150"
-                >
+                <Link href="/blog" className="text-rb-500 hover:text-blue-500 text-sm transition-colors duration-150">
                   Blog
                 </Link>
               </li>
@@ -142,14 +130,11 @@ export function SiteFooter() {
               <div className="flex gap-4">
                 <Link
                   href="/privacy"
-                  className="text-rb-500 hover:text-blue-500 dark:hover:text-blue-400 text-xs transition-colors duration-150"
+                  className="text-rb-500 hover:text-blue-500 text-xs transition-colors duration-150"
                 >
                   Privacy Policy
                 </Link>
-                <Link
-                  href="/terms"
-                  className="text-rb-500 hover:text-blue-500 dark:hover:text-blue-400 text-xs transition-colors duration-150"
-                >
+                <Link href="/terms" className="text-rb-500 hover:text-blue-500 text-xs transition-colors duration-150">
                   Terms of Service
                 </Link>
               </div>
@@ -157,7 +142,12 @@ export function SiteFooter() {
             <div className="flex items-center gap-3">
               <span className="text-rb-500 text-xs">
                 Built with support from{" "}
-                <a href="https://liquity.org" target="_blank" rel="noopener noreferrer" className="link-external hover:underline">
+                <a
+                  href="https://liquity.org"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="link-external hover:underline"
+                >
                   Liquity
                 </a>
               </span>

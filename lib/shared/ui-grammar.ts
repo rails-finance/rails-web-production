@@ -32,7 +32,7 @@ export const NAV_BUTTON =
   "inline-flex items-center gap-1.5 rounded-lg border border-rb-100 dark:border-rb-800 bg-rb-100 dark:bg-rb-800 px-3 py-1.5 text-sm text-rb-500 hover:text-foreground hover:bg-rb-200/60 dark:hover:bg-rb-700/50 hover:border-blue-500 transition-colors cursor-pointer";
 
 /** Text/inline link that navigates to another page. Turns blue on hover. */
-export const NAV_LINK = "text-rb-500 hover:text-blue-500 dark:hover:text-blue-400 transition-colors";
+export const NAV_LINK = "text-rb-500 hover:text-blue-500 transition-colors";
 
 /**
  * In-place control — structural base only (layout + transition). Pair with
@@ -80,8 +80,7 @@ export const RESET_LINK = "text-xs font-semibold text-teal-600 hover:text-teal-5
  * somewhere", not "resets". The app-wide rule: any link that opens a page is
  * blue (and a clickable card gets a blue hover border instead).
  */
-export const PAGE_LINK =
-  "text-xs font-semibold text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 transition-colors cursor-pointer";
+export const PAGE_LINK = "text-xs font-semibold text-blue-500 hover:underline cursor-pointer";
 
 /**
  * Dropdown / overlay-panel title — the heading row at the top of every
