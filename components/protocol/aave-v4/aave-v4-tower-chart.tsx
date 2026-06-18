@@ -471,7 +471,7 @@ export function AaveV4TowerChart({
       (r) => r.netSupply,
       (r) => r.netSupplyUsd,
       "bg-blue-500",
-      "Collateral",
+      "Combined Collateral",
     ),
     { sign: "", label: isLiveView ? "Total" : "In Protocol", amount: fmtUsd(totalSupplyUsd).display, isResult: true },
   ];

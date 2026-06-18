@@ -32,7 +32,7 @@ export function SiteFooter() {
               <h3 className="text-xl font-semibold tracking-wide">Rails</h3>
             </div>
             <p className="body-text mb-4">
-              Dedicated, read-only explorers for DeFi protocols — one at a time. On-chain-verifiable positions,
+              Dedicated, read-only explorers for DeFi support. On-chain-verifiable positions,
               timelines, and event detail for the protocols you actually use.
             </p>
             <div className="flex items-center gap-4">
@@ -135,7 +135,7 @@ export function SiteFooter() {
         </div>
 
         {/* Bottom Section */}
-        <div className="mt-8 pt-8 border-t border-rb-200 dark:border-rb-800">
+        <div className="mt-8 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex flex-col md:flex-row items-center gap-4 mb-4 md:mb-0">
               <p className="text-rb-500 text-xs">© {new Date().getFullYear()} Rails</p>
