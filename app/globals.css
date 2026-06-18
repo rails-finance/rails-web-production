@@ -84,9 +84,19 @@
   --text-external: var(--color-pink-500);
   --text-external-hover: var(--color-pink-400);
   /* Marketing accent — one global hue for decorative/brand emphasis on
-     marketing pages. Off the link palette (blue/pink) and off valence
-     (red/green). Retune the whole site here. See color-grammar.md §6. */
-  --marketing: var(--color-indigo-500);
+     marketing pages. Tuned to match the functional "positive" green (green-500,
+     #22c55e — the P&L-positive / Open / check hue), but deliberately kept as its
+     OWN token so the two greens share the "positive/active" intent yet stay
+     independently tunable (color-grammar.md §2, §5).
+     Off the link palette (blue/pink). Retune the whole marketing site here. */
+  --marketing: #22c55e;
+
+  /* Caution — the single "adverse, needs attention, NOT terminal" hue. Merges
+     the old amber(routine) + orange(redemption) tiers into one (orange-500); the
+     adverse ladder is now caution → critical(red). Most call sites use the
+     `orange-*` Tailwind classes directly; this token is the canonical code +
+     used where a raw value is needed. See color-grammar.md §5. */
+  --caution: #f97316; /* orange-500 */
 
   --pill-active-bg: var(--surface-active);
   --pill-active-text: var(--foreground);
@@ -185,8 +195,6 @@
   --color-blue-300: #93c5fd;
   --color-blue-400: #60a5fa;
   --color-blue-500: #3b82f6;
-  --color-amber-400: #fbbf24;
-  --color-amber-500: #f59e0b;
 }
 
 html {

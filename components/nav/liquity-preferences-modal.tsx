@@ -31,7 +31,9 @@ export function LiquityPreferencesModal({ onClose }: { onClose: () => void }) {
   const v2 = prefs.liquityV2;
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
     document.addEventListener("keydown", handler);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -43,10 +45,7 @@ export function LiquityPreferencesModal({ onClose }: { onClose: () => void }) {
 
   if (typeof document === "undefined") return null;
 
-  const setBranchThreshold = (
-    branch: LiquityV2Branch,
-    value: number,
-  ) => {
+  const setBranchThreshold = (branch: LiquityV2Branch, value: number) => {
     if (!isFinite(value)) return;
     const mcr = getLiquidationThreshold(branch);
     const floor = mcr + 1; // any threshold ≤ MCR is meaningless for this branch
@@ -86,18 +85,24 @@ export function LiquityPreferencesModal({ onClose }: { onClose: () => void }) {
             className="absolute top-4 right-4 cursor-pointer p-2 rounded-lg hover:bg-rb-200 dark:hover:bg-rb-800 transition-colors"
             aria-label="Close"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M18 6 6 18" />
               <path d="m6 6 12 12" />
             </svg>
           </button>
 
           <div className="flex items-center gap-3 mb-6">
-            <img
-              src="/icons/protocols/liquity.png"
-              alt=""
-              className="w-10 h-10 shrink-0 rounded-xl"
-            />
+            <img src="/icons/protocols/liquity.png" alt="" className="w-10 h-10 shrink-0 rounded-xl" />
             <div>
               <h2 className="text-xl font-bold leading-tight">Liquity V2 preferences</h2>
               <p className="text-xs text-rb-500 mt-0.5">
@@ -111,12 +116,10 @@ export function LiquityPreferencesModal({ onClose }: { onClose: () => void }) {
               Risk-zone threshold
             </div>
             <p className="text-xs text-rb-500 leading-relaxed mb-5">
-              The Conservative cut-off — collateral ratios at or above this
-              value render emerald, anything below sits in Caution (amber)
-              until the trove crosses MCR and becomes liquidatable. Each
-              branch has its own MCR, so each carries its own threshold.
-              Used by the price-runway widget on each trove and the CR colour
-              on the timeline.
+              The Conservative cut-off — collateral ratios at or above this value render emerald, anything below sits in
+              Caution (orange) until the trove crosses MCR and becomes liquidatable. Each branch has its own MCR, so
+              each carries its own threshold. Used by the price-runway widget on each trove and the CR colour on the
+              timeline.
             </p>
 
             <div className="space-y-5">
@@ -182,8 +185,8 @@ function BranchBlock({
       />
       <ThresholdRow
         label="Caution"
-        dotClass="bg-amber-500"
-        textClass="text-amber-400"
+        dotClass="bg-orange-500"
+        textClass="text-orange-400"
         value={null}
         floor={floor}
         suffix={`${mcr}% (MCR) up to ${thresholds.crConservativeMin}% CR`}

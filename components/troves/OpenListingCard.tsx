@@ -9,7 +9,15 @@ import { formatDuration } from "@/lib/date";
 import { formatBatchManagerDisplay, getBatchManagerDeprecation } from "@/lib/services/batch-manager-service";
 import { OraclePricesData } from "@/types/api/oracle";
 
-export function OpenListingCard({ trove, prices, selectorMode = false }: { trove: TroveSummary; prices?: OraclePricesData | null; selectorMode?: boolean }) {
+export function OpenListingCard({
+  trove,
+  prices,
+  selectorMode = false,
+}: {
+  trove: TroveSummary;
+  prices?: OraclePricesData | null;
+  selectorMode?: boolean;
+}) {
   // Save scroll position when navigating to trove detail
   const handleClick = () => {
     if (typeof window !== "undefined") {
@@ -22,8 +30,7 @@ export function OpenListingCard({ trove, prices, selectorMode = false }: { trove
   const collateralTokenKey = trove.collateralType.toLowerCase() as keyof OraclePricesData;
   const currentPrice = prices ? prices[collateralTokenKey] : null;
   const collateralUsd = currentPrice ? trove.collateral.amount * currentPrice : null;
-  const collateralRatio =
-    collateralUsd && trove.debt.current > 0 ? (collateralUsd / trove.debt.current) * 100 : null;
+  const collateralRatio = collateralUsd && trove.debt.current > 0 ? (collateralUsd / trove.debt.current) * 100 : null;
 
   const deprecation = getBatchManagerDeprecation(trove.batch.manager);
 
@@ -67,9 +74,7 @@ export function OpenListingCard({ trove, prices, selectorMode = false }: { trove
           <div className="col-span-2 md:col-span-1">
             <p className="text-xs text-rb-500 mb-1 font-semibold uppercase tracking-wider">Debt</p>
             <div className="flex items-center">
-              <h3 className="text-xl lg:text-3xl font-bold text-foreground">
-                {formatApproximate(trove.debt.current)}
-              </h3>
+              <h3 className="text-xl lg:text-3xl font-bold text-foreground">{formatApproximate(trove.debt.current)}</h3>
               <span className="ml-2 font-bold text-green-500">
                 <TokenIcon assetSymbol="BOLD" className="w-6 md:w-7 h-6 md:h-7 relative top-0" />
               </span>
@@ -81,9 +86,7 @@ export function OpenListingCard({ trove, prices, selectorMode = false }: { trove
             <p className="text-xs text-rb-500 mb-1 font-semibold uppercase tracking-wider">Backed by</p>
             <div className="flex items-center">
               <span className="flex items-center">
-                <p className="text-lg md:text-xl font-bold mr-1 text-foreground">
-                  {trove.collateral.amount}
-                </p>
+                <p className="text-lg md:text-xl font-bold mr-1 text-foreground">{trove.collateral.amount}</p>
                 <TokenIcon assetSymbol={trove.collateralType} />
               </span>
               {collateralUsd && (
@@ -100,9 +103,7 @@ export function OpenListingCard({ trove, prices, selectorMode = false }: { trove
           <div className="col-span-2 md:col-span-1">
             <p className="text-xs text-rb-500 mb-1 font-semibold uppercase tracking-wider">Collateral Ratio</p>
             {collateralRatio !== null ? (
-              <div className="text-lg md:text-xl font-bold text-foreground">
-                {collateralRatio.toFixed(1)}%
-              </div>
+              <div className="text-lg md:text-xl font-bold text-foreground">{collateralRatio.toFixed(1)}%</div>
             ) : (
               <div className="text-lg md:text-xl font-bold text-rb-500">N/A</div>
             )}
@@ -118,18 +119,16 @@ export function OpenListingCard({ trove, prices, selectorMode = false }: { trove
               )}
               <p className="text-xs text-rb-500 font-semibold uppercase tracking-wider">Interest Rate</p>
             </div>
-            <div className="text-lg md:text-xl font-bold text-foreground">
-              {trove.metrics.interestRate}%
-            </div>
+            <div className="text-lg md:text-xl font-bold text-foreground">{trove.metrics.interestRate}%</div>
             {trove.batch.isMember && trove.batch.manager && (
               <div className="text-xs font-medium text-pink-500 dark:text-pink-400 mt-1 truncate">
                 {formatBatchManagerDisplay(trove.batch.manager)}
                 {deprecation && (
-                  <span className={`inline-flex items-center gap-0.5 ml-1 ${
-                    deprecation.isPast
-                      ? "text-red-500 dark:text-red-400"
-                      : "text-amber-500 dark:text-amber-400"
-                  }`}>
+                  <span
+                    className={`inline-flex items-center gap-0.5 ml-1 ${
+                      deprecation.isPast ? "text-red-500 dark:text-red-400" : "text-orange-500 dark:text-orange-400"
+                    }`}
+                  >
                     <AlertTriangle className="w-3 h-3" />
                     <span className="text-[10px] font-bold uppercase">
                       {deprecation.isPast ? "Deprecated" : "Ending"}

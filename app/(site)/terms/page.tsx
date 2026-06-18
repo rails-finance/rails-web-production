@@ -26,9 +26,9 @@ export default function TermsPage() {
           Last updated: {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
         </p>
 
-        <div className="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-400 dark:border-amber-500 p-4 mb-8">
-          <h3 className="text-lg font-bold text-amber-800 dark:text-amber-300 mb-2">Important Notice</h3>
-          <p className="text-amber-700 dark:text-amber-400 text-sm">
+        <div className="bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-400 dark:border-orange-500 p-4 mb-8">
+          <h3 className="text-lg font-bold text-orange-800 dark:text-orange-300 mb-2">Important Notice</h3>
+          <p className="text-orange-700 dark:text-orange-400 text-sm">
             Rails is not a financial advisor, investment advisor, or broker. The information provided on this platform
             is for informational purposes only and should not be considered as financial, investment, legal, or tax
             advice. Always conduct your own research and consult with qualified professionals before making any

@@ -66,7 +66,12 @@ export interface TransactionHeatmapProps {
   title?: string;
 }
 
-export function TransactionHeatmap({ events, value, onChange, title = "Transaction Heatmap" }: TransactionHeatmapProps) {
+export function TransactionHeatmap({
+  events,
+  value,
+  onChange,
+  title = "Transaction Heatmap",
+}: TransactionHeatmapProps) {
   const [dragStart, setDragStart] = useState<number | null>(null);
   const [hoverTs, setHoverTs] = useState<number | null>(null);
 
@@ -126,9 +131,10 @@ export function TransactionHeatmap({ events, value, onChange, title = "Transacti
   const isDragging = dragStart !== null;
   // While dragging, show a live preview of the range derived from the cursor
   // so the user gets feedback before mouseup commits.
-  const displayRange: [number, number] | null = isDragging && hoverTs !== null
-    ? [Math.min(dragStart, hoverTs), Math.max(dragStart, hoverTs) + (SECONDS_PER_DAY - 1)]
-    : value;
+  const displayRange: [number, number] | null =
+    isDragging && hoverTs !== null
+      ? [Math.min(dragStart, hoverTs), Math.max(dragStart, hoverTs) + (SECONDS_PER_DAY - 1)]
+      : value;
 
   const inSelection = (dayTs: number): boolean => {
     if (!displayRange) return false;
@@ -174,23 +180,16 @@ export function TransactionHeatmap({ events, value, onChange, title = "Transacti
         </div>
       </div>
       <div className="flex gap-2 text-[10px] text-rb-500 overflow-x-auto">
-        <div
-          className="flex flex-col shrink-0 pt-4"
-          style={{ rowGap: `${CELL_GAP_PX}px` }}
-        >
+        <div className="flex flex-col shrink-0 pt-4" style={{ rowGap: `${CELL_GAP_PX}px` }}>
           {dowLabels.map((label, i) => (
-            <div
-              key={i}
-              className="leading-none"
-              style={{ height: `${CELL_PX}px`, lineHeight: `${CELL_PX}px` }}
-            >
+            <div key={i} className="leading-none" style={{ height: `${CELL_PX}px`, lineHeight: `${CELL_PX}px` }}>
               {label}
             </div>
           ))}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex" style={{ columnGap: `${CELL_GAP_PX}px`, marginBottom: `${CELL_GAP_PX}px` }}>
-            {grid.weeks.map(w => (
+            {grid.weeks.map((w) => (
               <div
                 key={`m-${w.weekIndex}`}
                 className="text-[10px] text-rb-500 leading-none"
@@ -201,9 +200,9 @@ export function TransactionHeatmap({ events, value, onChange, title = "Transacti
             ))}
           </div>
           <div className="flex" style={{ columnGap: `${CELL_GAP_PX}px` }}>
-            {grid.weeks.map(w => (
+            {grid.weeks.map((w) => (
               <div key={w.weekIndex} className="flex flex-col" style={{ rowGap: `${CELL_GAP_PX}px` }}>
-                {w.days.map(d => {
+                {w.days.map((d) => {
                   const cls = !d.inLifetime ? "bg-transparent" : bucketColor(d.count);
                   const selected = inSelection(d.ts) && d.inLifetime;
                   return (
@@ -212,7 +211,7 @@ export function TransactionHeatmap({ events, value, onChange, title = "Transacti
                       title={d.inLifetime ? `${fmtFullDate(d.ts)} · ${d.count} event${d.count === 1 ? "" : "s"}` : ""}
                       onMouseDown={() => onCellMouseDown(d)}
                       onMouseEnter={() => onCellMouseEnter(d)}
-                      className={`rounded-sm transition-colors ${cls} ${selected ? "ring-1 ring-amber-400 ring-offset-0" : ""} ${d.inLifetime ? "cursor-pointer" : ""}`}
+                      className={`rounded-sm transition-colors ${cls} ${selected ? "ring-1 ring-teal-400 ring-offset-0" : ""} ${d.inLifetime ? "cursor-pointer" : ""}`}
                       style={{ width: `${CELL_PX}px`, height: `${CELL_PX}px` }}
                     />
                   );

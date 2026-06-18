@@ -9,7 +9,7 @@ import { useTimelineDisplay } from "@/components/shared/timeline-display-context
 
 /** Semantic icon that replaces token icons when the event isn't about token flow */
 export type SpineIcon =
-  | "warning" // Passive loss: liquidation, redemption (amber triangle; red via warningTone)
+  | "warning" // Passive loss: liquidation, redemption (caution/critical tone via warningTone)
   | "rate-change" // Interest rate / parameter change (% with up/down arrow)
   | "delegate" // Delegation change (users icon with +/- badge)
   | "reward" // Reward claim / airdrop (sparkle)
@@ -19,8 +19,9 @@ export type SpineIcon =
 /** Spine line style encoding agency */
 export type SpineVariant = "solid" | "dotted";
 
-/** Optional spine color tint — encodes subsystem or event category */
-export type SpineColor = "default" | "blue" | "emerald" | "violet" | "purple" | "amber" | "orange" | "red";
+/** Optional spine color tint — encodes subsystem or event category. The two
+ *  adverse tones (caution/critical) double as the warningTone values, see §5. */
+export type SpineColor = "default" | "blue" | "emerald" | "violet" | "purple" | "caution" | "critical";
 
 const SPINE_COLORS: Record<SpineColor, string> = {
   default: "rgb(101 115 140)", // rb-500
@@ -28,9 +29,8 @@ const SPINE_COLORS: Record<SpineColor, string> = {
   emerald: "rgb(16 185 129)", // emerald-500
   violet: "rgb(139 92 246)", // violet-500
   purple: "rgb(168 85 247)", // purple-500
-  amber: "rgb(245 158 11)", // amber-500
-  orange: "rgb(249 115 22)", // orange-500
-  red: "rgb(239 68 68)", // red-500
+  caution: "rgb(249 115 22)", // orange-500 — redemption + all caution (color-grammar.md §5)
+  critical: "rgb(239 68 68)", // red-500 — liquidation + critical
 };
 
 /** Pulsing dot color matching spine tint */
@@ -40,16 +40,14 @@ const DOT_COLORS: Record<SpineColor, string> = {
   emerald: "bg-emerald-400",
   violet: "bg-violet-400",
   purple: "bg-purple-400",
-  amber: "bg-amber-400",
-  orange: "bg-orange-400",
-  red: "bg-red-400",
+  caution: "bg-orange-400",
+  critical: "bg-red-400",
 };
 
 /** Pill classes for the warning label, keyed by warning tone */
-const WARNING_PILL_CLASSES: Record<"amber" | "orange" | "red", string> = {
-  amber: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
-  orange: "bg-orange-500/15 text-orange-600 dark:text-orange-400",
-  red: "bg-red-500/15 text-red-600 dark:text-red-400",
+const WARNING_PILL_CLASSES: Record<"caution" | "critical", string> = {
+  caution: "bg-orange-500/15 text-orange-600 dark:text-orange-400",
+  critical: "bg-red-500/15 text-red-600 dark:text-red-400",
 };
 
 // ── Token row descriptor ────────────────────────────────────────────────────
@@ -81,10 +79,11 @@ export interface SpineColumnProps {
   tokens?: SpineTokenRow[];
   /** Semantic icon override — replaces token icons entirely */
   icon?: SpineIcon;
-  /** Tone for the "warning" triangle — amber for routine warnings, orange for
-   *  redemption, red for terminal events (liquidation). When set, the dotted
-   *  spine + lead-in dot inherit this tone too. Defaults to amber. */
-  warningTone?: "amber" | "orange" | "red";
+  /** Tone for the "warning" triangle — "caution" (orange) for redemption and
+   *  every routine adverse event, "critical" (red) for terminal events
+   *  (liquidation). The dotted spine + lead-in dot inherit this tone too.
+   *  Defaults to "caution". See color-grammar.md §5. */
+  warningTone?: "caution" | "critical";
   /** Optional short label rendered in a tinted pill beneath the warning
    *  triangle (e.g. "Redemption", "Liquidation"). Only used with icon="warning". */
   warningLabel?: string;
@@ -193,15 +192,15 @@ function UsersIcon({ size, color = "var(--color-rb-500)" }: { size: number; colo
   );
 }
 
-/** +/− badge overlaid bottom-right of the delegate glyph — fuchsia, matching
- *  the purple "Delegate" branding. Plus for a batch-manager join, minus for a
- *  leave. */
+/** +/− badge overlaid bottom-right of the delegate glyph — pink, matching
+ *  the "Delegate" party branding (pink = external party, color-grammar.md §4).
+ *  Plus for a batch-manager join, minus for a leave. */
 function DelegateBadge({ size, join }: { size: number; join: boolean }) {
   const r = Math.round(size * 0.5);
   return (
     <div
       className="absolute -bottom-0.5 -right-0.5 rounded-full flex items-center justify-center"
-      style={{ width: r, height: r, backgroundColor: "#D946EF", border: "2px solid var(--background)" }}
+      style={{ width: r, height: r, backgroundColor: "#EC4899", border: "2px solid var(--background)" }}
     >
       <svg
         width={r * 0.6}
@@ -219,6 +218,8 @@ function DelegateBadge({ size, join }: { size: number; join: boolean }) {
   );
 }
 
+// Reward / airdrop sparkle. Neutral by design — a reward isn't a valence signal,
+// so it carries no accent (color-grammar.md §5); the label says what it is.
 function RewardIcon({ size }: { size: number }) {
   return (
     <svg
@@ -226,7 +227,7 @@ function RewardIcon({ size }: { size: number }) {
       height={size}
       viewBox="0 0 24 24"
       fill="none"
-      stroke="#FBBF24"
+      stroke="var(--color-rb-500)"
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -334,7 +335,7 @@ function SpineTrailingMask() {
 export function SpineColumn({
   tokens,
   icon,
-  warningTone = "amber",
+  warningTone = "caution",
   warningLabel,
   iconDirection,
   tokenSymbol,
@@ -348,7 +349,7 @@ export function SpineColumn({
   const { showTimelineValues } = useTimelineDisplay();
 
   // For warning events the spine + lead-in dot inherit the warning tone so the
-  // whole dotted segment reads as redemption (orange) / liquidation (red).
+  // whole dotted segment reads as caution (orange) / critical (red, liquidation).
   const effectiveColor: SpineColor = icon === "warning" ? warningTone : color;
   const spineRgb = SPINE_COLORS[effectiveColor];
   const dotClass = DOT_COLORS[effectiveColor];

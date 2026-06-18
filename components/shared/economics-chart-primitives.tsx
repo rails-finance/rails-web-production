@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -77,7 +77,7 @@ export function num(s: string | undefined | null): number {
 export const parseRgba = (color: string): [string, string, string, number] | null => {
   const match = /rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*,\s*([\d.]+)\s*)?\)/i.exec(color);
   if (!match) return null;
-  const [, r, g, b, a = '1'] = match;
+  const [, r, g, b, a = "1"] = match;
   return [r, g, b, parseFloat(a)];
 };
 
@@ -148,9 +148,13 @@ export function fmtUsd(n: number): string {
 
 // ── Layout ─────────────────────────────────────────────────────────────────
 
-export function computeTowerLayout(segments: TowerSegment[], maxValue: number, chartHeight = CHART_HEIGHT): PositionedSegment[] {
+export function computeTowerLayout(
+  segments: TowerSegment[],
+  maxValue: number,
+  chartHeight = CHART_HEIGHT,
+): PositionedSegment[] {
   if (!maxValue || !isFinite(maxValue)) return [];
-  const visible = segments.filter(s => s.value > 0 && isFinite(s.value));
+  const visible = segments.filter((s) => s.value > 0 && isFinite(s.value));
   if (visible.length === 0) return [];
   const totalGapPx = Math.max(0, visible.length - 1) * SEGMENT_GAP_PX;
   const availableHeight = chartHeight - totalGapPx;
@@ -166,9 +170,16 @@ export function computeTowerLayout(segments: TowerSegment[], maxValue: number, c
 
 // ── Sub-components ─────────────────────────────────────────────────────────
 
-const SIDEBAR_KEY = '__sidebar__';
+const SIDEBAR_KEY = "__sidebar__";
 
-export function TowerBar({ segments, sideBar, height = CHART_HEIGHT, tooltipSide = 'right', sideBarTooltip, sideBarTooltipSide = 'left' }: {
+export function TowerBar({
+  segments,
+  sideBar,
+  height = CHART_HEIGHT,
+  tooltipSide = "right",
+  sideBarTooltip,
+  sideBarTooltipSide = "left",
+}: {
   segments: PositionedSegment[];
   /** Single-segment side bar (legacy) or stacked principal + accrued segments. */
   sideBar?:
@@ -177,17 +188,17 @@ export function TowerBar({ segments, sideBar, height = CHART_HEIGHT, tooltipSide
   height?: number;
   /** Which side of the tower a *segment* tooltip floats out from. Left tower
    *  uses 'right'; right tower uses 'left' to keep the popover inside the chart. */
-  tooltipSide?: 'left' | 'right';
+  tooltipSide?: "left" | "right";
   /** Tooltip body for the faded side bar — typically the lifetime total
    *  (e.g. "Total Deposited $12,345"). Skipped when omitted. */
   sideBarTooltip?: ReactNode;
   /** Which side the sideBar tooltip floats out from. Defaults to 'left' so
    *  it stays clear of the tower segments. */
-  sideBarTooltipSide?: 'left' | 'right';
+  sideBarTooltipSide?: "left" | "right";
 }) {
   const sideBarSegments = sideBar
     ? "segments" in sideBar
-      ? sideBar.segments.filter(s => s.heightPct > 0)
+      ? sideBar.segments.filter((s) => s.heightPct > 0)
       : sideBar.heightPct > 0
         ? [{ heightPct: sideBar.heightPct, color: sideBar.color }]
         : []
@@ -206,38 +217,38 @@ export function TowerBar({ segments, sideBar, height = CHART_HEIGHT, tooltipSide
     const handler = (e: MouseEvent) => {
       if (!containerRef.current?.contains(e.target as Node)) setActiveKey(null);
     };
-    document.addEventListener('click', handler);
-    return () => document.removeEventListener('click', handler);
+    document.addEventListener("click", handler);
+    return () => document.removeEventListener("click", handler);
   }, [activeKey]);
 
-  const activeSegment = activeKey && activeKey !== SIDEBAR_KEY
-    ? segments.find(s => s.key === activeKey)
-    : null;
+  const activeSegment = activeKey && activeKey !== SIDEBAR_KEY ? segments.find((s) => s.key === activeKey) : null;
   const sideBarActive = activeKey === SIDEBAR_KEY;
 
   return (
     <div ref={containerRef} className="flex gap-px shrink-0">
       {sideBarSegments.length > 0 && (
         <div className="relative shrink-0" style={{ width: 5, height }}>
-          {sideBarSegments.reduce<{ cursor: number; nodes: ReactNode[] }>(
-            (acc, seg, i) => {
-              acc.nodes.push(
-                <div
-                  key={i}
-                  className="absolute w-full rounded-sm"
-                  style={{
-                    bottom: acc.cursor,
-                    height: seg.heightPct,
-                    backgroundColor: seg.color,
-                    ...seg.patternStyle,
-                  }}
-                />
-              );
-              acc.cursor += seg.heightPct;
-              return acc;
-            },
-            { cursor: 0, nodes: [] }
-          ).nodes}
+          {
+            sideBarSegments.reduce<{ cursor: number; nodes: ReactNode[] }>(
+              (acc, seg, i) => {
+                acc.nodes.push(
+                  <div
+                    key={i}
+                    className="absolute w-full rounded-sm"
+                    style={{
+                      bottom: acc.cursor,
+                      height: seg.heightPct,
+                      backgroundColor: seg.color,
+                      ...seg.patternStyle,
+                    }}
+                  />,
+                );
+                acc.cursor += seg.heightPct;
+                return acc;
+              },
+              { cursor: 0, nodes: [] },
+            ).nodes
+          }
           {sideBarInteractive && (
             // Hit area: stretch slightly outward (−left-1) so the 5px-wide
             // bar isn't a microscopic touch target. Sits above the painted
@@ -245,13 +256,16 @@ export function TowerBar({ segments, sideBar, height = CHART_HEIGHT, tooltipSide
             <div
               className="absolute -left-1 right-0 inset-y-0 cursor-pointer z-10"
               onMouseEnter={() => setActiveKey(SIDEBAR_KEY)}
-              onMouseLeave={() => setActiveKey(prev => prev === SIDEBAR_KEY ? null : prev)}
-              onClick={(e) => { e.stopPropagation(); setActiveKey(SIDEBAR_KEY); }}
+              onMouseLeave={() => setActiveKey((prev) => (prev === SIDEBAR_KEY ? null : prev))}
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveKey(SIDEBAR_KEY);
+              }}
             />
           )}
           {sideBarActive && sideBarTooltip && (
             <div
-              className={`absolute z-20 ${sideBarTooltipSide === 'right' ? 'left-full ml-2' : 'right-full mr-2'} pointer-events-none`}
+              className={`absolute z-20 ${sideBarTooltipSide === "right" ? "left-full ml-2" : "right-full mr-2"} pointer-events-none`}
               style={{
                 // Center on the sideBar's filled extent, clamped inside the bar.
                 bottom: Math.max(0, Math.min(sideBarTotalHeight / 2 - 24, height - 48)),
@@ -270,27 +284,29 @@ export function TowerBar({ segments, sideBar, height = CHART_HEIGHT, tooltipSide
           return (
             <div
               key={seg.key}
-              className={`absolute left-0 right-0 rounded-sm ${interactive ? 'cursor-pointer' : ''}`}
+              className={`absolute left-0 right-0 rounded-sm ${interactive ? "cursor-pointer" : ""}`}
               style={{ bottom: seg.bottomPct, height: seg.heightPct }}
               onMouseEnter={interactive ? () => setActiveKey(seg.key) : undefined}
-              onMouseLeave={interactive ? () => setActiveKey(prev => prev === seg.key ? null : prev) : undefined}
-              onClick={interactive ? (e) => { e.stopPropagation(); setActiveKey(seg.key); } : undefined}
+              onMouseLeave={interactive ? () => setActiveKey((prev) => (prev === seg.key ? null : prev)) : undefined}
+              onClick={
+                interactive
+                  ? (e) => {
+                      e.stopPropagation();
+                      setActiveKey(seg.key);
+                    }
+                  : undefined
+              }
             >
-              {seg.colorClass && (
-                <div className={`absolute inset-0 rounded-sm ${seg.colorClass}`} />
-              )}
+              {seg.colorClass && <div className={`absolute inset-0 rounded-sm ${seg.colorClass}`} />}
               {seg.patternStyle && (
-                <div
-                  className="absolute inset-0 rounded-sm pointer-events-none bg-sunken"
-                  style={seg.patternStyle}
-                />
+                <div className="absolute inset-0 rounded-sm pointer-events-none bg-sunken" style={seg.patternStyle} />
               )}
             </div>
           );
         })}
         {activeSegment && (
           <div
-            className={`absolute z-20 ${tooltipSide === 'right' ? 'left-full ml-2' : 'right-full mr-2'} pointer-events-none`}
+            className={`absolute z-20 ${tooltipSide === "right" ? "left-full ml-2" : "right-full mr-2"} pointer-events-none`}
             style={{
               // Vertically center on the segment, clamped inside the tower.
               bottom: Math.max(0, Math.min(activeSegment.bottomPct + activeSegment.heightPct / 2 - 24, height - 48)),
@@ -324,7 +340,7 @@ export function TowerBarSkeleton({ height = CHART_HEIGHT }: { height?: number })
 }
 
 export function BreakdownTable({ rows }: { rows: BreakdownRow[] }) {
-  const visible = rows.filter(r => !r.hidden);
+  const visible = rows.filter((r) => !r.hidden);
   // Layout: sign (~14px) | swatch (~14px) | label (flex) | amount (150px,
   // left-aligned). Whole table caps at 300px so the amount column always
   // starts at the half-width mark — keeps swatches vertically aligned and
@@ -340,23 +356,28 @@ export function BreakdownTable({ rows }: { rows: BreakdownRow[] }) {
       <tbody>
         {visible.map((row, i) => {
           const rowText = row.isResult
-            ? 'text-foreground font-bold'
-            : row.indent ? 'text-rb-500 font-medium' : 'text-rb-500 font-bold';
+            ? "text-foreground font-bold"
+            : row.indent
+              ? "text-rb-500 font-medium"
+              : "text-rb-500 font-bold";
           // Result rows pick up a top divider in rb-500 so the total reads as
           // the sum-line beneath the per-asset contributions.
-          const cellBorder = row.isResult ? 'border-t border-rb-300 dark:border-rb-600' : '';
+          const cellBorder = row.isResult ? "border-t border-rb-300 dark:border-rb-600" : "";
           return (
             <tr key={i} className={rowText}>
               <td className={`py-1 text-right pr-0.5 tabular-nums ${cellBorder}`}>{row.sign}</td>
               <td className={`py-1 pr-1 ${cellBorder}`}>
-                {(row.swatchClass || row.swatchStyle) ? (
+                {row.swatchClass || row.swatchStyle ? (
                   <span
-                    className={`inline-block w-2 h-2 rounded-xs overflow-hidden ${row.swatchClass ?? ''}`}
+                    className={`inline-block w-2 h-2 rounded-xs overflow-hidden ${row.swatchClass ?? ""}`}
                     style={row.swatchStyle}
                   />
                 ) : null}
               </td>
-              <td className={`py-1 whitespace-nowrap overflow-hidden text-ellipsis ${cellBorder}`}>{row.label}{row.icon && <span className="inline-flex ml-1 align-middle">{row.icon}</span>}</td>
+              <td className={`py-1 whitespace-nowrap overflow-hidden text-ellipsis ${cellBorder}`}>
+                {row.label}
+                {row.icon && <span className="inline-flex ml-1 align-middle">{row.icon}</span>}
+              </td>
               <td className={`py-1 pl-3 text-right tabular-nums whitespace-nowrap ${cellBorder}`}>
                 {row.amount}
                 {row.usdHint && <span className="font-normal ml-1">{row.usdHint}</span>}
@@ -373,7 +394,7 @@ export function BreakdownTable({ rows }: { rows: BreakdownRow[] }) {
 
 export function Stat({ label, sublabel, children }: { label: string; sublabel?: string; children: ReactNode }) {
   return (
-    <div className="rounded-lg p-3" style={{ background: 'var(--surface-hover)' }}>
+    <div className="rounded-lg p-3" style={{ background: "var(--surface-hover)" }}>
       <div className="text-xs  uppercase mb-1">{label}</div>
       <div className="flex items-center gap-1">{children}</div>
       {sublabel && <div className="text-xs  mt-0.5">{sublabel}</div>}
@@ -438,9 +459,18 @@ export function DualTowerChart({ left, right, height = CHART_HEIGHT, maxValue, c
   // alignment moves the visible block, not just the surrounding whitespace.
   if (showLeft && !showRightTower && !showRightBreakdown && !hasRightPlaceholder) {
     return (
-      <div className={`flex flex-col lg:flex-row items-center lg:items-stretch justify-center gap-3 ${className ?? ""}`}>
+      <div
+        className={`flex flex-col lg:flex-row items-center lg:items-stretch justify-center gap-3 ${className ?? ""}`}
+      >
         <div className="flex items-end justify-center gap-1 py-2">
-          <TowerBar segments={leftPositioned} sideBar={left.sideBar} height={height} tooltipSide="right" sideBarTooltip={left.sideBarTooltip} sideBarTooltipSide="left" />
+          <TowerBar
+            segments={leftPositioned}
+            sideBar={left.sideBar}
+            height={height}
+            tooltipSide="right"
+            sideBarTooltip={left.sideBarTooltip}
+            sideBarTooltipSide="left"
+          />
         </div>
         <div className="lg:flex-1 lg:flex lg:flex-col">
           <div className="lg:mt-auto w-[300px] max-w-full">
@@ -462,10 +492,28 @@ export function DualTowerChart({ left, right, height = CHART_HEIGHT, maxValue, c
 
       {/* Towers */}
       <div className="flex items-end justify-center gap-1 py-2 order-1 lg:order-none">
-        {showLeft && <TowerBar segments={leftPositioned} sideBar={left.sideBar} height={height} tooltipSide="right" sideBarTooltip={left.sideBarTooltip} sideBarTooltipSide="left" />}
+        {showLeft && (
+          <TowerBar
+            segments={leftPositioned}
+            sideBar={left.sideBar}
+            height={height}
+            tooltipSide="right"
+            sideBarTooltip={left.sideBarTooltip}
+            sideBarTooltipSide="left"
+          />
+        )}
         {!showLeft && hasLeftPlaceholder && left.placeholder}
-        {(leftSlotVisible && rightSlotVisible) && <div className="w-2 shrink-0" />}
-        {showRightTower && <TowerBar segments={rightPositioned} sideBar={right!.sideBar} height={height} tooltipSide="left" sideBarTooltip={right!.sideBarTooltip} sideBarTooltipSide="right" />}
+        {leftSlotVisible && rightSlotVisible && <div className="w-2 shrink-0" />}
+        {showRightTower && (
+          <TowerBar
+            segments={rightPositioned}
+            sideBar={right!.sideBar}
+            height={height}
+            tooltipSide="left"
+            sideBarTooltip={right!.sideBarTooltip}
+            sideBarTooltipSide="right"
+          />
+        )}
         {!showRightTower && hasRightPlaceholder && right!.placeholder}
       </div>
 
@@ -489,28 +537,22 @@ export function EconomicsChartShell({ title, children }: { title: string; childr
   return (
     <div className="rounded-lg overflow-hidden mb-4 surface-active">
       <button
-        onClick={() => setIsOpen(o => !o)}
+        onClick={() => setIsOpen((o) => !o)}
         className="w-full px-4 py-3 flex items-center justify-between text-left cursor-pointer transition-colors"
-        style={{ background: 'transparent' }}
-        onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-hover)'}
-        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+        style={{ background: "transparent" }}
+        onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-hover)")}
+        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
         aria-expanded={isOpen}
         aria-label={isOpen ? `Hide ${title}` : `Show ${title}`}
       >
         <div className="flex items-center gap-2">
           <span className="font-semibold text-foreground">{title}</span>
         </div>
-        {isOpen ? (
-          <ChevronUp className="w-4 h-4 " />
-        ) : (
-          <ChevronDown className="w-4 h-4 " />
-        )}
+        {isOpen ? <ChevronUp className="w-4 h-4 " /> : <ChevronDown className="w-4 h-4 " />}
       </button>
       {isOpen && (
         <div className="px-4 pb-4 space-y-4">
-          <div className="border-t border-rb-200 dark:border-rb-800 pt-4">
-            {children}
-          </div>
+          <div className="border-t border-rb-200 dark:border-rb-800 pt-4">{children}</div>
         </div>
       )}
     </div>
@@ -529,7 +571,8 @@ export type WaterfallStep = {
 
 export function WaterfallBar({ steps, height = CHART_HEIGHT }: { steps: WaterfallStep[]; height?: number }) {
   // Compute running total to position each bar
-  const positions: { key: string; bottom: number; top: number; colorClass: string; patternStyle?: CSSProperties }[] = [];
+  const positions: { key: string; bottom: number; top: number; colorClass: string; patternStyle?: CSSProperties }[] =
+    [];
   let running = 0;
   for (const step of steps) {
     if (step.value === 0) continue;
@@ -541,7 +584,7 @@ export function WaterfallBar({ steps, height = CHART_HEIGHT }: { steps: Waterfal
 
   if (positions.length === 0) return null;
 
-  const allValues = positions.flatMap(p => [p.bottom, p.top]);
+  const allValues = positions.flatMap((p) => [p.bottom, p.top]);
   const minVal = Math.min(0, ...allValues);
   const maxVal = Math.max(0, ...allValues);
   const range = (maxVal - minVal) * 1.08 || 1;
@@ -591,22 +634,22 @@ export function HorizontalBar({ segments, height = 32 }: { segments: HorizontalS
 
   return (
     <div className="flex rounded-md overflow-hidden" style={{ height }}>
-      {segments.filter(s => s.value > 0).map((seg) => {
-        const widthPct = (seg.value / total) * 100;
-        return (
-          <div key={seg.key} className="relative" style={{ width: `${widthPct}%` }}>
-            <div className={`absolute inset-0 ${seg.colorClass}`} />
-            {seg.patternStyle && (
-              <div className="absolute inset-0 pointer-events-none" style={seg.patternStyle} />
-            )}
-            {widthPct > 15 && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-[10px] font-bold text-white/80 drop-shadow-sm">{seg.label}</span>
-              </div>
-            )}
-          </div>
-        );
-      })}
+      {segments
+        .filter((s) => s.value > 0)
+        .map((seg) => {
+          const widthPct = (seg.value / total) * 100;
+          return (
+            <div key={seg.key} className="relative" style={{ width: `${widthPct}%` }}>
+              <div className={`absolute inset-0 ${seg.colorClass}`} />
+              {seg.patternStyle && <div className="absolute inset-0 pointer-events-none" style={seg.patternStyle} />}
+              {widthPct > 15 && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-[10px] font-bold text-white/80 drop-shadow-sm">{seg.label}</span>
+                </div>
+              )}
+            </div>
+          );
+        })}
     </div>
   );
 }
@@ -629,13 +672,11 @@ export function PriceSensitivityBar({
   const breakPct = Math.min((breakEvenPrice / ceiling) * 100, 100);
   const currentPct = Math.min(Math.max((currentPrice / ceiling) * 100, 2), 98);
   const inProfit = currentPrice >= breakEvenPrice;
-  const distPct = Math.abs((breakEvenPrice - currentPrice) / breakEvenPrice * 100);
+  const distPct = Math.abs(((breakEvenPrice - currentPrice) / breakEvenPrice) * 100);
 
   return (
     <div>
-      <div className="text-xs  uppercase tracking-wider mb-2">
-        {symbol} Price Sensitivity
-      </div>
+      <div className="text-xs  uppercase tracking-wider mb-2">{symbol} Price Sensitivity</div>
       <div className="relative mb-1.5">
         <div className="flex rounded-md overflow-hidden h-2.5">
           {/* Loss zone */}
@@ -643,24 +684,27 @@ export function PriceSensitivityBar({
           {/* Profit zone */}
           <div className="bg-emerald-500/15 flex-1" />
         </div>
-        {/* Break-even marker */}
+        {/* Break-even marker — neutral: it's a reference threshold (where loss
+            meets profit), not a caution. The label below carries the value. */}
         <div
-          className="absolute top-[-2px] w-0.5 h-3.5 bg-amber-400 rounded-full"
-          style={{ left: `${breakPct}%`, transform: 'translateX(-50%)' }}
+          className="absolute top-[-2px] w-0.5 h-3.5 bg-rb-500 rounded-full"
+          style={{ left: `${breakPct}%`, transform: "translateX(-50%)" }}
         />
         {/* Current price marker */}
         <div
           className="absolute top-[-2px] w-0.5 h-3.5 bg-blue-400 rounded-full"
-          style={{ left: `${currentPct}%`, transform: 'translateX(-50%)' }}
+          style={{ left: `${currentPct}%`, transform: "translateX(-50%)" }}
         />
       </div>
       <div className="flex justify-between text-[9px]">
         <span className="text-red-400">loss zone</span>
-        <span className="text-amber-400">break-even: ${formatCompactUsd(breakEvenPrice).slice(1)}</span>
+        <span className="text-rb-500">break-even: ${formatCompactUsd(breakEvenPrice).slice(1)}</span>
         <span className="text-emerald-400">profit zone</span>
       </div>
       <div className="text-center text-[9px] mt-0.5">
-        <span className="text-blue-400">current {symbol}: ${currentPrice.toLocaleString()} </span>
+        <span className="text-blue-400">
+          current {symbol}: ${currentPrice.toLocaleString()}{" "}
+        </span>
         <span className={inProfit ? "text-emerald-400" : "text-red-400"}>
           ({distPct.toFixed(1)}% {inProfit ? "above" : "below"} break-even)
         </span>

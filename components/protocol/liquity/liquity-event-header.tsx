@@ -80,7 +80,7 @@ function formatNumber(n: number): string {
   return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
-/** Small "people" glyph used inside the purple delegate / batch rate pills. */
+/** Small "people" glyph used inside the pink delegate / batch rate pills. */
 function UsersGlyph() {
   return (
     <svg
@@ -102,7 +102,7 @@ function UsersGlyph() {
 }
 
 /** Interest-rate pill for individual (non-delegated) troves — a muted rb-500
- *  tint mirroring the visual weight of the purple delegate pill. */
+ *  tint mirroring the visual weight of the pink delegate pill. */
 function RatePill({ rate }: { rate: number }) {
   return (
     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-rb-500/15 text-foreground">
@@ -357,7 +357,7 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
           <span className="ml-auto inline-flex items-center gap-2">
             {ctx.operation === "redeemCollateral" && ctx.isZombieTrove && (
               <span
-                className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-bold rounded bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-bold rounded bg-orange-500/15 text-orange-600 dark:text-orange-400"
                 title={
                   stateAfter.debt === 0
                     ? "Zombie trove fully redeemed — debt cleared, collateral now claimable"

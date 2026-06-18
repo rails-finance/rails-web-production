@@ -34,19 +34,19 @@ import type { HubTier } from "@/components/protocol/aave-v4/aave-v4-spoke-consta
 //      shape, in case the spoke's name contains a space.
 //   3. Mirror in SPOKE_META below if it needs editorial copy.
 const SPOKE_SLUG_TO_NAME: Record<string, string> = {
-  "main":              "Main",
-  "bluechip":          "Bluechip",
-  "forex":             "Forex",
-  "gold":              "Gold",
+  main: "Main",
+  bluechip: "Bluechip",
+  forex: "Forex",
+  gold: "Gold",
   "ethena-correlated": "Ethena Correlated",
-  "ethena-ecosystem":  "Ethena Ecosystem",
-  "etherfi":           "EtherFi",
-  "kelp":              "Kelp",
-  "lido":              "Lido",
+  "ethena-ecosystem": "Ethena Ecosystem",
+  etherfi: "EtherFi",
+  kelp: "Kelp",
+  lido: "Lido",
   // API emits "Lombard BTC" as the display name; spoke-meta keys it under
   // "Lombard" (older copy). Both aliases resolve to the same slug below.
-  "lombard":           "Lombard BTC",
-  "treasury":          "Treasury",
+  lombard: "Lombard BTC",
+  treasury: "Treasury",
 };
 
 const SPOKE_NAME_TO_SLUG: Record<string, string> = {
@@ -206,10 +206,7 @@ export const SPOKE_META: Record<string, SpokeMeta> = {
     collateralHub: "Core",
     borrowHub: "Core",
     // TODO copy: confirm lido LST scope.
-    narrative: [
-      "Lido Spoke on the Core Hub.",
-      "Built around stETH / wstETH liquid-staking collateral.",
-    ],
+    narrative: ["Lido Spoke on the Core Hub.", "Built around stETH / wstETH liquid-staking collateral."],
   },
   Lombard: {
     name: "Lombard",
@@ -229,18 +226,14 @@ export function getSpokeMeta(name: string): SpokeMeta | null {
 }
 
 export const ARCHETYPE_LABEL: Record<SpokeArchetype, string> = {
-  "standard": "Standard Spoke",
+  standard: "Standard Spoke",
   "cross-hub-credit": "Cross-Hub Credit",
-  "correlated": "Correlated Spoke",
-  "isolation": "Isolation Spoke",
-  "ecosystem": "Ecosystem Spoke",
+  correlated: "Correlated Spoke",
+  isolation: "Isolation Spoke",
+  ecosystem: "Ecosystem Spoke",
 };
 
-export const ARCHETYPE_ACCENT: Record<SpokeArchetype, { text: string; bg: string; border: string }> = {
-  // Tints intentionally subtle — the band is informational, not a status.
-  "standard":         { text: "text-rb-400",      bg: "bg-rb-500/10",       border: "border-rb-500/30" },
-  "cross-hub-credit": { text: "text-violet-300",  bg: "bg-violet-500/10",   border: "border-violet-500/30" },
-  "correlated":       { text: "text-cyan-300",    bg: "bg-cyan-500/10",     border: "border-cyan-500/30" },
-  "isolation":        { text: "text-amber-300",   bg: "bg-amber-500/10",    border: "border-amber-500/30" },
-  "ecosystem":        { text: "text-fuchsia-300", bg: "bg-fuchsia-500/10",  border: "border-fuchsia-500/30" },
-};
+// A former `ARCHETYPE_ACCENT` map (per-archetype amber/violet/cyan/fuchsia tints)
+// lived here but was never consumed — the archetype renders as a neutral label
+// via ARCHETYPE_LABEL. It was removed to keep off-grammar color references out of
+// the code; the archetype is identity, not a status, so it carries no color.

@@ -5,21 +5,20 @@
 
 export type HubTier = "Core" | "Plus" | "Prime";
 
-export const HUB_COLORS: Record<HubTier, { text: string; bg: string }> = {
-  Core:  { text: "text-blue-400",    bg: "bg-blue-500/15" },
-  Plus:  { text: "text-amber-400",   bg: "bg-amber-500/15" },
-  Prime: { text: "text-emerald-400", bg: "bg-emerald-500/15" },
-};
+// Hub tiers render as neutral text badges (see SpokeIdentity / position card) —
+// the tier is identity, not a status, so it carries no color. A former
+// `HUB_COLORS` map (per-tier blue/amber/emerald) was unused and removed to keep
+// off-grammar color out of the code; don't reintroduce it. See color-grammar.md.
 
 export const SPOKE_HUB: Record<string, HubTier> = {
-  Main:                "Core",
-  Forex:               "Core",
-  Gold:                "Core",
+  Main: "Core",
+  Forex: "Core",
+  Gold: "Core",
   "Ethena Correlated": "Plus",
-  "Ethena Ecosystem":  "Plus",
-  EtherFi:             "Core",
-  Kelp:                "Core",
-  Lido:                "Core",
-  Lombard:             "Core",
-  Bluechip:            "Prime",
+  "Ethena Ecosystem": "Plus",
+  EtherFi: "Core",
+  Kelp: "Core",
+  Lido: "Core",
+  Lombard: "Core",
+  Bluechip: "Prime",
 };

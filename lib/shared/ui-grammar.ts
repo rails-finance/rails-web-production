@@ -49,8 +49,10 @@ export const CTRL_OFF = "text-rb-500 hover:bg-rb-100 dark:hover:bg-rb-800 hover:
  * hover, so an open control simply looks "hovered" for as long as it's engaged. */
 export const CTRL_ON = "bg-rb-100 dark:bg-rb-800 text-foreground";
 
-/** Engaged in-place control carrying a semantic accent (e.g. an active date filter). */
-export const CTRL_ON_ACCENT = "bg-amber-500/15 text-amber-500 dark:text-amber-400 hover:bg-amber-500/25";
+/** Engaged in-place control carrying a semantic accent (e.g. an active date
+ *  filter). Teal — it's an in-place control state, which is the utility hue's
+ *  job (color-grammar.md §4c); NOT a status, so not a caution/orange. */
+export const CTRL_ON_ACCENT = "bg-teal-500/15 text-teal-600 dark:text-teal-400 hover:bg-teal-500/25";
 
 /**
  * In-panel reset link — the single "Reset" affordance that lives in an open
@@ -61,10 +63,11 @@ export const CTRL_ON_ACCENT = "bg-amber-500/15 text-amber-500 dark:text-amber-40
  *
  * Colour: teal — the brand's dedicated "utility action / in-place interaction"
  * hue. Also: the New pill, active nav, the expand/collapse chevron hover, and the
- * activity heatmap. Deliberately NOT blue (navigation), pink (external), indigo
- * (marketing), amber (active accent), red (danger) or green (positive sign), so
- * per the one-meaning-per-colour rule teal always reads as "utility/in-place
- * interaction", never a status or a nav target.
+ * activity heatmap. Deliberately NOT blue (navigation), pink (external/party),
+ * green (marketing brand + positive sign), orange (redemption) or red
+ * (negative/liquidation), so per the one-meaning-per-colour rule teal always
+ * reads as "utility/in-place interaction", never a status or a nav target.
+ * (amber is mid-review — see color-grammar.md §7.)
  */
 export const RESET_LINK = "text-xs font-semibold text-teal-600 hover:text-teal-500 transition-colors cursor-pointer";
 

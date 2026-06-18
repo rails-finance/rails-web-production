@@ -205,7 +205,7 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
           label: "Health Factor",
           headerIcon: hfStale ? (
             <span
-              className="text-amber-500"
+              className="text-orange-500"
               title="Approximate — live on-chain source unavailable. Shown value derived from indexed balances × off-chain prices."
               aria-label="Health factor is approximate; live on-chain source unavailable"
             >

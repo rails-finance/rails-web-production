@@ -100,7 +100,7 @@ export function LiquityEventCard({
   const iconSlot = isPassive ? (
     <SpineColumn
       icon="warning"
-      warningTone={ctx.operation === "liquidate" ? "red" : ctx.operation === "redeemCollateral" ? "orange" : "amber"}
+      warningTone={ctx.operation === "liquidate" ? "critical" : "caution"}
       warningLabel={
         ctx.operation === "liquidate" ? "Liquidation" : ctx.operation === "redeemCollateral" ? "Redemption" : undefined
       }

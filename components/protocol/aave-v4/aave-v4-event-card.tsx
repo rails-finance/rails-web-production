@@ -40,7 +40,7 @@ export function AaveV4EventCard({ event, isFirst, isLast, txGroup, eventNumber }
   const iconSlot = isLiquidation ? (
     <SpineColumn
       icon="warning"
-      warningTone="red"
+      warningTone="critical"
       warningLabel="Liquidation"
       spine="dotted"
       isFirst={isFirst}

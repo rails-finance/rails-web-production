@@ -127,7 +127,7 @@ export function OpenSummaryCard({
           className={`flex items-start gap-2 rounded-lg p-3 mb-2 text-sm ${
             deprecation.isPast
               ? "bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900"
-              : "bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900"
+              : "bg-orange-50 dark:bg-orange-950/50 text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-900"
           }`}
         >
           <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
@@ -167,7 +167,7 @@ export function OpenSummaryCard({
               ownerEns={trove.ownerEns}
             />
             {/* Delegate marker — name lives in the row below the card, the
-                fuchsia icon here is just a status flag. */}
+                pink icon here is just a status flag (pink = external party). */}
             {trove.batch.isMember && (
               <span
                 className="inline-flex items-center text-pink-500/90"
@@ -224,7 +224,12 @@ export function OpenSummaryCard({
             <div className="text-xs mt-0.5 min-h-[1rem]">
               {collateralUsd !== null && collateralUsd > 0 ? (
                 <span className="inline-flex items-center font-bold text-green-400 border-l-2 border-r-2 border-green-400 rounded-sm px-1 py-0">
-                  <HighlightableValue type="collateralUsd" state="after" value={collateralUsd} className="text-green-400">
+                  <HighlightableValue
+                    type="collateralUsd"
+                    state="after"
+                    value={collateralUsd}
+                    className="text-green-400"
+                  >
                     <FadeNumber value={collateralUsd} formatFn={formatUsdValue} animateOnMount={animateValues} />
                   </HighlightableValue>
                 </span>
