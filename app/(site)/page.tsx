@@ -107,8 +107,8 @@ function GetInTouch() {
           <div className="flex flex-col flex-1">
             <p className="text-base md:text-lg font-normal leading-relaxed text-rb-500 max-w-md">
               Working with a protocol team or building DeFi infrastructure? Rails partners with sponsors to launch{" "}
-              <span className="font-bold">dedicated explorers</span> — one protocol at a time, with the activity,
-              position, and event detail your community can verify on-chain.
+              <span className="font-bold">dedicated explorers</span> — with the activity, position, and event detail
+              your community can verify on-chain.
             </p>
             <p className="body-text max-w-md mt-4">
               Contact us on Telegram at{" "}

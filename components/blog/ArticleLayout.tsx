@@ -16,7 +16,7 @@ export function ArticleLayout({ article, nextArticle, prevArticle, children }: A
   });
 
   return (
-    <article className="container mx-auto px-4 md:px-6 pt-32 pb-12 max-w-4xl">
+    <article className="container mx-auto px-4 md:px-6 pt-32 pb-12 max-w-3xl">
       {/* Back to Blog Button */}
       <Link
         href="/blog"

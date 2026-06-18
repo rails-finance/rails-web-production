@@ -1,10 +1,11 @@
 import { LiquityLogo } from "@/components/LiquityLogo";
+import { Check } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "About Rails",
   description:
-    "Rails builds dedicated, read-only explorers for DeFi protocols — one protocol at a time. Built by a two-person team with support from Liquity. The team, the roadmap, the supporters.",
+    "Rails builds dedicated, read-only explorers for DeFi protocols. Built by a two-person team with support from Liquity. The team, the roadmap, the supporters.",
   openGraph: {
     title: "About Rails",
     description: "Dedicated explorers for DeFi protocols. The team, the roadmap, the supporters.",
@@ -25,41 +26,30 @@ const H3 = "text-lg font-semibold text-foreground";
 const LEAD = "text-base md:text-lg font-normal leading-relaxed text-rb-500";
 const LINK = "text-blue-500 hover:text-blue-600 transition-colors";
 
-/** Roadmap stages, rendered as a vertical timeline. Live integrations (Liquity
- *  V2, Aave V4) carry a coloured node; planned stages stay quiet. Class strings
- *  are literal so Tailwind keeps them. */
+/** Roadmap stages, rendered as a vertical timeline. Shipped stages (Liquity V2,
+ *  Aave V4) carry a tick; the planned stage is an empty amber node. Class
+ *  strings are literal so Tailwind keeps them. */
 const ROADMAP = [
   {
     n: 1,
     title: "Liquity V2 Support",
-    status: "Completed",
     body: "Full coverage of Liquity V2 — trove tracking across WETH, wstETH, and rETH, batch-manager attribution, event timelines, and per-trove economics.",
-    circle: "bg-green-500",
-    badge: "bg-green-600 text-green-50",
+    circle: "bg-slate-500",
+    tick: true,
   },
   {
     n: 2,
     title: "Aave V4 Support",
-    status: "New",
     body: "Multi-spoke lending coverage — per-spoke health factor, liquidation price, and rate exposure, all read from current on-chain state.",
-    circle: "bg-blue-500",
-    badge: "bg-teal-600 text-white",
+    circle: "bg-green-500",
+    tick: true,
   },
   {
     n: 3,
-    title: "Multi-Protocol Intelligence",
-    status: "Planned",
-    body: "More protocols, each with its own dedicated explorer — Morpho, Compound, Sky, the Liquity V2 forks, and beyond. Rails grows one rail at a time.",
-    circle: "bg-violet-500",
-    badge: "bg-rb-300 text-rb-700 dark:bg-rb-800 dark:text-rb-200",
-  },
-  {
-    n: 4,
-    title: "Modularisation",
-    status: "Planned",
-    body: "Rails evolves into portable, composable surfaces — event cards, position cards, timelines — that protocol teams can embed directly into their own UIs.",
-    circle: "bg-orange-400",
-    badge: "bg-rb-300 text-rb-700 dark:bg-rb-800 dark:text-rb-200",
+    title: "Multiprotocol Support",
+    body: "More protocols, each with its own dedicated explorer — expanding across the bluechip DeFi ecosystem and beyond.",
+    circle: "bg-amber-500",
+    tick: false,
   },
 ] as const;
 
@@ -67,20 +57,19 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen">
       {/* Lead */}
-      <section className="max-w-7xl mx-auto px-4 md:px-6 pt-32 pb-14">
-        <h1 className="font-sans font-semibold tracking-tight leading-tight text-foreground text-[clamp(28px,4.5vw,48px)] md:whitespace-nowrap">
-          Dedicated, read-only explorers for DeFi
+      <section className="max-w-3xl mx-auto px-4 md:px-6 pt-32 pb-14">
+        <h1 className="font-sans font-semibold tracking-tight leading-tight text-foreground text-[clamp(28px,4.5vw,48px)]">
+          Dedicated, read-only explorers for DeFi support
         </h1>
       </section>
 
       {/* Roadmap — its own background band, echoing the home feature spotlight.
           Two columns on desktop: a narrow intro/CTA rail beside the timeline. */}
       <div className="bg-gradient-to-b from-rb-100 to-rb-200 dark:from-rb-900 dark:to-rb-800">
-        <section className="max-w-7xl mx-auto px-4 md:px-6 py-16">
-          <div className="grid gap-10 md:grid-cols-3 md:gap-16">
+        <section className="max-w-3xl mx-auto px-4 md:px-6 py-16">
+          <div className="grid gap-10 md:grid-cols-2 md:gap-16">
             {/* Intro rail */}
-            <div className="md:col-span-1 self-start">
-              <h2 className={`${H2} mb-4`}>The definitive DeFi support platform</h2>
+            <div className="self-start">
               <p className={`${LEAD} mb-4`}>
                 We believe that decentralised finance (DeFi) represents the future of finance, but it's currently too
                 complex for most users to understand and navigate safely. <span className="font-semibold">Rails</span>{" "}
@@ -91,7 +80,7 @@ export default function AboutPage() {
             </div>
 
             {/* Timeline */}
-            <ol className="md:col-span-2">
+            <ol>
               {ROADMAP.map((c, i) => {
                 const isLast = i === ROADMAP.length - 1;
                 return (
@@ -99,19 +88,16 @@ export default function AboutPage() {
                     {/* Spine: numbered node + connector down to the next stage */}
                     <div className="flex flex-col items-center shrink-0">
                       <div
-                        className={`z-10 flex h-9 w-9 items-center justify-center rounded-full text-white font-bold ${c.circle}`}
+                        className={`z-10 flex h-9 w-9 items-center justify-center rounded-full text-white ${c.circle}`}
                       >
-                        {c.n}
+                        {c.tick && <Check className="h-5 w-5" strokeWidth={3} aria-hidden="true" />}
                       </div>
                       {!isLast && <div className="mt-1 w-px flex-1 bg-rb-300 dark:bg-rb-700" />}
                     </div>
 
                     {/* Content */}
                     <div className={isLast ? "pt-1" : "pt-1 pb-8"}>
-                      <div className="flex items-center gap-3 mb-1.5">
-                        <h3 className={H3}>{c.title}</h3>
-                        <span className={`shrink-0 text-xs font-bold px-2.5 py-1 rounded ${c.badge}`}>{c.status}</span>
-                      </div>
+                      <h3 className={`${H3} mb-1.5`}>{c.title}</h3>
                       <p className="body-text">{c.body}</p>
                     </div>
                   </li>
@@ -122,7 +108,7 @@ export default function AboutPage() {
         </section>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-16">
+      <div className="max-w-3xl mx-auto px-4 md:px-6 py-16">
         {/* Team Section */}
         <div className="mb-12">
           <h2 className={`${H2} mb-6`}>Team</h2>

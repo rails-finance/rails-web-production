@@ -3,7 +3,7 @@
 import { useMemo, type ReactNode } from "react";
 import { ArrowUpRight, Circle, GitBranch } from "lucide-react";
 import type { TimelineActor, TimelineEvent, TimelineMetrics, TimelineEngagementType } from "@/types/pulse";
-import { MetricsRow, MetricIcons } from "../shared/MetricsRow";
+import { MetricIcons } from "../shared/MetricsRow";
 import { formatDisplayDate, formatFullDateTime } from "../types";
 import { Handle } from "./Handle";
 import { NestedTimeline } from "./NestedTimeline";
@@ -67,10 +67,10 @@ export function PulseContent({
               {formatDisplayDate(event.date)}
             </div>
             {event.postUrl && (
-              <span className="flex items-center bg-slate-200 dark:bg-slate-800 group-hover:bg-blue-500 dark:group-hover:bg-blue-500 transition-colors rounded-full pl-3 pr-2 py-1 text-xs text-slate-600 dark:text-slate-300 group-hover:text-white">
-                <span>Read</span>
-                <ArrowUpRight className="size-4 ml-1" aria-hidden="true" />
-              </span>
+              <ArrowUpRight
+                className="size-4 text-slate-400 dark:text-slate-500 group-hover:text-blue-500 transition-colors"
+                aria-hidden="true"
+              />
             )}
           </div>
         </div>
@@ -107,15 +107,22 @@ export function PulseContent({
       <div className="flex flex-row justify-between items-start gap-x-4">
         {/* Content, Handle */}
         <div className="flex-1 max-w-[50ch] text-sm space-y-4 tracking-wide text-slate-600 dark:text-slate-400">
-          <p>
-            {isGitHub ? (
+          {isGitHub ? (
+            <p>
               <span className="inline-block text-slate-200 font-mono text-sm">
                 {event.content}
               </span>
-            ) : (
-              <span className="text-slate-600 dark:text-slate-400 font-medium">{event.content}</span>
-            )}
-          </p>
+            </p>
+          ) : (
+            <div>
+              <p>
+                <span className="text-slate-600 dark:text-slate-400 font-medium">{event.content}</span>
+              </p>
+              {event.subtitle && (
+                <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400 font-normal">{event.subtitle}</p>
+              )}
+            </div>
+          )}
           {!isGitHub && (
             <div className="mt-1 flex items-center">
               <Handle
@@ -127,12 +134,6 @@ export function PulseContent({
             </div>
           )}
         </div>
-        {/* Metrics - always top right */}
-        {event.metrics && (
-          <div className="flex items-start shrink-0">
-            <MetricsRow metrics={event.metrics} className="text-sm flex-nowrap" compact />
-          </div>
-        )}
       </div>
 
       <div className="">
@@ -168,10 +169,10 @@ export function PulseContent({
             {formatDisplayDate(event.date)}
           </div>
           {event.postUrl && (
-            <span className="flex items-center bg-white dark:bg-slate-800 [.group:hover:not(:has(.group\/nested:hover))_&]:bg-blue-500 transition-all duration-200 ease-out rounded-full pl-3 pr-2 py-1 text-xs text-slate-600 dark:text-slate-300 [.group:hover:not(:has(.group\/nested:hover))_&]:text-white">
-              <span>View</span>
-              <ArrowUpRight className="size-4 ml-1" aria-hidden="true" />
-            </span>
+            <ArrowUpRight
+              className="size-4 text-slate-400 dark:text-slate-500 [.group:hover:not(:has(.group\/nested:hover))_&]:text-blue-500 transition-colors"
+              aria-hidden="true"
+            />
           )}
         </div>
       )}

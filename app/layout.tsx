@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     template: "Rails | %s",
   },
   description:
-    "Rails builds dedicated explorers for DeFi protocols — on-chain-verifiable positions, timelines, and event detail, one protocol at a time. Live now: Liquity V2 and Aave V4, with more bluechip protocols on the way.",
+    "Rails builds dedicated explorers for DeFi protocols — on-chain-verifiable positions, timelines, and event detail. Live now: Liquity V2 and Aave V4, with more bluechip protocols on the way.",
   keywords: [
     "DeFi",
     "Ethereum",

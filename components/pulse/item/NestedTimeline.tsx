@@ -4,7 +4,6 @@ import { type ReactNode } from "react";
 import { ArrowUpRight } from "lucide-react";
 import type { TimelineActor, TimelineEvent, TimelineMetrics } from "@/types/pulse";
 import { Avatar } from "../shared/Avatar";
-import { MetricsRow } from "../shared/MetricsRow";
 import { formatFullDateTime } from "../types";
 import { Handle } from "./Handle";
 
@@ -86,12 +85,6 @@ export function NestedTimeline({
                           </p>
                         )}
                       </div>
-                      {/* Metrics - top right */}
-                      {entry.typeLabel !== "repost" && entry.metrics && (
-                        <div className="flex items-center shrink-0">
-                          <MetricsRow metrics={entry.metrics} className="text-sm flex-nowrap" compact />
-                        </div>
-                      )}
                     </div>
                     {/* Row 2: Handle/Actors + Arrow */}
                     <div className="flex flex-row justify-between items-center">
@@ -117,9 +110,10 @@ export function NestedTimeline({
                       ) : (
                         <div />
                       )}
-                      <span className="flex items-center bg-slate-200 dark:bg-slate-800 group-hover/nested:bg-blue-500 dark:group-hover/nested:bg-blue-500 transition-all duration-200 ease-out rounded-full pl-2 pr-1.5 py-0.5 text-xs text-slate-500 dark:text-slate-400 group-hover/nested:text-white opacity-0 group-hover/nested:opacity-100">
-                        <ArrowUpRight className="size-3" aria-hidden="true" />
-                      </span>
+                      <ArrowUpRight
+                        className="size-4 text-blue-500 opacity-0 group-hover/nested:opacity-100 transition-opacity"
+                        aria-hidden="true"
+                      />
                     </div>
                   </a>
                 ) : (
@@ -133,12 +127,6 @@ export function NestedTimeline({
                           </p>
                         )}
                       </div>
-                      {/* Metrics - top right */}
-                      {entry.typeLabel !== "repost" && entry.metrics && (
-                        <div className="flex items-center shrink-0">
-                          <MetricsRow metrics={entry.metrics} className="text-sm flex-nowrap" compact />
-                        </div>
-                      )}
                     </div>
                     {/* Row 2: Handle/Actors */}
                     {(entry.actors && entry.actors.length > 0) || entry.actor ? (
