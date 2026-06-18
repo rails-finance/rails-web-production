@@ -103,49 +103,46 @@ function GetInTouch() {
       <div className="max-w-7xl mx-auto px-4 py-16">
         <h2 className="font-semibold tracking-tight leading-tight pb-4 text-[clamp(28px,4vw,42px)]">Get in touch</h2>
 
-        <div className="flex flex-col md:flex-row items-start justify-between gap-10">
-          <div className="flex flex-col flex-1">
-            <p className="text-base md:text-lg font-normal leading-relaxed text-rb-500 max-w-md">
-              Working with a protocol team or building DeFi infrastructure? Rails partners with sponsors to launch{" "}
-              <span className="font-bold">dedicated explorers</span> — with the activity, position, and event detail
-              your community can verify on-chain.
-            </p>
-            <p className="body-text max-w-md mt-4">
-              Contact us on Telegram at{" "}
-              <a
-                href="https://t.me/railsfinance"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-pink-500 hover:text-pink-600 transition-colors"
-              >
-                railsfinance
-              </a>
-              .
-            </p>
-          </div>
-
-          <div className="flex shrink-0 flex-col items-center gap-3">
+        <div className="flex items-start gap-6">
+          <a
+            href="https://t.me/railsfinance"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex shrink-0 text-pink-500 hover:text-pink-600 transition-colors"
+            aria-label="Rails Finance Telegram"
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/telegram-qr.svg"
               alt="Rails Finance Telegram QR"
-              width={200}
-              height={200}
+              width={120}
+              height={120}
               className="dark:invert"
             />
-            <a
-              href="https://t.me/railsfinance"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-pink-500 hover:text-pink-600 transition-colors"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
-              </svg>
-              railsfinance
-            </a>
-          </div>
+          </a>
+
+          <p className="text-base md:text-lg font-normal leading-relaxed text-rb-500 max-w-xl">
+            Working with a protocol team or building DeFi infrastructure? Rails partners with protocols — typically
+            through grants — to build dedicated explorers, with the activity, position, and event detail your community
+            can verify on-chain.
+          </p>
         </div>
+
+        <p className="body-text mt-6">
+          Contact us on Telegram at{" "}
+          <a
+            href="https://t.me/railsfinance"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 align-middle text-pink-500 hover:text-pink-600 transition-colors"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+            </svg>
+            railsfinance
+          </a>
+          .
+        </p>
       </div>
     </div>
   );
