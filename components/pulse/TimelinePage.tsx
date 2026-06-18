@@ -21,6 +21,7 @@ const PLATFORM_OPTIONS: { platform: TimelinePlatform; label?: string; icon?: Rea
   { platform: "x", icon: <XIcon className="size-3.5" /> },
   { platform: "github", icon: <GitHubIcon className="size-3.5" /> },
   { platform: "blog", label: "Blog" },
+  { platform: "app", label: "Updates" },
 ];
 
 const DEFAULT_DATA_SOURCES = [

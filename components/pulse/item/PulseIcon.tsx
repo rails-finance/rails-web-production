@@ -1,8 +1,6 @@
 "use client";
 
-import { AppWindow, Globe, Share2, UsersRound, File } from "lucide-react";
 import type { TimelineEvent } from "@/types/pulse";
-import { Avatar } from "../shared/Avatar";
 import { TimelineConnector } from "../timeline/TimelineConnector";
 
 const XIcon = ({ className = "size-6" }: { className?: string }) => (
@@ -17,33 +15,47 @@ const GitHubIcon = ({ className = "size-6" }: { className?: string }) => (
   </svg>
 );
 
-const platformIcons = {
-  x: XIcon,
-  farcaster: Share2,
-  medium: File,
-  blog: File,
-  app: AppWindow,
-  internal: UsersRound,
-  github: GitHubIcon,
-  other: Globe,
-};
+/** Rails wordmark glyph — the abstract linear "R", neutral, inherits currentColor.
+ *  Mirrors the mark in `components/nav/header-bar.tsx`. */
+const RailsMark = ({ className = "size-6" }: { className?: string }) => (
+  <svg viewBox="0 0 200 200" fill="currentColor" aria-hidden="true" className={className}>
+    <path style={{ opacity: 0.85 }} d="M 79.763 159.671 L 111.637 159.671 L 52.168 41.625 L 20.295 41.625 L 79.763 159.671 Z" />
+    <path style={{ opacity: 0.85 }} d="M 98.578 97.056 L 130.451 97.056 L 105.044 47.853 L 73.171 47.853 L 98.578 97.056 Z" />
+    <path d="M 148.892 142.388 L 180.766 142.388 L 155.359 93.185 L 123.486 93.185 L 148.892 142.388 Z" />
+  </svg>
+);
+
+/** The single spine glyph an entry refers to: an explicit icon (protocol logo)
+ *  if provided, otherwise the source application's mark. Author identity lives
+ *  in the post content (the Handle avatar), so the spine stays a clean badge. */
+function SpineGlyph({ event }: { event: TimelineEvent }) {
+  if (event.iconUrl) {
+    return <img src={event.iconUrl} alt="" className="h-full w-full object-cover" loading="lazy" />;
+  }
+  switch (event.platform) {
+    case "x":
+      return <XIcon className="size-5 text-slate-800 dark:text-slate-100" />;
+    case "github":
+      return <GitHubIcon className="size-5 text-slate-800 dark:text-slate-100" />;
+    default:
+      return <RailsMark className="size-6 text-slate-900 dark:text-white" />;
+  }
+}
 
 export function PulseIcon({
   event,
   isFirst,
   isLast,
-  className = "",
 }: {
   event: TimelineEvent;
   isFirst: boolean;
   isLast: boolean;
   className?: string;
 }) {
-  const PlatformIcon = platformIcons[event.platform] ?? Globe;
   const connectorStyle = isLast ? { display: "none" } : { height: "calc(100% + 3.5rem)" };
 
   return (
-    <div className={`relative flex h-full mr-2 sm:mr-4 md:mr-6 shrink-0 flex-col items-center `}>
+    <div className="relative flex h-full mr-2 sm:mr-4 md:mr-6 shrink-0 flex-col items-center">
       <div
         className="absolute left-1/2 top-0 -z-10 flex h-full w-1 -translate-x-1/2 justify-center text-slate-300 dark:text-[#30343F]"
         style={connectorStyle}
@@ -51,43 +63,9 @@ export function PulseIcon({
         <TimelineConnector event={event} isFirst={isFirst} isLast={isLast} />
       </div>
 
-      {event.postUrl ? (
-        <a href={event.postUrl} target="_blank" rel="noreferrer" className="relative z-20">
-          <div className="relative flex size-full justify-center">
-            <div className="relative flex items-center justify-center">
-              <Avatar
-                handle={event.author}
-                platform={event.platform}
-                overrideSrc={event.iconUrl}
-                size={40}
-                className="border border-slate-200 dark:border-slate-500"
-              />
-            </div>
-            <div className="absolute bottom-0 -right-4 flex size-6 items-center justify-center rounded-full border-2 border-white bg-white text-slate-700 dark:border-slate-900 dark:bg-slate-900 dark:text-white">
-              <PlatformIcon className="size-3.5" />
-              <span className="sr-only">{event.platform}</span>
-            </div>
-          </div>
-        </a>
-      ) : (
-        <div className="relative z-20">
-          <div className="relative flex size-full justify-center">
-            <div className="relative flex items-center justify-center">
-              <Avatar
-                handle={event.author}
-                platform={event.platform}
-                overrideSrc={event.iconUrl}
-                size={40}
-                className="border border-slate-200 dark:border-slate-500"
-              />
-            </div>
-            <div className="absolute bottom-0 -right-4 flex size-6 items-center justify-center rounded-full border-2 border-white bg-white text-slate-700 dark:border-slate-900 dark:bg-slate-900 dark:text-white">
-              <PlatformIcon className="size-3.5" />
-              <span className="sr-only">{event.platform}</span>
-            </div>
-          </div>
-        </div>
-      )}
+      <div className="relative z-20 flex size-10 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+        <SpineGlyph event={event} />
+      </div>
     </div>
   );
 }

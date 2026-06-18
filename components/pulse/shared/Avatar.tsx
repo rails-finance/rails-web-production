@@ -26,7 +26,7 @@ export function Avatar({
   overrideSrc?: string;
 }) {
   const basePath = getAvatarBasePath(handle, platform);
-  const [extension, setExtension] = useState<"png" | "jpg" | null>("png");
+  const [extension, setExtension] = useState<"png" | "jpg" | "svg" | null>("png");
   const initial = handle?.replace(/^@/, "").charAt(0)?.toUpperCase() ?? "?";
 
   const src = overrideSrc ?? (basePath && extension ? `${basePath}.${extension}` : null);
@@ -45,6 +45,8 @@ export function Avatar({
           onError={(event) => {
             if (extension === "png") {
               setExtension("jpg");
+            } else if (extension === "jpg") {
+              setExtension("svg");
             } else {
               event.currentTarget.style.display = "none";
               setExtension(null);
