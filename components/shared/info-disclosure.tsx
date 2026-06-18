@@ -18,9 +18,10 @@ import { useCallback, useState } from "react";
  * swaps the disc to a red triangle so dangerous states surface without a click.
  *
  * The disc uses the existing (i) glyph, whose center "i" is a cutout — it shows
- * the pill/panel background through it (near-white in light mode), matching the
- * dark-disc / light-i mockup. In dark mode the disc flips light so it stays
- * legible against the dark canvas.
+ * the pill/panel background through it (near-white in light mode). The disc is
+ * filled with the app's utility hue (teal, per ui-grammar.ts) so the help
+ * affordance reads as an in-place utility action; in dark mode it lightens to
+ * stay legible against the dark canvas.
  */
 
 const INFO_PATH =
@@ -86,7 +87,7 @@ export function InfoDisclosure({
         className={`h-5 w-5 transition-colors ${
           warning
             ? "text-red-500 dark:text-red-400"
-            : "text-rb-600 group-hover/info:text-rb-900 dark:text-rb-300 dark:group-hover/info:text-rb-100"
+            : "text-teal-600 group-hover/info:text-teal-700 dark:text-teal-400 dark:group-hover/info:text-teal-300"
         }`}
         viewBox="0 0 20 20"
         fill="currentColor"

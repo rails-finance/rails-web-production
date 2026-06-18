@@ -306,7 +306,7 @@ function FilterChip({
         label ? "px-3 gap-1.5" : "px-2"
       } ${
         active
-          ? "border-blue-500 bg-blue-500 text-white dark:border-blue-500 dark:bg-blue-500 dark:text-white"
+          ? "border-teal-500 bg-teal-500 text-white dark:border-teal-500 dark:bg-teal-500 dark:text-white"
           : "border-rb-200 bg-white text-rb-500 hover:border-rb-300 hover:text-rb-500 dark:border-rb-700 dark:bg-transparent dark:text-rb-500 dark:hover:border-rb-600 dark:hover:text-rb-300"
       }`}
     >

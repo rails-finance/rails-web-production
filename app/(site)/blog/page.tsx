@@ -22,7 +22,7 @@ export default function BlogPage() {
           Blog
         </h1>
         <p className="text-xl text-rb-500">
-          Insights, updates, and stories from the Rails team about making DeFi more accessible.
+          Insights, updates, and stories from the Rails team.
         </p>
       </div>
 

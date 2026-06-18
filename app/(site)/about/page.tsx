@@ -47,10 +47,10 @@ const ROADMAP = [
   {
     n: 3,
     title: "Multi-Protocol Explorers",
-    body: "More protocols, each with its own dedicated explorer — expanding across the bluechip DeFi ecosystem and beyond.",
+    body: "We're continuing to expand Rails across the bluechip DeFi ecosystem",
     circle: "bg-rb-500",
     tick: true,
-    tickClass: "text-green-300/60",
+    tickClass: "text-rb-100 dark:text-rb-800",
   },
 ] as const;
 
