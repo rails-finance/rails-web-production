@@ -6,8 +6,7 @@ export const metadata: Metadata = {
     "Rails Privacy Policy. Learn how we handle data and protect your privacy when using the Rails DeFi analytics platform.",
   openGraph: {
     title: "Privacy Policy | Rails",
-    description:
-      "Rails Privacy Policy. Learn how we handle data and protect your privacy.",
+    description: "Rails Privacy Policy. Learn how we handle data and protect your privacy.",
     url: "https://rails.finance/privacy",
   },
   robots: {
@@ -20,7 +19,9 @@ export default function PrivacyPage() {
   return (
     <div className="container mx-auto md:px-6 px-4 pt-32 pb-12 max-w-3xl">
       <div className="prose prose-lg max-w-none">
-        <h1 className="text-3xl font-bold text-foreground mb-2">Privacy Policy</h1>
+        <h1 className="font-sans font-semibold tracking-tight leading-tight text-foreground text-[clamp(28px,4.5vw,48px)] mb-2">
+          Privacy Policy
+        </h1>
         <p className="text-sm text-rb-500 mb-8">
           Last updated: {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
         </p>
@@ -87,9 +88,7 @@ export default function PrivacyPage() {
 
         <section className="mb-8">
           <h2 className="text-2xl font-semibold text-rb-500 mb-4">Third-Party Services</h2>
-          <p className="text-rb-500 mb-4">
-            Rails interacts with the following third-party services:
-          </p>
+          <p className="text-rb-500 mb-4">Rails interacts with the following third-party services:</p>
           <ul className="list-disc pl-6 mb-4 text-rb-500">
             <li>
               <strong>Ethereum RPC Providers:</strong> To fetch blockchain data
@@ -108,9 +107,7 @@ export default function PrivacyPage() {
 
         <section className="mb-8">
           <h2 className="text-2xl font-semibold text-rb-500 mb-4">Cookies and Local Storage</h2>
-          <p className="text-rb-500 mb-4">
-            We use minimal browser local storage to enhance your experience:
-          </p>
+          <p className="text-rb-500 mb-4">We use minimal browser local storage to enhance your experience:</p>
           <ul className="list-disc pl-6 mb-4 text-rb-500">
             <li>User interface preferences (theme, layout settings)</li>
             <li>Recently viewed items for quick access</li>

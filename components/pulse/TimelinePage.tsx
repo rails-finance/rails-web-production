@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Activity, AlertCircle, Loader2, Pin } from "lucide-react";
+import { AlertCircle, Loader2, Pin } from "lucide-react";
 import type { TimelineEvent, TimelinePlatform } from "@/types/pulse";
 import { PulseTimelineItem } from "./item";
 
@@ -83,6 +83,26 @@ export function TimelinePage({ title, description, dataSources = DEFAULT_DATA_SO
     };
   }, [dataSources]);
 
+  // Dev guard: timeline ids are hand-maintained across separate feed files, and a
+  // collision makes React reuse the keyed node so a filtered-out card ghosts across
+  // every filter (see the rails-2025-012 x/blog clash). Warn loudly in dev so the
+  // next duplicate is caught at the source instead of as a mystery sticky card.
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production" || events.length === 0) return;
+    const seen = new Map<string, TimelineEvent>();
+    for (const event of events) {
+      const prior = seen.get(event.id);
+      if (prior) {
+        console.warn(
+          `[Pulse] Duplicate timeline id "${event.id}" — ids must be unique across feeds or cards ghost across filters. ` +
+            `Collision: "${prior.content}" (${prior.platform}) vs "${event.content}" (${event.platform}).`,
+        );
+      } else {
+        seen.set(event.id, event);
+      }
+    }
+  }, [events]);
+
   const sortedEvents = useMemo(
     () => [...events].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
     [events],
@@ -114,10 +134,9 @@ export function TimelinePage({ title, description, dataSources = DEFAULT_DATA_SO
   }, [filteredEvents]);
 
   return (
-    <section className="space-y-8 py-8">
+    <section className="space-y-8 pb-8">
       <div className="space-y-3">
-        <h1 className="text-4xl font-semibold text-foreground dark:text-white flex items-center gap-3">
-          <Activity className="size-8 text-emerald-600" />
+        <h1 className="font-sans font-semibold tracking-tight leading-tight text-foreground dark:text-white text-[clamp(28px,4.5vw,48px)]">
           {title}
         </h1>
         <p className="text-lg text-rb-500 max-w-2xl">{description}</p>
@@ -253,7 +272,7 @@ export function TimelinePage({ title, description, dataSources = DEFAULT_DATA_SO
             const globalIndex = groupedEvents.slice(0, groupIndex).reduce((acc, g) => acc + g.events.length, 0) + index;
             items.push(
               <PulseTimelineItem
-                key={event.id}
+                key={`${event.platform}-${event.id}`}
                 event={event}
                 isFirst={globalIndex === 0}
                 isLast={globalIndex === filteredEvents.length - 1}
@@ -287,7 +306,7 @@ function FilterChip({
         label ? "px-3 gap-1.5" : "px-2"
       } ${
         active
-          ? "border-rb-400 bg-rb-100 text-foreground dark:border-white dark:bg-white dark:text-foreground"
+          ? "border-blue-500 bg-blue-500 text-white dark:border-blue-500 dark:bg-blue-500 dark:text-white"
           : "border-rb-200 bg-white text-rb-500 hover:border-rb-300 hover:text-rb-500 dark:border-rb-700 dark:bg-transparent dark:text-rb-500 dark:hover:border-rb-600 dark:hover:text-rb-300"
       }`}
     >

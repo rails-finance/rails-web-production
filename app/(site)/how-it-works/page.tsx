@@ -103,8 +103,8 @@ export default function HowItWorksPage() {
   const [tab, setTab] = useState<Tab>("Overview");
 
   return (
-    <div className="max-w-3xl mx-auto px-4 md:px-6 py-16">
-      <h1 className="font-sans font-semibold tracking-tight leading-tight text-[clamp(28px,4vw,42px)] mb-6">
+    <div className="max-w-3xl mx-auto px-4 md:px-6 pt-32 pb-16">
+      <h1 className="font-sans font-semibold tracking-tight leading-tight text-foreground text-[clamp(28px,4.5vw,48px)] mb-6">
         How Rails Works
       </h1>
 
@@ -117,7 +117,7 @@ export default function HowItWorksPage() {
             onClick={() => setTab(t)}
             aria-pressed={tab === t}
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              tab === t ? "bg-[var(--marketing)] text-white" : "text-rb-500 hover:text-foreground"
+              tab === t ? "bg-blue-500 text-white" : "text-rb-500 hover:text-foreground"
             }`}
           >
             {t}

@@ -6,8 +6,7 @@ export const metadata: Metadata = {
     "Rails Terms of Service. Read about acceptable use, disclaimers, and limitations when using the Rails DeFi analytics platform.",
   openGraph: {
     title: "Terms of Service | Rails",
-    description:
-      "Rails Terms of Service. Read about acceptable use, disclaimers, and limitations.",
+    description: "Rails Terms of Service. Read about acceptable use, disclaimers, and limitations.",
     url: "https://rails.finance/terms",
   },
   robots: {
@@ -20,7 +19,9 @@ export default function TermsPage() {
   return (
     <div className="container mx-auto md:px-6 px-4 pt-32 pb-12 max-w-3xl">
       <div className="prose prose-lg max-w-none">
-        <h1 className="text-3xl font-bold text-foreground mb-2">Terms of Service</h1>
+        <h1 className="font-sans font-semibold tracking-tight leading-tight text-foreground text-[clamp(28px,4.5vw,48px)] mb-2">
+          Terms of Service
+        </h1>
         <p className="text-sm text-rb-500 mb-8">
           Last updated: {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
         </p>
@@ -75,9 +76,7 @@ export default function TermsPage() {
         </section>
 
         <section className="mb-8">
-          <h2 className="text-2xl font-semibold text-rb-500 mb-4">
-            4. DeFi and Blockchain Risks
-          </h2>
+          <h2 className="text-2xl font-semibold text-rb-500 mb-4">4. DeFi and Blockchain Risks</h2>
           <p className="text-rb-500 mb-4">You acknowledge and understand that:</p>
           <ul className="list-disc pl-6 mb-4 text-rb-500">
             <li>
@@ -125,9 +124,7 @@ export default function TermsPage() {
         </section>
 
         <section className="mb-8">
-          <h2 className="text-2xl font-semibold text-rb-500 mb-4">
-            7. Disclaimer of Warranties
-          </h2>
+          <h2 className="text-2xl font-semibold text-rb-500 mb-4">7. Disclaimer of Warranties</h2>
           <p className="text-rb-500 mb-4 font-semibold">
             THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND.
           </p>
