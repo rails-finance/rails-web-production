@@ -18,7 +18,7 @@ export function FooterThemeToggle() {
   return (
     <button
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      className="text-rb-500 hover:text-foreground transition-colors cursor-pointer p-1"
+      className="text-rb-500 hover:text-teal-500 transition-colors cursor-pointer p-1"
       title={isDark ? "Switch to light mode" : "Switch to dark mode"}
       aria-label="Toggle theme"
     >

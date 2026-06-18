@@ -49,13 +49,13 @@ export function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      className="cursor-pointer p-2 rounded-lg bg-rb-100 dark:bg-rb-800 hover:bg-rb-200 dark:hover:bg-rb-700 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rb-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-rb-400 dark:focus-visible:ring-offset-rb-900"
+      className="group cursor-pointer p-2 rounded-lg bg-rb-100 dark:bg-rb-800 hover:bg-rb-200 dark:hover:bg-rb-700 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rb-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-rb-400 dark:focus-visible:ring-offset-rb-900"
       aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
     >
       {theme === "light" ? (
-        <Moon className="w-5 h-5 text-rb-500" aria-hidden="true" />
+        <Moon className="w-5 h-5 text-rb-500 group-hover:text-teal-500 transition-colors" aria-hidden="true" />
       ) : (
-        <Sun className="w-5 h-5 text-rb-300" aria-hidden="true" />
+        <Sun className="w-5 h-5 text-rb-300 group-hover:text-teal-500 transition-colors" aria-hidden="true" />
       )}
     </button>
   );
