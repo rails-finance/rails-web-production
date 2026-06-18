@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import type { AaveV4Context } from "@/lib/shared/types/protocols/aave-v4";
 import { ExplainerList } from "@/components/shared/explainer-list";
 import { LearnMore } from "@/components/shared/learn-more-modal";
-import { aaveV4LiquidationContent } from "@/lib/shared/learn-more-content";
+import { aaveV4LiquidationContent, aaveV4EventFallbackContent } from "@/lib/shared/learn-more-content";
 import { shortAddr } from "@/lib/shared/format-event";
 import { aaveV4DisplaySymbol } from "@/lib/aave-v4/pt-tokens";
 import { effectiveBorrowAPR } from "@/lib/aave-v4/borrow-rate";
@@ -288,7 +288,10 @@ export function AaveV4EventExplainer({ ctx }: AaveV4EventExplainerProps) {
       );
   }
 
-  const learnMore = ctx.eventType === "liquidation" ? aaveV4LiquidationContent(ctx.spokeName) : null;
+  // Never-empty floor: liquidations get the dedicated modal; every other event
+  // type falls back to the generic Aave V4 explainer (P2 refines these).
+  const learnMore =
+    ctx.eventType === "liquidation" ? aaveV4LiquidationContent(ctx.spokeName) : aaveV4EventFallbackContent();
 
   return <ExplainerList items={items}>{learnMore && <LearnMore content={learnMore} />}</ExplainerList>;
 }

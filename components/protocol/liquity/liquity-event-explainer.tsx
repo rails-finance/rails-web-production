@@ -11,6 +11,12 @@ import {
   liquityRedemptionContent,
   liquityLiquidationContent,
   liquityOpenTroveContent,
+  liquityCloseTroveContent,
+  liquityAdjustTroveContent,
+  liquityInterestRateContent,
+  liquityDelegationContent,
+  liquityTransferContent,
+  liquityEventFallbackContent,
 } from "@/lib/shared/learn-more-content";
 
 // ── Formatters ──────────────────────────────────────────────────────
@@ -139,11 +145,9 @@ function generateOpenTroveItems(ctx: LiquityContext): ExplainerItem[] {
   items.push({
     content: (
       <span>
-        Position opened with a <V className="text-foreground">{stateAfter.collateralRatio.toFixed(1)}%</V>{" "}
-        collateralization ratio
+        Position opened with a <V>{stateAfter.collateralRatio.toFixed(1)}%</V> collateralization ratio
       </span>
     ),
-    type: stateAfter.collateralRatio < 150 ? "warning" : "success",
   });
 
   items.push({
@@ -1374,8 +1378,22 @@ function getLearnMoreContent(ctx: LiquityContext) {
         ctx.collateralType,
         ctx.stateAfter.annualInterestRate > 0 ? ctx.stateAfter.annualInterestRate : undefined,
       );
+    case "closeTrove":
+      return liquityCloseTroveContent();
+    case "adjustTrove":
+      return liquityAdjustTroveContent();
+    case "adjustTroveInterestRate":
+    case "applyPendingDebt":
+      return liquityInterestRateContent();
+    case "setInterestBatchManager":
+    case "removeFromBatch":
+    case "setBatchManagerAnnualInterestRate":
+      return liquityDelegationContent();
+    case "transferTrove":
+      return liquityTransferContent();
     default:
-      return null;
+      // Never-empty floor: any unmapped operation still gets a generic modal.
+      return liquityEventFallbackContent();
   }
 }
 
