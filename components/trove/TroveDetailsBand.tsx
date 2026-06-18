@@ -59,9 +59,9 @@ export function TroveDetailsBand({
         </div>
         {trove.batch.isMember && (
           <div className="text-rb-500 inline-flex items-center gap-1 flex-wrap">
-            <Users className="w-3 h-3 shrink-0 text-purple-500" aria-hidden="true" />
+            <Users className="w-3 h-3 shrink-0 text-pink-500" aria-hidden="true" />
             <span>
-              <span className="font-medium text-purple-500">{batchManagerInfo?.name || "Delegate"}</span> adds a{" "}
+              <span className="font-medium text-pink-500">{batchManagerInfo?.name || "Delegate"}</span> adds a{" "}
               <span className="text-foreground/80 font-semibold tabular-nums">+{trove.batch.managementFee}%</span> fee,{" "}
               ~
               <span className="text-foreground/80 font-semibold tabular-nums">

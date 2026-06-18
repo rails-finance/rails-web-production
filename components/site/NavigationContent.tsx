@@ -3,10 +3,13 @@ import { usePathname } from "next/navigation";
 import { Home, Users, BookOpen, FileText, Activity } from "lucide-react";
 import { ThemeToggle } from "../ThemeToggle";
 
-// Nav links are navigation, so their text shares the grammar's single blue
-// hover (blue = "this goes somewhere") rather than a per-item colour. The icon
-// tiles / protocol marks / badge keep their own distinct brand colours.
-const NAV_TEXT_HOVER = "hover:text-blue-500 dark:hover:text-blue-400";
+// Nav state grammar:
+//   rest    → text-foreground; icons stay neutral rb-500 throughout
+//   hover   → text → blue-500 (blue = "this goes somewhere")
+//   current → text-rb-500 (muted, you can't navigate to where you are) + semibold
+//             for a quiet "you are here" cue, not clickable
+const NAV_LINK_REST = "font-medium text-foreground hover:text-blue-500 dark:hover:text-blue-400";
+const NAV_LINK_CURRENT = "font-semibold text-rb-500 pointer-events-none";
 
 interface NavigationContentProps {
   onLinkClick?: () => void;
@@ -20,36 +23,26 @@ export function NavigationContent({ onLinkClick }: NavigationContentProps) {
       href: "/",
       label: "Home",
       icon: <Home size={16} />,
-      iconBg: "bg-green-600",
-      activeColor: "text-green-600 dark:text-green-600",
     },
     {
       href: "/about",
       label: "About",
       icon: <Users size={16} />,
-      iconBg: "bg-blue-600",
-      activeColor: "text-blue-600 dark:text-blue-600",
     },
     {
       href: "/pulse",
       label: "Pulse",
       icon: <Activity size={16} />,
-      iconBg: "bg-emerald-600",
-      activeColor: "text-emerald-600 dark:text-emerald-600",
     },
     {
       href: "/blog",
       label: "Blog",
       icon: <FileText size={16} />,
-      iconBg: "bg-orange-600",
-      activeColor: "text-orange-600 dark:text-orange-600",
     },
     {
       href: "/how-it-works",
       label: "How It Works",
       icon: <BookOpen size={16} />,
-      iconBg: "bg-purple-600",
-      activeColor: "text-purple-600 dark:text-purple-600",
     },
   ];
 
@@ -59,21 +52,18 @@ export function NavigationContent({ onLinkClick }: NavigationContentProps) {
     href: string;
     label: string;
     iconSrc: string;
-    activeColor: string;
     badge?: string;
   }[] = [
     {
       href: "/aave-v4",
       label: "Aave V4",
       iconSrc: "/icons/protocols/aave-v4.png",
-      activeColor: "text-teal-600 dark:text-teal-600",
       badge: "New",
     },
     {
       href: "/liquity-v2",
       label: "Liquity V2",
       iconSrc: "/icons/protocols/liquity.png",
-      activeColor: "text-indigo-600 dark:text-indigo-600",
     },
   ];
 
@@ -89,12 +79,12 @@ export function NavigationContent({ onLinkClick }: NavigationContentProps) {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 text-lg font-medium py-2 transition-colors ${
-                isActive ? `${item.activeColor} pointer-events-none` : `text-foreground ${NAV_TEXT_HOVER}`
+              className={`flex items-center gap-3 text-lg py-2 transition-colors ${
+                isActive ? NAV_LINK_CURRENT : NAV_LINK_REST
               }`}
               onClick={isActive ? undefined : onLinkClick}
             >
-              <div className={`flex ${item.iconBg} text-white p-1.5 rounded`}>{item.icon}</div>
+              <div className="flex p-1.5 text-rb-500">{item.icon}</div>
               <span>{item.label}</span>
             </Link>
           );
@@ -112,8 +102,8 @@ export function NavigationContent({ onLinkClick }: NavigationContentProps) {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 text-lg font-medium py-2 transition-colors ${
-                isActive ? `${item.activeColor} pointer-events-none` : `text-foreground ${NAV_TEXT_HOVER}`
+              className={`flex items-center gap-3 text-lg py-2 transition-colors ${
+                isActive ? NAV_LINK_CURRENT : NAV_LINK_REST
               }`}
               onClick={isActive ? undefined : onLinkClick}
             >
@@ -147,7 +137,7 @@ export function NavigationContent({ onLinkClick }: NavigationContentProps) {
             href="https://x.com/rails_finance"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-rb-500 hover:text-green-600 dark:hover:text-green-600 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 rounded"
+            className="text-rb-500 hover:text-pink-500 dark:hover:text-pink-400 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-pink-500 rounded"
             aria-label="Follow Rails on X"
           >
             <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -158,7 +148,7 @@ export function NavigationContent({ onLinkClick }: NavigationContentProps) {
             href="https://medium.com/@railsfinance"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-rb-500 hover:text-green-600 dark:hover:text-green-600 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 rounded"
+            className="text-rb-500 hover:text-pink-500 dark:hover:text-pink-400 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-pink-500 rounded"
             aria-label="Rails Finance on Medium"
           >
             <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -169,7 +159,7 @@ export function NavigationContent({ onLinkClick }: NavigationContentProps) {
             href="https://www.youtube.com/@rails_finance"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-rb-500 hover:text-green-600 dark:hover:text-green-600 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 rounded"
+            className="text-rb-500 hover:text-pink-500 dark:hover:text-pink-400 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-pink-500 rounded"
             aria-label="Rails Finance on YouTube"
           >
             <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -180,7 +170,7 @@ export function NavigationContent({ onLinkClick }: NavigationContentProps) {
             href="https://github.com/rails-finance"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-rb-500 hover:text-green-600 dark:hover:text-green-600 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 rounded"
+            className="text-rb-500 hover:text-pink-500 dark:hover:text-pink-400 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-pink-500 rounded"
             aria-label="Rails Finance on GitHub"
           >
             <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">

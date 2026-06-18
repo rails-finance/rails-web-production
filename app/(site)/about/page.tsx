@@ -24,17 +24,17 @@ export const metadata: Metadata = {
 const H2 = "text-3xl font-semibold tracking-tight text-foreground";
 const H3 = "text-lg font-semibold text-foreground";
 const LEAD = "text-base md:text-lg font-normal leading-relaxed text-rb-500";
-const LINK = "text-blue-500 hover:text-blue-600 transition-colors";
+const LINK = "text-pink-500 hover:text-pink-600 transition-colors";
 
 /** Roadmap stages, rendered as a vertical timeline. Shipped stages (Liquity V2,
- *  Aave V4) carry a tick; the planned stage is an empty amber node. Class
+ *  Aave V4) carry a tick; the planned stage is an empty grey node. Class
  *  strings are literal so Tailwind keeps them. */
 const ROADMAP = [
   {
     n: 1,
     title: "Liquity V2 Explorer",
     body: "Full coverage of Liquity V2 — trove tracking across WETH, wstETH, and rETH, batch-manager attribution, event timelines, and per-trove economics.",
-    circle: "bg-slate-500",
+    circle: "bg-green-500",
     tick: true,
   },
   {
@@ -48,8 +48,9 @@ const ROADMAP = [
     n: 3,
     title: "Multi-Protocol Explorers",
     body: "More protocols, each with its own dedicated explorer — expanding across the bluechip DeFi ecosystem and beyond.",
-    circle: "bg-amber-500",
-    tick: false,
+    circle: "bg-slate-500",
+    tick: true,
+    tickClass: "text-green-300/60",
   },
 ] as const;
 
@@ -90,7 +91,13 @@ export default function AboutPage() {
                       <div
                         className={`z-10 flex h-9 w-9 items-center justify-center rounded-full text-white ${c.circle}`}
                       >
-                        {c.tick && <Check className="h-5 w-5" strokeWidth={3} aria-hidden="true" />}
+                        {c.tick && (
+                          <Check
+                            className={`h-5 w-5 ${"tickClass" in c ? c.tickClass : ""}`}
+                            strokeWidth={3}
+                            aria-hidden="true"
+                          />
+                        )}
                       </div>
                       {!isLast && <div className="mt-1 w-px flex-1 bg-rb-300 dark:bg-rb-700" />}
                     </div>

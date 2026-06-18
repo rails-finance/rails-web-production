@@ -40,7 +40,7 @@ export function SiteFooter() {
                 href="https://x.com/rails_finance"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-rb-500 hover:text-green-600 dark:hover:text-green-600 transition-colors duration-150"
+                className="text-rb-500 hover:text-pink-500 dark:hover:text-pink-400 transition-colors duration-150"
                 title="Follow Rails on X"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -51,7 +51,7 @@ export function SiteFooter() {
                 href="https://www.youtube.com/@rails_finance"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-rb-500 hover:text-green-600 dark:hover:text-green-600 transition-colors duration-150"
+                className="text-rb-500 hover:text-pink-500 dark:hover:text-pink-400 transition-colors duration-150"
                 title="Rails Finance on YouTube"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -62,7 +62,7 @@ export function SiteFooter() {
                 href="https://github.com/rails-finance"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-rb-500 hover:text-green-600 dark:hover:text-green-600 transition-colors duration-150"
+                className="text-rb-500 hover:text-pink-500 dark:hover:text-pink-400 transition-colors duration-150"
                 title="Rails on GitHub"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -79,7 +79,7 @@ export function SiteFooter() {
               <li>
                 <Link
                   href="/"
-                  className="text-rb-500 hover:text-green-600 dark:hover:text-green-600 text-sm transition-colors duration-150"
+                  className="text-rb-500 hover:text-blue-500 dark:hover:text-blue-400 text-sm transition-colors duration-150"
                 >
                   Home
                 </Link>
@@ -87,7 +87,7 @@ export function SiteFooter() {
               <li>
                 <Link
                   href="/about"
-                  className="text-rb-500 hover:text-green-600 dark:hover:text-green-600 text-sm transition-colors duration-150"
+                  className="text-rb-500 hover:text-blue-500 dark:hover:text-blue-400 text-sm transition-colors duration-150"
                 >
                   About
                 </Link>
@@ -95,7 +95,7 @@ export function SiteFooter() {
               <li>
                 <Link
                   href="/how-it-works"
-                  className="text-rb-500 hover:text-green-600 dark:hover:text-green-600 text-sm transition-colors duration-150"
+                  className="text-rb-500 hover:text-blue-500 dark:hover:text-blue-400 text-sm transition-colors duration-150"
                 >
                   How It Works
                 </Link>
@@ -103,7 +103,7 @@ export function SiteFooter() {
               <li>
                 <Link
                   href="/pulse"
-                  className="text-rb-500 hover:text-green-600 dark:hover:text-green-600 text-sm transition-colors duration-150"
+                  className="text-rb-500 hover:text-blue-500 dark:hover:text-blue-400 text-sm transition-colors duration-150"
                 >
                   Pulse
                 </Link>
@@ -111,7 +111,7 @@ export function SiteFooter() {
               <li>
                 <Link
                   href="/blog"
-                  className="text-rb-500 hover:text-green-600 dark:hover:text-green-600 text-sm transition-colors duration-150"
+                  className="text-rb-500 hover:text-blue-500 dark:hover:text-blue-400 text-sm transition-colors duration-150"
                 >
                   Blog
                 </Link>
@@ -125,7 +125,7 @@ export function SiteFooter() {
             <p className="body-text mb-3">Help us continue building tools for the DeFi community</p>
             <a
               href="https://etherscan.io/name-lookup-search?id=donate.rails.eth"
-              className="inline-block bg-fuchsia-600 hover:bg-fuchsia-700 dark:bg-fuchsia-500 dark:hover:bg-fuchsia-600 text-white text-sm font-bold px-4 py-2 rounded-full transition-colors duration-150"
+              className="inline-block bg-pink-600 hover:bg-pink-700 dark:bg-pink-500 dark:hover:bg-pink-600 text-white text-sm font-bold px-4 py-2 rounded-full transition-colors duration-150"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -142,13 +142,13 @@ export function SiteFooter() {
               <div className="flex gap-4">
                 <Link
                   href="/privacy"
-                  className="text-rb-500 hover:text-foreground text-xs transition-colors duration-150"
+                  className="text-rb-500 hover:text-blue-500 dark:hover:text-blue-400 text-xs transition-colors duration-150"
                 >
                   Privacy Policy
                 </Link>
                 <Link
                   href="/terms"
-                  className="text-rb-500 hover:text-foreground text-xs transition-colors duration-150"
+                  className="text-rb-500 hover:text-blue-500 dark:hover:text-blue-400 text-xs transition-colors duration-150"
                 >
                   Terms of Service
                 </Link>
@@ -157,7 +157,7 @@ export function SiteFooter() {
             <div className="flex items-center gap-3">
               <span className="text-rb-500 text-xs">
                 Built with support from{" "}
-                <a href="https://liquity.org" target="_blank" rel="noopener noreferrer" className="hover:underline">
+                <a href="https://liquity.org" target="_blank" rel="noopener noreferrer" className="link-external hover:underline">
                   Liquity
                 </a>
               </span>

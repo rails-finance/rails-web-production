@@ -996,7 +996,7 @@ function generateSetBatchManagerItems(ctx: LiquityContext, accruedInterest: numb
           <>
             {" "}
             with{" "}
-            <WalletLink address={managerAddr} className="text-purple-500 hover:text-purple-600 transition-colors">
+            <WalletLink address={managerAddr} className="text-pink-500 hover:text-pink-600 transition-colors">
               {knownName ? `${knownName} (${shortAddr})` : shortAddr}
             </WalletLink>
           </>

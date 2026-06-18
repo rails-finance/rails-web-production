@@ -76,8 +76,13 @@
 
   --text-muted: var(--color-rb-500);
   --text-muted-hover: var(--rb-text-500);
+  /* Link/party accents — see migration/color-grammar.md for the full rule.
+     blue = stays inside Rails (internal nav + links).
+     pink = leaves Rails (external links) OR is an external party (delegates). */
   --text-link: var(--color-blue-400);
   --text-link-hover: var(--color-blue-300);
+  --text-external: var(--color-pink-500);
+  --text-external-hover: var(--color-pink-400);
 
   --pill-active-bg: var(--surface-active);
   --pill-active-text: var(--foreground);
@@ -314,7 +319,7 @@ body {
   }
 
   .article-content a {
-    @apply text-blue-600 dark:text-blue-400 no-underline hover:underline;
+    @apply text-pink-600 dark:text-pink-400 no-underline hover:underline;
   }
 
   .article-content strong {
@@ -444,6 +449,14 @@ body {
   transition: color 0.15s;
   &:hover {
     color: var(--text-muted-hover);
+  }
+}
+/* Links to external sites — see --text-external. Use for anchors that leave Rails. */
+.link-external {
+  color: var(--text-external);
+  transition: color 0.15s;
+  &:hover {
+    color: var(--text-external-hover);
   }
 }
 

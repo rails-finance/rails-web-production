@@ -111,11 +111,11 @@ function RatePill({ rate }: { rate: number }) {
   );
 }
 
-/** Interest-rate pill for delegated troves — purple with the people glyph,
- *  matching the Delegate / Batch rate header treatment. */
+/** Interest-rate pill for delegated troves — pink with the people glyph,
+ *  matching the Delegate / Batch rate header treatment (pink = external party). */
 function DelegateRatePill({ rate }: { rate: number }) {
   return (
-    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-700 dark:text-purple-400 text-xs font-bold">
+    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-700 dark:text-pink-400 text-xs font-bold">
       <UsersGlyph />
       {rate.toFixed(2)}%
     </span>
@@ -212,7 +212,7 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
             <>
               <DelegateRatePill rate={stateAfter.annualInterestRate} />
               {ctx.batchManager && (
-                <span className="text-sm font-bold text-purple-500">{getBatchManagerName(ctx.batchManager)}</span>
+                <span className="text-sm font-bold text-pink-500">{getBatchManagerName(ctx.batchManager)}</span>
               )}
             </>
           ) : ctx.operation === "setInterestBatchManager" ? (
@@ -220,7 +220,7 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
               <span className="text-sm text-rb-500">{style.label}</span>
               {stateAfter.annualInterestRate > 0 && <DelegateRatePill rate={stateAfter.annualInterestRate} />}
               {ctx.batchManager && (
-                <span className="text-sm font-bold text-purple-500">{getBatchManagerName(ctx.batchManager)}</span>
+                <span className="text-sm font-bold text-pink-500">{getBatchManagerName(ctx.batchManager)}</span>
               )}
             </>
           ) : ctx.operation === "openTrove" || ctx.operation === "openTroveAndJoinBatch" ? (

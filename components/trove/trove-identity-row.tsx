@@ -115,7 +115,7 @@ export function TroveIdentityRow({
           }}
           aria-label="View NFT on OpenSea"
           title="View NFT on OpenSea"
-          className="inline-flex items-center gap-1 text-rb-500 hover:text-blue-500 transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1 text-rb-500 hover:text-pink-500 transition-colors cursor-pointer"
         >
           <ImageIcon size={12} />
           <Link2 size={12} className="-rotate-45" />

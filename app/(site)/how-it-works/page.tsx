@@ -207,7 +207,7 @@ export default function HowItWorksPage() {
               href="https://github.com/rails-finance"
               target="_blank"
               rel="noopener noreferrer"
-              className="underline hover:text-blue-500 transition-colors"
+              className="underline hover:text-pink-500 transition-colors"
             >
               View on GitHub →
             </a>

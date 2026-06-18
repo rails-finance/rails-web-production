@@ -151,7 +151,7 @@ export function LearnMoreModal({ content, onClose }: { content: LearnMoreContent
                 </div>
                 <div className="text-xs ">
                   {content.video.description}{" "}
-                  <a href={content.video.url} target="_blank" rel="noopener noreferrer" className="link underline">
+                  <a href={content.video.url} target="_blank" rel="noopener noreferrer" className="link-external underline">
                     {content.video.label} ↗
                   </a>
                 </div>
@@ -169,7 +169,7 @@ export function LearnMoreModal({ content, onClose }: { content: LearnMoreContent
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block text-xs link hover:underline"
+                    className="block text-xs link-external hover:underline"
                   >
                     ↗ {link.label}
                   </a>
