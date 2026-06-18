@@ -9,7 +9,7 @@ import type { AaveSpokeCardInfo, AaveV4InterestPnl } from "@/lib/aave-v4/spoke-c
 import { fmtUsd, hfLabel, fmtLiqPrice, fmtSignedUsd, fmtTokenAmount } from "@/lib/aave-v4/format";
 import { aaveV4DisplaySymbol } from "@/lib/aave-v4/pt-tokens";
 import { LearnMore } from "@/components/shared/learn-more-modal";
-import { aaveV4SpokeContent } from "@/lib/shared/learn-more-content";
+import { aaveV4SpokeContent, aaveV4PositionFallbackContent } from "@/lib/shared/learn-more-content";
 
 // Oxford-join a list of asset symbols for prose ("wstETH, WBTC and USDC").
 function joinSymbols(syms: string[]): string {
@@ -235,7 +235,9 @@ export function AaveV4PositionExplanation({
   embedded?: boolean;
 }) {
   const positionItems = buildSpokePositionItems(spoke);
-  const spokeContent = aaveV4SpokeContent(spoke.name);
+  // Never-empty floor: spokes without editorial metadata fall back to the
+  // generic position explainer so the "?" is always available.
+  const spokeContent = aaveV4SpokeContent(spoke.name) ?? aaveV4PositionFallbackContent();
 
   return (
     <div

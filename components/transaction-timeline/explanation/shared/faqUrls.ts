@@ -22,6 +22,8 @@ export const FAQ_URLS = {
 export const AAVE_FAQ_URLS = {
   FAQ: "https://aave.com/faq",
   LIQUIDATIONS: "https://aave.com/help/borrowing/liquidations",
+  SUPPLYING: "https://aave.com/help/depositing",
+  BORROWING: "https://aave.com/help/borrowing",
   V4_POSITIONS: "https://aave.com/docs/aave-v4/positions",
   V4_LIQUIDATIONS: "https://aave.com/docs/aave-v4/positions/liquidations",
 } as const;

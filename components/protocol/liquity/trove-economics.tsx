@@ -24,6 +24,8 @@ import { usePreferences } from "@/lib/shared/preferences-context";
 import { trovePriceRunwayExplanation } from "@/components/protocol/liquity/trove-price-axis";
 import { PriceRunway } from "@/components/shared/price-runway";
 import { InfoDisclosure } from "@/components/shared/info-disclosure";
+import { LearnMore } from "@/components/shared/learn-more-modal";
+import { liquityEconomicsContent } from "@/lib/shared/learn-more-content";
 import { getLiquidationThreshold } from "@/lib/utils/liquidation-utils";
 import { LIQUIDATION_RESERVE_ETH } from "@/components/transaction-timeline/explanation/shared/eventHelpers";
 import { formatRatio, ratioLabel, useLiquityRatioColorClass } from "@/lib/shared/ratio-format";
@@ -1297,6 +1299,7 @@ export function TroveEconomicsSummary({ events, currentPrice, hideHeader }: Trov
                   </div>
                 ))}
               </div>
+              <LearnMore content={liquityEconomicsContent({ isBatched: meta.isInBatch })} />
             </InfoDisclosure>
           </div>
         )}

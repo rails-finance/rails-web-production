@@ -277,6 +277,47 @@ export function liquityPositionContent(opts: {
   };
 }
 
+// ── Liquity — Economics panel ────────────────────────────────────────────────
+//
+// State-explainer for the trove economics panel (carry cost + lifetime debt/
+// collateral flows). Scoped to what that panel shows, distinct from the
+// position panel's "About this position".
+export function liquityEconomicsContent(opts: { isBatched?: boolean } = {}): LearnMoreContent {
+  return {
+    title: "About the Economics",
+    intro:
+      "This panel breaks down what the trove costs to carry and traces every unit of debt and collateral that has flowed through it over its lifetime.",
+    detailsHeading: "Key concepts:",
+    details: [
+      {
+        bold: "Carrying cost",
+        text: opts.isBatched
+          ? "the interest plus the delegate's management fee that accrue to the debt each day and year."
+          : "the interest that accrues to the debt each day and year at your chosen rate.",
+      },
+      {
+        bold: "Upfront fee",
+        text: "a one-time borrowing fee taken when debt is drawn, equivalent to about 7 days of average interest.",
+      },
+      {
+        bold: "Lifetime flows",
+        text: "the towers decompose everything that ever moved through the trove — deposited, withdrawn, borrowed, repaid, redeemed, liquidated.",
+      },
+      {
+        bold: "Liquidation reserve",
+        text: "0.0375 ETH held back at open to pay liquidators, refunded when the trove closes.",
+      },
+    ],
+    links: [
+      { label: "Are there other borrowing fees?", url: FAQ_URLS.BORROWING_FEES },
+      { label: "What is the liquidation reserve?", url: FAQ_URLS.LIQUIDATION_RESERVE },
+      opts.isBatched
+        ? { label: "What is interest-rate delegation?", url: FAQ_URLS.DELEGATION }
+        : { label: "How do user-set interest rates work?", url: FAQ_URLS.USER_SET_RATES },
+    ],
+  };
+}
+
 // ── Liquity — Event-card modals (process events) ─────────────────────────────
 //
 // One content function per mechanic, mapped from operation types by the event
@@ -471,6 +512,159 @@ export function aaveV4EventFallbackContent(): LearnMoreContent {
       {
         bold: "Hub & spoke",
         text: "each spoke isolates risk — one shared health factor inside, fully independent between spokes.",
+      },
+    ],
+    links: [
+      { label: "Aave V4 positions", url: AAVE_FAQ_URLS.V4_POSITIONS },
+      { label: "Health factor & liquidations", url: AAVE_FAQ_URLS.LIQUIDATIONS },
+      { label: "Aave FAQ", url: AAVE_FAQ_URLS.FAQ },
+    ],
+  };
+}
+
+// ── Aave V4 — Event-card modals (process events) ─────────────────────────────
+//
+// Mechanic-specific content mapped from event types by the event explainer's
+// resolver. Same slot grammar as the Liquity event modals.
+
+export function aaveV4SupplyContent(): LearnMoreContent {
+  return {
+    title: "How Supplying Works",
+    intro:
+      "Supplying deposits an asset into a spoke, where it earns interest and — if enabled as collateral — can back borrowing. Withdrawing reverses it.",
+    detailsHeading: "Key concepts:",
+    details: [
+      {
+        bold: "Supplied balance",
+        text: "your deposit, which accrues supply interest continuously and stays withdrawable unless it's backing a borrow.",
+      },
+      {
+        bold: "Collateral toggle",
+        text: "each supplied asset can be switched on or off as collateral; only collateral-enabled supply supports borrowing.",
+      },
+      {
+        bold: "Withdrawing",
+        text: "you can withdraw any supply not currently needed to keep your borrows covered.",
+      },
+    ],
+    links: [
+      { label: "Aave V4 positions", url: AAVE_FAQ_URLS.V4_POSITIONS },
+      { label: "Supplying assets", url: AAVE_FAQ_URLS.SUPPLYING },
+      { label: "Aave FAQ", url: AAVE_FAQ_URLS.FAQ },
+    ],
+  };
+}
+
+export function aaveV4BorrowContent(): LearnMoreContent {
+  return {
+    title: "How Borrowing Works",
+    intro:
+      "Borrowing draws an asset against your supplied collateral within a spoke. Repaying returns the asset and frees up that collateral.",
+    detailsHeading: "Key concepts:",
+    details: [
+      {
+        bold: "Borrowing power",
+        text: "how much you can borrow depends on your collateral's value weighted by each asset's risk parameters.",
+      },
+      {
+        bold: "Health factor",
+        text: "borrowing lowers your health factor; if it falls below 1.0 the position can be liquidated.",
+      },
+      {
+        bold: "Borrow interest",
+        text: "debt accrues interest continuously at the asset's borrow rate until it's repaid.",
+      },
+    ],
+    links: [
+      { label: "Borrowing assets", url: AAVE_FAQ_URLS.BORROWING },
+      { label: "Health factor & liquidations", url: AAVE_FAQ_URLS.LIQUIDATIONS },
+      { label: "Aave FAQ", url: AAVE_FAQ_URLS.FAQ },
+    ],
+  };
+}
+
+export function aaveV4CollateralToggleContent(): LearnMoreContent {
+  return {
+    title: "How Collateral Works",
+    intro:
+      "Each supplied asset can be enabled or disabled as collateral. Only enabled assets back your borrowing and count toward your health factor.",
+    detailsHeading: "Key concepts:",
+    details: [
+      {
+        bold: "Collateral toggle",
+        text: "turning an asset on lets it back borrows; turning it off removes it from your borrowing power.",
+      },
+      {
+        bold: "Health-factor impact",
+        text: "disabling collateral lowers your health factor, so it's blocked if doing so would leave the position unsafe.",
+      },
+      {
+        bold: "Isolated per spoke",
+        text: "collateral only backs borrows within the same spoke — spokes never share risk.",
+      },
+    ],
+    links: [
+      { label: "Aave V4 positions", url: AAVE_FAQ_URLS.V4_POSITIONS },
+      { label: "Health factor & liquidations", url: AAVE_FAQ_URLS.LIQUIDATIONS },
+      { label: "Aave FAQ", url: AAVE_FAQ_URLS.FAQ },
+    ],
+  };
+}
+
+// Generic Aave position-panel fallback — the "never empty" floor for the spoke
+// position panel when a spoke has no editorial metadata. State-explainer, so
+// titled "About this position".
+export function aaveV4PositionFallbackContent(): LearnMoreContent {
+  return {
+    title: "About This Position",
+    intro:
+      "This panel explains an Aave V4 position in plain language — what's supplied as collateral, what's borrowed against it, and how safely the debt is covered.",
+    detailsHeading: "Key concepts:",
+    details: [
+      {
+        bold: "Supply & collateral",
+        text: "supplied assets earn interest and, when enabled, back your borrowing.",
+      },
+      {
+        bold: "Health factor",
+        text: "measures how safely your debt is covered; below 1.0 the position can be liquidated.",
+      },
+      {
+        bold: "Hub & spoke",
+        text: "each spoke isolates risk — one shared health factor inside, fully independent between spokes.",
+      },
+    ],
+    links: [
+      { label: "Aave V4 positions", url: AAVE_FAQ_URLS.V4_POSITIONS },
+      { label: "Health factor & liquidations", url: AAVE_FAQ_URLS.LIQUIDATIONS },
+      { label: "Aave FAQ", url: AAVE_FAQ_URLS.FAQ },
+    ],
+  };
+}
+
+// ── Aave V4 — Economics panel ────────────────────────────────────────────────
+//
+// State-explainer for the spoke economics band (lifetime towers + price
+// runways + health factor). Scoped to that band, distinct from the position
+// panel's "About this position".
+export function aaveV4EconomicsContent(): LearnMoreContent {
+  return {
+    title: "About the Economics",
+    intro:
+      "This band traces the position's supply and borrow flows over its lifetime and shows how much price cushion each collateral asset has before liquidation.",
+    detailsHeading: "Key concepts:",
+    details: [
+      {
+        bold: "Lifetime flows",
+        text: "the towers show every supply, withdrawal, borrow, and repayment over the position's life — not just the current balance.",
+      },
+      {
+        bold: "Price runway",
+        text: "how far each collateral asset's price can fall before it reaches the liquidation price.",
+      },
+      {
+        bold: "Health factor",
+        text: "the single safety number for the whole spoke; a runway is exhausted when the position's health factor would hit 1.0.",
       },
     ],
     links: [

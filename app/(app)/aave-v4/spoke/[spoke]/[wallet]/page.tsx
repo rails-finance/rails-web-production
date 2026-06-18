@@ -57,6 +57,8 @@ import { AaveV4SpokeRunwayStack } from "@/components/protocol/aave-v4/aave-v4-sp
 import { AaveV4PositionExposure } from "@/components/protocol/aave-v4/aave-v4-position-exposure";
 import { aaveV4RunwayExplanation } from "@/components/protocol/aave-v4/aave-v4-price-runway";
 import { InfoDisclosure } from "@/components/shared/info-disclosure";
+import { LearnMore } from "@/components/shared/learn-more-modal";
+import { aaveV4EconomicsContent } from "@/lib/shared/learn-more-content";
 import { AaveV4TowerChart } from "@/components/protocol/aave-v4/aave-v4-tower-chart";
 import {
   buildAaveV4SpokeCards,
@@ -809,6 +811,8 @@ function AaveV4SpokeEconomicsBand({
           </div>
         </InfoDisclosure>
       )}
+
+      <LearnMore content={aaveV4EconomicsContent()} />
     </div>
   );
 }
