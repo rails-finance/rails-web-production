@@ -1,5 +1,16 @@
 [
   {
+    "id": "rails-2026-neutral-risk-rfp-applied",
+    "date": "2026-06-15T12:00:00Z",
+    "type": "milestone",
+    "platform": "github",
+    "author": "rails.finance",
+    "iconUrl": "/avatars/app/rails.finance.png",
+    "postUrl": "https://github.com/rails-finance/neutral-risk",
+    "content": "Applied to steward the EF Neutral DeFi Risk Intelligence Aggregator",
+    "subtitle": "Our response to the Ethereum Foundation's OpenRisk RFP. Neutral Risk is our open-source aggregator showing what every major risk feed says about a protocol, side by side — no scores of our own."
+  },
+  {
     "id": "rails-2025-013",
     "date": "2025-08-06T09:45:00Z",
     "type": "post",
