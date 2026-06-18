@@ -44,10 +44,11 @@ const COMPONENTS = [
   {
     n: 1,
     title: "Blockchain Indexer (Sieve)",
-    lead: "Connects directly to Ethereum nodes and monitors all Liquity V2 and Aave V4 contracts in real-time.",
+    lead: "Sieve — our in-house indexer — connects directly to Ethereum and monitors all Liquity V2 and Aave V4 contracts in real-time.",
     points: [
       "Captures Liquity V2 events across three collateral branches (WETH, wstETH, rETH) and Aave V4 spoke activity",
       "Processes Transfer, TroveOperation, TroveUpdated, Liquidation, Redemption, and Batch events, plus Aave V4 Supply, Borrow, Repay, Withdraw, and Liquidation events",
+      "Reads from Ethereum through redundant RPC providers — a primary endpoint with automatic failover to a backup",
       "Fetches oracle prices from Chainlink for accurate USD valuations",
       "Routes events to the appropriate processing queues via RabbitMQ",
       "Maintains real-time synchronization with blockchain state",
