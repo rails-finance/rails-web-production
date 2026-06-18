@@ -15,7 +15,7 @@ export function isDashedConnector(event: TimelineEvent): boolean {
   return isThirdParty(event.author);
 }
 
-const CONNECTOR_COLOR_CLASS = "text-slate-300 dark:text-[#30343F]";
+const CONNECTOR_COLOR_CLASS = "text-rb-300 dark:text-[#30343F]";
 
 export function TimelineConnector({
   event,

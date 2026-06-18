@@ -62,7 +62,7 @@ function FeatureCard({ heading, name, description, slide }: FeatureCardProps) {
     <div className="relative">
       <div className="relative grid grid-cols-1 md:grid-cols-2 md:items-center">
         <div className="relative flex flex-col px-0 py-6 sm:px-0 sm:py-6 md:justify-center md:py-8 md:pr-8">
-          <span className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-blue-500">{name}</span>
+          <span className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] marketing">{name}</span>
           <h3 className="font-sans text-[37px] font-semibold leading-tight tracking-tight mb-4">{heading}</h3>
           <p className="body-text">{description}</p>
         </div>

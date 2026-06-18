@@ -33,7 +33,7 @@ export function Avatar({
 
   return (
     <span
-      className={`relative inline-flex items-center justify-center overflow-hidden rounded-full bg-white dark:bg-slate-900 ${className}`}
+      className={`relative inline-flex items-center justify-center overflow-hidden rounded-full bg-white dark:bg-rb-900 ${className}`}
       style={{ width: size, height: size }}
     >
       {src && (
@@ -55,7 +55,7 @@ export function Avatar({
         />
       )}
       <span
-        className={`absolute inset-0 flex items-center justify-center text-[0.6rem] font-semibold text-slate-600 transition-opacity dark:text-slate-200 bg-slate-200 dark:bg-slate-700 ${
+        className={`absolute inset-0 flex items-center justify-center text-[0.6rem] font-semibold text-rb-500 transition-opacity dark:text-rb-200 bg-rb-200 dark:bg-rb-700 ${
           src ? "opacity-0" : "opacity-100"
         }`}
       >

@@ -116,11 +116,11 @@ export function TimelinePage({ title, description, dataSources = DEFAULT_DATA_SO
   return (
     <section className="space-y-8 py-8">
       <div className="space-y-3">
-        <h1 className="text-4xl font-semibold text-slate-900 dark:text-white flex items-center gap-3">
+        <h1 className="text-4xl font-semibold text-foreground dark:text-white flex items-center gap-3">
           <Activity className="size-8 text-emerald-600" />
           {title}
         </h1>
-        <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl">{description}</p>
+        <p className="text-lg text-rb-500 max-w-2xl">{description}</p>
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -137,7 +137,7 @@ export function TimelinePage({ title, description, dataSources = DEFAULT_DATA_SO
       </div>
 
       {loading && (
-        <div className="flex items-center gap-2 text-slate-500">
+        <div className="flex items-center gap-2 text-rb-500">
           <Loader2 className="size-4 animate-spin" />
           Loading timeline...
         </div>
@@ -151,7 +151,7 @@ export function TimelinePage({ title, description, dataSources = DEFAULT_DATA_SO
       )}
 
       {!loading && filteredEvents.length === 0 && (
-        <p className="text-sm text-slate-500">No events match this filter yet.</p>
+        <p className="text-sm text-rb-500">No events match this filter yet.</p>
       )}
 
       <ul className="space-y-4">
@@ -176,22 +176,22 @@ export function TimelinePage({ title, description, dataSources = DEFAULT_DATA_SO
                     </span>
                     {/* Vertical line connecting to first event */}
                     <div
-                      className="absolute left-1/2 -translate-x-1/2 w-1 bg-slate-300 dark:bg-[#30343F]"
+                      className="absolute left-1/2 -translate-x-1/2 w-1 bg-rb-300 dark:bg-[#30343F]"
                       style={{ top: "50%", bottom: "-1rem" }}
                     />
                   </>
                 ) : (
                   <div
-                    className="absolute left-1/2 -translate-x-1/2 w-1 bg-slate-300 dark:bg-[#30343F]"
+                    className="absolute left-1/2 -translate-x-1/2 w-1 bg-rb-300 dark:bg-[#30343F]"
                     style={{ top: "-1rem", bottom: "-1rem" }}
                   />
                 )}
               </div>
               {/* Month label */}
               <div className="flex-1 flex items-center gap-4 py-2">
-                <div className="flex-1 border-t border-dashed border-slate-300 dark:border-slate-700" />
-                <span className="text-xs font-medium text-slate-500 dark:text-slate-500">{group.label}</span>
-                <div className="flex-1 border-t border-dashed border-slate-300 dark:border-slate-700" />
+                <div className="flex-1 border-t border-dashed border-rb-300 dark:border-rb-700" />
+                <span className="text-xs font-medium text-rb-500">{group.label}</span>
+                <div className="flex-1 border-t border-dashed border-rb-300 dark:border-rb-700" />
               </div>
             </li>,
           );
@@ -206,20 +206,20 @@ export function TimelinePage({ title, description, dataSources = DEFAULT_DATA_SO
                   style={{ width: "40px" }}
                 >
                   <div
-                    className="absolute left-1/2 -translate-x-1/2 w-1 bg-slate-300 dark:bg-[#30343F]"
+                    className="absolute left-1/2 -translate-x-1/2 w-1 bg-rb-300 dark:bg-[#30343F]"
                     style={{ top: "-1rem", bottom: "-1rem" }}
                   />
                 </div>
                 {/* Pinned message content */}
                 <div className="flex-1 py-2">
-                  <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 p-4">
+                  <div className="rounded-lg border border-rb-200 dark:border-rb-700 bg-rb-50 dark:bg-rb-800/50 p-4">
                     <div className="flex items-start gap-3">
                       <Pin className="size-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                       <div className="space-y-1">
                         <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
                           We're actively seeking funding to expand Rails.
                         </p>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                        <p className="text-sm text-rb-500 leading-relaxed">
                           We welcome your support and collaboration. Be the first to{" "}
                           <a
                             href="https://etherscan.io/name-lookup-search?id=donate.rails.eth"
@@ -287,8 +287,8 @@ function FilterChip({
         label ? "px-3 gap-1.5" : "px-2"
       } ${
         active
-          ? "border-slate-400 bg-slate-100 text-slate-700 dark:border-white dark:bg-white dark:text-slate-900"
-          : "border-slate-200 bg-white text-slate-400 hover:border-slate-300 hover:text-slate-500 dark:border-slate-700 dark:bg-transparent dark:text-slate-400 dark:hover:border-slate-600 dark:hover:text-slate-300"
+          ? "border-rb-400 bg-rb-100 text-foreground dark:border-white dark:bg-white dark:text-foreground"
+          : "border-rb-200 bg-white text-rb-500 hover:border-rb-300 hover:text-rb-500 dark:border-rb-700 dark:bg-transparent dark:text-rb-500 dark:hover:border-rb-600 dark:hover:text-rb-300"
       }`}
     >
       {icon}

@@ -58,7 +58,6 @@ export function NavigationContent({ onLinkClick }: NavigationContentProps) {
       href: "/aave-v4",
       label: "Aave V4",
       iconSrc: "/icons/protocols/aave-v4.png",
-      badge: "New",
     },
     {
       href: "/liquity-v2",

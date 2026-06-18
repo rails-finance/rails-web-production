@@ -53,22 +53,22 @@ export function PulseContent({
         {/* Content */}
         <div className="flex-1 p-4 flex flex-col justify-between">
           <div>
-            <p className="text-base font-semibold text-slate-700 dark:text-slate-200 leading-snug">
+            <p className="text-base font-semibold text-foreground leading-snug">
               {event.content}
             </p>
             {event.subtitle && (
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-sm text-rb-500 mt-1">
                 {event.subtitle}
               </p>
             )}
           </div>
           <div className="flex items-center justify-between mt-3">
-            <div className="text-xs text-slate-500 dark:text-slate-500" title={formatFullDateTime(event.date)}>
+            <div className="text-xs text-rb-500" title={formatFullDateTime(event.date)}>
               {formatDisplayDate(event.date)}
             </div>
             {event.postUrl && (
               <ArrowUpRight
-                className="size-4 text-slate-400 dark:text-slate-500 group-hover:text-blue-500 transition-colors"
+                className="size-4 text-rb-500 group-hover:text-blue-500 transition-colors"
                 aria-hidden="true"
               />
             )}
@@ -83,7 +83,7 @@ export function PulseContent({
           href={event.postUrl}
           target="_blank"
           rel="noreferrer"
-          className="group block relative rounded-lg bg-slate-50/50 dark:bg-slate-900/50 hover:bg-silver dark:hover:bg-slate-950/50 overflow-hidden transition-all cursor-pointer"
+          className="group block relative rounded-lg bg-rb-50/50 dark:bg-rb-900/50 hover:bg-silver dark:hover:bg-rb-950/50 overflow-hidden transition-all cursor-pointer"
         >
           {blogContent}
         </a>
@@ -91,7 +91,7 @@ export function PulseContent({
     }
 
     return (
-      <div className="relative rounded-lg bg-silver dark:bg-slate-900 overflow-hidden">
+      <div className="relative rounded-lg bg-silver dark:bg-rb-900 overflow-hidden">
         {blogContent}
       </div>
     );
@@ -100,26 +100,26 @@ export function PulseContent({
   const mainContent = (
     <div className={`relative rounded-lg space-y-3 px-6 py-4 transition-all ${
       isGitHub
-        ? "border-slate-800 bg-slate-950 group-hover:bg-slate-900"
-        : "bg-slate-50/50 dark:bg-slate-900/50 group-hover:bg-silver dark:group-hover:bg-slate-950/50"
+        ? "border-rb-800 bg-rb-950 group-hover:bg-rb-900"
+        : "bg-rb-50/50 dark:bg-rb-900/50 group-hover:bg-silver dark:group-hover:bg-rb-950/50"
     }`}>
       {/* Row 1: Content, Handle, Metrics */}
       <div className="flex flex-row justify-between items-start gap-x-4">
         {/* Content, Handle */}
-        <div className="flex-1 max-w-[50ch] text-sm space-y-4 tracking-wide text-slate-600 dark:text-slate-400">
+        <div className="flex-1 max-w-[50ch] text-sm space-y-4 tracking-wide text-rb-500">
           {isGitHub ? (
             <p>
-              <span className="inline-block text-slate-200 font-mono text-sm">
+              <span className="inline-block text-rb-200 font-mono text-sm">
                 {event.content}
               </span>
             </p>
           ) : (
             <div>
               <p>
-                <span className="text-slate-600 dark:text-slate-400 font-medium">{event.content}</span>
+                <span className="text-rb-500 font-medium">{event.content}</span>
               </p>
               {event.subtitle && (
-                <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400 font-normal">{event.subtitle}</p>
+                <p className="mt-1.5 text-sm text-rb-500 font-normal">{event.subtitle}</p>
               )}
             </div>
           )}
@@ -148,15 +148,15 @@ export function PulseContent({
               <GitBranch className="size-3 text-blue-400" />
               <span className="font-mono text-xs bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-md">main</span>
             </span>
-            <span className="text-slate-500">
+            <span className="text-rb-500">
               committed on {formatDisplayDate(event.date)}
             </span>
           </div>
-          <div className="flex items-center gap-2 text-slate-500 flex-wrap">
+          <div className="flex items-center gap-2 text-rb-500 flex-wrap">
             <span>0 parents</span>
             <span>commit</span>
             {event.postUrl && (
-              <span className="inline-flex items-center font-mono text-slate-300 group-hover:text-blue-400 transition-colors">
+              <span className="inline-flex items-center font-mono text-rb-300 group-hover:text-blue-400 transition-colors">
                 <span className="font-semibold">{getShortCommitHash(event.postUrl)}</span>
                 <ArrowUpRight className="size-3 ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
               </span>
@@ -165,12 +165,12 @@ export function PulseContent({
         </div>
       ) : (
         <div className="flex items-center justify-between">
-          <div className="text-xs text-slate-500 dark:text-slate-500" title={formatFullDateTime(event.date)}>
+          <div className="text-xs text-rb-500" title={formatFullDateTime(event.date)}>
             {formatDisplayDate(event.date)}
           </div>
           {event.postUrl && (
             <ArrowUpRight
-              className="size-4 text-slate-400 dark:text-slate-500 [.group:hover:not(:has(.group\/nested:hover))_&]:text-blue-500 transition-colors"
+              className="size-4 text-rb-500 [.group:hover:not(:has(.group\/nested:hover))_&]:text-blue-500 transition-colors"
               aria-hidden="true"
             />
           )}
@@ -257,6 +257,6 @@ function getHighlightIcon(type?: TimelineEngagementType) {
     case "quote":
       return <QuoteIcon className="size-3 text-emerald-500" />;
     default:
-      return <Circle className="size-2 text-slate-500" />;
+      return <Circle className="size-2 text-rb-500" />;
   }
 }

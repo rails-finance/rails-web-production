@@ -117,7 +117,7 @@ export default function HowItWorksPage() {
             onClick={() => setTab(t)}
             aria-pressed={tab === t}
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              tab === t ? "bg-green-600 text-white" : "text-rb-500 hover:text-foreground"
+              tab === t ? "bg-[var(--marketing)] text-white" : "text-rb-500 hover:text-foreground"
             }`}
           >
             {t}
@@ -143,11 +143,11 @@ export default function HowItWorksPage() {
             </p>
 
             <div className={CARD}>
-              <h3 className="text-base font-semibold text-green-600 dark:text-green-400 mb-3">Key Features</h3>
+              <h3 className="text-base font-semibold marketing mb-3">Key Features</h3>
               <ul className="space-y-2 text-foreground leading-relaxed">
                 {KEY_FEATURES.map((f) => (
                   <li key={f} className="flex gap-3">
-                    <span className="text-green-600 dark:text-green-400 shrink-0">·</span>
+                    <span className="marketing shrink-0">·</span>
                     <span>{f}</span>
                   </li>
                 ))}

@@ -64,12 +64,12 @@ export function ExplanationPanel({ items, leftColumn, rightColumn, footer, onTog
 
   return (
     <div
-      className={`rounded-b-lg py-1 ${shouldShowOpen ? "bg-slate-100 dark:bg-slate-950 w-full" : "bg-slate-100 dark:bg-slate-950 w-fit"}`}
+      className={`rounded-b-lg py-1 ${shouldShowOpen ? "bg-rb-100 dark:bg-rb-950 w-full" : "bg-rb-100 dark:bg-rb-950 w-fit"}`}
     >
       {!shouldShowOpen ? (
         <button
           onClick={handleToggle}
-          className="cursor-pointer px-4.5 flex items-center gap-1 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+          className="cursor-pointer px-4.5 flex items-center gap-1 text-rb-500 hover:text-foreground dark:hover:text-rb-200 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
           aria-expanded={shouldShowOpen}
           aria-label={getShowLabel()}
         >
@@ -81,7 +81,7 @@ export function ExplanationPanel({ items, leftColumn, rightColumn, footer, onTog
         <div className="">
           <button
             onClick={handleToggle}
-            className="cursor-pointer w-full px-4.5 flex items-center justify-between gap-1 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+            className="cursor-pointer w-full px-4.5 flex items-center justify-between gap-1 text-rb-500 hover:text-foreground dark:hover:text-rb-200 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
             aria-expanded={shouldShowOpen}
             aria-label={getHideLabel()}
           >
@@ -107,10 +107,10 @@ export function ExplanationPanel({ items, leftColumn, rightColumn, footer, onTog
               </div>
             ) : rightColumn ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="text-slate-900 dark:text-white space-y-2 text-sm">
+                <div className="text-foreground dark:text-white space-y-2 text-sm">
                   {items && items.map((item, index) => (
                     <div key={index} className={noBullets ? "" : "flex items-start gap-2"}>
-                      {!noBullets && <span className="text-slate-600 dark:text-slate-400">•</span>}
+                      {!noBullets && <span className="text-rb-500">•</span>}
                       {item}
                     </div>
                   ))}
@@ -120,10 +120,10 @@ export function ExplanationPanel({ items, leftColumn, rightColumn, footer, onTog
                 </div>
               </div>
             ) : (
-              <div className="text-slate-900 dark:text-white space-y-2 text-sm">
+              <div className="text-foreground dark:text-white space-y-2 text-sm">
                 {items && items.map((item, index) => (
                   <div key={index} className={noBullets ? "" : "flex items-start gap-2"}>
-                    {!noBullets && <span className="text-slate-600 dark:text-slate-400">•</span>}
+                    {!noBullets && <span className="text-rb-500">•</span>}
                     {item}
                   </div>
                 ))}
@@ -139,7 +139,7 @@ export function ExplanationPanel({ items, leftColumn, rightColumn, footer, onTog
             <div className="">
               <div className="pt-2 px-4 flex flex-wrap justify-between items-center gap-2">
                 <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1 text-xs  text-slate-700 dark:text-slate-600">
+                  <div className="flex items-center gap-1 text-xs  text-rb-500">
                     <span>View on</span>
                     <a
                       href={`https://etherscan.io/tx/${transactionHash}`}
@@ -186,13 +186,13 @@ export function ExplanationPanel({ items, leftColumn, rightColumn, footer, onTog
                     </a>
                   </div>
                 </div>
-                <span className="bg-slate-200 dark:bg-slate-800 rounded-sm px-1.5 py-1 inline-flex items-center">
-                  <span className="text-slate-600 dark:text-slate-400 text-xs flex items-center gap-1">
+                <span className="bg-rb-200 dark:bg-rb-800 rounded-sm px-1.5 py-1 inline-flex items-center">
+                  <span className="text-rb-500 text-xs flex items-center gap-1">
                     <Hash size={12} aria-hidden="true" />
                     {transactionHash.substring(0, 8)}...
                     <div className="relative inline-block group">
                       <button
-                        className="mx-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded cursor-pointer flex items-center"
+                        className="mx-1.5 text-rb-500 hover:text-foreground dark:hover:text-rb-200 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded cursor-pointer flex items-center"
                         aria-label={copiedTxHash ? "Copied to clipboard" : "Copy to clipboard"}
                         onClick={(e) => {
                           e.preventDefault();
@@ -206,7 +206,7 @@ export function ExplanationPanel({ items, leftColumn, rightColumn, footer, onTog
                       </button>
                       <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 pointer-events-none">
                         <div
-                          className={`bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-200 px-2 py-1 rounded text-xs whitespace-nowrap transition-opacity duration-200 ${
+                          className={`bg-rb-200 dark:bg-rb-700 text-foreground px-2 py-1 rounded text-xs whitespace-nowrap transition-opacity duration-200 ${
                             copiedTxHash ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                           }`}
                         >
@@ -221,7 +221,7 @@ export function ExplanationPanel({ items, leftColumn, rightColumn, footer, onTog
           )}
           <button
             onClick={handleToggle}
-            className="cursor-pointer w-full py-1 flex items-center justify-center gap-1 text-slate-600 dark:text-slate-600 hover:text-slate-900 dark:hover:text-slate-300 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+            className="cursor-pointer w-full py-1 flex items-center justify-center gap-1 text-rb-500 hover:text-foreground dark:hover:text-rb-300 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
             aria-expanded={shouldShowOpen}
             aria-label={getHideLabel()}
           >

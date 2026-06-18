@@ -17,7 +17,7 @@ export function HighlightableValue({
   type,
   state,
   value,
-  className = "text-slate-600 dark:text-slate-300",
+  className = "text-rb-500",
   asBlock = false,
   variant = "explanation",
 }: HighlightableValueProps) {
@@ -44,7 +44,7 @@ export function HighlightableValue({
   return (
     <Component
       className={`${asBlock ? "inline-block" : "font-bold"} ${shouldEnableHover ? "cursor-pointer " : ""} ${
-        className || "text-slate-600 dark:text-slate-300"
+        className || "text-rb-500"
       } ${getHighlightClass()} whitespace-nowrap`}
       onMouseEnter={shouldEnableHover ? () => setHoveredValue({ type, state, value }) : undefined}
       onMouseLeave={shouldEnableHover ? () => setHoveredValue(null) : undefined}

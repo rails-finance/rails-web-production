@@ -46,7 +46,7 @@ export function MonoRailSection() {
       <div className="max-w-7xl mx-auto px-4 py-16">
         <div className="text-center mb-10">
           <h2 className="font-sans font-semibold tracking-tight leading-tight mb-3 text-[clamp(24px,3.5vw,38px)]">
-            Rails <span className="text-blue-500">Explorers</span>
+            Rails <span className="marketing">Explorers</span>
           </h2>
           <p className="body-text max-w-xl mx-auto">
             Explore Liquity V2 and Aave V4 in granular detail with our dedicated explorers.
@@ -72,7 +72,7 @@ function MonoRailCard({ rail }: { rail: MonoRail }) {
         <div className="flex items-center gap-2">
           <span className="text-2xl font-semibold">{rail.label}</span>
           {rail.isNew && (
-            <span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-teal-600 text-white">
+            <span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-[var(--marketing)] text-white">
               New
             </span>
           )}
@@ -94,7 +94,7 @@ function MonoRailCard({ rail }: { rail: MonoRail }) {
     return (
       <Link
         href={rail.href}
-        className="p-5 flex flex-col gap-3 rounded-3xl border border-transparent bg-raised transition-colors hover:border-blue-500/40"
+        className="p-5 flex flex-col gap-3 rounded-3xl border border-transparent bg-raised transition-colors hover:border-blue-500"
       >
         {inner}
         {desc}

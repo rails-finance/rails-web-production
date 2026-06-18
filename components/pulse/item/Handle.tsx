@@ -15,7 +15,7 @@ export function Handle({
   avatarSize?: number;
 }) {
   return (
-    <span className={`font-medium text-xs text-slate-500 dark:text-slate-500 transition-colors inline-flex items-center gap-1 ${className}`}>
+    <span className={`font-medium text-xs text-rb-500 transition-colors inline-flex items-center gap-1 ${className}`}>
       {platform && avatarSize && <Avatar handle={handle} platform={platform} size={avatarSize} />}
       {handle}
     </span>

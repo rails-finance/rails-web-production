@@ -15,7 +15,7 @@ export function ExternalLinkIcon({ href, label, className = "" }: ExternalLinkIc
       className={`-rotate-45 inline-flex items-center justify-center ml-0.5 bg-pink-500 w-4 h-4 rounded-full transition-colors hover:bg-pink-600 focus:outline-none focus:ring-2 focus:ring-pink-400 ${className}`}
       aria-label={label}
     >
-      <Icon name="external-link" className="w-3 h-3 text-slate-100" aria-hidden="true" />
+      <Icon name="external-link" className="w-3 h-3 text-rb-100" aria-hidden="true" />
     </a>
   );
 }

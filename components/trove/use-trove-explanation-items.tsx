@@ -50,7 +50,7 @@ function buildLiquidatedItems(trove: TroveSummary): React.ReactNode[] {
   const dateRange = formatDateRange(trove.activity.createdAt, trove.activity.lastActivityAt);
 
   items.push(
-    <span key="liquidation" className="text-slate-500">
+    <span key="liquidation" className="text-rb-500">
       Trove ID{" "}
       <HighlightableValue type="troveId" state="after" value={trove.id ? parseInt(trove.id) : undefined}>
         {truncatedTroveId}
@@ -61,7 +61,7 @@ function buildLiquidatedItems(trove: TroveSummary): React.ReactNode[] {
   );
 
   items.push(
-    <span key="lifecycle" className="text-slate-500">
+    <span key="lifecycle" className="text-rb-500">
       Trove was active for{" "}
       <HighlightableValue type="duration" state="after">
         {duration}
@@ -77,7 +77,7 @@ function buildLiquidatedItems(trove: TroveSummary): React.ReactNode[] {
   if (nftUrl && trove.lastOwner) {
     const truncatedOwner = trove.ownerEns || `${trove.lastOwner.substring(0, 6)}...${trove.lastOwner.substring(38)}`;
     items.push(
-      <span key="nft-info" className="text-slate-500">
+      <span key="nft-info" className="text-rb-500">
         The{" "}
         <HighlightableValue type="nftToken" state="after">
           NFT
@@ -89,7 +89,7 @@ function buildLiquidatedItems(trove: TroveSummary): React.ReactNode[] {
         was held by{" "}
         <Link
           href={`/liquity-v2?ownerAddress=${trove.lastOwner}`}
-          className="hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
+          className="hover:text-foreground dark:hover:text-rb-200 transition-colors"
         >
           <HighlightableValue type="ownerAddress" state="after">
             {truncatedOwner}
@@ -100,7 +100,7 @@ function buildLiquidatedItems(trove: TroveSummary): React.ReactNode[] {
     );
   } else if (nftUrl) {
     items.push(
-      <span key="nft-info" className="text-slate-500">
+      <span key="nft-info" className="text-rb-500">
         Trove ownership is represented by an NFT token
       </span>,
     );
@@ -116,7 +116,7 @@ function buildClosedItems(trove: TroveSummary): React.ReactNode[] {
     (new Date(trove.activity.lastActivityAt).getTime() - new Date(trove.activity.createdAt).getTime()) / 1000;
 
   items.push(
-    <span key="peak-debt" className="text-slate-600 dark:text-slate-500">
+    <span key="peak-debt" className="text-rb-500">
       This trove reached a maximum debt of{" "}
       <HighlightableValue type="peakDebt" state="after" value={trove.debt.peak}>
         {formatPrice(trove.debt.peak)} BOLD
@@ -126,7 +126,7 @@ function buildClosedItems(trove: TroveSummary): React.ReactNode[] {
   );
 
   items.push(
-    <span key="peak-collateral" className="text-slate-600 dark:text-slate-500">
+    <span key="peak-collateral" className="text-rb-500">
       The highest recorded collateral was{" "}
       <HighlightableValue type="peakCollateral" state="after" value={trove.collateral.peakAmount}>
         {formatPrice(trove.collateral.peakAmount)} {trove.collateralType}
@@ -135,7 +135,7 @@ function buildClosedItems(trove: TroveSummary): React.ReactNode[] {
   );
 
   items.push(
-    <span key="lifecycle" className="text-slate-600 dark:text-slate-500">
+    <span key="lifecycle" className="text-rb-500">
       Trove was active for{" "}
       <HighlightableValue type="duration" state="after" value={durationInSeconds}>
         {duration}
@@ -152,7 +152,7 @@ function buildClosedItems(trove: TroveSummary): React.ReactNode[] {
   );
 
   items.push(
-    <span key="closure" className="text-slate-600 dark:text-slate-500">
+    <span key="closure" className="text-rb-500">
       The trove has been closed and all debt has been repaid. Any collateral above the liquidation reserve was returned
       to the owner
     </span>,
@@ -161,7 +161,7 @@ function buildClosedItems(trove: TroveSummary): React.ReactNode[] {
   const nftUrl = getTroveNftUrl(trove.collateralType, trove.id);
   if (nftUrl) {
     items.push(
-      <span key="nft-info" className="text-slate-600 dark:text-slate-500">
+      <span key="nft-info" className="text-rb-500">
         Trove ownership is represented by an NFT token
       </span>,
     );
@@ -201,7 +201,7 @@ function buildOpenItems({
 
   if (displayAccruedInterest !== undefined) {
     items.push(
-      <span key="debt-breakdown" className="text-slate-500">
+      <span key="debt-breakdown" className="text-rb-500">
         Current debt of{" "}
         <HighlightableValue type="debt" state="after" value={displayDebt}>
           {formatPrice(displayDebt)} BOLD
@@ -231,7 +231,7 @@ function buildOpenItems({
 
   if (hasLiveData && currentPrice && collateralUsd) {
     items.push(
-      <span key="collateral-info" className="text-slate-500">
+      <span key="collateral-info" className="text-rb-500">
         <HighlightableValue type="collateral" state="after" value={displayCollateral}>
           {displayCollateral} {trove.collateralType}
         </HighlightableValue>{" "}
@@ -248,7 +248,7 @@ function buildOpenItems({
     );
   } else {
     items.push(
-      <span key="collateral-info" className="text-slate-500">
+      <span key="collateral-info" className="text-rb-500">
         <HighlightableValue type="collateral" state="after" value={displayCollateral}>
           {displayCollateral} {trove.collateralType}
         </HighlightableValue>{" "}
@@ -260,7 +260,7 @@ function buildOpenItems({
   if (hasLiveData && collateralRatio) {
     const currentCollateralRatio = collateralRatio.toFixed(1);
     items.push(
-      <span key="collateral-ratio" className="text-slate-500">
+      <span key="collateral-ratio" className="text-rb-500">
         Collateral ratio of{" "}
         <HighlightableValue type="collRatio" state="after" value={parseFloat(currentCollateralRatio)}>
           {currentCollateralRatio}%
@@ -272,7 +272,7 @@ function buildOpenItems({
 
   if (trove.batch.isMember) {
     items.push(
-      <span key="delegated-rate" className="text-slate-500">
+      <span key="delegated-rate" className="text-rb-500">
         <HighlightableValue type="interestRate" state="after" value={displayInterestRate}>
           {displayInterestRate}%
         </HighlightableValue>{" "}
@@ -308,7 +308,7 @@ function buildOpenItems({
     );
   } else {
     items.push(
-      <span key="self-managed-rate" className="text-slate-500">
+      <span key="self-managed-rate" className="text-rb-500">
         Self-managed interest rate of{" "}
         <HighlightableValue type="interestRate" state="after" value={displayInterestRate}>
           {displayInterestRate}%
@@ -319,7 +319,7 @@ function buildOpenItems({
   }
 
   items.push(
-    <span key="interest-cost" className="text-slate-500">
+    <span key="interest-cost" className="text-rb-500">
       {trove.batch.isMember ? "Base interest" : "Current interest"} costs approximately{" "}
       <HighlightableValue type="dailyInterest" state="after" value={dailyInterestCost}>
         {formatPrice(dailyInterestCost)} BOLD
@@ -334,7 +334,7 @@ function buildOpenItems({
 
   if (debtInFront !== null && debtInFront !== undefined) {
     items.push(
-      <span key="debt-in-front" className="text-slate-500">
+      <span key="debt-in-front" className="text-rb-500">
         <span className="font-bold">{formatApproximate(debtInFront)} BOLD</span> of debt sits at the same or lower
         interest rate and is exposed to redemption alongside this trove
         {trovesAhead !== null && trovesAhead !== undefined && (
@@ -354,7 +354,7 @@ function buildOpenItems({
   if (nftUrl && trove.owner) {
     const truncatedOwner = trove.ownerEns || `${trove.owner.substring(0, 6)}...${trove.owner.substring(38)}`;
     items.push(
-      <span key="nft-info" className="text-slate-500">
+      <span key="nft-info" className="text-rb-500">
         A transferable{" "}
         <HighlightableValue type="nftToken" state="after">
           NFT
@@ -368,7 +368,7 @@ function buildOpenItems({
         is held by wallet{" "}
         <Link
           href={`/liquity-v2?ownerAddress=${trove.owner}`}
-          className="hover:text-slate-900 dark:hover:text-slate-200 transition-colors"
+          className="hover:text-foreground dark:hover:text-rb-200 transition-colors"
         >
           <HighlightableValue type="ownerAddress" state="after">
             {truncatedOwner}

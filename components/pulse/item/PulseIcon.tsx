@@ -34,11 +34,11 @@ function SpineGlyph({ event }: { event: TimelineEvent }) {
   }
   switch (event.platform) {
     case "x":
-      return <XIcon className="size-5 text-slate-800 dark:text-slate-100" />;
+      return <XIcon className="size-5 text-foreground" />;
     case "github":
-      return <GitHubIcon className="size-5 text-slate-800 dark:text-slate-100" />;
+      return <GitHubIcon className="size-5 text-foreground" />;
     default:
-      return <RailsMark className="size-6 text-slate-900 dark:text-white" />;
+      return <RailsMark className="size-6 text-foreground dark:text-white" />;
   }
 }
 
@@ -57,13 +57,13 @@ export function PulseIcon({
   return (
     <div className="relative flex h-full mr-2 sm:mr-4 md:mr-6 shrink-0 flex-col items-center">
       <div
-        className="absolute left-1/2 top-0 -z-10 flex h-full w-1 -translate-x-1/2 justify-center text-slate-300 dark:text-[#30343F]"
+        className="absolute left-1/2 top-0 -z-10 flex h-full w-1 -translate-x-1/2 justify-center text-rb-300 dark:text-[#30343F]"
         style={connectorStyle}
       >
         <TimelineConnector event={event} isFirst={isFirst} isLast={isLast} />
       </div>
 
-      <div className="relative z-20 flex size-10 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+      <div className="relative z-20 flex size-10 items-center justify-center overflow-hidden rounded-full border border-rb-200 bg-white dark:border-rb-700 dark:bg-rb-900">
         <SpineGlyph event={event} />
       </div>
     </div>

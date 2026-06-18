@@ -48,7 +48,7 @@ const ROADMAP = [
     n: 3,
     title: "Multi-Protocol Explorers",
     body: "More protocols, each with its own dedicated explorer — expanding across the bluechip DeFi ecosystem and beyond.",
-    circle: "bg-slate-500",
+    circle: "bg-rb-500",
     tick: true,
     tickClass: "text-green-300/60",
   },

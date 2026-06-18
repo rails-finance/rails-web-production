@@ -83,6 +83,10 @@
   --text-link-hover: var(--color-blue-300);
   --text-external: var(--color-pink-500);
   --text-external-hover: var(--color-pink-400);
+  /* Marketing accent — one global hue for decorative/brand emphasis on
+     marketing pages. Off the link palette (blue/pink) and off valence
+     (red/green). Retune the whole site here. See color-grammar.md §6. */
+  --marketing: var(--color-indigo-500);
 
   --pill-active-bg: var(--surface-active);
   --pill-active-text: var(--foreground);
@@ -458,6 +462,10 @@ body {
   &:hover {
     color: var(--text-external-hover);
   }
+}
+/* Marketing accent text/icons — single global hue, see --marketing. */
+.marketing {
+  color: var(--marketing);
 }
 
 /* Expand chevron */

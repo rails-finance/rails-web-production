@@ -26,12 +26,12 @@ export function HomeHero() {
 
   return (
     <section className="flex flex-col items-center text-center pt-16 pb-0 overflow-hidden relative">
-      <div className="absolute top-22 left-1/2 -translate-x-1/2 w-[500px] h-[220px] bg-blue-500/[0.07] rounded-full blur-[80px] pointer-events-none" />
+      <div className="absolute top-22 left-1/2 -translate-x-1/2 w-[500px] h-[220px] bg-[var(--marketing)]/[0.07] rounded-full blur-[80px] pointer-events-none" />
       <h1
         className="relative font-semibold leading-none tracking-tighter mb-2 text-5xl sm:text-7xl lg:text-8xl animate-hero-fade-up"
         style={{ animationDelay: "0.2s" }}
       >
-        Destination <span className="text-blue-500">DeFi</span>
+        Destination <span className="marketing">DeFi</span>
       </h1>
       <p
         className="relative font-sans font-light text-rb-500 tracking-tight mb-2 text-xl sm:text-2xl lg:text-3xl animate-hero-fade-up"

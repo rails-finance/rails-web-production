@@ -70,12 +70,12 @@ export function MetricsRow({
     >
       {hasViews && (
         <span className="inline-flex items-center gap-1">
-          <span className="font-bold text-slate-700 dark:text-slate-200 text-[0.625rem]">{formatNumberWithCommas(metrics.views!)}</span>
-          <span className="text-slate-500 dark:text-slate-400 text-xs">Views</span>
+          <span className="font-bold text-foreground text-[0.625rem]">{formatNumberWithCommas(metrics.views!)}</span>
+          <span className="text-rb-500 text-xs">Views</span>
         </span>
       )}
       {engagementMetrics.length > 0 && (
-        <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 dark:bg-slate-950/50 px-1.5 -mr-0.5 py-0.5">
+        <span className="inline-flex items-center gap-2 rounded-full bg-rb-100 dark:bg-rb-950/50 px-1.5 -mr-0.5 py-0.5">
           {engagementMetrics.map((item) => {
             const value = item.value as number;
             const labelText = (value === 1 ? singularLabels[item.label] ?? item.label : item.label).toLowerCase();
@@ -89,7 +89,7 @@ export function MetricsRow({
               >
                 <item.icon className="size-3" aria-hidden="true" />
                 <span>{value}</span>
-                {showLabels && <span className="text-slate-600 dark:text-slate-300">{labelText}</span>}
+                {showLabels && <span className="text-rb-500">{labelText}</span>}
               </span>
             );
           })}

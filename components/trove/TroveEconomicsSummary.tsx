@@ -240,7 +240,7 @@ const REDEMPTION_PATTERN = checkerPattern("rgba(251, 146, 60, 0.6)");   // orang
 const LIQUIDATION_PATTERN = checkerPattern("rgba(248, 113, 113, 0.6)");  // red-400
 const REPAID_PATTERN = checkerPattern("rgba(52, 211, 153, 0.5)");        // emerald-400
 const WITHDRAWN_PATTERN = checkerPattern("rgba(96, 165, 250, 0.5)");     // blue-400
-const COSTS_PATTERN = checkerPattern("rgba(148, 163, 184, 0.3)");         // slate
+const COSTS_PATTERN = checkerPattern("rgba(104, 119, 144, 0.3)");        // rb-500
 
 function computeTowerLayout(
   segments: TowerSegment[],
@@ -318,17 +318,17 @@ function TowerBar({
 function BreakdownTable({ rows }: { rows: BreakdownRow[] }) {
   const visible = rows.filter(r => !r.hidden);
   return (
-    <div className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 space-y-0.5">
+    <div className="text-[11px] sm:text-xs text-rb-500 space-y-0.5">
       {visible.map((row, i) => (
         <div
           key={i}
           className={`flex items-center gap-1 ${
             row.isResult
-              ? "border-t border-slate-300 dark:border-slate-600 font-semibold pt-1 mt-0.5"
+              ? "border-t border-rb-300 dark:border-rb-600 font-semibold pt-1 mt-0.5"
               : ""
-          } ${row.indent ? "text-[10px] text-slate-400 dark:text-slate-500" : ""}`}
+          } ${row.indent ? "text-[10px] text-rb-500" : ""}`}
         >
-          <span className="w-3 text-right text-slate-400 dark:text-slate-500 shrink-0 text-[10px]">{row.sign}</span>
+          <span className="w-3 text-right text-rb-500 shrink-0 text-[10px]">{row.sign}</span>
           {(row.swatchClass || row.swatchStyle) ? (
             <span
               className={`w-2.5 h-2.5 rounded-xs shrink-0 overflow-hidden ${row.swatchClass ?? ""}`}
@@ -337,11 +337,11 @@ function BreakdownTable({ rows }: { rows: BreakdownRow[] }) {
           ) : (
             <span className="w-2.5 shrink-0" />
           )}
-          <span className={`shrink-0 ${row.indent ? "" : "font-bold text-slate-400 dark:text-slate-600"}`}>{row.label}</span>
+          <span className={`shrink-0 ${row.indent ? "" : "font-bold text-rb-500"}`}>{row.label}</span>
           <span className="flex-1" />
           <span className="tabular-nums text-right shrink-0 font-bold">{row.amount}</span>
           {row.usdHint && (
-            <span className="text-slate-400 dark:text-slate-500 text-[10px] shrink-0">{row.usdHint}</span>
+            <span className="text-rb-500 text-[10px] shrink-0">{row.usdHint}</span>
           )}
         </div>
       ))}
@@ -570,7 +570,7 @@ export function TroveEconomicsSummary({
   ] : [];
 
   return (
-    <div className="rounded-lg bg-slate-50 dark:bg-slate-900 overflow-hidden">
+    <div className="rounded-lg bg-rb-50 dark:bg-rb-900 overflow-hidden">
       {/* Header */}
       <button
         onClick={() => {
@@ -578,18 +578,18 @@ export function TroveEconomicsSummary({
           setIsOpen(next);
           onToggle?.(next);
         }}
-        className="w-full px-4 py-3 flex items-center justify-between text-left cursor-pointer hover:bg-slate-100  dark:hover:bg-slate-950 transition-colors"
+        className="w-full px-4 py-3 flex items-center justify-between text-left cursor-pointer hover:bg-rb-100  dark:hover:bg-rb-950 transition-colors"
         aria-expanded={isOpen}
         aria-label={isOpen ? "Hide trove economics" : "Show trove economics"}
       >
         <div className="flex items-center gap-2">
-          <ChartColumnBig size={18} className="text-slate-500" />
-          <span className="font-semibold text-slate-700 dark:text-white">Trove Economics</span><span className=" text-[10px] relative -bottom-0.75 text-slate-700 dark:text-slate-500">(Experimental)</span>
+          <ChartColumnBig size={18} className="text-rb-500" />
+          <span className="font-semibold text-foreground dark:text-white">Trove Economics</span><span className=" text-[10px] relative -bottom-0.75 text-rb-500">(Experimental)</span>
         </div>
         {isOpen ? (
-          <ChevronUp className="w-4 h-4 text-slate-400" />
+          <ChevronUp className="w-4 h-4 text-rb-500" />
         ) : (
-          <ChevronDown className="w-4 h-4 text-slate-400" />
+          <ChevronDown className="w-4 h-4 text-rb-500" />
         )}
       </button>
 
@@ -598,7 +598,7 @@ export function TroveEconomicsSummary({
         <div className="px-4 pb-4 space-y-4">
 
           {/* Position Summary */}
-          <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
+          <div className="border-t border-rb-200 dark:border-rb-800 pt-4">
             {debtPeak > 0 && (
               <>
                 {/* Desktop: table – bar – gap – bar – table */}
@@ -652,7 +652,7 @@ export function TroveEconomicsSummary({
             )}
             {redemption && (
               <div className="flex flex-wrap items-center gap-1.5 mt-3 text-xs mb-1 font-semibold">
-                <span className="text-slate-500">Borrower&apos;s net outcome from redemptions was</span>
+                <span className="text-rb-500">Borrower&apos;s net outcome from redemptions was</span>
                 <span className={`${
                   redemption.realizedPL >= 0
                     ? "text-green-700 dark:text-green-400"
@@ -662,7 +662,7 @@ export function TroveEconomicsSummary({
                 </span>
                 {opportunityPL !== null && (
                   <>
-                    <span className="text-slate-500"> or </span>
+                    <span className="text-rb-500"> or </span>
                     <span className={` ${
                       opportunityPL >= 0
                         ? "text-green-700 dark:text-green-400"
@@ -670,13 +670,13 @@ export function TroveEconomicsSummary({
                     }`}>
                       {opportunityPL >= 0 ? "+" : "\u2212"}{formatUsdValue(Math.abs(opportunityPL))}
                     </span>
-                    <span className="text-xs text-slate-500">at today&apos;s value</span>
+                    <span className="text-xs text-rb-500">at today&apos;s value</span>
                   </>
                 )}
               </div>
             )}
             {economics.gas.totalGasCostEth > 0 && (
-              <p className="text-xs text-slate-500 flex items-center gap-0.5">
+              <p className="text-xs text-rb-500 flex items-center gap-0.5">
                 A total of {economics.gas.totalGasCostEth.toFixed(4)}{" "}
                 <TokenIcon assetSymbol="ETH" className="w-3 h-3 inline-block" />{" "}
                 ({formatUsdValue(economics.gas.totalGasCostUsd)}) has been spent on gas fees

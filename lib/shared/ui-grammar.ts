@@ -59,10 +59,12 @@ export const CTRL_ON_ACCENT = "bg-amber-500/15 text-amber-500 dark:text-amber-40
  * styling stay identical everywhere, and the reset always sits in the panel
  * header rather than floating next to the trigger.
  *
- * Colour: teal — the brand's dedicated "utility action" hue (also the New pill /
- * active nav). Deliberately NOT blue (navigation), amber (active accent), red
- * (danger) or green (positive), so per the one-meaning-per-colour rule a teal
- * link always reads as "reset/utility", not a status or a nav target.
+ * Colour: teal — the brand's dedicated "utility action / in-place interaction"
+ * hue. Also: the New pill, active nav, the expand/collapse chevron hover, and the
+ * activity heatmap. Deliberately NOT blue (navigation), pink (external), indigo
+ * (marketing), amber (active accent), red (danger) or green (positive sign), so
+ * per the one-meaning-per-colour rule teal always reads as "utility/in-place
+ * interaction", never a status or a nav target.
  */
 export const RESET_LINK = "text-xs font-semibold text-teal-600 hover:text-teal-500 transition-colors cursor-pointer";
 

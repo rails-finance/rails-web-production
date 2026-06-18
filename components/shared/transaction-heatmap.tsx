@@ -36,10 +36,10 @@ function fmtFullDate(ts: number): string {
 
 function bucketColor(count: number): string {
   if (count === 0) return "bg-rb-200/50 dark:bg-rb-900/60";
-  if (count === 1) return "bg-emerald-400/30 dark:bg-emerald-500/30";
-  if (count === 2) return "bg-emerald-400/55 dark:bg-emerald-500/55";
-  if (count <= 4) return "bg-emerald-500/75 dark:bg-emerald-400/75";
-  return "bg-emerald-500 dark:bg-emerald-400";
+  if (count === 1) return "bg-teal-400/30 dark:bg-teal-500/30";
+  if (count === 2) return "bg-teal-400/55 dark:bg-teal-500/55";
+  if (count <= 4) return "bg-teal-500/75 dark:bg-teal-400/75";
+  return "bg-teal-500 dark:bg-teal-400";
 }
 
 const CELL_PX = 12;

@@ -7,7 +7,7 @@ import { Avatar } from "../shared/Avatar";
 import { formatFullDateTime } from "../types";
 import { Handle } from "./Handle";
 
-const CONNECTOR_COLOR_CLASS = "bg-slate-300 dark:bg-[#30343F]";
+const CONNECTOR_COLOR_CLASS = "bg-rb-300 dark:bg-[#30343F]";
 
 export function NestedTimeline({
   entries,
@@ -36,7 +36,7 @@ export function NestedTimeline({
       <ul className="space-y-0">
         {entries.map((entry, index) => {
           const isLast = index === entries.length - 1;
-          const iconNode = entry.icon ? <span className="text-slate-400 dark:text-slate-500">{entry.icon}</span> : null;
+          const iconNode = entry.icon ? <span className="text-rb-500">{entry.icon}</span> : null;
           return (
             <li key={entry.id} className="relative flex">
               {/* Connector column */}
@@ -58,7 +58,7 @@ export function NestedTimeline({
                 {/* Icon at junction point - centered over vertical line */}
                 {iconNode && (
                   <div
-                    className="absolute flex items-center justify-center size-4 rounded-full bg-slate-100 dark:bg-slate-800"
+                    className="absolute flex items-center justify-center size-4 rounded-full bg-rb-100 dark:bg-rb-800"
                     style={{ top: 'calc(1rem - 8px)', left: 'calc(0.5rem - 8px)' }}
                     title={formatFullDateTime(entry.date)}
                   >
@@ -74,11 +74,11 @@ export function NestedTimeline({
                     href={entry.link}
                     target="_blank"
                     rel="noreferrer"
-                    className="group/nested block relative pl-4 py-2 space-y-2 dark:border-slate-800 rounded-md hover:bg-white dark:hover:bg-slate-800/50 transition-all duration-200 ease-out cursor-pointer -ml-2 px-2"
+                    className="group/nested block relative pl-4 py-2 space-y-2 dark:border-rb-800 rounded-md hover:bg-white dark:hover:bg-rb-800/50 transition-all duration-200 ease-out cursor-pointer -ml-2 px-2"
                   >
                     {/* Row 1: Content + Metrics */}
                     <div className="flex flex-row justify-between items-start gap-x-4">
-                      <div className="flex-1 max-w-[45ch] text-xs/4 sm:text-xs tracking-wide text-slate-600 dark:text-slate-400 font-medium">
+                      <div className="flex-1 max-w-[45ch] text-xs/4 sm:text-xs tracking-wide text-rb-500 font-medium">
                         {entry.content && (
                           <p>
                             <span className="">{entry.content}</span>
@@ -96,7 +96,7 @@ export function NestedTimeline({
                               title={actor.handle}
                               className="relative"
                             >
-                              <Avatar handle={actor.handle} platform={platform} size={22} className="ring-2 ring-white dark:ring-slate-900" />
+                              <Avatar handle={actor.handle} platform={platform} size={22} className="ring-2 ring-white dark:ring-rb-900" />
                             </span>
                           ))}
                         </div>
@@ -117,10 +117,10 @@ export function NestedTimeline({
                     </div>
                   </a>
                 ) : (
-                  <div className="relative pl-4 py-2 space-y-2 dark:border-slate-800">
+                  <div className="relative pl-4 py-2 space-y-2 dark:border-rb-800">
                     {/* Row 1: Content + Metrics */}
                     <div className="flex flex-row justify-between items-start gap-x-4">
-                      <div className="flex-1 max-w-[45ch] text-xs/4 sm:text-xs tracking-wide text-slate-600 dark:text-slate-400 font-medium">
+                      <div className="flex-1 max-w-[45ch] text-xs/4 sm:text-xs tracking-wide text-rb-500 font-medium">
                         {entry.content && (
                           <p>
                             <span className="">{entry.content}</span>
@@ -142,7 +142,7 @@ export function NestedTimeline({
                                 title={actor.handle}
                                 className="hover:opacity-80 transition-opacity relative hover:z-10"
                               >
-                                <Avatar handle={actor.handle} platform={platform} size={22} className="ring-2 ring-white dark:ring-slate-900" />
+                                <Avatar handle={actor.handle} platform={platform} size={22} className="ring-2 ring-white dark:ring-rb-900" />
                               </a>
                             ))}
                           </div>

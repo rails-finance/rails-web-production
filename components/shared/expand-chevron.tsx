@@ -1,16 +1,17 @@
 export interface ExpandChevronProps {
   isOpen: boolean;
   /** Tailwind group-hover prefix the chevron lives inside, e.g. "evt", "card", "proto".
-   *  The pill turns blue with a white icon on group hover. */
+   *  The pill turns teal with a white icon on group hover — teal = in-place utility
+   *  (expand/collapse is a disclosure, not navigation, so deliberately NOT blue). */
   group: string;
   size?: number;
   className?: string;
 }
 
 const GROUP_BG: Record<string, string> = {
-  evt:   "group-hover/evt:bg-blue-500",
-  card:  "group-hover/card:bg-blue-500",
-  proto: "group-hover/proto:bg-blue-500",
+  evt:   "group-hover/evt:bg-teal-500",
+  card:  "group-hover/card:bg-teal-500",
+  proto: "group-hover/proto:bg-teal-500",
 };
 
 export function ExpandChevron({ isOpen, group, size = 12, className }: ExpandChevronProps) {
