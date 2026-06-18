@@ -2,6 +2,7 @@ import type { LearnMoreContent } from "@/components/shared/learn-more-modal";
 import type { CurveEventType } from "@/lib/shared/types/protocols/curve";
 import type { UniswapEventType } from "@/lib/shared/types/protocols/uniswap";
 import { getSpokeMeta, ARCHETYPE_LABEL } from "@/lib/aave-v4/spoke-meta";
+import { FAQ_URLS, AAVE_FAQ_URLS } from "@/components/transaction-timeline/explanation/shared/faqUrls";
 
 // ── CoW Protocol ─────────────────────────────────────────────────────────────
 
@@ -156,6 +157,326 @@ export function liquityOpenTroveContent(): LearnMoreContent {
         label: "How user-set interest rates work",
         url: "https://docs.liquity.org/v2-faq/borrowing-and-liquidations#what-are-user-set-rates",
       },
+    ],
+  };
+}
+
+// ── Liquity — Live position panel (the trove summary's "?" FAQ) ──────────────
+//
+// Panel-scoped FAQ for the live trove position card. It consolidates the
+// per-bullet "learn more" chain icons that used to sit inline on each
+// explanation row into a single standardised "?" modal. Content is keyed to
+// what THIS panel surfaces — collateral ratio, interest/delegation, redemption
+// exposure, and trove-NFT ownership — so the questions answer the obvious
+// "what does this number mean?" without repeating the borrowing/liquidation/
+// redemption EVENT modals. Quick Links point at the canonical Liquity docs.
+export function liquityPositionContent(opts: {
+  collateralType: string;
+  status: "open" | "closed" | "liquidated";
+  isBatched?: boolean;
+}): LearnMoreContent {
+  const { collateralType, status, isBatched } = opts;
+  const isETH = collateralType === "WETH" || collateralType === "ETH";
+  const minCR = isETH ? "110%" : "120%";
+
+  if (status === "liquidated") {
+    return {
+      title: "About This Position",
+      intro:
+        "This trove was liquidated when its collateral ratio fell below the minimum threshold. The panel above reconstructs its final state — peak debt, collateral, and how long it stayed open.",
+      detailsHeading: "Key concepts:",
+      details: [
+        {
+          bold: "Liquidation threshold",
+          text: `a trove is liquidated once its collateral ratio drops below ${minCR} for ${collateralType}. Anyone can trigger the liquidation.`,
+        },
+        {
+          bold: "Trove NFT",
+          text: "ownership of a trove is an ERC-721 NFT. One address can hold many troves, each a separate position.",
+        },
+      ],
+      links: [
+        { label: "How do liquidations work?", url: FAQ_URLS.LIQUIDATIONS },
+        { label: "How many troves can I open with the same address?", url: FAQ_URLS.NFT_TROVES },
+      ],
+    };
+  }
+
+  if (status === "closed") {
+    return {
+      title: "About This Position",
+      intro:
+        "This trove has been closed and its debt fully repaid. The panel above shows its lifetime peaks — the most debt and collateral it ever held.",
+      detailsHeading: "Key concepts:",
+      details: [
+        {
+          bold: "Closing a trove",
+          text: "repaying all debt returns the collateral above the liquidation reserve to the owner and burns the trove NFT.",
+        },
+        {
+          bold: "Trove NFT",
+          text: "ownership of a trove is an ERC-721 NFT. One address can hold many troves, each a separate position.",
+        },
+      ],
+      links: [
+        { label: "What is a Trove?", url: FAQ_URLS.WHAT_IS_TROVE },
+        { label: "How many troves can I open with the same address?", url: FAQ_URLS.NFT_TROVES },
+      ],
+    };
+  }
+
+  // Open trove — the live, interactive case.
+  const details: LearnMoreContent["details"] = [
+    {
+      bold: "Collateral ratio",
+      text: `the collateral's USD value relative to the debt. It must stay above ${minCR} for ${collateralType} or the trove can be liquidated.`,
+    },
+  ];
+  if (isBatched) {
+    details.push({
+      bold: "Interest delegation",
+      text: "a batch manager sets this trove's rate and charges a management fee on top of the interest, both accruing to the debt.",
+    });
+  } else {
+    details.push({
+      bold: "Interest rate",
+      text: "you set your own rate. Lower rates cost less but sit earlier in the redemption queue.",
+    });
+  }
+  details.push(
+    {
+      bold: "Redemption exposure",
+      text: "debt at the same or lower interest rate is redeemed first. The debt-in-front figure is how much shields this trove.",
+    },
+    {
+      bold: "Trove NFT",
+      text: "ownership of a trove is an ERC-721 NFT. One address can hold many troves, each a separate position.",
+    },
+  );
+
+  const links: LearnMoreContent["links"] = [
+    { label: "How do I decide on my collateral ratio?", url: FAQ_URLS.LTV_COLLATERAL_RATIO },
+  ];
+  if (isBatched) {
+    links.push({ label: "What is interest-rate delegation?", url: FAQ_URLS.DELEGATION });
+  } else {
+    links.push({ label: "How do user-set interest rates work?", url: FAQ_URLS.USER_SET_RATES });
+  }
+  links.push(
+    { label: "What happens if my trove gets redeemed?", url: FAQ_URLS.REDEMPTION_SELECTION },
+    { label: "How many troves can I open with the same address?", url: FAQ_URLS.NFT_TROVES },
+  );
+
+  return {
+    title: "About This Position",
+    intro:
+      "This panel explains the trove's live state in plain language — what backs the debt, what it costs to hold, and how exposed it is to redemption.",
+    detailsHeading: "Key concepts:",
+    details,
+    links,
+  };
+}
+
+// ── Liquity — Event-card modals (process events) ─────────────────────────────
+//
+// One content function per mechanic, mapped from operation types by the event
+// explainer's resolver. Process-event titles read "How … works"; each follows
+// the slot grammar (Intro → Key Concepts → Quick Links) with no instance
+// numbers. See migration/learn-more-modal-grammar.md.
+
+export function liquityCloseTroveContent(): LearnMoreContent {
+  return {
+    title: "How Closing a Trove Works",
+    intro:
+      "Closing a trove repays its entire debt and returns the collateral, ending the position. The trove's NFT is burned once it closes.",
+    detailsHeading: "Key concepts:",
+    details: [
+      {
+        bold: "Full repayment",
+        text: "closing requires repaying the whole debt — principal plus accrued interest — in BOLD.",
+      },
+      {
+        bold: "Liquidation reserve",
+        text: "the 0.0375 ETH gas reserve set aside when the trove opened is refunded on close.",
+      },
+      {
+        bold: "Trove NFT",
+        text: "the NFT representing the position is burned when the trove closes, freeing the slot.",
+      },
+    ],
+    links: [
+      { label: "What is a Trove?", url: FAQ_URLS.WHAT_IS_TROVE },
+      { label: "What is the liquidation reserve?", url: FAQ_URLS.LIQUIDATION_RESERVE },
+      { label: "How many troves can I open with the same address?", url: FAQ_URLS.NFT_TROVES },
+    ],
+  };
+}
+
+export function liquityAdjustTroveContent(): LearnMoreContent {
+  return {
+    title: "How Adjusting a Trove Works",
+    intro:
+      "An adjustment changes a trove's collateral or debt without closing it — adding or withdrawing collateral, or borrowing or repaying BOLD.",
+    detailsHeading: "Key concepts:",
+    details: [
+      {
+        bold: "Collateral changes",
+        text: "depositing more collateral raises the collateral ratio; withdrawing collateral lowers it.",
+      },
+      {
+        bold: "Debt changes",
+        text: "borrowing more BOLD increases the debt and may incur a one-time borrowing fee; repaying reduces it.",
+      },
+      {
+        bold: "Collateral ratio",
+        text: "every adjustment must leave the trove above its minimum collateral ratio, or it will revert.",
+      },
+    ],
+    links: [
+      { label: "How do I decide on my collateral ratio?", url: FAQ_URLS.LTV_COLLATERAL_RATIO },
+      { label: "Are there other borrowing fees?", url: FAQ_URLS.BORROWING_FEES },
+      { label: "What is a Trove?", url: FAQ_URLS.WHAT_IS_TROVE },
+    ],
+  };
+}
+
+export function liquityInterestRateContent(): LearnMoreContent {
+  return {
+    title: "How Interest Rates Work",
+    intro:
+      "Each trove carries a user-set annual interest rate that accrues continuously to its debt. You can change the rate at any time.",
+    detailsHeading: "Key concepts:",
+    details: [
+      {
+        bold: "User-set rate",
+        text: "you choose your own rate. Lower rates cost less but sit earlier in the redemption queue.",
+      },
+      {
+        bold: "Continuous accrual",
+        text: "interest compounds onto the principal over time rather than being charged upfront.",
+      },
+      {
+        bold: "Premium on change",
+        text: "changing the rate soon after the last adjustment can incur an upfront premium, discouraging rate-gaming.",
+      },
+    ],
+    links: [
+      { label: "How do user-set interest rates work?", url: FAQ_URLS.USER_SET_RATES },
+      { label: "What are redemptions?", url: FAQ_URLS.REDEMPTIONS },
+    ],
+  };
+}
+
+export function liquityDelegationContent(): LearnMoreContent {
+  return {
+    title: "How Interest Delegation Works",
+    intro:
+      "A trove can delegate interest-rate management to a batch manager — a delegate that sets one shared rate for a group of troves and charges a management fee.",
+    detailsHeading: "Key concepts:",
+    details: [
+      {
+        bold: "Batch manager",
+        text: "a delegate that sets a single interest rate applied to every trove in its batch.",
+      },
+      {
+        bold: "Management fee",
+        text: "an annual fee, on top of the interest, that accrues to the debt as the delegate's compensation.",
+      },
+      {
+        bold: "Joining & leaving",
+        text: "a trove can join or exit a batch at any time; leaving returns rate control to the owner.",
+      },
+    ],
+    links: [
+      { label: "What is interest-rate delegation?", url: FAQ_URLS.DELEGATION },
+      { label: "How do user-set interest rates work?", url: FAQ_URLS.USER_SET_RATES },
+    ],
+  };
+}
+
+export function liquityTransferContent(): LearnMoreContent {
+  return {
+    title: "How Trove Transfers Work",
+    intro: "A trove is an ERC-721 NFT, so its ownership can be transferred to another wallet like any other token.",
+    detailsHeading: "Key concepts:",
+    details: [
+      {
+        bold: "Trove NFT",
+        text: "ownership of the position is a transferable NFT — whoever holds it controls the trove.",
+      },
+      {
+        bold: "Transfer effects",
+        text: "transferring the NFT hands full control of the collateral and debt to the new owner.",
+      },
+      {
+        bold: "Multiple troves",
+        text: "one address can hold many troves, each a separate NFT and position.",
+      },
+    ],
+    links: [
+      { label: "How many troves can I open with the same address?", url: FAQ_URLS.NFT_TROVES },
+      { label: "What is a Trove?", url: FAQ_URLS.WHAT_IS_TROVE },
+    ],
+  };
+}
+
+// Generic Liquity fallback — guarantees the "never empty" floor for any trove
+// event without a dedicated modal. Wired as the resolver's default.
+export function liquityEventFallbackContent(): LearnMoreContent {
+  return {
+    title: "How Liquity V2 Troves Work",
+    intro:
+      "Liquity V2 lets you borrow BOLD against collateral in a trove — a self-custodied position represented by an NFT.",
+    detailsHeading: "Key concepts:",
+    details: [
+      {
+        bold: "Trove",
+        text: "your borrowing position — collateral in, BOLD out, with a collateral ratio to keep above the threshold.",
+      },
+      {
+        bold: "Interest rate",
+        text: "a user-set rate that accrues to the debt and sets the trove's place in the redemption queue.",
+      },
+      {
+        bold: "Redemptions",
+        text: "BOLD can be redeemed for collateral at face value, starting with the lowest-rate troves.",
+      },
+    ],
+    links: [
+      { label: "What is a Trove?", url: FAQ_URLS.WHAT_IS_TROVE },
+      { label: "How do user-set interest rates work?", url: FAQ_URLS.USER_SET_RATES },
+      { label: "What are redemptions?", url: FAQ_URLS.REDEMPTIONS },
+    ],
+  };
+}
+
+// Generic Aave V4 fallback — the "never empty" floor for any Aave event without
+// a dedicated modal (supply / withdraw / borrow / repay / collateral_toggle).
+// P2 will replace these with mechanic-specific content.
+export function aaveV4EventFallbackContent(): LearnMoreContent {
+  return {
+    title: "How Aave V4 Positions Work",
+    intro:
+      "Aave V4 lets you supply assets as collateral and borrow against them inside an isolated spoke, where one shared health factor governs the whole position.",
+    detailsHeading: "Key concepts:",
+    details: [
+      {
+        bold: "Supply & collateral",
+        text: "supplied assets earn interest and, when enabled, back your borrowing.",
+      },
+      {
+        bold: "Borrowing & health factor",
+        text: "borrowing draws against your collateral; the health factor measures how safely the debt is covered.",
+      },
+      {
+        bold: "Hub & spoke",
+        text: "each spoke isolates risk — one shared health factor inside, fully independent between spokes.",
+      },
+    ],
+    links: [
+      { label: "Aave V4 positions", url: AAVE_FAQ_URLS.V4_POSITIONS },
+      { label: "Health factor & liquidations", url: AAVE_FAQ_URLS.LIQUIDATIONS },
+      { label: "Aave FAQ", url: AAVE_FAQ_URLS.FAQ },
     ],
   };
 }

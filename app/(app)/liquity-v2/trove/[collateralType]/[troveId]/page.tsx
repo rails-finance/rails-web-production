@@ -8,6 +8,7 @@ import { TroveSummaryCardSelector } from "@/components/trove/TroveSummaryCardSel
 import { TroveDetailsBand } from "@/components/trove/TroveDetailsBand";
 import { TroveContextRow } from "@/components/trove/TroveContextRow";
 import { useTroveExplanationItems } from "@/components/trove/use-trove-explanation-items";
+import { liquityPositionContent } from "@/lib/shared/learn-more-content";
 import { TroveEconomicsSummary } from "@/components/protocol/liquity/trove-economics";
 import { formatDate, formatDuration } from "@/lib/date";
 import { Icon } from "@/components/icons/icon";
@@ -159,7 +160,16 @@ function TroveSummaryStack({
                 debtInFrontLoading={debtInFrontLoading}
               />
             )}
-            <TroveContextRow items={items} isOpen={summaryExplanationOpen} onToggle={onToggleSummaryExplanation} />
+            <TroveContextRow
+              items={items}
+              isOpen={summaryExplanationOpen}
+              onToggle={onToggleSummaryExplanation}
+              learnMore={liquityPositionContent({
+                collateralType: trove.collateralType,
+                status: trove.status === "liquidated" ? "liquidated" : trove.status === "closed" ? "closed" : "open",
+                isBatched: trove.batch.isMember,
+              })}
+            />
           </div>
         </div>
       )}
