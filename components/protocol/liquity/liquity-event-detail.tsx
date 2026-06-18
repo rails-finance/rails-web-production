@@ -492,7 +492,7 @@ export function LiquityEventDetail({
                     <span className="inline-flex items-center gap-1.5">
                       <span className="font-bold text-foreground">{stateAfter.coll.toFixed(4)}</span>
                       <TokenChipIcon symbol={ctx.collateralType} size={14} />
-                      <span className="font-semibold text-emerald-600 dark:text-emerald-400">claimable</span>
+                      <span className="font-semibold text-green-600 dark:text-green-400">claimable</span>
                     </span>
                   )}
                   {showPl && (

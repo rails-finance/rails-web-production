@@ -7,7 +7,7 @@ export type HubTier = "Core" | "Plus" | "Prime";
 
 // Hub tiers render as neutral text badges (see SpokeIdentity / position card) —
 // the tier is identity, not a status, so it carries no color. A former
-// `HUB_COLORS` map (per-tier blue/amber/emerald) was unused and removed to keep
+// `HUB_COLORS` map (per-tier blue/amber/green) was unused and removed to keep
 // off-grammar color out of the code; don't reintroduce it. See color-grammar.md.
 
 export const SPOKE_HUB: Record<string, HubTier> = {

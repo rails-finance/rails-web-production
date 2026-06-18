@@ -21,12 +21,12 @@ export type SpineVariant = "solid" | "dotted";
 
 /** Optional spine color tint — encodes subsystem or event category. The two
  *  adverse tones (caution/critical) double as the warningTone values, see §5. */
-export type SpineColor = "default" | "blue" | "emerald" | "violet" | "purple" | "caution" | "critical";
+export type SpineColor = "default" | "blue" | "green" | "violet" | "purple" | "caution" | "critical";
 
 const SPINE_COLORS: Record<SpineColor, string> = {
   default: "rgb(101 115 140)", // rb-500
   blue: "rgb(59 130 246)", // blue-500
-  emerald: "rgb(16 185 129)", // emerald-500
+  green: "rgb(34 197 94)", // green-500
   violet: "rgb(139 92 246)", // violet-500
   purple: "rgb(168 85 247)", // purple-500
   caution: "rgb(249 115 22)", // orange-500 — redemption + all caution (color-grammar.md §5)
@@ -35,9 +35,9 @@ const SPINE_COLORS: Record<SpineColor, string> = {
 
 /** Pulsing dot color matching spine tint */
 const DOT_COLORS: Record<SpineColor, string> = {
-  default: "bg-emerald-400",
+  default: "bg-green-400",
   blue: "bg-blue-400",
-  emerald: "bg-emerald-400",
+  green: "bg-green-400",
   violet: "bg-violet-400",
   purple: "bg-purple-400",
   caution: "bg-orange-400",
@@ -309,7 +309,7 @@ function LockOpenBadge() {
 }
 
 /** Pulsing dot for the newest event in an active timeline — color matches spine tint */
-function PulsingDot({ dotClass = "bg-emerald-400" }: { dotClass?: string }) {
+function PulsingDot({ dotClass = "bg-green-400" }: { dotClass?: string }) {
   return (
     <div className="relative flex items-center justify-center" style={{ width: 10, height: 10 }}>
       <span className={`absolute inline-flex h-full w-full rounded-full ${dotClass} opacity-50 animate-ping`} />

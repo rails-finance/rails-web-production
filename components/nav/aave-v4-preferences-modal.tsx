@@ -103,8 +103,8 @@ export function AaveV4PreferencesModal({ onClose }: { onClose: () => void }) {
             <div className="rounded-xl border border-rb-200/60 dark:border-rb-800/60 p-4 space-y-3">
               <HeadroomRow
                 label="Conservative"
-                dotClass="bg-emerald-500"
-                textClass="text-emerald-400"
+                dotClass="bg-green-500"
+                textClass="text-green-400"
                 value={v4.headroomConservativeMin}
                 onChange={setHeadroom}
                 suffix="% headroom above liq price or more"

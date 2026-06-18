@@ -16,7 +16,7 @@ export type LiquityV2Branch = (typeof LIQUITY_V2_BRANCHES)[number];
  *  Only the Conservative→Caution boundary is user-editable; the lower bound
  *  is fixed by the branch's MCR. */
 export interface LiquityV2BranchThresholds {
-  crConservativeMin: number; // CR ≥ this → Conservative/emerald
+  crConservativeMin: number; // CR ≥ this → Conservative/green
   // CR < this → Caution/orange
 }
 

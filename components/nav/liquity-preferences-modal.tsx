@@ -116,7 +116,7 @@ export function LiquityPreferencesModal({ onClose }: { onClose: () => void }) {
               Risk-zone threshold
             </div>
             <p className="text-xs text-rb-500 leading-relaxed mb-5">
-              The Conservative cut-off — collateral ratios at or above this value render emerald, anything below sits in
+              The Conservative cut-off — collateral ratios at or above this value render green, anything below sits in
               Caution (orange) until the trove crosses MCR and becomes liquidatable. Each branch has its own MCR, so
               each carries its own threshold. Used by the price-runway widget on each trove and the CR colour on the
               timeline.
@@ -176,8 +176,8 @@ function BranchBlock({
 
       <ThresholdRow
         label="Conservative"
-        dotClass="bg-emerald-500"
-        textClass="text-emerald-400"
+        dotClass="bg-green-500"
+        textClass="text-green-400"
         value={thresholds.crConservativeMin}
         floor={floor}
         onChange={onChange}

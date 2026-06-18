@@ -15,7 +15,7 @@
  *
  * Each column has two stacked bars:
  *   - Top bar = the value transacted in this event (signed delta magnitude,
- *     emerald/blue for additions, darker tier for removals)
+ *     green/blue for additions, darker tier for removals)
  *   - Bottom bar = the total state of that side after the event
  *
  * Both bars in a column share the same scale (the position's lifetime peak
@@ -41,13 +41,13 @@ export interface PositionBarData {
 
 // Two-tier per side, same colour family. Additions use the vivid POP; removals
 // and underlying totals sit in BASE — softer in light mode (pale) and deep in
-// dark mode (saturated navy / emerald) so the bars stay sympathetic to the
+// dark mode (saturated navy / green) so the bars stay sympathetic to the
 // surface behind them.
 const COLL_POP = "bg-blue-500 dark:bg-blue-500";
 const COLL_BASE = "bg-blue-200 dark:bg-blue-900";
 
-const DEBT_POP = "bg-emerald-500 dark:bg-emerald-500";
-const DEBT_BASE = "bg-emerald-200 dark:bg-emerald-900";
+const DEBT_POP = "bg-green-500 dark:bg-green-500";
+const DEBT_BASE = "bg-green-200 dark:bg-green-900";
 
 function pct(value: number, scale: number): number {
   if (scale <= 0) return 0;

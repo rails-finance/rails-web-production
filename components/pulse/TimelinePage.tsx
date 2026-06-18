@@ -233,9 +233,9 @@ export function TimelinePage({ title, description, dataSources = DEFAULT_DATA_SO
                 <div className="flex-1 py-2">
                   <div className="rounded-lg border border-rb-200 dark:border-rb-700 bg-rb-50 dark:bg-rb-800/50 p-4">
                     <div className="flex items-start gap-3">
-                      <Pin className="size-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                      <Pin className="size-4 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
                       <div className="space-y-1">
-                        <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                        <p className="text-sm font-bold text-green-600 dark:text-green-400">
                           We're actively seeking funding to expand Rails.
                         </p>
                         <p className="text-sm text-rb-500 leading-relaxed">

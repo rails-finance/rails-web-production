@@ -122,7 +122,7 @@ export const reverseDiagonalPattern = (color: string): CSSProperties => {
 
 export const REDEMPTION_PATTERN = checkerPattern("rgba(251, 146, 60, 0.6)");
 export const LIQUIDATION_PATTERN = checkerPattern("rgba(248, 113, 113, 0.6)");
-export const REPAID_PATTERN = reverseDiagonalPattern("rgba(52, 211, 153, 0.5)");
+export const REPAID_PATTERN = reverseDiagonalPattern("rgba(74, 222, 128, 0.5)");
 export const WITHDRAWN_PATTERN = reverseDiagonalPattern("rgba(96, 165, 250, 0.5)");
 export const COSTS_PATTERN = reverseDiagonalPattern("rgba(217, 70, 239, 0.5)");
 
@@ -682,7 +682,7 @@ export function PriceSensitivityBar({
           {/* Loss zone */}
           <div className="bg-red-500/25" style={{ width: `${breakPct}%` }} />
           {/* Profit zone */}
-          <div className="bg-emerald-500/15 flex-1" />
+          <div className="bg-green-500/15 flex-1" />
         </div>
         {/* Break-even marker — neutral: it's a reference threshold (where loss
             meets profit), not a caution. The label below carries the value. */}
@@ -699,13 +699,13 @@ export function PriceSensitivityBar({
       <div className="flex justify-between text-[9px]">
         <span className="text-red-400">loss zone</span>
         <span className="text-rb-500">break-even: ${formatCompactUsd(breakEvenPrice).slice(1)}</span>
-        <span className="text-emerald-400">profit zone</span>
+        <span className="text-green-400">profit zone</span>
       </div>
       <div className="text-center text-[9px] mt-0.5">
         <span className="text-blue-400">
           current {symbol}: ${currentPrice.toLocaleString()}{" "}
         </span>
-        <span className={inProfit ? "text-emerald-400" : "text-red-400"}>
+        <span className={inProfit ? "text-green-400" : "text-red-400"}>
           ({distPct.toFixed(1)}% {inProfit ? "above" : "below"} break-even)
         </span>
       </div>

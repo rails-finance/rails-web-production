@@ -4,7 +4,7 @@
 // `MultiAssetTowerChart` inside `components/protocol/aave/aave-economics.tsx`,
 // trimmed to V4 (no V3 livePositions branch, no protocolLabel switch).
 //
-// Renders one collateral tower (blue) + one debt tower (emerald) per spoke.
+// Renders one collateral tower (blue) + one debt tower (green) per spoke.
 // Withdrawn / repaid amounts render as hatched segments on top of the active
 // segments so the chart tells the lifetime story; the Display dropdown collapses
 // back to current-state-only.
@@ -30,7 +30,7 @@ import { fmtUsd } from "@/lib/aave-v4/format";
 const CHART_HEIGHT = 180;
 
 const COLLATERAL_FADED = "rgba(59,130,246,0.2)";
-const DEBT_GREEN_FADED = "rgba(52,211,153,0.2)";
+const DEBT_GREEN_FADED = "rgba(74, 222, 128,0.2)";
 
 // Below this USD value, lifetime flows (withdrawn / repaid / liquidated) don't
 // earn a breakdown row or a hatched segment. Kept low ($0.01) so test-sized
@@ -385,7 +385,7 @@ export function AaveV4TowerChart({
   ];
 
   const debtSegments: TowerSegment[] = [
-    ...activeSegs(debtAssets, (r) => r.netDebtUsd, "bg-emerald-400", "debt", "Debt", "out"),
+    ...activeSegs(debtAssets, (r) => r.netDebtUsd, "bg-green-400", "debt", "Debt", "out"),
     ...(!isLiveView ? flowSegs(liquidatedDebtAssets, LIQUIDATION_PATTERN, "debt-liquidated", "Liquidated", "in") : []),
     ...(!isLiveView ? flowSegs(repaidAssets, REPAID_PATTERN, "debt-repaid", "Repaid", "in") : []),
   ];
@@ -493,7 +493,7 @@ export function AaveV4TowerChart({
       debtAssets,
       (r) => r.netDebt,
       (r) => r.netDebtUsd,
-      "bg-emerald-400",
+      "bg-green-400",
       "Debt",
     ),
     { sign: "", label: "Outstanding", amount: fmtUsd(totalDebtUsd).display, isResult: true },

@@ -58,16 +58,14 @@ export function MetricsRow({
 
   const engagementMetrics = [
     { icon: TwitterReplyIcon, label: "Replies", value: metrics.replies, color: "text-sky-400" },
-    { icon: TwitterRepostIcon, label: "Reposts", value: metrics.reposts, color: "text-emerald-500" },
+    { icon: TwitterRepostIcon, label: "Reposts", value: metrics.reposts, color: "text-green-500" },
     { icon: TwitterLikeIcon, label: "Likes", value: metrics.likes, color: "text-rose-500" },
   ].filter((item) => typeof item.value === "number" && item.value > 0);
 
   const hasViews = typeof metrics.views === "number" && metrics.views > 0;
 
   return (
-    <div
-      className={`flex flex-col items-end gap-0.5 ${className} ${compact ? "whitespace-nowrap text-sm" : ""}`}
-    >
+    <div className={`flex flex-col items-end gap-0.5 ${className} ${compact ? "whitespace-nowrap text-sm" : ""}`}>
       {hasViews && (
         <span className="inline-flex items-center gap-1">
           <span className="font-bold text-foreground text-[0.625rem]">{formatNumberWithCommas(metrics.views!)}</span>
@@ -78,7 +76,7 @@ export function MetricsRow({
         <span className="inline-flex items-center gap-2 rounded-full bg-rb-100 dark:bg-rb-950/50 px-1.5 -mr-0.5 py-0.5">
           {engagementMetrics.map((item) => {
             const value = item.value as number;
-            const labelText = (value === 1 ? singularLabels[item.label] ?? item.label : item.label).toLowerCase();
+            const labelText = (value === 1 ? (singularLabels[item.label] ?? item.label) : item.label).toLowerCase();
             const accessibleLabel = `${value} ${labelText}`;
             return (
               <span

@@ -9,7 +9,13 @@ import { Handle } from "./Handle";
 import { NestedTimeline } from "./NestedTimeline";
 
 const QuoteIcon = ({ className = "size-3" }: { className?: string }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className={className}
+    aria-hidden="true"
+  >
     <path d="M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z" />
     <path d="M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z" />
   </svg>
@@ -27,11 +33,7 @@ function getBlogThumbnail(postUrl?: string): string | null {
   return match ? `/blog/${match[1]}.png` : null;
 }
 
-export function PulseContent({
-  event,
-}: {
-  event: TimelineEvent;
-}) {
+export function PulseContent({ event }: { event: TimelineEvent }) {
   const isGitHub = event.platform === "github";
   const isBlog = event.platform === "blog";
   const blogThumbnail = isBlog ? getBlogThumbnail(event.postUrl) : null;
@@ -43,24 +45,14 @@ export function PulseContent({
         {/* Thumbnail */}
         {blogThumbnail && (
           <div className="hidden sm:block shrink-0 sm:w-40">
-            <img
-              src={blogThumbnail}
-              alt=""
-              className="w-full h-full object-contain"
-            />
+            <img src={blogThumbnail} alt="" className="w-full h-full object-contain" />
           </div>
         )}
         {/* Content */}
         <div className="flex-1 p-4 flex flex-col justify-between">
           <div>
-            <p className="text-base font-semibold text-foreground leading-snug">
-              {event.content}
-            </p>
-            {event.subtitle && (
-              <p className="text-sm text-rb-500 mt-1">
-                {event.subtitle}
-              </p>
-            )}
+            <p className="text-base font-semibold text-foreground leading-snug">{event.content}</p>
+            {event.subtitle && <p className="text-sm text-rb-500 mt-1">{event.subtitle}</p>}
           </div>
           <div className="flex items-center justify-between mt-3">
             <div className="text-xs text-rb-500" title={formatFullDateTime(event.date)}>
@@ -90,37 +82,31 @@ export function PulseContent({
       );
     }
 
-    return (
-      <div className="relative rounded-lg bg-silver dark:bg-rb-900 overflow-hidden">
-        {blogContent}
-      </div>
-    );
+    return <div className="relative rounded-lg bg-silver dark:bg-rb-900 overflow-hidden">{blogContent}</div>;
   }
 
   const mainContent = (
-    <div className={`relative rounded-lg space-y-3 px-6 py-4 transition-all ${
-      isGitHub
-        ? "border-rb-800 bg-rb-950 group-hover:bg-rb-900"
-        : "bg-rb-50/50 dark:bg-rb-900/50 group-hover:bg-silver dark:group-hover:bg-rb-950/50"
-    }`}>
+    <div
+      className={`relative rounded-lg space-y-3 px-6 py-4 transition-all ${
+        isGitHub
+          ? "border-rb-800 bg-rb-950 group-hover:bg-rb-900"
+          : "bg-rb-50/50 dark:bg-rb-900/50 group-hover:bg-silver dark:group-hover:bg-rb-950/50"
+      }`}
+    >
       {/* Row 1: Content, Handle, Metrics */}
       <div className="flex flex-row justify-between items-start gap-x-4">
         {/* Content, Handle */}
         <div className="flex-1 max-w-[50ch] text-sm space-y-4 tracking-wide text-rb-500">
           {isGitHub ? (
             <p>
-              <span className="inline-block text-rb-200 font-mono text-sm">
-                {event.content}
-              </span>
+              <span className="inline-block text-rb-200 font-mono text-sm">{event.content}</span>
             </p>
           ) : (
             <div>
               <p>
                 <span className="text-rb-500 font-medium">{event.content}</span>
               </p>
-              {event.subtitle && (
-                <p className="mt-1.5 text-sm text-rb-500 font-normal">{event.subtitle}</p>
-              )}
+              {event.subtitle && <p className="mt-1.5 text-sm text-rb-500 font-normal">{event.subtitle}</p>}
             </div>
           )}
           {!isGitHub && (
@@ -148,9 +134,7 @@ export function PulseContent({
               <GitBranch className="size-3 text-blue-400" />
               <span className="font-mono text-xs bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-md">main</span>
             </span>
-            <span className="text-rb-500">
-              committed on {formatDisplayDate(event.date)}
-            </span>
+            <span className="text-rb-500">committed on {formatDisplayDate(event.date)}</span>
           </div>
           <div className="flex items-center gap-2 text-rb-500 flex-wrap">
             <span>0 parents</span>
@@ -181,12 +165,7 @@ export function PulseContent({
 
   if (event.postUrl) {
     return (
-      <a
-        href={event.postUrl}
-        target="_blank"
-        rel="noreferrer"
-        className="group block cursor-pointer"
-      >
+      <a href={event.postUrl} target="_blank" rel="noreferrer" className="group block cursor-pointer">
         {mainContent}
       </a>
     );
@@ -195,11 +174,7 @@ export function PulseContent({
   return mainContent;
 }
 
-function ExpandedDetail({
-  event,
-}: {
-  event: TimelineEvent;
-}) {
+function ExpandedDetail({ event }: { event: TimelineEvent }) {
   const engagementEntries = useMemo(() => {
     const entries: Array<{
       id: string;
@@ -236,11 +211,7 @@ function ExpandedDetail({
   return (
     <div className="space-y-6 mt-2">
       {engagementEntries.length > 0 && (
-        <NestedTimeline
-          entries={engagementEntries}
-          platform={event.platform}
-          parentEvent={event}
-        />
+        <NestedTimeline entries={engagementEntries} platform={event.platform} parentEvent={event} />
       )}
     </div>
   );
@@ -251,11 +222,11 @@ function getHighlightIcon(type?: TimelineEngagementType) {
     case "like":
       return <MetricIcons.like className="size-3 text-rose-500" />;
     case "repost":
-      return <MetricIcons.repost className="size-3 text-emerald-500" />;
+      return <MetricIcons.repost className="size-3 text-green-500" />;
     case "reply":
       return <MetricIcons.reply className="size-3 text-blue-500" />;
     case "quote":
-      return <QuoteIcon className="size-3 text-emerald-500" />;
+      return <QuoteIcon className="size-3 text-green-500" />;
     default:
       return <Circle className="size-2 text-rb-500" />;
   }

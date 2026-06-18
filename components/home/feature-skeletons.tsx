@@ -40,12 +40,12 @@ function PositionCardBody() {
   return (
     <div className="flex h-full w-full flex-col gap-3 p-4">
       <div className="flex items-center gap-2">
-        <div className="h-3.5 w-20 rounded bg-emerald-500/55" />
+        <div className="h-3.5 w-20 rounded bg-green-500/55" />
         <div className="h-3.5 w-20 rounded bg-rb-400 dark:bg-rb-600" />
         <div className="ml-auto h-3.5 w-28 rounded bg-rb-300 dark:bg-rb-700" />
       </div>
       <div className="grid flex-1 grid-cols-2 gap-6">
-        {["bg-blue-500/55", "bg-emerald-500/55"].map((coin, i) => (
+        {["bg-blue-500/55", "bg-green-500/55"].map((coin, i) => (
           <div key={i} className="flex flex-col justify-center gap-2">
             <div className="h-2.5 w-16 rounded bg-rb-200 dark:bg-rb-800" />
             <div className="flex items-center gap-3">
@@ -76,7 +76,7 @@ function EconomicsBody() {
         </div>
         <div className="flex flex-1 items-end justify-center gap-4 pb-1">
           <div className="h-[78%] w-12 rounded bg-blue-500/55" />
-          <div className="h-[56%] w-12 rounded bg-emerald-500/55" />
+          <div className="h-[56%] w-12 rounded bg-green-500/55" />
         </div>
         {/* Mirrors the left legend (swatch + bar), one row fewer, and bottom-
             aligned to the foot of the towers as it reads IRL. */}
@@ -106,7 +106,7 @@ function TimelineBody() {
   const events = [
     { dot: "bg-blue-500/55", title: "w-24", numberSide: "left" as const },
     { dot: "bg-blue-500/55", title: "w-20", numberSide: "right" as const },
-    { dot: "bg-emerald-500/55", title: "w-28", numberSide: "left" as const },
+    { dot: "bg-green-500/55", title: "w-28", numberSide: "left" as const },
   ];
   return (
     <div className="flex h-full w-full flex-col p-4">
@@ -114,7 +114,7 @@ function TimelineBody() {
       <div className="flex gap-2">
         <div className="w-6" />
         <div className="flex w-4 flex-col items-center">
-          <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+          <div className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
           <div className="mt-1 h-3 w-px bg-rb-300 dark:bg-rb-700" />
         </div>
       </div>

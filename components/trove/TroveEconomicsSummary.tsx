@@ -24,10 +24,7 @@ interface TroveEconomicsSummaryProps {
 }
 
 // Calculate economics from transaction data (client-side fallback)
-function calculateEconomicsFromTransactions(
-  transactions: Transaction[],
-  collateralType: string
-): TroveEconomics {
+function calculateEconomicsFromTransactions(transactions: Transaction[], collateralType: string): TroveEconomics {
   const redemptions = transactions.filter(isRedemptionTransaction);
   const troveOps = transactions.filter(isTroveTransaction);
   const liquidations = transactions.filter(isLiquidationTransaction);
@@ -104,7 +101,7 @@ function calculateEconomicsFromTransactions(
 
   const liquidatedCollateral = liquidations.reduce(
     (sum, tx) => sum + Math.abs(tx.troveOperation.collChangeFromOperation),
-    0
+    0,
   );
   const liquidatedCollSeized = Math.max(0, liquidatedCollateral - totalCollSurplus);
 
@@ -236,18 +233,15 @@ const checkerPattern = (color: string): CSSProperties => {
   };
 };
 
-const REDEMPTION_PATTERN = checkerPattern("rgba(251, 146, 60, 0.6)");   // orange-400
-const LIQUIDATION_PATTERN = checkerPattern("rgba(248, 113, 113, 0.6)");  // red-400
-const REPAID_PATTERN = checkerPattern("rgba(52, 211, 153, 0.5)");        // emerald-400
-const WITHDRAWN_PATTERN = checkerPattern("rgba(96, 165, 250, 0.5)");     // blue-400
-const COSTS_PATTERN = checkerPattern("rgba(104, 119, 144, 0.3)");        // rb-500
+const REDEMPTION_PATTERN = checkerPattern("rgba(251, 146, 60, 0.6)"); // orange-400
+const LIQUIDATION_PATTERN = checkerPattern("rgba(248, 113, 113, 0.6)"); // red-400
+const REPAID_PATTERN = checkerPattern("rgba(74, 222, 128, 0.5)"); // green-400
+const WITHDRAWN_PATTERN = checkerPattern("rgba(96, 165, 250, 0.5)"); // blue-400
+const COSTS_PATTERN = checkerPattern("rgba(104, 119, 144, 0.3)"); // rb-500
 
-function computeTowerLayout(
-  segments: TowerSegment[],
-  maxValue: number,
-): PositionedSegment[] {
+function computeTowerLayout(segments: TowerSegment[], maxValue: number): PositionedSegment[] {
   if (maxValue === 0) return [];
-  const visible = segments.filter(s => s.value > 0);
+  const visible = segments.filter((s) => s.value > 0);
   const gapPct = (SEGMENT_GAP_PX / CHART_HEIGHT) * 100;
   const minHeightPct = (MIN_SEGMENT_PX / CHART_HEIGHT) * 100;
   let cursorPct = 0;
@@ -273,63 +267,61 @@ function TowerBar({
 }) {
   return (
     <div className="flex gap-0.75 shrink-0">
-        {/* Side bar (e.g. Borrowed / Deposited reference level) */}
-        {sideBar && sideBar.heightPct > 0 && (
-          <div className="relative shrink-0" style={{ width: 5, height: CHART_HEIGHT }}>
-            <div
-              className="absolute bottom-0 w-full rounded-xs"
-              style={{
-                height: `${sideBar.heightPct}%`,
-                backgroundColor: sideBar.color,
-              }}
-            />
-          </div>
-        )}
-        {/* Tower */}
-        <div className="relative w-16 sm:w-20" style={{ height: CHART_HEIGHT }}>
-          {segments.map((seg) => (
-            <div key={seg.key}>
-              {seg.colorClass && (
-                <div
-                  className={`absolute inset-x-0 rounded-xs ${seg.colorClass}`}
-                  style={{
-                    bottom: `${seg.bottomPct}%`,
-                    height: `${seg.heightPct}%`,
-                  }}
-                />
-              )}
-              {seg.patternStyle && (
-                <div
-                  className="absolute inset-x-0 rounded-xs pointer-events-none"
-                  style={{
-                    bottom: `${seg.bottomPct}%`,
-                    height: `${seg.heightPct}%`,
-                    ...seg.patternStyle,
-                  }}
-                />
-              )}
-            </div>
-          ))}
+      {/* Side bar (e.g. Borrowed / Deposited reference level) */}
+      {sideBar && sideBar.heightPct > 0 && (
+        <div className="relative shrink-0" style={{ width: 5, height: CHART_HEIGHT }}>
+          <div
+            className="absolute bottom-0 w-full rounded-xs"
+            style={{
+              height: `${sideBar.heightPct}%`,
+              backgroundColor: sideBar.color,
+            }}
+          />
         </div>
+      )}
+      {/* Tower */}
+      <div className="relative w-16 sm:w-20" style={{ height: CHART_HEIGHT }}>
+        {segments.map((seg) => (
+          <div key={seg.key}>
+            {seg.colorClass && (
+              <div
+                className={`absolute inset-x-0 rounded-xs ${seg.colorClass}`}
+                style={{
+                  bottom: `${seg.bottomPct}%`,
+                  height: `${seg.heightPct}%`,
+                }}
+              />
+            )}
+            {seg.patternStyle && (
+              <div
+                className="absolute inset-x-0 rounded-xs pointer-events-none"
+                style={{
+                  bottom: `${seg.bottomPct}%`,
+                  height: `${seg.heightPct}%`,
+                  ...seg.patternStyle,
+                }}
+              />
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
 function BreakdownTable({ rows }: { rows: BreakdownRow[] }) {
-  const visible = rows.filter(r => !r.hidden);
+  const visible = rows.filter((r) => !r.hidden);
   return (
     <div className="text-[11px] sm:text-xs text-rb-500 space-y-0.5">
       {visible.map((row, i) => (
         <div
           key={i}
           className={`flex items-center gap-1 ${
-            row.isResult
-              ? "border-t border-rb-300 dark:border-rb-600 font-semibold pt-1 mt-0.5"
-              : ""
+            row.isResult ? "border-t border-rb-300 dark:border-rb-600 font-semibold pt-1 mt-0.5" : ""
           } ${row.indent ? "text-[10px] text-rb-500" : ""}`}
         >
           <span className="w-3 text-right text-rb-500 shrink-0 text-[10px]">{row.sign}</span>
-          {(row.swatchClass || row.swatchStyle) ? (
+          {row.swatchClass || row.swatchStyle ? (
             <span
               className={`w-2.5 h-2.5 rounded-xs shrink-0 overflow-hidden ${row.swatchClass ?? ""}`}
               style={row.swatchStyle}
@@ -340,9 +332,7 @@ function BreakdownTable({ rows }: { rows: BreakdownRow[] }) {
           <span className={`shrink-0 ${row.indent ? "" : "font-bold text-rb-500"}`}>{row.label}</span>
           <span className="flex-1" />
           <span className="tabular-nums text-right shrink-0 font-bold">{row.amount}</span>
-          {row.usdHint && (
-            <span className="text-rb-500 text-[10px] shrink-0">{row.usdHint}</span>
-          )}
+          {row.usdHint && <span className="text-rb-500 text-[10px] shrink-0">{row.usdHint}</span>}
         </div>
       ))}
     </div>
@@ -386,39 +376,41 @@ export function TroveEconomicsSummary({
   // Include pending interest so "Current Debt" matches the header.
   // Prefer the blockchain-derived entireDebt prop (synced with the header);
   // fall back to a local estimate from rate × elapsed time.
-  const entireDebt = entireDebtProp ?? (
-    trove.status === "open" && trove.debt.current > 0
-      ? trove.debt.current + calculateAccruedInterest(
+  const entireDebt =
+    entireDebtProp ??
+    (trove.status === "open" && trove.debt.current > 0
+      ? trove.debt.current +
+        calculateAccruedInterest(
           trove.debt.current,
           trove.metrics.interestRate + (trove.batch.isMember ? trove.batch.managementFee : 0),
           trove.activity.lastActivityAt,
         )
-      : trove.debt.current
-  );
+      : trove.debt.current);
   // P/L excludes fees (shown separately in collateral breakdown)
-  const opportunityPL = redemption && currentPrice
-    ? redemption.totalDebtCleared - redemption.totalCollateralLost * currentPrice
-    : null;
+  const opportunityPL =
+    redemption && currentPrice ? redemption.totalDebtCleared - redemption.totalCollateralLost * currentPrice : null;
 
   // Tower chart data
   // Total interest including what's still outstanding in current debt
-  const totalInterestAndMgmtFees = Math.max(0,
-    entireDebt
-    + economics.position.totalRepaid
-    + (redemption?.totalDebtCleared ?? 0)
-    + (liquidation?.totalDebtCleared ?? 0)
-    - economics.position.totalBorrowed
-    - economics.costs.totalUpfrontFees
+  const totalInterestAndMgmtFees = Math.max(
+    0,
+    entireDebt +
+      economics.position.totalRepaid +
+      (redemption?.totalDebtCleared ?? 0) +
+      (liquidation?.totalDebtCleared ?? 0) -
+      economics.position.totalBorrowed -
+      economics.costs.totalUpfrontFees,
   );
   // Split interest vs delegate fees: prefer API value, fall back to proportional estimate from rates
   const apiMgmtFees = economics.costs.totalManagementFees ?? 0;
   const mgmtRate = trove.batch.isMember ? trove.batch.managementFee : 0;
   const intRate = trove.metrics.interestRate;
-  const delegateFees = apiMgmtFees > 0
-    ? Math.min(apiMgmtFees, totalInterestAndMgmtFees)
-    : (mgmtRate > 0 && intRate + mgmtRate > 0)
-      ? totalInterestAndMgmtFees * (mgmtRate / (intRate + mgmtRate))
-      : 0;
+  const delegateFees =
+    apiMgmtFees > 0
+      ? Math.min(apiMgmtFees, totalInterestAndMgmtFees)
+      : mgmtRate > 0 && intRate + mgmtRate > 0
+        ? totalInterestAndMgmtFees * (mgmtRate / (intRate + mgmtRate))
+        : 0;
   const interestAccrued = Math.max(0, totalInterestAndMgmtFees - delegateFees);
   const totalCosts = economics.costs.totalUpfrontFees + totalInterestAndMgmtFees;
 
@@ -429,9 +421,21 @@ export function TroveEconomicsSummary({
   const repaidPrincipal = economics.position.totalRepaid - costsSettled;
 
   const debtSegments: TowerSegment[] = [
-    { key: "current-debt", label: "Current Debt", value: entireDebt, colorClass: "bg-emerald-500" },
-    { key: "debt-liquidated", label: "Liquidated", value: liquidation?.totalDebtCleared ?? 0, colorClass: "", patternStyle: LIQUIDATION_PATTERN },
-    { key: "debt-redeemed", label: "Redeemed", value: redemption?.totalDebtCleared ?? 0, colorClass: "", patternStyle: REDEMPTION_PATTERN },
+    { key: "current-debt", label: "Current Debt", value: entireDebt, colorClass: "bg-green-500" },
+    {
+      key: "debt-liquidated",
+      label: "Liquidated",
+      value: liquidation?.totalDebtCleared ?? 0,
+      colorClass: "",
+      patternStyle: LIQUIDATION_PATTERN,
+    },
+    {
+      key: "debt-redeemed",
+      label: "Redeemed",
+      value: redemption?.totalDebtCleared ?? 0,
+      colorClass: "",
+      patternStyle: REDEMPTION_PATTERN,
+    },
     { key: "repaid", label: "Repaid", value: repaidPrincipal, colorClass: "", patternStyle: REPAID_PATTERN },
     { key: "costs", label: "Costs", value: costsSettled, colorClass: "", patternStyle: COSTS_PATTERN },
   ];
@@ -440,20 +444,19 @@ export function TroveEconomicsSummary({
 
   // Liquidated collateral is a residual — only trust it when actual liquidation events exist
   const hasLiquidations = transactions?.some(isLiquidationTransaction) ?? false;
-  const rawLiquidatedColl = Math.max(0,
-    economics.position.totalCollateralDeposited
-    + (redemption?.totalFeesRetained ?? 0)
-    - trove.collateral.amount
-    - economics.position.totalCollateralWithdrawn
-    - (redemption?.totalCollateralLost ?? 0)
+  const rawLiquidatedColl = Math.max(
+    0,
+    economics.position.totalCollateralDeposited +
+      (redemption?.totalFeesRetained ?? 0) -
+      trove.collateral.amount -
+      economics.position.totalCollateralWithdrawn -
+      (redemption?.totalCollateralLost ?? 0),
   );
   const liquidatedColl = hasLiquidations && rawLiquidatedColl > 0.0001 ? rawLiquidatedColl : 0;
 
   // Claimable surplus from liquidation (separate from seized collateral)
   const claimableSurplus = liquidation?.totalCollateralSurplus ?? 0;
-  const liquidatedSeized = claimableSurplus > 0
-    ? Math.max(0, liquidatedColl - claimableSurplus)
-    : liquidatedColl;
+  const liquidatedSeized = claimableSurplus > 0 ? Math.max(0, liquidatedColl - claimableSurplus) : liquidatedColl;
 
   // Zombie trove: debt fully cleared but collateral remains claimable
   const isZombie = trove.debt.current === 0 && trove.collateral.amount > 0;
@@ -461,16 +464,56 @@ export function TroveEconomicsSummary({
   // Collateral tower: bottom-to-top: In Trove (or Claimable), Surplus, Fees, Redeemed, Liquidated, Withdrawn
   const feesReceivedColl = redemption?.totalFeesRetained ?? 0;
 
-  const collSegments: TowerSegment[] = currentPrice ? [
-    isZombie
-      ? { key: "claimable", label: "Claimable", value: trove.collateral.amount * currentPrice, colorClass: "bg-blue-700 ring-1 ring-inset ring-green-700 dark:ring-green-400" }
-      : { key: "in-trove", label: "In Trove", value: trove.collateral.amount * currentPrice, colorClass: "bg-blue-500" },
-    { key: "liq-surplus", label: "Claimable", value: claimableSurplus * currentPrice, colorClass: "bg-blue-700 ring-1 ring-inset ring-green-700 dark:ring-green-400" },
-    { key: "fees-received", label: "Fees Received", value: feesReceivedColl * currentPrice, colorClass: "bg-cyan-800" },
-    { key: "coll-redeemed", label: "Redeemed", value: (redemption?.totalCollateralLost ?? 0) * currentPrice, colorClass: "", patternStyle: REDEMPTION_PATTERN },
-    { key: "liquidated", label: "Liquidated", value: liquidatedSeized * currentPrice, colorClass: "", patternStyle: LIQUIDATION_PATTERN },
-    { key: "withdrawn", label: "Withdrawn", value: economics.position.totalCollateralWithdrawn * currentPrice, colorClass: "", patternStyle: WITHDRAWN_PATTERN },
-  ] : [];
+  const collSegments: TowerSegment[] = currentPrice
+    ? [
+        isZombie
+          ? {
+              key: "claimable",
+              label: "Claimable",
+              value: trove.collateral.amount * currentPrice,
+              colorClass: "bg-blue-700 ring-1 ring-inset ring-green-700 dark:ring-green-400",
+            }
+          : {
+              key: "in-trove",
+              label: "In Trove",
+              value: trove.collateral.amount * currentPrice,
+              colorClass: "bg-blue-500",
+            },
+        {
+          key: "liq-surplus",
+          label: "Claimable",
+          value: claimableSurplus * currentPrice,
+          colorClass: "bg-blue-700 ring-1 ring-inset ring-green-700 dark:ring-green-400",
+        },
+        {
+          key: "fees-received",
+          label: "Fees Received",
+          value: feesReceivedColl * currentPrice,
+          colorClass: "bg-cyan-800",
+        },
+        {
+          key: "coll-redeemed",
+          label: "Redeemed",
+          value: (redemption?.totalCollateralLost ?? 0) * currentPrice,
+          colorClass: "",
+          patternStyle: REDEMPTION_PATTERN,
+        },
+        {
+          key: "liquidated",
+          label: "Liquidated",
+          value: liquidatedSeized * currentPrice,
+          colorClass: "",
+          patternStyle: LIQUIDATION_PATTERN,
+        },
+        {
+          key: "withdrawn",
+          label: "Withdrawn",
+          value: economics.position.totalCollateralWithdrawn * currentPrice,
+          colorClass: "",
+          patternStyle: WITHDRAWN_PATTERN,
+        },
+      ]
+    : [];
 
   const collPeak = currentPrice ? (economics.position.totalCollateralDeposited + feesReceivedColl) * currentPrice : 0;
   const towerMax = Math.max(debtPeak, collPeak) * 1.08;
@@ -481,93 +524,168 @@ export function TroveEconomicsSummary({
   // Side bars: derive height from positioned segments so gaps are accounted for.
   // Debt: borrowed = everything below costs → use the bottom edge of the costs segment.
   // Collateral: deposited = entire tower → use the top edge of the topmost segment.
-  const costsPos = debtPositioned.find(s => s.key === "costs");
-  const debtSideBar = economics.position.totalBorrowed > 0 ? {
-    heightPct: costsPos
-      ? costsPos.bottomPct
-      : (economics.position.totalBorrowed / towerMax) * 100,
-    color: "rgba(52, 211, 153, 0.25)",
-  } : undefined;
+  const costsPos = debtPositioned.find((s) => s.key === "costs");
+  const debtSideBar =
+    economics.position.totalBorrowed > 0
+      ? {
+          heightPct: costsPos ? costsPos.bottomPct : (economics.position.totalBorrowed / towerMax) * 100,
+          color: "rgba(74, 222, 128, 0.25)",
+        }
+      : undefined;
 
   const topCollSeg = collPositioned[collPositioned.length - 1];
-  const collSideBar = currentPrice && economics.position.totalCollateralDeposited > 0 ? {
-    heightPct: topCollSeg
-      ? topCollSeg.bottomPct + topCollSeg.heightPct
-      : (economics.position.totalCollateralDeposited * currentPrice / towerMax) * 100,
-    color: "rgba(59, 130, 246, 0.25)",
-  } : undefined;
+  const collSideBar =
+    currentPrice && economics.position.totalCollateralDeposited > 0
+      ? {
+          heightPct: topCollSeg
+            ? topCollSeg.bottomPct + topCollSeg.heightPct
+            : ((economics.position.totalCollateralDeposited * currentPrice) / towerMax) * 100,
+          color: "rgba(59, 130, 246, 0.25)",
+        }
+      : undefined;
 
   // Debt breakdown: math sum → Current Debt
   const debtBreakdownRows: BreakdownRow[] = [
-    { sign: "", label: "Borrowed", amount: formatPrice(economics.position.totalBorrowed), symbol: "BOLD", swatchStyle: { backgroundColor: "rgba(52, 211, 153, 0.25)" } },
-    { sign: "+", label: "Costs", amount: formatPrice(totalCosts), symbol: "BOLD", hidden: totalCosts === 0, swatchStyle: COSTS_PATTERN },
-    { sign: "", label: "Interest Accrued", amount: formatPrice(interestAccrued), symbol: "BOLD", hidden: interestAccrued === 0, indent: true },
-    { sign: "", label: "Upfront Fees", amount: formatPrice(economics.costs.totalUpfrontFees), symbol: "BOLD", hidden: economics.costs.totalUpfrontFees === 0, indent: true },
-    { sign: "", label: "Delegate Fees", amount: formatPrice(delegateFees), symbol: "BOLD", hidden: delegateFees === 0, indent: true },
-    { sign: "\u2212", label: "Repaid", amount: formatPrice(economics.position.totalRepaid), symbol: "BOLD", hidden: economics.position.totalRepaid === 0, swatchStyle: REPAID_PATTERN },
-    { sign: "\u2212", label: "Redeemed", amount: formatPrice(redemption?.totalDebtCleared ?? 0), symbol: "BOLD", hidden: !redemption || redemption.totalDebtCleared === 0, swatchStyle: REDEMPTION_PATTERN },
-    { sign: "\u2212", label: "Liquidated", amount: formatPrice(liquidation?.totalDebtCleared ?? 0), symbol: "BOLD", hidden: !liquidation || liquidation.totalDebtCleared === 0, swatchStyle: LIQUIDATION_PATTERN },
-    { sign: "", label: "Current Debt", amount: formatPrice(entireDebt), symbol: "BOLD", isResult: true, swatchClass: "bg-emerald-500" },
-  ];
-
-  // Collateral breakdown: math sum → In Trove
-  const collBreakdownRows: BreakdownRow[] = currentPrice ? [
     {
-      sign: "", label: "Deposited",
-      amount: economics.position.totalCollateralDeposited.toFixed(2),
-      symbol: collateralSymbol,
-      usdHint: `[${formatCompactUsd(economics.position.totalCollateralDeposited * currentPrice)}]`,
-      swatchStyle: { backgroundColor: "rgba(59, 130, 246, 0.25)" },
+      sign: "",
+      label: "Borrowed",
+      amount: formatPrice(economics.position.totalBorrowed),
+      symbol: "BOLD",
+      swatchStyle: { backgroundColor: "rgba(74, 222, 128, 0.25)" },
     },
     {
-      sign: "\u2212", label: "Withdrawn",
-      amount: economics.position.totalCollateralWithdrawn.toFixed(2),
-      symbol: collateralSymbol,
-      usdHint: `[${formatCompactUsd(economics.position.totalCollateralWithdrawn * currentPrice)}]`,
-      hidden: economics.position.totalCollateralWithdrawn === 0,
-      swatchStyle: WITHDRAWN_PATTERN,
+      sign: "+",
+      label: "Costs",
+      amount: formatPrice(totalCosts),
+      symbol: "BOLD",
+      hidden: totalCosts === 0,
+      swatchStyle: COSTS_PATTERN,
     },
     {
-      sign: "\u2212", label: "Liquidated",
-      amount: liquidatedSeized.toFixed(2),
-      symbol: collateralSymbol,
-      usdHint: `[${formatCompactUsd(liquidatedSeized * currentPrice)}]`,
-      hidden: liquidatedSeized === 0,
-      swatchStyle: LIQUIDATION_PATTERN,
+      sign: "",
+      label: "Interest Accrued",
+      amount: formatPrice(interestAccrued),
+      symbol: "BOLD",
+      hidden: interestAccrued === 0,
+      indent: true,
     },
     {
-      sign: "\u2212", label: "Redeemed",
-      amount: (redemption?.totalCollateralLost ?? 0).toFixed(2),
-      symbol: collateralSymbol,
-      usdHint: `[${formatCompactUsd((redemption?.totalCollateralLost ?? 0) * currentPrice)}]`,
-      hidden: !redemption || redemption.totalCollateralLost === 0,
+      sign: "",
+      label: "Upfront Fees",
+      amount: formatPrice(economics.costs.totalUpfrontFees),
+      symbol: "BOLD",
+      hidden: economics.costs.totalUpfrontFees === 0,
+      indent: true,
+    },
+    {
+      sign: "",
+      label: "Delegate Fees",
+      amount: formatPrice(delegateFees),
+      symbol: "BOLD",
+      hidden: delegateFees === 0,
+      indent: true,
+    },
+    {
+      sign: "\u2212",
+      label: "Repaid",
+      amount: formatPrice(economics.position.totalRepaid),
+      symbol: "BOLD",
+      hidden: economics.position.totalRepaid === 0,
+      swatchStyle: REPAID_PATTERN,
+    },
+    {
+      sign: "\u2212",
+      label: "Redeemed",
+      amount: formatPrice(redemption?.totalDebtCleared ?? 0),
+      symbol: "BOLD",
+      hidden: !redemption || redemption.totalDebtCleared === 0,
       swatchStyle: REDEMPTION_PATTERN,
     },
     {
-      sign: "+", label: "Fees Received",
-      amount: feesReceivedColl.toFixed(4),
-      symbol: collateralSymbol,
-      usdHint: `[${formatCompactUsd(feesReceivedColl * currentPrice)}]`,
-      hidden: feesReceivedColl === 0,
-      swatchClass: "bg-cyan-800",
+      sign: "\u2212",
+      label: "Liquidated",
+      amount: formatPrice(liquidation?.totalDebtCleared ?? 0),
+      symbol: "BOLD",
+      hidden: !liquidation || liquidation.totalDebtCleared === 0,
+      swatchStyle: LIQUIDATION_PATTERN,
     },
     {
-      sign: "", label: "Claimable",
-      amount: claimableSurplus.toFixed(4),
-      symbol: collateralSymbol,
-      usdHint: `[${formatCompactUsd(claimableSurplus * currentPrice)}]`,
-      hidden: claimableSurplus === 0,
-      swatchClass: "bg-blue-700 ring-1 ring-inset ring-green-700 dark:ring-green-400",
-    },
-    {
-      sign: "", label: isZombie ? "Claimable" : "In Trove",
-      amount: trove.collateral.amount.toFixed(2),
-      symbol: collateralSymbol,
-      usdHint: `[${formatCompactUsd(trove.collateral.amount * currentPrice)}]`,
+      sign: "",
+      label: "Current Debt",
+      amount: formatPrice(entireDebt),
+      symbol: "BOLD",
       isResult: true,
-      swatchClass: isZombie ? "bg-blue-700 ring-1 ring-inset ring-green-700 dark:ring-green-400" : "bg-blue-500",
+      swatchClass: "bg-green-500",
     },
-  ] : [];
+  ];
+
+  // Collateral breakdown: math sum → In Trove
+  const collBreakdownRows: BreakdownRow[] = currentPrice
+    ? [
+        {
+          sign: "",
+          label: "Deposited",
+          amount: economics.position.totalCollateralDeposited.toFixed(2),
+          symbol: collateralSymbol,
+          usdHint: `[${formatCompactUsd(economics.position.totalCollateralDeposited * currentPrice)}]`,
+          swatchStyle: { backgroundColor: "rgba(59, 130, 246, 0.25)" },
+        },
+        {
+          sign: "\u2212",
+          label: "Withdrawn",
+          amount: economics.position.totalCollateralWithdrawn.toFixed(2),
+          symbol: collateralSymbol,
+          usdHint: `[${formatCompactUsd(economics.position.totalCollateralWithdrawn * currentPrice)}]`,
+          hidden: economics.position.totalCollateralWithdrawn === 0,
+          swatchStyle: WITHDRAWN_PATTERN,
+        },
+        {
+          sign: "\u2212",
+          label: "Liquidated",
+          amount: liquidatedSeized.toFixed(2),
+          symbol: collateralSymbol,
+          usdHint: `[${formatCompactUsd(liquidatedSeized * currentPrice)}]`,
+          hidden: liquidatedSeized === 0,
+          swatchStyle: LIQUIDATION_PATTERN,
+        },
+        {
+          sign: "\u2212",
+          label: "Redeemed",
+          amount: (redemption?.totalCollateralLost ?? 0).toFixed(2),
+          symbol: collateralSymbol,
+          usdHint: `[${formatCompactUsd((redemption?.totalCollateralLost ?? 0) * currentPrice)}]`,
+          hidden: !redemption || redemption.totalCollateralLost === 0,
+          swatchStyle: REDEMPTION_PATTERN,
+        },
+        {
+          sign: "+",
+          label: "Fees Received",
+          amount: feesReceivedColl.toFixed(4),
+          symbol: collateralSymbol,
+          usdHint: `[${formatCompactUsd(feesReceivedColl * currentPrice)}]`,
+          hidden: feesReceivedColl === 0,
+          swatchClass: "bg-cyan-800",
+        },
+        {
+          sign: "",
+          label: "Claimable",
+          amount: claimableSurplus.toFixed(4),
+          symbol: collateralSymbol,
+          usdHint: `[${formatCompactUsd(claimableSurplus * currentPrice)}]`,
+          hidden: claimableSurplus === 0,
+          swatchClass: "bg-blue-700 ring-1 ring-inset ring-green-700 dark:ring-green-400",
+        },
+        {
+          sign: "",
+          label: isZombie ? "Claimable" : "In Trove",
+          amount: trove.collateral.amount.toFixed(2),
+          symbol: collateralSymbol,
+          usdHint: `[${formatCompactUsd(trove.collateral.amount * currentPrice)}]`,
+          isResult: true,
+          swatchClass: isZombie ? "bg-blue-700 ring-1 ring-inset ring-green-700 dark:ring-green-400" : "bg-blue-500",
+        },
+      ]
+    : [];
 
   return (
     <div className="rounded-lg bg-rb-50 dark:bg-rb-900 overflow-hidden">
@@ -584,19 +702,15 @@ export function TroveEconomicsSummary({
       >
         <div className="flex items-center gap-2">
           <ChartColumnBig size={18} className="text-rb-500" />
-          <span className="font-semibold text-foreground dark:text-white">Trove Economics</span><span className=" text-[10px] relative -bottom-0.75 text-rb-500">(Experimental)</span>
+          <span className="font-semibold text-foreground dark:text-white">Trove Economics</span>
+          <span className=" text-[10px] relative -bottom-0.75 text-rb-500">(Experimental)</span>
         </div>
-        {isOpen ? (
-          <ChevronUp className="w-4 h-4 text-rb-500" />
-        ) : (
-          <ChevronDown className="w-4 h-4 text-rb-500" />
-        )}
+        {isOpen ? <ChevronUp className="w-4 h-4 text-rb-500" /> : <ChevronDown className="w-4 h-4 text-rb-500" />}
       </button>
 
       {/* Expanded content */}
       {isOpen && (
         <div className="px-4 pb-4 space-y-4">
-
           {/* Position Summary */}
           <div className="border-t border-rb-200 dark:border-rb-800 pt-4">
             {debtPeak > 0 && (
@@ -653,22 +767,24 @@ export function TroveEconomicsSummary({
             {redemption && (
               <div className="flex flex-wrap items-center gap-1.5 mt-3 text-xs mb-1 font-semibold">
                 <span className="text-rb-500">Borrower&apos;s net outcome from redemptions was</span>
-                <span className={`${
-                  redemption.realizedPL >= 0
-                    ? "text-green-700 dark:text-green-400"
-                    : "text-red-700 dark:text-red-400"
-                }`}>
-                  {redemption.realizedPL >= 0 ? "+" : "\u2212"}{formatUsdValue(Math.abs(redemption.realizedPL))}
+                <span
+                  className={`${
+                    redemption.realizedPL >= 0 ? "text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400"
+                  }`}
+                >
+                  {redemption.realizedPL >= 0 ? "+" : "\u2212"}
+                  {formatUsdValue(Math.abs(redemption.realizedPL))}
                 </span>
                 {opportunityPL !== null && (
                   <>
                     <span className="text-rb-500"> or </span>
-                    <span className={` ${
-                      opportunityPL >= 0
-                        ? "text-green-700 dark:text-green-400"
-                        : "text-red-700 dark:text-red-400"
-                    }`}>
-                      {opportunityPL >= 0 ? "+" : "\u2212"}{formatUsdValue(Math.abs(opportunityPL))}
+                    <span
+                      className={` ${
+                        opportunityPL >= 0 ? "text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400"
+                      }`}
+                    >
+                      {opportunityPL >= 0 ? "+" : "\u2212"}
+                      {formatUsdValue(Math.abs(opportunityPL))}
                     </span>
                     <span className="text-xs text-rb-500">at today&apos;s value</span>
                   </>
@@ -678,12 +794,11 @@ export function TroveEconomicsSummary({
             {economics.gas.totalGasCostEth > 0 && (
               <p className="text-xs text-rb-500 flex items-center gap-0.5">
                 A total of {economics.gas.totalGasCostEth.toFixed(4)}{" "}
-                <TokenIcon assetSymbol="ETH" className="w-3 h-3 inline-block" />{" "}
-                ({formatUsdValue(economics.gas.totalGasCostUsd)}) has been spent on gas fees
+                <TokenIcon assetSymbol="ETH" className="w-3 h-3 inline-block" /> (
+                {formatUsdValue(economics.gas.totalGasCostUsd)}) has been spent on gas fees
               </p>
             )}
           </div>
-
         </div>
       )}
     </div>

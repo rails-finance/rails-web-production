@@ -243,7 +243,7 @@ interface TroveMeta {
 
 const REDEMPTION_PATTERN = checkerPattern("rgba(251, 146, 60, 0.6)");
 const LIQUIDATION_PATTERN = checkerPattern("rgba(248, 113, 113, 0.6)");
-const REPAID_PATTERN = checkerPattern("rgba(52, 211, 153, 0.5)");
+const REPAID_PATTERN = checkerPattern("rgba(74, 222, 128, 0.5)");
 const WITHDRAWN_PATTERN = checkerPattern("rgba(96, 165, 250, 0.5)");
 const COSTS_PATTERN = checkerPattern("rgba(217, 70, 239, 0.5)");
 
@@ -530,7 +530,7 @@ export function TroveEconomicsSummary({ events, currentPrice, hideHeader }: Trov
       key: "current-debt",
       label: "Current Debt",
       value: entireDebt,
-      colorClass: "bg-emerald-500",
+      colorClass: "bg-green-500",
       tooltip: debtTip(entireDebt, "out"),
     },
     ...(!isLiveView
@@ -698,7 +698,7 @@ export function TroveEconomicsSummary({ events, currentPrice, hideHeader }: Trov
     !isLiveView && economics.position.totalBorrowed > 0
       ? {
           heightPct: (economics.position.totalBorrowed / towerMax) * CHART_HEIGHT,
-          color: "rgba(52, 211, 153, 0.25)",
+          color: "rgba(74, 222, 128, 0.25)",
         }
       : undefined;
 
@@ -718,7 +718,7 @@ export function TroveEconomicsSummary({ events, currentPrice, hideHeader }: Trov
       amount: formatPrice(economics.position.totalBorrowed),
       symbol: stableSymbol,
       hidden: isLiveView,
-      swatchStyle: { backgroundColor: "rgba(52, 211, 153, 0.25)" },
+      swatchStyle: { backgroundColor: "rgba(74, 222, 128, 0.25)" },
     },
     {
       sign: "+",
@@ -782,7 +782,7 @@ export function TroveEconomicsSummary({ events, currentPrice, hideHeader }: Trov
       amount: formatPrice(entireDebt),
       symbol: stableSymbol,
       isResult: true,
-      swatchClass: "bg-emerald-500",
+      swatchClass: "bg-green-500",
     },
   ];
 
