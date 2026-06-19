@@ -186,7 +186,7 @@ function AaveV4SpokeCard({
         ) : (
           <OpenPositionStats
             statusPill={
-              <span className={`font-bold px-2 py-0.5 rounded-full text-xs ${bucket.pillClass}`}>
+              <span className={`font-bold px-2 py-0.5 rounded-sm text-xs ${bucket.pillClass}`}>
                 {bucket.pillLabel}
               </span>
             }

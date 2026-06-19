@@ -8,7 +8,7 @@ export function LiquidatedBadge() {
   return (
     <span
       title="This wallet was liquidated on this spoke at least once"
-      className="font-bold px-2 py-0.5 rounded-full text-xs bg-red-500/20 text-red-500"
+      className="font-bold px-2 py-0.5 rounded-sm text-xs bg-red-500/20 text-red-500"
     >
       Liquidated
     </span>
