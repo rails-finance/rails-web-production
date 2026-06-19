@@ -174,7 +174,7 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
             <span className="text-xs font-semibold">{row.spokeName}</span>
             <span className="text-xs font-bold uppercase tracking-wide">{hubTier}</span>
           </span>
-          <WalletPill wallet={row.wallet} ensName={row.ensName} />
+          <WalletPill wallet={row.wallet} ensName={row.ensName} href={`/aave-v4?wallet=${row.wallet}`} />
         </>
       }
       identity={

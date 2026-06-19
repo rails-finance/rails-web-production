@@ -6,7 +6,7 @@
 // the address presentation is one component across surfaces.
 
 import { useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Facehash } from "@/components/shared/facehash";
 import { Icon } from "@/components/icons/icon";
 
@@ -21,11 +21,13 @@ export function WalletPill({
 }: {
   wallet: string;
   ensName: string | null;
-  /** When set, the address label becomes a link (to the wallet-filtered
-   *  listing). Only the detail card passes this — the listing card already
-   *  wraps the whole row in a <Link>, so a nested anchor would be invalid. */
+  /** When set, the address label becomes a clickable link to the wallet-filtered
+   *  listing. Rendered as a <button> (not <a>) with router.push so it works even
+   *  when the listing card wraps the whole row in a Next <Link> — a nested anchor
+   *  would be invalid HTML. Both the listing card and the detail card pass it. */
   href?: string;
 }) {
+  const router = useRouter();
   const [copied, setCopied] = useState(false);
   const label = ensName ?? shortAddr(wallet);
   const copy = () => {
@@ -38,13 +40,18 @@ export function WalletPill({
       <Facehash address={wallet} size={16} />
       <span className="inline-flex items-center gap-1 text-xs text-rb-500">
         {href ? (
-          <Link
-            href={href}
-            onClick={(e) => e.stopPropagation()}
-            className="font-mono text-rb-500 hover:text-blue-500 transition-colors"
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              router.push(href);
+            }}
+            aria-label={`Filter positions by wallet ${label}`}
+            className="font-mono text-rb-500 hover:text-blue-500 transition-colors cursor-pointer"
           >
             {label}
-          </Link>
+          </button>
         ) : (
           <span className="font-mono text-rb-500">{label}</span>
         )}
