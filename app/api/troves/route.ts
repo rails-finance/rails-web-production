@@ -5,8 +5,11 @@ import { resolveEnsAddress } from "@/lib/ens/resolve-ens";
 
 const RAILS_API_URL = process.env.RAILS_API_URL;
 
-// Valid parameter values for validation
-const VALID_STATUSES = ["open", "closed", "liquidated"];
+// Valid parameter values for validation. `status` is a comma-separated list of
+// display buckets (active/zombie/closed/liquidated); legacy raw values
+// (open) and "all" are tolerated for inbound bookmark stability. The backend
+// resolves buckets onto (status, is_zombie) predicates.
+const VALID_STATUS_TOKENS = ["active", "zombie", "open", "closed", "liquidated", "all"];
 const VALID_COLLATERAL_TYPES = ["WETH", "wstETH", "rETH"];
 const VALID_SORT_FIELDS = [
   "debt",
@@ -117,8 +120,14 @@ export async function GET(request: NextRequest) {
 
     // Add parameters with inline validation
     if (troveId) backendParams.set("troveId", troveId);
-    if (status && VALID_STATUSES.includes(status)) {
-      backendParams.set("status", status);
+    // Forward the validated status buckets as a comma-separated list. Unknown
+    // tokens are dropped silently (mirrors the collateralTypes pattern).
+    const statusTokens = (status ?? "")
+      .split(",")
+      .map((s) => s.trim().toLowerCase())
+      .filter((s) => VALID_STATUS_TOKENS.includes(s));
+    if (statusTokens.length > 0) {
+      backendParams.set("status", Array.from(new Set(statusTokens)).join(","));
     }
     // Forward the multi-select form when present, fall back to the legacy
     // single param. The backend accepts either.

@@ -2,12 +2,10 @@ import type { FilterDimension, FilterOptionDef } from "@/components/shared/filte
 import { joinOptionLabels } from "@/components/shared/filter-bar/types";
 import type { TroveListFilterParams } from "@/lib/liquity-v2/list-filter-types";
 import {
-  defaultStatus,
-  effectiveStatus,
-  defaultShowZombie,
-  effectiveShowZombie,
-  type EffectiveStatus,
-  type EffectiveShowZombie,
+  canonicalStatuses,
+  defaultStatuses,
+  effectiveStatuses,
+  sameStatusSet,
 } from "@/lib/liquity-v2/listing-visibility";
 
 type Dim = FilterDimension<TroveListFilterParams>;
@@ -30,74 +28,40 @@ function bareLabel(values: string[], options: FilterOptionDef[]): string {
  * auto-relax-on-scope behavior is preserved (a stale "open" is never baked in).
  */
 export function troveFilterDimensions({ collateralOptions }: { collateralOptions: FilterOptionDef[] }): Dim[] {
-  // Status folds in two terminal/degenerate states as plain values:
-  //   - Liquidated: a liquidated Liquity trove is terminal (the ID can't
-  //     reopen), so "with liquidations" is just status=liquidated.
-  //   - Zombie: an unredeemable (sub-min-debt) trove is a real protocol state.
-  //     The API exposes it as a separate `showZombie` flag, so we map the
-  //     (status, zombie) pair onto a single key here.
-  // No standalone "All": no selection already means the contextual default
-  // (active on the bare directory, full history on a scoped wallet/trove query —
-  // see listing-visibility.ts), so an explicit "all" would either duplicate
-  // Reset (scoped) or be the directory's show-everything, which clearing covers.
-  const STATUS_LABEL: Record<string, string> = {
-    active: "Active",
-    zombie: "Zombie",
-    closed: "Closed",
-    liquidated: "Liquidated",
-  };
-  // Collapse the (status, zombie) pair into one key. null = "everything" (no
-  // specific state) → no selection / no chip.
-  const statusKey = (s: EffectiveStatus, z: EffectiveShowZombie): string | null => {
-    if (s === "closed") return "closed";
-    if (s === "liquidated") return "liquidated";
-    if (z === true) return "zombie";
-    if (s === "open" && z === false) return "active";
-    return null;
-  };
+  // Status is a multi-select over four buckets. Zombie (an unredeemable
+  // sub-min-debt trove) and Liquidated (a terminal state) are real protocol
+  // states surfaced as first-class buckets alongside Active/Closed; the server
+  // resolves the selection onto (status, is_zombie) predicates. Selecting all
+  // four = "show everything" (no server filter). No selection = the contextual
+  // default (active on the bare directory, everything on a scoped wallet/trove
+  // query — see listing-visibility.ts), so `set` writes `undefined` whenever the
+  // choice equals that default, keeping auto-relax-on-scope working and URLs
+  // clean.
   const status: Dim = {
     id: "status",
     label: "Status",
     group: "Status",
-    cardinality: "single",
+    cardinality: "multi",
     options: [
       { value: "active", label: "Active" },
-      { value: "closed", label: "Closed" },
       { value: "zombie", label: "Zombie" },
+      { value: "closed", label: "Closed" },
       { value: "liquidated", label: "Liquidated" },
     ],
-    get: (f) => {
-      const k = statusKey(effectiveStatus(f), effectiveShowZombie(f));
-      return k ? [k] : [];
-    },
-    defaultValues: (f) => {
-      const k = statusKey(defaultStatus(f), defaultShowZombie(f));
-      return k ? [k] : [];
-    },
+    get: (f) => effectiveStatuses(f),
+    defaultValues: (f) => defaultStatuses(f),
     set: (f, values) => {
-      const v = values[0];
-      let nextStatus: string | undefined;
-      let nextZombie: boolean | "all" | undefined;
-      if (v === "active") {
-        nextStatus = "open";
-        nextZombie = false;
-      } else if (v === "zombie") {
-        nextStatus = "open";
-        nextZombie = true;
-      } else if (v === "closed") {
-        nextStatus = "closed";
-      } else if (v === "liquidated") {
-        nextStatus = "liquidated";
-      }
-      // Write undefined when the choice equals the contextual default so the
-      // default is never baked in (keeps auto-relax-on-scope working).
+      const sel = canonicalStatuses(values);
+      const def = defaultStatuses(f);
+      // Write undefined when the selection is empty (clearing returns to the
+      // default) or matches the contextual default, so the default is never
+      // baked into the URL and auto-relax-on-scope keeps working.
       return {
         ...f,
-        status: nextStatus === defaultStatus(f) ? undefined : nextStatus,
-        showZombie: nextZombie === defaultShowZombie(f) ? undefined : nextZombie,
+        statuses: sel.length === 0 || sameStatusSet(sel, def) ? undefined : sel,
       };
     },
-    chipLabel: (vals) => STATUS_LABEL[vals[0]] ?? vals[0],
+    chipLabel: (vals, opts) => `Status: ${joinOptionLabels(canonicalStatuses(vals), opts)}`,
   };
 
   const collateral: Dim = {

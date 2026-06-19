@@ -14,11 +14,58 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useWalletContext } from "@/components/nav/wallet-context";
 import { upsertSession } from "@/lib/shared/sessions";
 import {
-  defaultShowZombie,
-  defaultStatus,
-  effectiveShowZombie,
-  effectiveStatus,
+  ALL_STATUS_BUCKETS,
+  canonicalStatuses,
+  defaultStatuses,
+  effectiveStatuses,
+  isAllStatuses,
+  sameStatusSet,
+  type StatusBucket,
 } from "@/lib/liquity-v2/listing-visibility";
+
+// Parse the `status` URL param into a bucket selection. The canonical form is a
+// comma-separated list of buckets (active,zombie,closed,liquidated). For inbound
+// bookmark stability we also translate the legacy raw form (status=open/closed/
+// liquidated + the old showZombie flag) into buckets. Returns undefined when no
+// status intent is present so the contextual default applies at read time.
+function parseStatusParam(statusRaw: string | null, showZombieRaw: string | null): StatusBucket[] | undefined {
+  const tokens = (statusRaw ?? "")
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+
+  // Canonical: every token is already a bucket (or explicit "all").
+  if (tokens.length > 0 && tokens.every((t) => t === "all" || (ALL_STATUS_BUCKETS as string[]).includes(t))) {
+    if (tokens.includes("all")) return [...ALL_STATUS_BUCKETS];
+    return canonicalStatuses(tokens);
+  }
+
+  // Legacy raw status (+ showZombie) → buckets.
+  const z = showZombieRaw?.toLowerCase();
+  const buckets = new Set<StatusBucket>();
+  const has = (t: string) => tokens.includes(t);
+  if (tokens.length === 0) {
+    // status absent: a lone legacy showZombie still carries intent.
+    if (z === "all") return [...ALL_STATUS_BUCKETS];
+    if (z === "true") return canonicalStatuses(["active", "zombie"]);
+    if (z === "false") return ["active"];
+    return undefined;
+  }
+  if (has("all")) return [...ALL_STATUS_BUCKETS];
+  if (has("open")) {
+    if (z === "true") buckets.add("zombie");
+    else if (z === "false") buckets.add("active");
+    else {
+      // open without an explicit zombie flag → both open sub-states (safe superset)
+      buckets.add("active");
+      buckets.add("zombie");
+    }
+  }
+  if (has("closed")) buckets.add("closed");
+  if (has("liquidated")) buckets.add("liquidated");
+  const out = canonicalStatuses([...buckets]);
+  return out.length > 0 ? out : undefined;
+}
 
 // Constants
 const ITEMS_PER_PAGE = 20;
@@ -75,13 +122,14 @@ function TrovesPageContent() {
     const troveId = searchParams.get("troveId");
     if (troveId) filters.troveId = troveId;
 
-    // Carry RAW status intent: "all" (explicit show-everything) and the
-    // concrete statuses pass through verbatim; absence stays undefined so the
-    // contextual default (open on the bare directory, all on a scoped query)
-    // is applied at use via effectiveStatus(). See lib/liquity-v2/
-    // listing-visibility.ts. The landing strip's status=open is unaffected.
-    const status = searchParams.get("status");
-    if (status) filters.status = status;
+    // Carry RAW status intent as a bucket selection. Absence stays undefined so
+    // the contextual default (active on the bare directory, everything on a
+    // scoped query) is applied at use via effectiveStatuses(). The canonical URL
+    // form is `status=active,zombie,...`; the legacy raw form (status=open +
+    // showZombie) is translated for bookmark stability. See lib/liquity-v2/
+    // listing-visibility.ts.
+    const statuses = parseStatusParam(searchParams.get("status"), searchParams.get("showZombie"));
+    if (statuses) filters.statuses = statuses;
 
     // collateralTypes (multi) is the canonical form; honor the legacy
     // collateralType (single) for old links.
@@ -123,14 +171,6 @@ function TrovesPageContent() {
     const hasRedemptionsParam = searchParams.get("hasRedemptions");
     if (hasRedemptionsParam === "true") filters.hasRedemptions = true;
     if (hasRedemptionsParam === "false") filters.hasRedemptions = false;
-
-    // Handle showZombie. "all" = explicit show-everything; true/false are
-    // concrete choices; absence stays undefined so the contextual default
-    // (hide on the bare directory, all on a scoped query) applies at use.
-    const showZombieParam = searchParams.get("showZombie");
-    if (showZombieParam === "all") filters.showZombie = "all";
-    else if (showZombieParam === "true") filters.showZombie = true;
-    else if (showZombieParam === "false") filters.showZombie = false;
 
     const sortBy = searchParams.get("sortBy");
     if (sortBy) filters.sortBy = sortBy;
@@ -200,23 +240,21 @@ function TrovesPageContent() {
     // Add filters
     if (filterParams.troveId) params.set("troveId", filterParams.troveId);
 
-    // Status / zombie visibility. The same builder feeds both the shareable
+    // Status (multi-select buckets). The same builder feeds both the shareable
     // URL (forApi=false) and the /api/troves request (forApi=true):
-    //   - URL: write only when the user's choice differs from the contextual
-    //     default, so directory + wallet-view URLs stay clean and the absence
-    //     of the param is what drives auto-relax on the next read.
-    //   - API: send the resolved server-side filter; "all" means no filter.
+    //   - URL: write the comma-separated buckets only when the selection differs
+    //     from the contextual default, so directory + wallet-view URLs stay clean
+    //     and the absence of the param is what drives auto-relax on the next read.
+    //   - API: send the resolved bucket selection; the full set ("everything")
+    //     is sent as no `status` param, which the backend reads as no filter.
     if (forApi) {
-      const effStatus = effectiveStatus(filterParams);
-      if (effStatus !== "all") params.set("status", effStatus);
-      const effZombie = effectiveShowZombie(filterParams);
-      if (typeof effZombie === "boolean") params.set("showZombie", String(effZombie));
-    } else {
-      if (filterParams.status !== undefined && filterParams.status !== defaultStatus(filterParams)) {
-        params.set("status", filterParams.status);
+      if (!isAllStatuses(filterParams)) {
+        params.set("status", effectiveStatuses(filterParams).join(","));
       }
-      if (filterParams.showZombie !== undefined && filterParams.showZombie !== defaultShowZombie(filterParams)) {
-        params.set("showZombie", String(filterParams.showZombie));
+    } else {
+      const eff = effectiveStatuses(filterParams);
+      if (!sameStatusSet(eff, defaultStatuses(filterParams))) {
+        params.set("status", eff.join(","));
       }
     }
 

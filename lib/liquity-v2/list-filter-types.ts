@@ -4,9 +4,14 @@
 // for existing callers (the listing page). Visibility helpers live separately in
 // lib/liquity-v2/listing-visibility.ts.
 
+import type { StatusBucket } from "@/lib/liquity-v2/listing-visibility";
+
 export interface TroveListFilterParams {
   troveId?: string;
-  status?: string;
+  /** Multi-select status buckets (active / zombie / closed / liquidated).
+   *  Empty/undefined = use the contextual default (active on the bare directory,
+   *  everything on a scoped wallet/trove query). See listing-visibility.ts. */
+  statuses?: StatusBucket[];
   /** Multi-select collateral types. Empty/undefined = all. */
   collateralTypes?: string[];
   ownerAddress?: string;
@@ -16,9 +21,6 @@ export interface TroveListFilterParams {
   batchOnly?: boolean;
   individualOnly?: boolean;
   hasRedemptions?: boolean;
-  /** Zombie visibility. true = only zombies, false = hide zombies,
-   *  "all" = explicit show-everything, undefined = use contextual default. */
-  showZombie?: boolean | "all";
   sortBy?: string;
   sortOrder?: "asc" | "desc";
 }
