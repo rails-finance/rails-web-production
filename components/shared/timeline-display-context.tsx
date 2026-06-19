@@ -42,17 +42,17 @@ export interface TimelineDisplayState {
 }
 
 const DEFAULTS = {
-  showTimestamps: false,
+  showTimestamps: true,
   showChangeBars: false,
   showBalanceBars: false,
   showTimelineValues: true,
   showTickerLabels: false,
-  showUsdValues: false,
+  showUsdValues: true,
   showEventNumbers: false,
   showInterestRates: false,
   showCollateralRatio: false,
 };
-const STORAGE_KEY = "timeline-display-v2";
+const STORAGE_KEY = "timeline-display-v3";
 
 const Ctx = createContext<TimelineDisplayState>({
   ...DEFAULTS,
