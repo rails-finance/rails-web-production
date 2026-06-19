@@ -62,7 +62,7 @@ export function TroveIdentityRow({
               e.stopPropagation();
               router.push(`/liquity-v2?ownerAddress=${ownerAddress}`);
             }}
-            className={`font-mono hover:text-foreground transition-colors cursor-pointer ${isLastOwner ? "opacity-70" : ""}`}
+            className={`font-mono hover:text-blue-500 transition-colors cursor-pointer ${isLastOwner ? "opacity-70" : ""}`}
             aria-label={`Filter troves by owner ${ownerLabel}`}
           >
             {ownerLabel}
