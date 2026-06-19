@@ -95,6 +95,15 @@ export interface AaveSpokeCardInfo {
    *  dashboards label THIS figure "Collateral"; Rails' headline "Collateral"
    *  shows the gross totalSupplyUsd, so the explanation panel states both. */
   weightedCollateralUsd: number;
+  /** Collateral-only blended liquidation threshold — Σ(collateralUsd × lt) /
+   *  Σ(collateralUsd) over collateral-enabled reserves, on the chain-truth
+   *  balance basis. Computed with the IDENTICAL formula `describeCollateral
+   *  Exposure` uses (lib/aave-v4/position-exposure), so the exposure sentence
+   *  ("…% blended liquidation threshold") and the position-explanation panel
+   *  ("each asset counts only up to its liquidation threshold, ~…%") state the
+   *  same number rather than two same-looking-but-differently-derived figures.
+   *  null when there's no priced collateral. */
+  blendedLt: number | null;
   totalDebtUsd: number;
   peakSupplyUsd: number;
   peakDebtUsd: number;
@@ -652,11 +661,29 @@ export function buildSpokeCards(
 
     const wasLiquidated = g.result.reserves.some((r) => r.liquidationCount > 0);
 
+    // Collateral-only blended LT on the chain-truth basis — same formula as the
+    // exposure sentence (describeCollateralExposure) so the two readouts agree.
+    // Σ(collateralUsd × lt) / Σ(collateralUsd) over collateral-enabled reserves,
+    // using currentSupplied when chain-patched and the same net-supply fallback
+    // and LT-fallback the exposure component uses.
+    let collValueUsd = 0;
+    let collWeightedLtUsd = 0;
+    for (const r of g.result.reserves) {
+      if (!(r.collateralEnabled ?? true)) continue;
+      const amount = r.currentSupplied ?? Math.max(0, r.supplied - r.withdrawn - r.liquidatedCollateral);
+      if (amount <= 0) continue;
+      const usd = amount * (resolvePrice(r.symbol, prices) ?? 1);
+      collValueUsd += usd;
+      collWeightedLtUsd += usd * (r.lt ?? AAVE_V4_FALLBACK_LT);
+    }
+    const blendedLt = collValueUsd > 0 ? collWeightedLtUsd / collValueUsd : null;
+
     return {
       name: g.name,
       hub: g.hub,
       totalSupplyUsd: g.totalSupplyUsd,
       weightedCollateralUsd: simResult.weightedCollateralUsd,
+      blendedLt,
       totalDebtUsd: g.totalDebtUsd,
       peakSupplyUsd,
       peakDebtUsd,

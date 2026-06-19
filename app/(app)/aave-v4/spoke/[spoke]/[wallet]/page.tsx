@@ -767,7 +767,7 @@ function AaveV4SpokeEconomicsBand({
         onToggleHideSurplus={() => setHideSurplus((v) => !v)}
       />
 
-      <AaveV4PositionExposure reserves={reserves} prices={prices} />
+      <AaveV4PositionExposure reserves={reserves} prices={prices} blendedLt={runwayCard?.blendedLt} />
 
       {runwayCard && <AaveV4SpokeRunwayStack spoke={runwayCard} />}
 
@@ -799,6 +799,13 @@ function AaveV4SpokeEconomicsBand({
               <span>
                 The whole spoke shares one health factor, so a broad drop across several collaterals at once would trip
                 liquidation sooner than any single asset&apos;s runway implies.
+              </span>
+            </div>
+            <div className="flex items-start gap-2 leading-relaxed">
+              <span className="select-none text-rb-500">•</span>
+              <span>
+                Reaching a liquidation price doesn&apos;t close the position — Aave liquidates only partially, repaying
+                enough debt to nudge the health factor back above 1.0.
               </span>
             </div>
             <div className="flex items-start gap-2 leading-relaxed">

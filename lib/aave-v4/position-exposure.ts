@@ -43,7 +43,15 @@ function joinClauses(parts: string[]): string {
   return `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}`;
 }
 
-export function describeCollateralExposure(reserves: ExposureInput[]): CollateralExposure {
+export function describeCollateralExposure(
+  reserves: ExposureInput[],
+  // Canonical blended LT from the spoke (AaveSpokeCardInfo.blendedLt), computed
+  // with this same formula on the chain-truth basis. When passed, the sentence
+  // states it verbatim instead of recomputing, so the exposure line and the
+  // position-explanation panel (which reads the same field) can't drift. Omit
+  // (undefined) to compute locally; null suppresses the LT clause.
+  blendedLtOverride?: number | null,
+): CollateralExposure {
   const coll = reserves.filter((r) => r.collateralUsd > 0);
   const totalUsd = coll.reduce((s, r) => s + r.collateralUsd, 0);
   const empty: CollateralExposure = {
@@ -72,22 +80,27 @@ export function describeCollateralExposure(reserves: ExposureInput[]): Collatera
   const topPct = Math.round((bySymbol[0].collateralUsd / totalUsd) * 100);
   const dominant = topPct >= 60 ? { symbol: bySymbol[0].symbol, pct: topPct } : null;
 
-  // Blended LT.
-  const blendedLt = coll.reduce((s, r) => s + r.collateralUsd * r.lt, 0) / totalUsd;
+  // Blended LT — the override when the caller holds the canonical spoke value,
+  // otherwise Σ(usd·lt)/Σ(usd) over this reserve set.
+  const blendedLtComputed = coll.reduce((s, r) => s + r.collateralUsd * r.lt, 0) / totalUsd;
+  const blendedLt = blendedLtOverride !== undefined ? blendedLtOverride : blendedLtComputed;
 
   // Compose the sentence. A single asset reads best by name (the class label
   // is noise — "entirely AAVE" beats "all other across 1 asset"); multi-asset
   // lists the class shares, collapsing to "all X" when one class covers it.
   let sentence: string;
+  // LT as a whole percent (not a 0–1 decimal) to match the position-explanation
+  // panel's "about NN% of its value" phrasing — same metric, one format.
+  const ltPct = blendedLt != null && blendedLt > 0 ? Math.round(blendedLt * 100) : 0;
   if (coll.length === 1) {
-    const ltPart = blendedLt > 0 ? `, at a ${blendedLt.toFixed(2)} liquidation threshold` : "";
+    const ltPart = ltPct > 0 ? `, at a ${ltPct}% liquidation threshold` : "";
     sentence = `Collateral is entirely ${bySymbol[0].symbol}${ltPart}.`;
   } else {
     const classPart =
       classes.length === 1 ? `all ${classes[0].label}` : joinClauses(classes.map((c) => `${c.pct}% ${c.label}`));
-    const ltPart = blendedLt > 0 ? `, at a ${blendedLt.toFixed(2)} blended liquidation threshold` : "";
+    const ltPart = ltPct > 0 ? `, at a ${ltPct}% blended liquidation threshold` : "";
     sentence = `Collateral is ${classPart} across ${coll.length} assets${ltPart}.`;
   }
 
-  return { totalUsd, assetCount: coll.length, classes, dominant, blendedLt: blendedLt || null, sentence };
+  return { totalUsd, assetCount: coll.length, classes, dominant, blendedLt: blendedLt ?? null, sentence };
 }

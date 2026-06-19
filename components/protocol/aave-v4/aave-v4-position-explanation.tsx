@@ -37,23 +37,42 @@ function buildInterestItems(pnl: AaveV4InterestPnl): React.ReactNode[] {
       </span>,
     );
   }
-  for (const a of pnl.assets) {
-    if (a.supplyInterest > 0) {
-      items.push(
-        <span key={`earn-${a.symbol}`}>
-          Earned {fmtTokenAmount(a.supplyInterest)} {aaveV4DisplaySymbol(a.symbol)}
-          {a.supplyInterestUsd > 0 && <> ({fmtUsd(a.supplyInterestUsd).display})</>} in supply interest.
-        </span>,
-      );
-    }
-    if (a.borrowInterest > 0) {
-      items.push(
-        <span key={`paid-${a.symbol}`}>
-          Paid {fmtTokenAmount(a.borrowInterest)} {aaveV4DisplaySymbol(a.symbol)}
-          {a.borrowInterestUsd > 0 && <> ({fmtUsd(a.borrowInterestUsd).display})</>} in borrow interest.
-        </span>,
-      );
-    }
+  // Per-asset earned/paid folded into a single bullet rather than one line each
+  // (a multi-asset position otherwise spawns four+ near-identical bullets).
+  const earned = pnl.assets.filter((a) => a.supplyInterest > 0);
+  const paid = pnl.assets.filter((a) => a.borrowInterest > 0);
+  const leg = (amount: number, symbol: string, usd: number) => (
+    <>
+      {fmtTokenAmount(amount)} {aaveV4DisplaySymbol(symbol)}
+      {usd > 0 && <> ({fmtUsd(usd).display})</>}
+    </>
+  );
+  const joinLegs = (nodes: React.ReactNode[]) =>
+    nodes.map((n, i) => (
+      <span key={i}>
+        {i > 0 ? (i === nodes.length - 1 ? " and " : ", ") : null}
+        {n}
+      </span>
+    ));
+  if (earned.length > 0 || paid.length > 0) {
+    items.push(
+      <span key="interest-breakdown">
+        {earned.length > 0 && (
+          <>
+            Earned {joinLegs(earned.map((a) => leg(a.supplyInterest, a.symbol, a.supplyInterestUsd)))} in supply
+            interest
+          </>
+        )}
+        {earned.length > 0 && paid.length > 0 && "; "}
+        {paid.length > 0 && (
+          <>
+            {earned.length > 0 ? "paid " : "Paid "}
+            {joinLegs(paid.map((a) => leg(a.borrowInterest, a.symbol, a.borrowInterestUsd)))} in borrow interest
+          </>
+        )}
+        .
+      </span>,
+    );
   }
   if (pnl.unattributed) {
     items.push(
@@ -136,13 +155,12 @@ function buildSpokePositionItems(spoke: AaveSpokeCardInfo): React.ReactNode[] {
         .
       </span>,
     );
-    if (spoke.totalSupplyUsd > 0 && spoke.weightedCollateralUsd > 0) {
+    if (spoke.blendedLt != null && spoke.weightedCollateralUsd > 0) {
       items.push(
         <span key="collateral-basis">
           Borrowing and the health factor don&rsquo;t credit the full deposit — each asset counts only up to its
-          liquidation threshold (about {Math.round((spoke.weightedCollateralUsd / spoke.totalSupplyUsd) * 100)}% of its
-          value here). So this collateral can carry up to {fmtUsd(spoke.weightedCollateralUsd).display} of debt before
-          the position becomes liquidatable.
+          liquidation threshold (about {Math.round(spoke.blendedLt * 100)}% of its value here). So this collateral can
+          carry up to {fmtUsd(spoke.weightedCollateralUsd).display} of debt before the position becomes liquidatable.
         </span>,
       );
     }
@@ -189,18 +207,30 @@ function buildSpokePositionItems(spoke: AaveSpokeCardInfo): React.ReactNode[] {
   }
 
   // Lifetime history — event-derived peaks (same framing as the tower chart).
-  if (spoke.peakSupplyUsd > 1 || spoke.peakDebtUsd > 1) {
+  // Only when a peak meaningfully exceeds the current position; a peak is always
+  // ≥ current, so when they're level this bullet just restates the headline
+  // collateral/debt (the first bullet) and is pure repetition. Each clause is
+  // gated on its own peak so a level side never echoes its current value.
+  const peakSupplyAbove = spoke.peakSupplyUsd > 1 && spoke.peakSupplyUsd > spoke.totalSupplyUsd * 1.01;
+  const peakDebtAbove = spoke.peakDebtUsd > 1 && spoke.peakDebtUsd > spoke.totalDebtUsd * 1.01;
+  if (peakSupplyAbove || peakDebtAbove) {
+    let body: React.ReactNode;
+    const supplyNode = <strong className="text-foreground">{fmtUsd(spoke.peakSupplyUsd).display}</strong>;
+    const debtNode = <strong className="text-foreground">{fmtUsd(spoke.peakDebtUsd).display}</strong>;
+    if (peakSupplyAbove && peakDebtAbove) {
+      body = (
+        <>
+          supply peaked at {supplyNode} and debt at {debtNode}
+        </>
+      );
+    } else if (peakSupplyAbove) {
+      body = <>supply peaked at {supplyNode}</>;
+    } else {
+      body = <>debt peaked at {debtNode}</>;
+    }
     items.push(
       <span key="peaks">
-        Across {spoke.eventCount} event{spoke.eventCount === 1 ? "" : "s"}, supply peaked at{" "}
-        <strong className="text-foreground">{fmtUsd(spoke.peakSupplyUsd).display}</strong>
-        {spoke.peakDebtUsd > 1 && (
-          <>
-            {" "}
-            and debt at <strong className="text-foreground">{fmtUsd(spoke.peakDebtUsd).display}</strong>
-          </>
-        )}
-        .
+        Across {spoke.eventCount} event{spoke.eventCount === 1 ? "" : "s"}, {body}.
       </span>,
     );
   }

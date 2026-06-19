@@ -31,10 +31,12 @@ import { fmtPrice } from "@/components/shared/price-pill";
  *   • **Liquidation zone** — red, from the liquidation price to the right edge.
  *     The one deliberate colour: being at/below the liquidation price is a hard
  *     on-chain fact, not an opinion. It deepens once the live price is in it.
- *   • **Ruler** — an "n% drop from the live price" label every 10% (the same
- *     basis as the resting "% from liquidation" readout, so the two never
- *     disagree), brightest at the liquidation line and fading with distance from
- *     it; the safe upside carries no ticks, reading as unbounded off the left edge.
+ *   • **Ruler** — a "% from liquidation" axis: a gridline every 10%, 0% ON the
+ *     liquidation line and the numbers climbing leftward into the safe runway.
+ *     Same basis as the resting "% from liquidation" readout — (price − liq) /
+ *     price — so the live-price marker lands on exactly the value the caption
+ *     states and the two can't disagree. Brightest at the liquidation line (where
+ *     the runway runs out) and fading as the runway lengthens off the left edge.
  *     Revealed only on hover, and only on hover-capable (desktop) pointers — touch /
  *     mobile never shows it, so the resting readouts can't be crowded there. The
  *     resting "% from liquidation" / "liquidation $" readouts stay put under the
@@ -137,20 +139,23 @@ export function PriceRunway({ currentPrice, liqPrice }: PriceRunwayProps) {
   const fillEnd = offscreen ? OFFSCREEN_STUB : Math.min(fillPct, liqPos);
   const headroomW = Math.max(0, liqPos - fillEnd);
 
-  // Ruler increments in the SAME basis as the readout: each tick is an n% drop
-  // from the live price (0% at the price marker, growing toward the liquidation
-  // line), so the marker's "X% from liquidation" label lines up with where the
-  // liq line actually falls on the ruler. Brightest at the liquidation line and
-  // fading with distance from it — the crisp band marks where the runway runs
-  // out. Ticks outside the drawn window are dropped rather than clamped to an edge.
+  // A "% from liquidation" axis in the SAME basis as the readout — each tick is
+  // the % a price sits above the liquidation line, (p − liq) / p — with 0% ON the
+  // liquidation line and the numbers climbing LEFTWARD into the safe runway. So
+  // the live-price marker lands on exactly the "X% from liquidation" the resting
+  // caption states (the two can't disagree), instead of the inverse "% drop from
+  // today" reading whose big numbers pointed at the red. Brightest at the
+  // liquidation line — where the runway runs out — and fading as the runway
+  // lengthens. Ticks past the window's left edge are dropped, not clamped.
   const rulerTicks = [];
   for (let n = 0; n <= RULER_MAX_PCT; n += 10) {
-    const raw = ((windowTop - currentPrice * (1 - n / 100)) / range) * 100;
+    const price = liqPrice! / (1 - n / 100); // (price − liq) / price = n/100
+    const raw = ((windowTop - price) / range) * 100;
     if (raw < 0 || raw > 100) continue;
     rulerTicks.push({
       pct: n,
       pos: raw,
-      opacity: Math.max(0, 1 - Math.abs(pctFromLiq - n) / RULER_FADE_DENOM),
+      opacity: Math.max(0, 1 - n / RULER_FADE_DENOM),
     });
   }
 
