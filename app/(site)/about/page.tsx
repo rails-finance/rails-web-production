@@ -81,7 +81,7 @@ export default function AboutPage() {
             people to understand and navigate safely.
           </p>
           <p className={LEAD}>
-            Rails is a specialized analytics platform that fixes that. Rails takes raw Ethereum L1 data from{" "}
+            Rails is a specialised analytics platform that fixes that. Rails takes raw Ethereum L1 data from{" "}
             <Link href="/liquity-v2" className="text-blue-500 hover:underline transition-colors">
               Liquity V2
             </Link>{" "}
@@ -100,9 +100,9 @@ export default function AboutPage() {
       <div className="max-w-3xl mx-auto px-4 md:px-6 py-16">
         <section>
           <h2 className={`${H2} mb-4`}>Key Features</h2>
-          <ul className="space-y-2 leading-relaxed">
+          <ul className="space-y-2">
             {KEY_FEATURES.map((f) => (
-              <li key={f} className="body-text flex gap-3">
+              <li key={f} className={`${LEAD} flex gap-3`}>
                 <span className="text-rb-500 shrink-0">·</span>
                 <span>{f}</span>
               </li>
