@@ -96,7 +96,6 @@ function CollateralMetric({
   afterInUsd,
   isClose,
   isLiquidation,
-  collSurplus,
 }: {
   collateralType: string;
   before: number;
@@ -105,11 +104,9 @@ function CollateralMetric({
   afterInUsd: number;
   isClose: boolean;
   isLiquidation: boolean;
-  collSurplus?: number;
 }) {
   const { showUsdValues } = useTimelineDisplay();
   const hasChange = isClose ? before !== after : before !== 0 && before !== after;
-  const hasSurplus = collSurplus !== undefined && collSurplus > 0;
 
   return (
     <StateMetric label="Collateral">
@@ -141,7 +138,6 @@ function CollateralMetric({
           </span>
         )}
       </StateTransition>
-      {hasSurplus && <div className="text-xs text-foreground mt-0.5">+{formatColl(collSurplus)} claimable surplus</div>}
     </StateMetric>
   );
 }
@@ -247,17 +243,6 @@ function CollateralRatioMetric({
   );
 }
 
-// ── Stat (for breakdown sections) ───────────────────────────────────
-
-function Stat({ label, value, className }: { label: string; value: string; className?: string }) {
-  return (
-    <div className="flex flex-col">
-      <span className=" text-xs">{label}</span>
-      <span className={`font-bold text-sm ${className ?? ""}`}>{value}</span>
-    </div>
-  );
-}
-
 // ── Main component ──────────────────────────────────────────────────
 
 export interface LiquityEventDetailProps {
@@ -342,7 +327,6 @@ export function LiquityEventDetail({
   }
 
   const afterCollInUsd = stateAfter.coll * collPrice;
-  const claimableSurplus = liquidation && liquidation.collSurplus > 0 ? liquidation.collSurplus : undefined;
 
   const showGrid = beforeDebt > 0 || stateAfter.debt > 0 || isClose;
 
@@ -371,7 +355,6 @@ export function LiquityEventDetail({
                 afterInUsd={afterCollInUsd}
                 isClose={isClose}
                 isLiquidation={isLiquidation}
-                collSurplus={claimableSurplus}
               />
               <DebtMetric
                 before={beforeDebt}
@@ -413,48 +396,11 @@ export function LiquityEventDetail({
         </div>
       )}
 
-      {/* Liquidation breakdown */}
-      {liquidation && (
-        <div className="px-4 py-2">
-          <span className="text-sm font-semibold text-foreground">Liquidation Breakdown</span>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
-            <Stat
-              label="Debt offset by SP"
-              value={`${toLocaleStringHelper(liquidation.debtOffsetBySP)} ${ctx.assetType ?? "BOLD"}`}
-            />
-            {liquidation.debtRedistributed > 0 && (
-              <Stat
-                label="Debt redistributed"
-                value={`${toLocaleStringHelper(liquidation.debtRedistributed)} ${ctx.assetType ?? "BOLD"}`}
-              />
-            )}
-            <Stat
-              label="Coll to SP"
-              value={`${formatColl(liquidation.collSentToSP)} ${ctx.collateralType} (${formatUsd(liquidation.collSentToSP * liquidation.price)})`}
-            />
-            {liquidation.collRedistributed > 0 && (
-              <Stat
-                label="Coll redistributed"
-                value={`${formatColl(liquidation.collRedistributed)} ${ctx.collateralType}`}
-              />
-            )}
-            {liquidation.collSurplus > 0 && (
-              <Stat
-                label="Surplus returned"
-                value={`${formatColl(liquidation.collSurplus)} ${ctx.collateralType} (${formatUsd(liquidation.collSurplus * liquidation.price)})`}
-                className="text-foreground"
-              />
-            )}
-            <Stat label="Price" value={formatUsd(liquidation.price)} />
-            {liquidation.boldGasCompensation > 0 && (
-              <Stat
-                label="Gas Compensation"
-                value={`${toLocaleStringHelper(liquidation.boldGasCompensation)} ${ctx.assetType ?? "BOLD"} + ${formatColl(liquidation.collGasCompensation)} ${ctx.collateralType}`}
-              />
-            )}
-          </div>
-        </div>
-      )}
+      {/* Liquidation breakdown intentionally lives only in the event footnote
+          (explainer) now — the per-line detail (debt cleared, collateral
+          liquidated, claimable surplus, SP/liquidator splits) is generated
+          there by generateLiquidateItems, so it no longer appears in the
+          details body. */}
 
       {/* Historic collateral price pill, sharing its row with the redemption
           P/L (net outcome) on the left. P/L reconciles with the Cleared /

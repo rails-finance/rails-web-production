@@ -16,7 +16,10 @@ function getOperationStyle(operation: string, ctx?: LiquityContext): OperationSt
   switch (operation) {
     case "openTrove":
     case "openTroveAndJoinBatch":
-      return { label: "Open", color: "text-white", bg: "bg-green-500", badge: true };
+      // Soft-tint pill matching the Aave V4 "Enable" header badge — the two
+      // "you opened a position" actions now share one visual grammar, on the
+      // semantic `positive` token (color-grammar.md §5: the Open/active green).
+      return { label: "Open", color: "text-positive", bg: "bg-positive/20", badge: true };
     case "closeTrove":
       return { label: "Close", color: "", bg: "bg-rb-500/20 dark:bg-rb-500/20", badge: true };
     case "liquidate":
@@ -225,9 +228,7 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
             </>
           ) : ctx.operation === "openTrove" || ctx.operation === "openTroveAndJoinBatch" ? (
             <>
-              <span
-                className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${style.bg} ${style.color}`}
-              >
+              <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${style.bg} ${style.color}`}>
                 {style.label}
               </span>
               {hasCollChange && (
@@ -277,9 +278,36 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
                 </span>
               )}
             </>
+          ) : ctx.operation === "liquidate" ? (
+            // The dotted spine carries a critical "LIQUIDATION" pill on desktop,
+            // so the header badge is mobile-only here. The freed space lets the
+            // facts read with labels — collateral liquidated, debt cleared —
+            // mirroring the redemption header grammar. Labels stay neutral
+            // (rb-500); the red spine alone carries the critical valence.
+            <>
+              <span
+                className={`sm:hidden inline-block px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${style.bg} ${style.color}`}
+              >
+                {style.label}
+              </span>
+              {hasCollChange && (
+                <span className="inline-flex items-center gap-1.5 text-sm">
+                  <span className="text-rb-500">Liquidated</span>
+                  <span className={`font-bold text-foreground ${hideVal}`}>{formatNumber(Math.abs(collChange))}</span>
+                  <TokenChipIcon symbol={ctx.collateralType} size={16} />
+                </span>
+              )}
+              {hasDebtChange && (
+                <span className="inline-flex items-center gap-1.5 text-sm">
+                  <span className="text-rb-500">Cleared</span>
+                  <span className={`font-bold text-foreground ${hideVal}`}>{formatNumber(Math.abs(debtChange))}</span>
+                  <TokenChipIcon symbol={ctx.assetType ?? "BOLD"} size={16} />
+                </span>
+              )}
+            </>
           ) : style.badge ? (
             <span
-              className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${style.bg} ${style.color} ${ctx.operation === "liquidate" ? "sm:hidden" : ""}`}
+              className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wide ${style.bg} ${style.color}`}
             >
               {style.label}
             </span>
@@ -312,12 +340,13 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
             <span className="text-sm text-rb-500">{style.label}</span>
           )}
 
-          {/* Debt change (skip for open trove, redemption, delegate, and combined — shown inline or n/a) */}
+          {/* Debt change (skip for open trove, redemption, liquidation, delegate, and combined — shown inline or n/a) */}
           {hasDebtChange &&
             !style.label.includes(" + ") &&
             ctx.operation !== "openTrove" &&
             ctx.operation !== "openTroveAndJoinBatch" &&
             ctx.operation !== "redeemCollateral" &&
+            ctx.operation !== "liquidate" &&
             ctx.operation !== "setInterestBatchManager" && (
               <span className="inline-flex items-center gap-1.5 text-sm">
                 <span className={`font-bold text-foreground ${hideVal}`}>{formatNumber(Math.abs(debtChange))}</span>
@@ -325,18 +354,31 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
               </span>
             )}
 
-          {/* Collateral change (skip for open trove, redemption, delegate, and combined) */}
+          {/* Collateral change (skip for open trove, redemption, liquidation, delegate, and combined) */}
           {hasCollChange &&
             !style.label.includes(" + ") &&
             ctx.operation !== "openTrove" &&
             ctx.operation !== "openTroveAndJoinBatch" &&
             ctx.operation !== "redeemCollateral" &&
+            ctx.operation !== "liquidate" &&
             ctx.operation !== "setInterestBatchManager" && (
               <span className="inline-flex items-center gap-1.5 text-sm">
                 <span className={`font-bold text-foreground ${hideVal}`}>{formatNumber(Math.abs(collChange))}</span>
                 <TokenChipIcon symbol={ctx.collateralType} size={16} />
               </span>
             )}
+
+          {/* Claimable collateral surplus — on a liquidation where the trove's
+              collateral value exceeded its debt, the remainder is returned to
+              the owner and remains claimable. Mirrors the prod liquidation
+              header (and the redemption "claimable" treatment in the detail). */}
+          {ctx.operation === "liquidate" && ctx.liquidation && ctx.liquidation.collSurplus > 0 && (
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-green-500/20 text-green-700 dark:text-green-400">
+              <span>{ctx.liquidation.collSurplus.toFixed(4)}</span>
+              <TokenChipIcon symbol={ctx.collateralType} size={16} />
+              claimable
+            </span>
+          )}
 
           {/* Interest rate — single pill. The label already says it's a rate,
               so no second "% APR" is needed in the trailing cluster below. */}
