@@ -19,6 +19,13 @@
 
   --color-green-600: #008900;
   --color-green-400: #4ade80;
+
+  /* Informational · positive (color-grammar.md §5) — the single functional
+     "positive / open / active" green. Drives the soft-tint Open/Enable header
+     pills (bg-positive/20 + text-positive). Its own token, deliberately kept
+     separate from the --marketing green even at a shared value so either can
+     retune without dragging the other. */
+  --color-positive: #22c55e; /* green-500 */
 }
 
 /* ── Rails-explorer brand palette (additive, ported during phase-1 reskin) ──

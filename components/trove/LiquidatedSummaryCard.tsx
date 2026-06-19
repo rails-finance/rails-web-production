@@ -16,13 +16,15 @@ export function LiquidatedSummaryCard({ trove }: LiquidatedSummaryCardProps) {
             left, "X ago" pill + redemption/tx counters on the right. */}
         <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
           <span className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold tracking-wider px-2 py-0.5 bg-red-700 text-white rounded-xs text-xs">
-              LIQUIDATED
-            </span>
-            <span className="text-xs font-bold uppercase tracking-wide text-foreground/80">
-              {trove.collateralType}
-            </span>
-            <TroveIdentityRow troveId={trove.id} collateralType={trove.collateralType} owner={trove.owner} lastOwner={trove.lastOwner} ownerEns={trove.ownerEns} />
+            <span className="font-bold px-2 py-0.5 rounded-full text-xs bg-red-500/20 text-red-500">Liquidated</span>
+            <span className="text-xs font-bold uppercase tracking-wide text-foreground/80">{trove.collateralType}</span>
+            <TroveIdentityRow
+              troveId={trove.id}
+              collateralType={trove.collateralType}
+              owner={trove.owner}
+              lastOwner={trove.lastOwner}
+              ownerEns={trove.ownerEns}
+            />
           </span>
           <span className="flex items-center gap-2 text-xs text-rb-500">
             <span className="inline-flex items-center gap-1">

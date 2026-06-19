@@ -155,9 +155,7 @@ export function OpenSummaryCard({
       <div className="text-foreground">
         <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
           <span className="flex items-center gap-2 flex-wrap">
-            <span className="font-bold tracking-wider px-2 py-0.5 bg-rb-300 dark:bg-rb-700 text-foreground/80 dark:text-foreground/60 rounded-xs text-xs">
-              OPEN
-            </span>
+            <span className="font-bold px-2 py-0.5 rounded-full text-xs bg-positive/20 text-positive">Open</span>
             <span className="text-xs font-bold uppercase tracking-wide text-foreground/80">{trove.collateralType}</span>
             <TroveIdentityRow
               troveId={trove.id}

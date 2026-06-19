@@ -3,8 +3,8 @@
 // pills speak the same vocabulary (NO DEBT / OPEN / UNDERWATER).
 //
 // The vocabulary is deliberately limited to factual states, not risk
-// judgements: NO DEBT (nothing borrowed), OPEN (active, above the liquidation
-// threshold), UNDERWATER (HF < 1 — liquidatable, a hard on-chain fact). Rails
+// judgements: No debt (nothing borrowed), Open (active, above the liquidation
+// threshold), Underwater (HF < 1 — liquidatable, a hard on-chain fact). Rails
 // does not editorialize where within the open band a position sits with words
 // like "cautious" or "at risk"; the HF value and headroom % carry that meaning.
 //
@@ -24,10 +24,10 @@ const NEUTRAL_PILL = "bg-rb-300 dark:bg-rb-700 text-foreground/80 dark:text-fore
 
 export function bucketForHealth(hf: number | null): HealthBucket {
   if (hf == null) {
-    return { pillLabel: "NO DEBT", pillClass: NEUTRAL_PILL, valueColor: "text-rb-500" };
+    return { pillLabel: "No debt", pillClass: NEUTRAL_PILL, valueColor: "text-rb-500" };
   }
   if (hf >= 1.0) {
-    return { pillLabel: "OPEN", pillClass: NEUTRAL_PILL, valueColor: "text-foreground/80" };
+    return { pillLabel: "Open", pillClass: NEUTRAL_PILL, valueColor: "text-foreground/80" };
   }
-  return { pillLabel: "UNDERWATER", pillClass: NEUTRAL_PILL, valueColor: "text-foreground/80" };
+  return { pillLabel: "Underwater", pillClass: NEUTRAL_PILL, valueColor: "text-foreground/80" };
 }

@@ -165,9 +165,7 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
   return (
     <OpenPositionStats
       statusPill={
-        <span className={`font-bold tracking-wider px-2 py-0.5 rounded-xs text-xs ${bucket.pillClass}`}>
-          {bucket.pillLabel}
-        </span>
+        <span className={`font-bold px-2 py-0.5 rounded-full text-xs ${bucket.pillClass}`}>{bucket.pillLabel}</span>
       }
       leadingIdentity={
         <>

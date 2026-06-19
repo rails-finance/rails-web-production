@@ -78,7 +78,7 @@ export function AaveV4EventHeader({ ctx, timestamp, txGroup, eventNumber }: Aave
         {groupChip}
         {ctx.alsoToggledCollateral ? (
           <>
-            <span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold bg-green-500/20 text-green-400">
+            <span className="inline-block px-2 py-0.5 rounded-full text-xs font-bold bg-positive/20 text-positive">
               Enable
             </span>
             <span className="text-sm text-rb-500">Supply</span>
