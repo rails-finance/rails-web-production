@@ -57,9 +57,12 @@ export function MetricsRow({
   };
 
   const engagementMetrics = [
-    { icon: TwitterReplyIcon, label: "Replies", value: metrics.replies, color: "text-sky-400" },
+    // Engagement icons follow the grammar: reply = interaction blue (matches the
+    // reply affordance in PulseContent), repost = positive green (§5), like =
+    // neutral (no valence — color-grammar.md §3). Reply/like were off-grammar hues.
+    { icon: TwitterReplyIcon, label: "Replies", value: metrics.replies, color: "text-blue-500" },
     { icon: TwitterRepostIcon, label: "Reposts", value: metrics.reposts, color: "text-green-500" },
-    { icon: TwitterLikeIcon, label: "Likes", value: metrics.likes, color: "text-rose-500" },
+    { icon: TwitterLikeIcon, label: "Likes", value: metrics.likes, color: "text-rb-500" },
   ].filter((item) => typeof item.value === "number" && item.value > 0);
 
   const hasViews = typeof metrics.views === "number" && metrics.views > 0;

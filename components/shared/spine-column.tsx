@@ -19,16 +19,17 @@ export type SpineIcon =
 /** Spine line style encoding agency */
 export type SpineVariant = "solid" | "dotted";
 
-/** Optional spine color tint — encodes subsystem or event category. The two
- *  adverse tones (caution/critical) double as the warningTone values, see §5. */
-export type SpineColor = "default" | "blue" | "green" | "violet" | "purple" | "caution" | "critical";
+/** Spine color tint. The spine line itself carries NO decorative/subsystem
+ *  tint — it stays neutral. The only tints are the two §5 adverse tones, which
+ *  are the warningTone values (caution = redemption + routine adverse, critical
+ *  = liquidation). External-party events (delegation) signal via the pink glyph
+ *  badge (color-grammar.md §4b), not the spine line. (The former blue/green/
+ *  violet/purple subsystem tints were retired — color variation doesn't belong
+ *  on the spine.) */
+export type SpineColor = "default" | "caution" | "critical";
 
 const SPINE_COLORS: Record<SpineColor, string> = {
   default: "rgb(101 115 140)", // rb-500
-  blue: "rgb(59 130 246)", // blue-500
-  green: "rgb(34 197 94)", // green-500
-  violet: "rgb(139 92 246)", // violet-500
-  purple: "rgb(168 85 247)", // purple-500
   caution: "rgb(249 115 22)", // orange-500 — redemption + all caution (color-grammar.md §5)
   critical: "rgb(239 68 68)", // red-500 — liquidation + critical
 };
@@ -36,10 +37,6 @@ const SPINE_COLORS: Record<SpineColor, string> = {
 /** Pulsing dot color matching spine tint */
 const DOT_COLORS: Record<SpineColor, string> = {
   default: "bg-green-400",
-  blue: "bg-blue-400",
-  green: "bg-green-400",
-  violet: "bg-violet-400",
-  purple: "bg-purple-400",
   caution: "bg-orange-400",
   critical: "bg-red-400",
 };
@@ -105,7 +102,7 @@ export interface SpineColumnProps {
 
 // ── Icon SVGs ───────────────────────────────────────────────────────────────
 
-function WarningIcon({ size, color = "#F59E0B" }: { size: number; color?: string }) {
+function WarningIcon({ size, color = "var(--caution)" }: { size: number; color?: string }) {
   return (
     <svg
       width={size}

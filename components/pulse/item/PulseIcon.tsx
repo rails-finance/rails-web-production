@@ -19,8 +19,14 @@ const GitHubIcon = ({ className = "size-6" }: { className?: string }) => (
  *  Mirrors the mark in `components/nav/header-bar.tsx`. */
 const RailsMark = ({ className = "size-6" }: { className?: string }) => (
   <svg viewBox="0 0 200 200" fill="currentColor" aria-hidden="true" className={className}>
-    <path style={{ opacity: 0.85 }} d="M 79.763 159.671 L 111.637 159.671 L 52.168 41.625 L 20.295 41.625 L 79.763 159.671 Z" />
-    <path style={{ opacity: 0.85 }} d="M 98.578 97.056 L 130.451 97.056 L 105.044 47.853 L 73.171 47.853 L 98.578 97.056 Z" />
+    <path
+      style={{ opacity: 0.85 }}
+      d="M 79.763 159.671 L 111.637 159.671 L 52.168 41.625 L 20.295 41.625 L 79.763 159.671 Z"
+    />
+    <path
+      style={{ opacity: 0.85 }}
+      d="M 98.578 97.056 L 130.451 97.056 L 105.044 47.853 L 73.171 47.853 L 98.578 97.056 Z"
+    />
     <path d="M 148.892 142.388 L 180.766 142.388 L 155.359 93.185 L 123.486 93.185 L 148.892 142.388 Z" />
   </svg>
 );
@@ -57,7 +63,7 @@ export function PulseIcon({
   return (
     <div className="relative flex h-full mr-2 sm:mr-4 md:mr-6 shrink-0 flex-col items-center">
       <div
-        className="absolute left-1/2 top-0 -z-10 flex h-full w-1 -translate-x-1/2 justify-center text-rb-300 dark:text-[#30343F]"
+        className="absolute left-1/2 top-0 -z-10 flex h-full w-1 -translate-x-1/2 justify-center text-rb-300 dark:text-rb-700"
         style={connectorStyle}
       >
         <TimelineConnector event={event} isFirst={isFirst} isLast={isLast} />

@@ -15,7 +15,9 @@ export function isDashedConnector(event: TimelineEvent): boolean {
   return isThirdParty(event.author);
 }
 
-const CONNECTOR_COLOR_CLASS = "text-rb-300 dark:text-[#30343F]";
+// Matches the base position timeline spine connector (timeline-spine.tsx):
+// rb-300 light / rb-700 dark. (Was a one-off dark hex, off-grammar.)
+const CONNECTOR_COLOR_CLASS = "text-rb-300 dark:text-rb-700";
 
 export function TimelineConnector({
   event,

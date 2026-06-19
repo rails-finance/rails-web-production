@@ -4,10 +4,11 @@ import { type ReactNode } from "react";
 import { ArrowUpRight } from "lucide-react";
 import type { TimelineActor, TimelineEvent, TimelineMetrics } from "@/types/pulse";
 import { Avatar } from "../shared/Avatar";
-import { formatFullDateTime } from "../types";
+import { formatFullDateTime, isInternalPlatform } from "../types";
 import { Handle } from "./Handle";
 
-const CONNECTOR_COLOR_CLASS = "bg-rb-300 dark:bg-[#30343F]";
+// Matches the base position timeline spine connector: rb-300 light / rb-700 dark.
+const CONNECTOR_COLOR_CLASS = "bg-rb-300 dark:bg-rb-700";
 
 export function NestedTimeline({
   entries,
@@ -31,6 +32,10 @@ export function NestedTimeline({
 }) {
   if (entries.length === 0) return null;
 
+  // Nested engagement links follow the parent platform: internal stays blue
+  // (§4a), everything else leaves Rails → external pink (§4b).
+  const isInternal = isInternalPlatform(platform);
+
   return (
     <div className="relative">
       <ul className="space-y-0">
@@ -42,24 +47,16 @@ export function NestedTimeline({
               {/* Connector column */}
               <div className="relative w-8 shrink-0">
                 {/* Vertical line - top segment (all entries including first) */}
-                <div
-                  className={`absolute left-2 top-0 w-px h-4 ${CONNECTOR_COLOR_CLASS}`}
-                />
+                <div className={`absolute left-2 top-0 w-px h-4 ${CONNECTOR_COLOR_CLASS}`} />
                 {/* Vertical line - bottom segment (all except last) */}
-                {!isLast && (
-                  <div
-                    className={`absolute left-2 top-4 bottom-0 w-px ${CONNECTOR_COLOR_CLASS}`}
-                  />
-                )}
+                {!isLast && <div className={`absolute left-2 top-4 bottom-0 w-px ${CONNECTOR_COLOR_CLASS}`} />}
                 {/* Horizontal line */}
-                <div
-                  className={`absolute left-2 top-4 h-px w-6 ${CONNECTOR_COLOR_CLASS}`}
-                />
+                <div className={`absolute left-2 top-4 h-px w-6 ${CONNECTOR_COLOR_CLASS}`} />
                 {/* Icon at junction point - centered over vertical line */}
                 {iconNode && (
                   <div
                     className="absolute flex items-center justify-center size-4 rounded-full bg-rb-100 dark:bg-rb-800"
-                    style={{ top: 'calc(1rem - 8px)', left: 'calc(0.5rem - 8px)' }}
+                    style={{ top: "calc(1rem - 8px)", left: "calc(0.5rem - 8px)" }}
                     title={formatFullDateTime(entry.date)}
                   >
                     {iconNode}
@@ -91,19 +88,22 @@ export function NestedTimeline({
                       {entry.actors && entry.actors.length > 0 ? (
                         <div className="flex items-center gap-0.5">
                           {entry.actors.map((actor) => (
-                            <span
-                              key={actor.handle}
-                              title={actor.handle}
-                              className="relative"
-                            >
-                              <Avatar handle={actor.handle} platform={platform} size={22} className="ring-2 ring-white dark:ring-rb-900" />
+                            <span key={actor.handle} title={actor.handle} className="relative">
+                              <Avatar
+                                handle={actor.handle}
+                                platform={platform}
+                                size={22}
+                                className="ring-2 ring-white dark:ring-rb-900"
+                              />
                             </span>
                           ))}
                         </div>
                       ) : entry.actor ? (
                         <Handle
                           handle={entry.actor}
-                          className="group-hover/nested:!text-blue-400"
+                          className={
+                            isInternal ? "group-hover/nested:!text-blue-400" : "group-hover/nested:!text-pink-400"
+                          }
                           platform={platform}
                           avatarSize={22}
                         />
@@ -111,7 +111,9 @@ export function NestedTimeline({
                         <div />
                       )}
                       <ArrowUpRight
-                        className="size-4 text-blue-500 opacity-0 group-hover/nested:opacity-100 transition-opacity"
+                        className={`size-4 opacity-0 group-hover/nested:opacity-100 transition-opacity ${
+                          isInternal ? "text-blue-500" : "text-pink-500"
+                        }`}
                         aria-hidden="true"
                       />
                     </div>
@@ -142,16 +144,17 @@ export function NestedTimeline({
                                 title={actor.handle}
                                 className="hover:opacity-80 transition-opacity relative hover:z-10"
                               >
-                                <Avatar handle={actor.handle} platform={platform} size={22} className="ring-2 ring-white dark:ring-rb-900" />
+                                <Avatar
+                                  handle={actor.handle}
+                                  platform={platform}
+                                  size={22}
+                                  className="ring-2 ring-white dark:ring-rb-900"
+                                />
                               </a>
                             ))}
                           </div>
-                        ) : entry.actor && (
-                          <Handle
-                            handle={entry.actor}
-                            platform={platform}
-                            avatarSize={22}
-                          />
+                        ) : (
+                          entry.actor && <Handle handle={entry.actor} platform={platform} avatarSize={22} />
                         )}
                       </div>
                     ) : null}

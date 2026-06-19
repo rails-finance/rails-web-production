@@ -11,7 +11,7 @@ export function SiteFooter() {
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Rails Info */}
-          <div className="md:col-span-2">
+          <div>
             <div className="flex items-center gap-1.5 mb-3 text-foreground">
               <svg width={28} height={28} viewBox="0 0 200 200" fill="none" aria-hidden="true">
                 <path
@@ -72,9 +72,9 @@ export function SiteFooter() {
             </div>
           </div>
 
-          {/* Platform */}
+          {/* Learn About Rails */}
           <div>
-            <h4 className="text-sm font-semibold text-foreground mb-3">Platform</h4>
+            <h4 className="text-sm font-semibold text-foreground mb-3">Learn About Rails</h4>
             <ul className="space-y-2">
               <li>
                 <Link href="/" className="text-rb-500 hover:text-blue-500 text-sm transition-colors duration-150">
@@ -102,6 +102,33 @@ export function SiteFooter() {
               <li>
                 <Link href="/blog" className="text-rb-500 hover:text-blue-500 text-sm transition-colors duration-150">
                   Blog
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Explorers — the rails */}
+          <div>
+            <h4 className="text-sm font-semibold text-foreground mb-3">Rails Explorers</h4>
+            <ul className="space-y-2">
+              <li>
+                <Link
+                  href="/aave-v4"
+                  className="flex items-center gap-2 text-rb-500 hover:text-blue-500 text-sm transition-colors duration-150"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/icons/protocols/aave-v4.png" alt="" className="h-4 w-4 shrink-0 rounded" />
+                  <span>Aave V4</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/liquity-v2"
+                  className="flex items-center gap-2 text-rb-500 hover:text-blue-500 text-sm transition-colors duration-150"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/icons/protocols/liquity.png" alt="" className="h-4 w-4 shrink-0 rounded" />
+                  <span>Liquity V2</span>
                 </Link>
               </li>
             </ul>

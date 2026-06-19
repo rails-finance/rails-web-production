@@ -38,7 +38,7 @@ export default function Home() {
                 <p className="text-xs font-medium tracking-[0.12em] uppercase text-rb-500">The DeFi Curious</p>
               </div>
               <p className="body-text flex-1 mb-6">
-                <span className="font-semibold text-foreground">Learn by example:</span> Browse real protocol activity
+                <span className="font-semibold text-foreground">Learn by example.</span> Browse real protocol activity
                 to see how DeFi works in practice. No capital required — just explore the ecosystem, follow live events,
                 and build your intuition before you commit.
               </p>
@@ -49,7 +49,7 @@ export default function Home() {
                 <p className="text-xs font-medium tracking-[0.12em] uppercase text-rb-500">The Active DeFi User</p>
               </div>
               <p className="body-text flex-1 mb-6">
-                <span className="font-semibold text-foreground">Stay on top of positions:</span> Monitor collateral
+                <span className="font-semibold text-foreground">Stay on top of positions.</span> Monitor collateral
                 ratios, redemption exposure, yield earned, and liquidation risk — all translated into plain language.
                 Know exactly where you stand, without reading a transaction trace.
               </p>
@@ -60,7 +60,7 @@ export default function Home() {
                 <p className="text-xs font-medium tracking-[0.12em] uppercase text-rb-500">DeFi Teams</p>
               </div>
               <p className="body-text flex-1 mb-6">
-                <span className="font-semibold text-foreground">Support your community:</span> Give your users a
+                <span className="font-semibold text-foreground">Support your community.</span> Give your users a
                 dedicated, verifiable window into their positions. A Rails integration means your protocol gets full
                 coverage — and your community gets answers, not confusion.
               </p>
@@ -71,7 +71,7 @@ export default function Home() {
                 <p className="text-xs font-medium tracking-[0.12em] uppercase text-rb-500">Crisis Support</p>
               </div>
               <p className="body-text flex-1 mb-6">
-                <span className="font-semibold text-foreground">When frontends fail:</span> DNS hijacks. Frontend
+                <span className="font-semibold text-foreground">When frontends fail.</span> DNS hijacks. Frontend
                 outages. Contract exploits. When your usual interface goes dark, Rails gives you read-only access to
                 your positions — no wallet connection, no permissions, no exposure.
               </p>

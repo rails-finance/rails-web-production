@@ -636,7 +636,11 @@ export function TroveEconomicsSummary({ events, currentPrice, hideHeader }: Trov
           key: "fees-received",
           label: "Fees Received",
           value: feesReceivedColl * effectivePrice,
-          colorClass: "bg-cyan-800",
+          // Neutral rb swatch: fees received are a passive accrual, not an
+          // actionable collateral slice — the blue family (in-trove / claimable
+          // / deposited) is reserved for balances you can act on. (Was an
+          // off-grammar hue — color-grammar.md §3.)
+          colorClass: "bg-rb-400",
           tooltip: collTip(feesReceivedColl, feesReceivedColl * effectivePrice, "in"),
         },
         ...(!isLiveView
@@ -832,7 +836,7 @@ export function TroveEconomicsSummary({ events, currentPrice, hideHeader }: Trov
           symbol: collateralSymbol,
           usdHint: `[${formatCompactUsd(feesReceivedColl * effectivePrice)}]`,
           hidden: feesReceivedColl === 0,
-          swatchClass: "bg-cyan-800",
+          swatchClass: "bg-rb-400",
         },
         {
           sign: "",

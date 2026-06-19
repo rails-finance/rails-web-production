@@ -92,7 +92,7 @@
      OWN token so the two greens share the "positive/active" intent yet stay
      independently tunable (color-grammar.md §2, §5).
      Off the link palette (blue/pink). Retune the whole marketing site here. */
-  --marketing: #22c55e;
+  --marketing: rgb(50, 120, 255);
 
   /* Caution — the single "adverse, needs attention, NOT terminal" hue. Merges
      the old amber(routine) + orange(redemption) tiers into one (orange-500); the
@@ -333,8 +333,11 @@ body {
     @apply text-2xl font-semibold mt-10 mb-4 text-slate-900 dark:text-slate-100;
   }
 
+  /* In-prose blog links stay inside Rails by default → internal link blue
+     (single shade both modes, color-grammar.md §4a). External links in body
+     copy should opt into `.link-external` at the call site. */
   .article-content a {
-    @apply text-pink-600 dark:text-pink-400 no-underline hover:underline;
+    @apply text-blue-500 no-underline hover:underline;
   }
 
   .article-content strong {
@@ -411,14 +414,6 @@ body {
 }
 
 /* Buttons */
-.btn-primary {
-  @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-colors;
-  background: var(--color-fuchsia-600, #c026d3);
-  color: #ffffff;
-  &:hover {
-    background: var(--color-fuchsia-500, #d946ef);
-  }
-}
 .btn-secondary {
   @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors;
   border: 1px solid var(--color-rb-700);
@@ -635,20 +630,6 @@ label[for] {
   transform-origin: bottom right;
 }
 
-@keyframes highlight-flash {
-  0% {
-    border-color: rgba(139, 92, 246, 0.7);
-  }
-  100% {
-    border-color: rgba(139, 92, 246, 0.4);
-  }
-}
-.animate-highlight-flash {
-  animation: highlight-flash 1s ease-out forwards;
-  border-left: 3px solid rgba(139, 92, 246, 0.4);
-  border-radius: 0.75rem;
-}
-
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -734,54 +715,6 @@ label[for] {
   to {
     transform: translateX(-50%);
   }
-}
-
-/* Simulator shimmer border */
-@keyframes shimmer-rotate {
-  from {
-    --shimmer-angle: 0deg;
-  }
-  to {
-    --shimmer-angle: 360deg;
-  }
-}
-@property --shimmer-angle {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
-.simulator-shimmer {
-  position: relative;
-  border-radius: 0.5rem;
-}
-.simulator-shimmer::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  border: 1px solid transparent;
-  background: conic-gradient(
-      from var(--shimmer-angle),
-      transparent 0%,
-      #3b82f6 15%,
-      #60a5fa 30%,
-      transparent 50%,
-      #3b82f6 65%,
-      #60a5fa 80%,
-      transparent 100%
-    )
-    border-box;
-  -webkit-mask:
-    linear-gradient(#000 0 0) padding-box,
-    linear-gradient(#000 0 0) border-box;
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#000 0 0) padding-box,
-    linear-gradient(#000 0 0) border-box;
-  mask-composite: exclude;
-  animation: shimmer-rotate 3s linear infinite;
-  pointer-events: none;
-  z-index: 1;
 }
 
 /* Terminal-style scrollbar (used by Rails Index activity tables) */

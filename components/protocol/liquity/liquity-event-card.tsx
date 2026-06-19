@@ -109,11 +109,12 @@ export function LiquityEventCard({
       isLast={!!isLast}
     />
   ) : isDelegate ? (
+    // Delegation reads as an external-party event via the pink +/- glyph badge
+    // (color-grammar.md §4b); the spine line itself stays neutral.
     <SpineColumn
       icon="delegate"
       iconDirection={isJoin ? "up" : "down"}
       spine="dotted"
-      color="purple"
       isFirst={isFirst}
       isLast={!!isLast}
     />
@@ -122,7 +123,6 @@ export function LiquityEventCard({
       icon="rate-change"
       iconDirection={rateUp ? "up" : "down"}
       spine="dotted"
-      color={ctx.operation === "setBatchManagerAnnualInterestRate" ? "purple" : "default"}
       isFirst={isFirst}
       isLast={!!isLast}
     />

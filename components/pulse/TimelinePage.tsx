@@ -195,13 +195,13 @@ export function TimelinePage({ title, description, dataSources = DEFAULT_DATA_SO
                     </span>
                     {/* Vertical line connecting to first event */}
                     <div
-                      className="absolute left-1/2 -translate-x-1/2 w-1 bg-rb-300 dark:bg-[#30343F]"
+                      className="absolute left-1/2 -translate-x-1/2 w-1 bg-rb-300 dark:bg-rb-700"
                       style={{ top: "50%", bottom: "-1rem" }}
                     />
                   </>
                 ) : (
                   <div
-                    className="absolute left-1/2 -translate-x-1/2 w-1 bg-rb-300 dark:bg-[#30343F]"
+                    className="absolute left-1/2 -translate-x-1/2 w-1 bg-rb-300 dark:bg-rb-700"
                     style={{ top: "-1rem", bottom: "-1rem" }}
                   />
                 )}
@@ -225,7 +225,7 @@ export function TimelinePage({ title, description, dataSources = DEFAULT_DATA_SO
                   style={{ width: "40px" }}
                 >
                   <div
-                    className="absolute left-1/2 -translate-x-1/2 w-1 bg-rb-300 dark:bg-[#30343F]"
+                    className="absolute left-1/2 -translate-x-1/2 w-1 bg-rb-300 dark:bg-rb-700"
                     style={{ top: "-1rem", bottom: "-1rem" }}
                   />
                 </div>

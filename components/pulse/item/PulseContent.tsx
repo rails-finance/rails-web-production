@@ -4,7 +4,7 @@ import { useMemo, type ReactNode } from "react";
 import { ArrowUpRight, Circle, GitBranch } from "lucide-react";
 import type { TimelineActor, TimelineEvent, TimelineMetrics, TimelineEngagementType } from "@/types/pulse";
 import { MetricIcons } from "../shared/MetricsRow";
-import { formatDisplayDate, formatFullDateTime } from "../types";
+import { formatDisplayDate, formatFullDateTime, isInternalPlatform } from "../types";
 import { Handle } from "./Handle";
 import { NestedTimeline } from "./NestedTimeline";
 
@@ -37,6 +37,10 @@ export function PulseContent({ event }: { event: TimelineEvent }) {
   const isGitHub = event.platform === "github";
   const isBlog = event.platform === "blog";
   const blogThumbnail = isBlog ? getBlogThumbnail(event.postUrl) : null;
+  // Link affordance hue: internal platforms (blog/app) read blue (§4a), every
+  // other platform leaves Rails → external pink (§4b). Both literal class
+  // strings are present so Tailwind generates each variant.
+  const isInternal = isInternalPlatform(event.platform);
 
   // Blog layout - thumbnail left, content right
   if (isBlog) {
@@ -113,7 +117,11 @@ export function PulseContent({ event }: { event: TimelineEvent }) {
             <div className="mt-1 flex items-center">
               <Handle
                 handle={event.author ?? "@rails_account"}
-                className="[.group:hover:not(:has(.group\/nested:hover))_&]:!text-blue-400"
+                className={
+                  isInternal
+                    ? "[.group:hover:not(:has(.group\/nested:hover))_&]:!text-blue-400"
+                    : "[.group:hover:not(:has(.group\/nested:hover))_&]:!text-pink-400"
+                }
                 platform={event.platform}
                 avatarSize={22}
               />
@@ -131,8 +139,8 @@ export function PulseContent({ event }: { event: TimelineEvent }) {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="inline-flex items-center gap-1">
-              <GitBranch className="size-3 text-blue-400" />
-              <span className="font-mono text-xs bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-md">main</span>
+              <GitBranch className="size-3 text-rb-400" />
+              <span className="font-mono text-xs bg-rb-500/20 text-rb-400 px-1.5 py-0.5 rounded-md">main</span>
             </span>
             <span className="text-rb-500">committed on {formatDisplayDate(event.date)}</span>
           </div>
@@ -140,7 +148,7 @@ export function PulseContent({ event }: { event: TimelineEvent }) {
             <span>0 parents</span>
             <span>commit</span>
             {event.postUrl && (
-              <span className="inline-flex items-center font-mono text-rb-300 group-hover:text-blue-400 transition-colors">
+              <span className="inline-flex items-center font-mono text-rb-300 group-hover:text-pink-400 transition-colors">
                 <span className="font-semibold">{getShortCommitHash(event.postUrl)}</span>
                 <ArrowUpRight className="size-3 ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
               </span>
@@ -154,7 +162,11 @@ export function PulseContent({ event }: { event: TimelineEvent }) {
           </div>
           {event.postUrl && (
             <ArrowUpRight
-              className="size-4 text-rb-500 [.group:hover:not(:has(.group\/nested:hover))_&]:text-blue-500 transition-colors"
+              className={`size-4 text-rb-500 transition-colors ${
+                isInternal
+                  ? "[.group:hover:not(:has(.group\/nested:hover))_&]:text-blue-500"
+                  : "[.group:hover:not(:has(.group\/nested:hover))_&]:text-pink-500"
+              }`}
               aria-hidden="true"
             />
           )}
@@ -164,10 +176,23 @@ export function PulseContent({ event }: { event: TimelineEvent }) {
   );
 
   if (event.postUrl) {
+    // Stretched-link pattern instead of wrapping the whole card in an <a>: the
+    // engagement entries below are their own links, and <a> nested inside <a> is
+    // invalid HTML — the browser splits the DOM, which orphaned the footer arrow
+    // from `.group` so its hover tint never fired. The overlay <a> is a sibling
+    // of the content (not a parent), and the nested timeline is lifted above it
+    // (relative z-10) so its links stay clickable.
     return (
-      <a href={event.postUrl} target="_blank" rel="noreferrer" className="group block cursor-pointer">
+      <div className="group relative cursor-pointer">
         {mainContent}
-      </a>
+        <a
+          href={event.postUrl}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={event.content}
+          className="absolute inset-0"
+        />
+      </div>
     );
   }
 
@@ -209,7 +234,9 @@ function ExpandedDetail({ event }: { event: TimelineEvent }) {
   }, [event.engagements, event.id]);
 
   return (
-    <div className="space-y-6 mt-2">
+    // relative z-10 lifts the engagement links above the card's stretched-link
+    // overlay (see the main return) so they remain individually clickable.
+    <div className="relative z-10 space-y-6 mt-2">
       {engagementEntries.length > 0 && (
         <NestedTimeline entries={engagementEntries} platform={event.platform} parentEvent={event} />
       )}
@@ -220,7 +247,7 @@ function ExpandedDetail({ event }: { event: TimelineEvent }) {
 function getHighlightIcon(type?: TimelineEngagementType) {
   switch (type) {
     case "like":
-      return <MetricIcons.like className="size-3 text-rose-500" />;
+      return <MetricIcons.like className="size-3 text-rb-500" />;
     case "repost":
       return <MetricIcons.repost className="size-3 text-green-500" />;
     case "reply":
