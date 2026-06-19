@@ -21,38 +21,17 @@ export const metadata: Metadata = {
  *   H3   — sub-heading / card title
  *   LEAD — intro / framing paragraph (one notch up from body)
  *   LINK — inline text link
- *   CARD — bordered raised panel for feature/approach blocks
  * Body copy uses the global `.body-text` utility (see globals.css). */
 const H2 = "text-3xl font-semibold tracking-tight text-foreground";
 const H3 = "text-lg font-semibold text-foreground";
 const LEAD = "text-base md:text-lg font-normal leading-relaxed text-rb-500";
 const LINK = "text-pink-500 hover:text-pink-600 transition-colors";
-const CARD = "rounded-xl border border-rb-200 dark:border-rb-800 bg-raised p-5";
 
-/* Key Features — the at-a-glance capability list shown under "What Rails Does". */
+/* Key Features — the at-a-glance capability list shown in its own section. */
 const KEY_FEATURES = [
   "Real-time tracking of Liquity V2 troves and Aave V4 positions",
   "Rich transaction timelines with detailed explanations",
   "Ownership history and transfer tracking",
-];
-
-/* The Rails Approach — the three processing stages. */
-const APPROACH = [
-  {
-    n: 1,
-    title: "Monitor Blocks",
-    body: "Rails watches the Ethereum network for Liquity V2 and Aave V4 events.",
-  },
-  {
-    n: 2,
-    title: "Context & Analysis",
-    body: "Rails decodes what each event means and recomputes health factor, liquidation price, and rate exposure.",
-  },
-  {
-    n: 3,
-    title: "Presentation",
-    body: "Rails renders it as clear timelines and plain-language cards.",
-  },
 ];
 
 /** Roadmap stages, rendered as a vertical timeline. Shipped stages (Liquity V2,
@@ -97,10 +76,12 @@ export default function AboutPage() {
       <div className="bg-gradient-to-b from-rb-100 to-rb-200 dark:from-rb-900 dark:to-rb-800">
         <section className="max-w-3xl mx-auto px-4 md:px-6 py-16">
           <h2 className={`${H2} mb-4`}>What Rails Does</h2>
-          <p className={`${LEAD} mb-6`}>
+          <p className={`${LEAD} mb-4`}>
             We believe decentralised finance represents the future of finance, but it's currently too hard for most
-            people to understand and navigate safely. Rails is a specialized analytics platform that fixes that. Rails
-            takes raw Ethereum L1 data from{" "}
+            people to understand and navigate safely.
+          </p>
+          <p className={LEAD}>
+            Rails is a specialized analytics platform that fixes that. Rails takes raw Ethereum L1 data from{" "}
             <Link href="/liquity-v2" className="text-blue-500 hover:underline transition-colors">
               Liquity V2
             </Link>{" "}
@@ -111,8 +92,14 @@ export default function AboutPage() {
             and turns it into clear, plain-language explanations — self-service support that keeps you informed and
             confident in your DeFi activity.
           </p>
+        </section>
+      </div>
 
-          <h3 className="text-base font-semibold text-foreground mb-3">Key Features</h3>
+      {/* Key Features — at-a-glance capability list + a quiet path to the
+          dev-facing architecture page. No background band. */}
+      <div className="max-w-3xl mx-auto px-4 md:px-6 py-16">
+        <section>
+          <h2 className={`${H2} mb-4`}>Key Features</h2>
           <ul className="space-y-2 text-foreground leading-relaxed">
             {KEY_FEATURES.map((f) => (
               <li key={f} className="flex gap-3">
@@ -121,34 +108,13 @@ export default function AboutPage() {
               </li>
             ))}
           </ul>
-        </section>
-      </div>
 
-      {/* The Rails Approach — the three processing stages. */}
-      <div className="max-w-3xl mx-auto px-4 md:px-6 py-16">
-        <section>
-          <h2 className={`${H2} mb-4`}>The Rails Approach</h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {APPROACH.map((s) => (
-              <div key={s.n} className={CARD}>
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  {s.n}. {s.title}
-                </h3>
-                <p className="text-rb-500 leading-relaxed">{s.body}</p>
-              </div>
-            ))}
-
-            {/* Fourth cell fills the empty grid slot with a quiet path to the
-                dev-facing page — no card chrome, so it reads as connective text. */}
-            <div className="flex items-center px-5 py-4">
-              <p className="body-text">
-                Curious how it's built?{" "}
-                <Link href="/about/architecture" className="text-blue-500 hover:underline transition-colors">
-                  Read the technical architecture →
-                </Link>
-              </p>
-            </div>
-          </div>
+          <p className="body-text mt-6">
+            Curious how it's built?{" "}
+            <Link href="/about/architecture" className="text-blue-500 hover:underline transition-colors">
+              Read the technical architecture →
+            </Link>
+          </p>
         </section>
       </div>
 

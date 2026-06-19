@@ -72,8 +72,8 @@ function MonoRailCard({ rail }: { rail: MonoRail }) {
         <div className="flex items-center gap-2">
           <span className="text-2xl font-semibold">{rail.label}</span>
           {rail.isNew && (
-            <span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-[var(--marketing)] text-white">
-              New
+            <span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-caution-500 text-white">
+              BETA
             </span>
           )}
         </div>

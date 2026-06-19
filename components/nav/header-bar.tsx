@@ -83,12 +83,19 @@ function RailsLogo() {
  *  Rails is the brand, the protocol label names the rail. */
 function ProtocolLabel({ protocol }: { protocol: { id: string; label: string; iconSrc: string; prefixes: string[] } }) {
   return (
-    <Link href={protocol.prefixes[0]} className="group ml-3 flex items-center gap-1.5">
-      <img src={protocol.iconSrc} alt="" className="w-4 h-4 shrink-0 rounded-[3px]" />
-      <span className="text-[11px] uppercase tracking-[0.14em] font-semibold text-foreground group-hover:text-blue-500 transition-colors">
-        {protocol.label}
-      </span>
-    </Link>
+    <div className="ml-3 flex items-center gap-2">
+      <Link href={protocol.prefixes[0]} className="group flex items-center gap-1.5">
+        <img src={protocol.iconSrc} alt="" className="w-4 h-4 shrink-0 rounded-[3px]" />
+        <span className="text-[11px] uppercase tracking-[0.14em] font-semibold text-foreground group-hover:text-blue-500 transition-colors">
+          {protocol.label}
+        </span>
+      </Link>
+      {protocol.id === "aave-v4" && (
+        <span className="text-[9px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-caution-500 text-white">
+          BETA
+        </span>
+      )}
+    </div>
   );
 }
 
