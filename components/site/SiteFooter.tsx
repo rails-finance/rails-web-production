@@ -88,10 +88,10 @@ export function SiteFooter() {
               </li>
               <li>
                 <Link
-                  href="/how-it-works"
+                  href="/about/architecture"
                   className="text-rb-500 hover:text-blue-500 text-sm transition-colors duration-150"
                 >
-                  How It Works
+                  Architecture
                 </Link>
               </li>
               <li>

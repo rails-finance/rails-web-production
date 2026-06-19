@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Users, BookOpen, FileText, Activity } from "lucide-react";
+import { Home, Users, FileText, Activity } from "lucide-react";
 import { ThemeToggle } from "../ThemeToggle";
 
 // Nav state grammar:
@@ -38,11 +38,6 @@ export function NavigationContent({ onLinkClick }: NavigationContentProps) {
       href: "/blog",
       label: "Blog",
       icon: <FileText size={16} />,
-    },
-    {
-      href: "/how-it-works",
-      label: "How It Works",
-      icon: <BookOpen size={16} />,
     },
   ];
 

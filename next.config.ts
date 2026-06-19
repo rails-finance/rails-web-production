@@ -58,6 +58,14 @@ const nextConfig: NextConfig = {
         destination: "/aave-v4?ownerEns=:slug",
         permanent: true,
       },
+      // "How It Works" folded into About: the Overview content now lives on
+      // /about and the Technical Architecture tab became /about/architecture.
+      // Preserve inbound bookmarks by sending the old page to /about.
+      {
+        source: "/how-it-works",
+        destination: "/about",
+        permanent: true,
+      },
       // The cross-protocol /wallet/[address] umbrella is gone — each rail
       // stands alone. Preserve inbound bookmarks by sending stale links to
       // the platform home, which surfaces the protocol cards.

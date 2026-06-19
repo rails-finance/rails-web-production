@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { LiquityLogo } from "@/components/LiquityLogo";
 import { Check } from "lucide-react";
 import type { Metadata } from "next";
@@ -5,10 +6,10 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "About Rails",
   description:
-    "Rails builds dedicated, read-only explorers for DeFi protocols. Built by a two-person team with support from Liquity. The team, the roadmap, the supporters.",
+    "Rails builds dedicated, read-only explorers for DeFi protocols. What Rails does, the approach behind it, the roadmap, the team, and the supporters.",
   openGraph: {
     title: "About Rails",
-    description: "Dedicated explorers for DeFi protocols. The team, the roadmap, the supporters.",
+    description: "Dedicated explorers for DeFi protocols. What Rails does, the roadmap, the team, the supporters.",
     url: "https://rails.finance/about",
   },
 };
@@ -20,11 +21,44 @@ export const metadata: Metadata = {
  *   H3   — sub-heading / card title
  *   LEAD — intro / framing paragraph (one notch up from body)
  *   LINK — inline text link
+ *   CARD — bordered raised panel for feature/approach blocks
  * Body copy uses the global `.body-text` utility (see globals.css). */
 const H2 = "text-3xl font-semibold tracking-tight text-foreground";
 const H3 = "text-lg font-semibold text-foreground";
 const LEAD = "text-base md:text-lg font-normal leading-relaxed text-rb-500";
 const LINK = "text-pink-500 hover:text-pink-600 transition-colors";
+const CARD = "rounded-xl border border-rb-200 dark:border-rb-800 bg-raised p-5";
+
+/* Key Features — the at-a-glance capability list shown under "What Rails Does". */
+const KEY_FEATURES = [
+  "Real-time tracking of Liquity V2 troves and Aave V4 positions",
+  "Rich transaction timelines with detailed explanations",
+  "Ownership history and transfer tracking",
+];
+
+/* The Rails Approach — the four processing stages. */
+const APPROACH = [
+  {
+    n: 1,
+    title: "Data Collection",
+    body: "We continuously monitor the Ethereum blockchain for Liquity V2 and Aave V4 events. Every transaction, state change, and protocol interaction is captured in real-time.",
+  },
+  {
+    n: 2,
+    title: "Context Enrichment",
+    body: "Raw blockchain events are enriched with transaction context. We analyze why transfers happened, what operations triggered them, and how they affect protocol state.",
+  },
+  {
+    n: 3,
+    title: "Analysis",
+    body: "Multi-step operations are decoded into something legible. Health factor, liquidation price, and rate exposure are computed from current on-chain state, with the inputs visible.",
+  },
+  {
+    n: 4,
+    title: "Presentation",
+    body: "The result is rendered as intuitive timelines, position views, and plain-language explanations — each event a self-contained card.",
+  },
+];
 
 /** Roadmap stages, rendered as a vertical timeline. Shipped stages (Liquity V2,
  *  Aave V4) carry a tick; the planned stage is an empty grey node. Class
@@ -64,6 +98,60 @@ export default function AboutPage() {
         </h1>
       </section>
 
+      <div className="max-w-3xl mx-auto px-4 md:px-6 pb-16">
+        {/* What Rails Does — the prime explainer, first thing after the lead. */}
+        <section className="mb-14">
+          <h2 className={`${H2} mb-4`}>What Rails Does</h2>
+          <p className={`${LEAD} mb-6`}>
+            Rails is a specialized analytics platform that makes DeFi activity easy to understand. We take complex
+            blockchain data from protocols like{" "}
+            <Link href="/liquity-v2" className="underline hover:text-blue-500 transition-colors">
+              Liquity V2
+            </Link>{" "}
+            and{" "}
+            <Link href="/aave-v4" className="underline hover:text-blue-500 transition-colors">
+              Aave V4
+            </Link>{" "}
+            and transform it into clear, actionable insights.
+          </p>
+
+          <div className={CARD}>
+            <h3 className="text-base font-semibold text-foreground mb-3">Key Features</h3>
+            <ul className="space-y-2 text-foreground leading-relaxed">
+              {KEY_FEATURES.map((f) => (
+                <li key={f} className="flex gap-3">
+                  <span className="text-rb-500 shrink-0">·</span>
+                  <span>{f}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        {/* The Rails Approach — the four processing stages. */}
+        <section>
+          <h2 className={`${H2} mb-4`}>The Rails Approach</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {APPROACH.map((s) => (
+              <div key={s.n} className={CARD}>
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  {s.n}. {s.title}
+                </h3>
+                <p className="text-rb-500 leading-relaxed">{s.body}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Quiet path through to the deeper, dev-facing page. */}
+          <p className="body-text mt-6">
+            Curious how it's built?{" "}
+            <Link href="/about/architecture" className={LINK}>
+              Read the technical architecture →
+            </Link>
+          </p>
+        </section>
+      </div>
+
       {/* Roadmap — its own background band, echoing the home feature spotlight.
           Two columns on desktop: a narrow intro/CTA rail beside the timeline. */}
       <div className="bg-gradient-to-b from-rb-100 to-rb-200 dark:from-rb-900 dark:to-rb-800">
@@ -74,9 +162,8 @@ export default function AboutPage() {
               <p className={`${LEAD} mb-4`}>
                 We believe that decentralised finance (DeFi) represents the future of finance, but it's currently too
                 complex for most users to understand and navigate safely. <span className="font-semibold">Rails</span>{" "}
-                provides clear, intuitive explanations
-                of DeFi transactions and protocol events, empowering users with self-service support that keeps them
-                informed and confident in their DeFi activity.
+                provides clear, intuitive explanations of DeFi transactions and protocol events, empowering users with
+                self-service support that keeps them informed and confident in their DeFi activity.
               </p>
             </div>
 
