@@ -24,8 +24,8 @@ const LINK = "text-blue-500 hover:underline";
 // Spoke pill — an obvious, tappable link into the listing filtered to that
 // spoke. Full set always shown (never truncated): they wrap.
 const SPOKE_PILL =
-  "inline-flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/5 px-2 py-0.5 text-[12px] " +
-  "text-blue-500 transition-colors hover:bg-blue-500/10 hover:border-blue-500/50";
+  "inline-flex items-center gap-1 rounded-full border border-rb-200 dark:border-rb-700 px-2 py-0.5 text-[12px] " +
+  "text-foreground/80 transition-colors hover:border-blue-500/50 hover:text-blue-500";
 
 /** Listing URL filtered to one hub (`/aave-v4?hubs=core`), optionally narrowed
  *  to one asset on a given side. Values match the listing's filter param space:
@@ -117,7 +117,7 @@ export function AaveV4HubColumn({ hub }: { hub: HubView }) {
       <div className="mb-4">
         <Link
           href={listingHref(hub.hub)}
-          className={`text-base font-semibold ${LINK}`}
+          className="text-base font-semibold text-foreground transition-colors hover:text-blue-500"
           title={`View positions in ${hub.label}`}
         >
           {hub.label}
