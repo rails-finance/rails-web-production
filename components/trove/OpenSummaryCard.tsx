@@ -255,7 +255,7 @@ export function OpenSummaryCard({
               <TokenIcon assetSymbol="BOLD" className="inline-block w-7 h-7" />
             </div>
             <div className="text-xs mt-0.5 text-rb-500">
-              <HighlightableValue type="interestRate" state="after" value={displayInterestRate}>
+              <HighlightableValue type="interestRate" state="after" value={displayInterestRate} className="text-rb-500">
                 <FadeNumber value={displayInterestRate} decimals={2} animateOnMount={animateValues} />%
               </HighlightableValue>{" "}
               interest rate
