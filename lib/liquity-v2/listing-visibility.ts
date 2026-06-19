@@ -1,11 +1,11 @@
 // Visibility resolution for the Liquity V2 listing.
 //
-// The listing doubles as a wallet / trove view. On the bare directory we show
-// only active troves by default; when the query is scoped to a specific identity
-// — an owner address, an ENS name, or a single trove ID — we relax to "show
-// everything" so a wallet's full history, including closed and liquidated
-// troves, is visible. That's the self-service-support case: someone looking up
-// their own address wants the closed trove surfaced, not filtered away.
+// The listing doubles as a wallet / trove view, and the default in every case is
+// "show everything" — active, zombie, closed, and liquidated troves are all
+// visible out of the box, on the bare directory and on a scoped wallet/trove
+// query alike. That's the self-service-support case: someone looking up their
+// own address wants the closed trove surfaced, not filtered away — and a visitor
+// browsing the directory sees the full picture rather than an active-only slice.
 //
 // Status is a MULTI-SELECT over four display buckets — active / zombie / closed
 // / liquidated. (Zombie is not a stored status; on the server it's open +
@@ -18,10 +18,9 @@
 //   - undefined / []  → "no opinion": resolve to the contextual default
 //   - a concrete set  → an explicit choice
 //
-// Keeping an untouched filter `undefined` is what makes auto-relax work with no
-// boundary-reset bookkeeping: typing a wallet never carries a stale "active"
-// default, because the default is never written into the object — it's only
-// applied here, at read time, once we know whether the query is scoped.
+// Keeping an untouched filter `undefined` keeps the default out of the filter
+// object: the full-set default is never written in, only applied here at read
+// time, so a cleared selection always resolves back to "show everything".
 //
 // Both the listing page (URL <-> API serialization) and TroveListFilters
 // (chip + active-count) resolve effective values through this module so the two
@@ -60,16 +59,19 @@ export interface ListingVisibilityInput {
 }
 
 /** A query is "scoped" when it targets a specific identity (owner address, ENS
- *  name, or a single trove ID). Scoped queries show full history by default;
- *  the bare directory shows only active troves by default. */
+ *  name, or a single trove ID). Status defaults to the full set regardless of
+ *  scope; this predicate remains for callers that care about identity scope. */
 export function isScopedQuery(f: ListingVisibilityInput): boolean {
   return Boolean(f.ownerAddress || f.ownerEns || f.troveId);
 }
 
-/** The contextual default selection: active-only on the bare directory, the full
- *  set (everything) on a scoped wallet/trove query. */
-export function defaultStatuses(f: ListingVisibilityInput): StatusBucket[] {
-  return isScopedQuery(f) ? [...ALL_STATUS_BUCKETS] : ["active"];
+/** The contextual default selection: the full set (everything) in all cases —
+ *  bare directory and scoped wallet/trove query alike. The bare `/liquity-v2`
+ *  view shows active, zombie, closed, and liquidated troves out of the box, and
+ *  because the full set maps to NO server-side status filter the canonical URL
+ *  stays clean (no `status=` param). */
+export function defaultStatuses(_f: ListingVisibilityInput): StatusBucket[] {
+  return [...ALL_STATUS_BUCKETS];
 }
 
 /** The selection actually in effect: an explicit non-empty choice wins; an empty
