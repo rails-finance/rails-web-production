@@ -100,9 +100,9 @@ export default function AboutPage() {
       <div className="max-w-3xl mx-auto px-4 md:px-6 py-16">
         <section>
           <h2 className={`${H2} mb-4`}>Key Features</h2>
-          <ul className="space-y-2 text-foreground leading-relaxed">
+          <ul className="space-y-2 leading-relaxed">
             {KEY_FEATURES.map((f) => (
-              <li key={f} className="flex gap-3">
+              <li key={f} className="body-text flex gap-3">
                 <span className="text-rb-500 shrink-0">·</span>
                 <span>{f}</span>
               </li>
