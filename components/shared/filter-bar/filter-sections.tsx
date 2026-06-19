@@ -120,7 +120,7 @@ export function FilterSections<F>({ dimensions, filters, onChange }: FilterSecti
               aria-expanded={open}
             >
               <span>{group.name}</span>
-              {groupActive && <span className="w-1.5 h-1.5 rounded-full bg-blue-500" aria-hidden="true" />}
+              {groupActive && <span className="w-1.5 h-1.5 rounded-full bg-teal-500" aria-hidden="true" />}
               <ChevronDown
                 className={`w-3.5 h-3.5 text-rb-500 transition-transform ${open ? "rotate-180" : ""}`}
                 aria-hidden="true"

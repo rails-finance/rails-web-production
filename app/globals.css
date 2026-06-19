@@ -26,6 +26,24 @@
      separate from the --marketing green even at a shared value so either can
      retune without dragging the other. */
   --color-positive: #22c55e; /* green-500 */
+
+  /* Informational · caution (color-grammar.md §5) — the single "adverse, needs
+     attention, NOT terminal" hue (orange). Defined here as a full scale so the
+     whole caution tier (redemption + zombie + deprecation glyphs, badges, spine
+     bars, and the left-border notice panels) is retunable from ONE place: edit
+     these eleven values and every `*-caution-*` utility + the `--caution` token
+     and `notice-caution` panel move together. Values are Tailwind's orange-*. */
+  --color-caution-50: #fff7ed;
+  --color-caution-100: #ffedd5;
+  --color-caution-200: #fed7aa;
+  --color-caution-300: #fdba74;
+  --color-caution-400: #fb923c;
+  --color-caution-500: #f97316;
+  --color-caution-600: #ea580c;
+  --color-caution-700: #c2410c;
+  --color-caution-800: #9a3412;
+  --color-caution-900: #7c2d12;
+  --color-caution-950: #431407;
 }
 
 /* ── Rails-explorer brand palette (additive, ported during phase-1 reskin) ──
@@ -102,11 +120,18 @@
   --marketing: rgb(50, 120, 255);
 
   /* Caution — the single "adverse, needs attention, NOT terminal" hue. Merges
-     the old amber(routine) + orange(redemption) tiers into one (orange-500); the
-     adverse ladder is now caution → critical(red). Most call sites use the
-     `orange-*` Tailwind classes directly; this token is the canonical code +
-     used where a raw value is needed. See color-grammar.md §5. */
-  --caution: #f97316; /* orange-500 */
+     the old amber(routine) + orange(redemption) tiers into one; the adverse
+     ladder is now caution → critical(red). Call sites use the `*-caution-*`
+     Tailwind utilities (driven by the --color-caution-* scale in @theme); this
+     token is the canonical mid value, used where a raw color is needed (e.g. an
+     SVG `color`). See color-grammar.md §5. */
+  --caution: var(--color-caution-500);
+
+  /* Notice panel (color-grammar.md §5) — the left-border + tinted-bg "this is a
+     note, set apart from the UI furniture" treatment. Light defaults here; dark
+     overrides in `.dark`. Consumed by the `notice-caution` utility. */
+  --notice-caution-bg: var(--color-caution-50);
+  --notice-caution-border: var(--color-caution-400);
 
   --pill-active-bg: var(--surface-active);
   --pill-active-text: var(--foreground);
@@ -178,6 +203,11 @@
   --rb-chart-grid: #14161e;
   --rb-tooltip-bg: #050507;
   --rb-tooltip-border: #14161e;
+
+  /* Notice panel — dark side: a deep translucent caution wash + a brighter left
+     rule so the panel reads against the dark canvas. */
+  --notice-caution-bg: color-mix(in srgb, var(--color-caution-900) 20%, transparent);
+  --notice-caution-border: var(--color-caution-500);
 }
 
 @theme inline {
@@ -266,6 +296,15 @@ html.dark {
 }
 @utility bg-field {
   background-color: var(--surface-field);
+}
+
+/* Notice panel — the left-border + tinted-bg "note" treatment (color-grammar.md
+   §5). Chrome only: bg + left rule. Markup adds its own padding / text colour
+   (text-caution-*) / layout so each site keeps its content shape. Theme-aware
+   via the --notice-caution-* vars. */
+@utility notice-caution {
+  border-left: 4px solid var(--notice-caution-border);
+  background-color: var(--notice-caution-bg);
 }
 
 body {

@@ -123,13 +123,7 @@ export function OpenSummaryCard({
   return (
     <div>
       {deprecation && (
-        <div
-          className={`flex items-start gap-2 rounded-lg p-3 mb-2 text-sm ${
-            deprecation.isPast
-              ? "bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900"
-              : "bg-orange-50 dark:bg-orange-950/50 text-orange-700 dark:text-orange-400 border border-orange-200 dark:border-orange-900"
-          }`}
-        >
+        <div className="notice-caution flex items-start gap-2 p-3 mb-2 text-sm text-caution-700 dark:text-caution-400">
           <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
           <p>
             {deprecation.isPast ? (
@@ -187,7 +181,7 @@ export function OpenSummaryCard({
                 </span>
               )}
               {trove.activity.redemptionCount > 0 && (
-                <span className="inline-flex items-center text-orange-400">
+                <span className="inline-flex items-center text-caution-400">
                   <Icon name="triangle" size={12} />
                   <span className="ml-1">{trove.activity.redemptionCount}</span>
                 </span>

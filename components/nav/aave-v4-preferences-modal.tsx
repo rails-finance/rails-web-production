@@ -111,8 +111,8 @@ export function AaveV4PreferencesModal({ onClose }: { onClose: () => void }) {
               />
               <HeadroomRow
                 label="Caution"
-                dotClass="bg-orange-500"
-                textClass="text-orange-400"
+                dotClass="bg-caution-500"
+                textClass="text-caution-400"
                 value={null}
                 suffix={`liq price up to +${v4.headroomConservativeMin}% headroom`}
               />

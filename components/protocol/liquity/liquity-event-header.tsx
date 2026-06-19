@@ -60,7 +60,7 @@ function getOperationStyle(operation: string, ctx?: LiquityContext): OperationSt
     case "applyPendingDebt":
       return { label: "Apply debt", color: "text-pink-700 dark:text-pink-400", bg: "bg-pink-500/20", badge: true };
     case "redeemCollateral":
-      return { label: "Redemption", color: "text-white", bg: "bg-orange-500", badge: true };
+      return { label: "Redemption", color: "text-white", bg: "bg-caution-500", badge: true };
     case "adjustZombieTrove":
     case "adjustUnredeemableZombieTrove":
       return { label: "Redeemed", color: "text-foreground", bg: "bg-rb-200 dark:bg-rb-800", badge: true };
@@ -265,14 +265,14 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
               </span>
               {hasCollChange && (
                 <span className="inline-flex items-center gap-1.5 text-sm">
-                  <span className="text-orange-600 dark:text-orange-400">Cleared</span>
+                  <span className="text-caution-600 dark:text-caution-400">Cleared</span>
                   <span className={`font-bold text-foreground ${hideVal}`}>{formatNumber(Math.abs(collChange))}</span>
                   <TokenChipIcon symbol={ctx.collateralType} size={16} />
                 </span>
               )}
               {hasDebtChange && (
                 <span className="inline-flex items-center gap-1.5 text-sm">
-                  <span className="text-orange-600 dark:text-orange-400">Reduced</span>
+                  <span className="text-caution-600 dark:text-caution-400">Reduced</span>
                   <span className={`font-bold text-foreground ${hideVal}`}>{formatNumber(Math.abs(debtChange))}</span>
                   <TokenChipIcon symbol={ctx.assetType ?? "BOLD"} size={16} />
                 </span>
@@ -399,7 +399,7 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
           <span className="ml-auto inline-flex items-center gap-2">
             {ctx.operation === "redeemCollateral" && ctx.isZombieTrove && (
               <span
-                className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-bold rounded bg-orange-500/15 text-orange-600 dark:text-orange-400"
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-bold rounded bg-caution-500/15 text-caution-600 dark:text-caution-400"
                 title={
                   stateAfter.debt === 0
                     ? "Zombie trove fully redeemed — debt cleared, collateral now claimable"

@@ -30,20 +30,20 @@ export type SpineColor = "default" | "caution" | "critical";
 
 const SPINE_COLORS: Record<SpineColor, string> = {
   default: "rgb(101 115 140)", // rb-500
-  caution: "rgb(249 115 22)", // orange-500 — redemption + all caution (color-grammar.md §5)
+  caution: "var(--caution)", // redemption + all caution (color-grammar.md §5)
   critical: "rgb(239 68 68)", // red-500 — liquidation + critical
 };
 
 /** Pulsing dot color matching spine tint */
 const DOT_COLORS: Record<SpineColor, string> = {
   default: "bg-green-400",
-  caution: "bg-orange-400",
+  caution: "bg-caution-400",
   critical: "bg-red-400",
 };
 
 /** Pill classes for the warning label, keyed by warning tone */
 const WARNING_PILL_CLASSES: Record<"caution" | "critical", string> = {
-  caution: "bg-orange-500/15 text-orange-600 dark:text-orange-400",
+  caution: "bg-caution-500/15 text-caution-600 dark:text-caution-400",
   critical: "bg-red-500/15 text-red-600 dark:text-red-400",
 };
 

@@ -32,7 +32,7 @@ export function LiquidatedSummaryCard({ trove }: LiquidatedSummaryCardProps) {
               {formatDuration(trove.activity.lastActivityAt, new Date())} ago
             </span>
             {trove.activity.redemptionCount > 0 && (
-              <span className="inline-flex items-center text-orange-400">
+              <span className="inline-flex items-center text-caution-400">
                 <Icon name="triangle" size={12} />
                 <span className="ml-1">{trove.activity.redemptionCount}</span>
               </span>

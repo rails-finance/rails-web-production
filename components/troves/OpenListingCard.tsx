@@ -58,7 +58,7 @@ export function OpenListingCard({
             <span className="ml-1">{trove.activity.transactionCount - trove.activity.redemptionCount}</span>
           </span>
           {trove.activity.redemptionCount > 0 && (
-            <span className="inline-flex items-center text-orange-400">
+            <span className="inline-flex items-center text-caution-400">
               <Icon name="triangle" size={12} />
               <span className="ml-1">{trove.activity.redemptionCount}</span>
             </span>
@@ -124,11 +124,7 @@ export function OpenListingCard({
               <div className="text-xs font-medium text-pink-500 dark:text-pink-400 mt-1 truncate">
                 {formatBatchManagerDisplay(trove.batch.manager)}
                 {deprecation && (
-                  <span
-                    className={`inline-flex items-center gap-0.5 ml-1 ${
-                      deprecation.isPast ? "text-red-500 dark:text-red-400" : "text-orange-500 dark:text-orange-400"
-                    }`}
-                  >
+                  <span className="inline-flex items-center gap-0.5 ml-1 text-caution-500 dark:text-caution-400">
                     <AlertTriangle className="w-3 h-3" />
                     <span className="text-[10px] font-bold uppercase">
                       {deprecation.isPast ? "Deprecated" : "Ending"}
