@@ -281,7 +281,11 @@ function TrovesPageContent() {
     const appliedFilters = newFilters || filters;
     const page = newPage || currentPage;
     const params = buildSearchParams(appliedFilters, page);
-    const url = params.toString() ? `/liquity-v2?${params.toString()}` : "/liquity-v2";
+    // URLSearchParams over-encodes commas as %2C; a comma is a legal query
+    // sub-delimiter (RFC 3986), so un-encode it for readable list params
+    // (status=active,zombie,liquidated). API requests don't go through here.
+    const qs = params.toString().replace(/%2C/gi, ",");
+    const url = qs ? `/liquity-v2?${qs}` : "/liquity-v2";
     router.push(url);
   };
 

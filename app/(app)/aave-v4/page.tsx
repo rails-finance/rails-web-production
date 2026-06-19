@@ -143,7 +143,11 @@ function AaveV4ListPageContent() {
 
   const updateUrl = (next: AaveV4ListFilterParams, page: number) => {
     const p = buildSearchParams(next, page);
-    const url = p.toString() ? `/aave-v4?${p.toString()}` : "/aave-v4";
+    // URLSearchParams over-encodes commas as %2C; a comma is a legal query
+    // sub-delimiter (RFC 3986), so un-encode it for readable list params
+    // (spokes=core,plus). API requests don't go through here.
+    const qs = p.toString().replace(/%2C/gi, ",");
+    const url = qs ? `/aave-v4?${qs}` : "/aave-v4";
     router.push(url);
   };
 
