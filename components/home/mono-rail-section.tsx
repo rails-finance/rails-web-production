@@ -79,7 +79,7 @@ function MonoRailCard({ rail }: { rail: MonoRail }) {
         </div>
         <div className="flex gap-1 mt-1">
           {rail.tags.map((t) => (
-            <span key={t} className="text-xs px-1.5 py-0.5 rounded bg-rb-100 dark:bg-rb-700">
+            <span key={t} className="text-xs px-1.5 py-0.5 rounded bg-background">
               {t}
             </span>
           ))}

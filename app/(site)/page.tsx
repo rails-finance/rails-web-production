@@ -37,12 +37,10 @@ export default function Home() {
                 <GraduationCap className="h-[18px] w-[18px] text-rb-500 shrink-0" aria-hidden="true" />
                 <p className="text-xs font-medium tracking-[0.12em] uppercase text-rb-500">The DeFi Curious</p>
               </div>
-              <h3 className="text-[17px] font-semibold tracking-tight leading-snug mb-3.5 text-foreground">
-                Learn by example
-              </h3>
               <p className="body-text flex-1 mb-6">
-                Browse real protocol activity to see how DeFi works in practice. No capital required — just explore the
-                ecosystem, follow live events, and build your intuition before you commit.
+                <span className="font-semibold text-foreground">Learn by example:</span> Browse real protocol activity
+                to see how DeFi works in practice. No capital required — just explore the ecosystem, follow live events,
+                and build your intuition before you commit.
               </p>
             </div>
             <div className="flex flex-col">
@@ -50,12 +48,10 @@ export default function Home() {
                 <Wallet className="h-[18px] w-[18px] text-rb-500 shrink-0" aria-hidden="true" />
                 <p className="text-xs font-medium tracking-[0.12em] uppercase text-rb-500">The Active DeFi User</p>
               </div>
-              <h3 className="text-[17px] font-semibold tracking-tight leading-snug mb-3.5 text-foreground">
-                Stay on top of positions
-              </h3>
               <p className="body-text flex-1 mb-6">
-                Monitor collateral ratios, redemption exposure, yield earned, and liquidation risk — all translated into
-                plain language. Know exactly where you stand, without reading a transaction trace.
+                <span className="font-semibold text-foreground">Stay on top of positions:</span> Monitor collateral
+                ratios, redemption exposure, yield earned, and liquidation risk — all translated into plain language.
+                Know exactly where you stand, without reading a transaction trace.
               </p>
             </div>
             <div className="flex flex-col">
@@ -63,12 +59,10 @@ export default function Home() {
                 <Code2 className="h-[18px] w-[18px] text-rb-500 shrink-0" aria-hidden="true" />
                 <p className="text-xs font-medium tracking-[0.12em] uppercase text-rb-500">DeFi Teams</p>
               </div>
-              <h3 className="text-[17px] font-semibold tracking-tight leading-snug mb-3.5 text-foreground">
-                Support your community
-              </h3>
               <p className="body-text flex-1 mb-6">
-                Give your users a dedicated, verifiable window into their positions. A Rails integration means your
-                protocol gets full coverage — and your community gets answers, not confusion.
+                <span className="font-semibold text-foreground">Support your community:</span> Give your users a
+                dedicated, verifiable window into their positions. A Rails integration means your protocol gets full
+                coverage — and your community gets answers, not confusion.
               </p>
             </div>
             <div className="flex flex-col">
@@ -76,12 +70,10 @@ export default function Home() {
                 <ShieldAlert className="h-[18px] w-[18px] text-rb-500 shrink-0" aria-hidden="true" />
                 <p className="text-xs font-medium tracking-[0.12em] uppercase text-rb-500">Crisis Support</p>
               </div>
-              <h3 className="text-[17px] font-semibold tracking-tight leading-snug mb-3.5 text-foreground">
-                When frontends fail
-              </h3>
               <p className="body-text flex-1 mb-6">
-                DNS hijacks. Frontend outages. Contract exploits. When your usual interface goes dark, Rails gives you
-                read-only access to your positions — no wallet connection, no permissions, no exposure.
+                <span className="font-semibold text-foreground">When frontends fail:</span> DNS hijacks. Frontend
+                outages. Contract exploits. When your usual interface goes dark, Rails gives you read-only access to
+                your positions — no wallet connection, no permissions, no exposure.
               </p>
             </div>
           </div>
