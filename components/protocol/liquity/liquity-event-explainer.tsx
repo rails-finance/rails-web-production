@@ -297,7 +297,6 @@ function generateAdjustTroveItems(
             )}
           </span>
         ),
-        type: "warning",
       });
     }
 
@@ -430,7 +429,6 @@ function generateAdjustRateItems(
           )}
         </span>
       ),
-      type: "warning",
     });
   }
 
@@ -523,13 +521,13 @@ function generateLiquidateItems(ctx: LiquityContext): ExplainerItem[] {
     });
     items.push({
       content: (
-        <span className="text-foreground">
+        <span>
           Net impact: {netBenefit >= 0 ? "+" : ""}
           {fmtUsd(Math.abs(netBenefit))}
           {netBenefit >= 0 ? " (beneficial due to liquidation penalty)" : " (small cost)"}
         </span>
       ),
-      type: netBenefit >= 0 ? "success" : "warning",
+      type: netBenefit >= 0 ? "success" : "default",
     });
     items.push({
       content: (
@@ -684,9 +682,7 @@ function generateLiquidateItems(ctx: LiquityContext): ExplainerItem[] {
   // Redistribution warning
   if (wasPartiallyRedistributed) {
     items.push({
-      content: (
-        <span className="text-foreground">⚠️ Partial redistribution occurred (Stability Pool was insufficient)</span>
-      ),
+      content: <span>⚠️ Partial redistribution occurred (Stability Pool was insufficient)</span>,
       type: "warning",
     });
   }
@@ -781,6 +777,8 @@ function generateRedeemItems(ctx: LiquityContext, currentPrice?: number): Explai
           {isZombie && ", remaining open with collateral only (a 'zero-debt Zombie Trove')"}
         </span>
       ),
+      // Zombie is a named abnormal state → caution tier (§5). A non-zombie
+      // zero-debt close is routine → default.
       type: isZombie ? "warning" : "default",
     });
   } else {
@@ -1140,7 +1138,6 @@ function generateRemoveFromBatchItems(
           Accrued delegate fees: <V>~{accruedManagementFees.toFixed(2)} BOLD</V>
         </span>
       ),
-      type: "warning",
     });
   }
 
@@ -1347,11 +1344,18 @@ function generateItems(
 
 // ── Styles ──────────────────────────────────────────────────────────
 
+// Explainer prose carries NO valence color or whole-sentence emphasis. A
+// caution/critical signal (zombie, redemption, liquidation) lives on the card
+// chrome — the badge, the spine warningTone, the pill — which is sufficient;
+// repeating it as colored footnote text is redundant. The bullets stay in the
+// muted body tone, with emphasis carried only by <V> on values mirrored in that
+// chrome. The `type` field is retained for semantics/possible icon use but adds
+// no text color. (Per Miles, 2026-06-19.)
 const TYPE_STYLES: Record<string, string> = {
-  warning: "text-foreground",
-  success: "text-foreground",
-  error: "text-foreground",
-  info: "text-foreground",
+  warning: "",
+  success: "",
+  error: "",
+  info: "",
 };
 
 // ── Component ───────────────────────────────────────────────────────
