@@ -45,13 +45,15 @@ function activeProtocol(pathname: string | null) {
  *  "Explorer" sublabel — there isn't a single explorer, there are mono-rails. */
 function RailsLogo() {
   return (
-    <Link href="/" className="group flex items-center gap-1.5 text-foreground shrink-0">
+    <Link
+      href="/"
+      className="group flex items-center gap-1.5 text-foreground hover:text-blue-500 transition-colors shrink-0"
+    >
       <svg
         width={30}
         height={30}
         viewBox="0 0 200 200"
         fill="none"
-        className="opacity-100 group-hover:opacity-70 transition-opacity"
         aria-hidden="true"
       >
         <path
@@ -69,9 +71,7 @@ function RailsLogo() {
           d="M 148.892 142.388 L 180.766 142.388 L 155.359 93.185 L 123.486 93.185 L 148.892 142.388 Z"
         />
       </svg>
-      <span className="text-base tracking-wide font-semibold opacity-100 group-hover:opacity-70 transition-opacity">
-        Rails
-      </span>
+      <span className="text-base tracking-wide font-semibold">Rails</span>
     </Link>
   );
 }
@@ -85,7 +85,7 @@ function ProtocolLabel({ protocol }: { protocol: { id: string; label: string; ic
   return (
     <Link href={protocol.prefixes[0]} className="group ml-3 flex items-center gap-1.5">
       <img src={protocol.iconSrc} alt="" className="w-4 h-4 shrink-0 rounded-[3px]" />
-      <span className="text-[11px] uppercase tracking-[0.14em] font-semibold text-rb-500 group-hover:text-foreground transition-colors">
+      <span className="text-[11px] uppercase tracking-[0.14em] font-semibold text-foreground group-hover:text-blue-500 transition-colors">
         {protocol.label}
       </span>
     </Link>
