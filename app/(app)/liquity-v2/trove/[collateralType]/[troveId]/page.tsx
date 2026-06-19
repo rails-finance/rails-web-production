@@ -399,13 +399,14 @@ export default function TrovePage() {
   if (loading) {
     // Real back button (so the nav chrome doesn't pop in) above two
     // card-shaped blocks that pulse in place — one for the position card, one
-    // for the economics panel. They share the `bg-raised` card surface, so
-    // they read as the cards themselves fading in.
+    // for the economics panel. They read as the cards themselves fading in; the
+    // economics panel uses a gradient that fades into the page background so its
+    // bottom edge blends away and the skeleton doesn't have to commit to a height.
     return (
       <div className="space-y-6 py-8">
         <SmartBackButton walletFilterHref="/liquity-v2" />
         <div className="h-44 rounded-2xl bg-raised animate-pulse" />
-        <div className="h-72 rounded-2xl bg-raised animate-pulse" />
+        <div className="h-72 rounded-2xl bg-gradient-to-b from-[var(--surface-raised)] to-[var(--background)] animate-pulse" />
       </div>
     );
   }

@@ -427,10 +427,17 @@ function AaveV4SpokePageInner() {
   useRequestPrices(reserveAddresses);
 
   if (loading) {
+    // Real back button (so the nav chrome doesn't pop in) above two
+    // card-shaped blocks that pulse in place — one for the position stat card,
+    // one for the economics panel. The economics panel's height fluctuates with
+    // the asset count, so instead of guessing it we fade it into the page
+    // background with a gradient: the bottom edge blends away and the skeleton
+    // doesn't have to commit to a height.
     return (
-      <div className="py-8 space-y-6">
-        <div className="h-32 bg-raised rounded-lg animate-pulse" />
-        <div className="h-64 bg-raised rounded-lg animate-pulse" />
+      <div className="space-y-6 py-8">
+        <SmartBackButton walletFilterHref={walletFilterHref} />
+        <div className="h-44 rounded-2xl bg-raised animate-pulse" />
+        <div className="h-72 rounded-2xl bg-gradient-to-b from-[var(--surface-raised)] to-[var(--background)] animate-pulse" />
       </div>
     );
   }
