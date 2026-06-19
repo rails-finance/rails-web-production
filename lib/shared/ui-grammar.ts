@@ -113,11 +113,16 @@ export const PILL_META =
 
 /**
  * Count badge — a solid chip showing a count of active selections (e.g. the
- * number of engaged filter groups). Deliberately the highest-contrast chip in
- * the grammar because its whole job is to pull the eye to "you have N active".
+ * number of engaged filter groups). Its job is to pull the eye to "you have N
+ * active", so it lifts off the control surface it nests in (CTRL_ON = rb-100
+ * light / rb-800 dark). The fill is theme-split because a single fixed value
+ * can't serve both: rb-500 reads as a gentle lift off the dark button but
+ * inverts into a heavy saturated stamp on the white one, so light steps a touch
+ * darker (rb-400) instead — matched restraint, opposite direction. text is
+ * theme-aware via text-foreground.
  * One token so the badge reads identically everywhere a count appears — the
  * listing filter bar, the per-category multi-select pills, and the timeline
  * controls.
  */
 export const COUNT_BADGE =
-  "inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full bg-rb-500 text-foreground text-[10px] font-semibold";
+  "inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 rounded-full bg-rb-400 dark:bg-rb-500 text-foreground text-[10px] font-semibold";
