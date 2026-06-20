@@ -11,13 +11,13 @@ import { ClosedPositionStats } from "@/components/shared/closed-position-stats";
 import { OpenPositionStats } from "@/components/shared/open-position-stats";
 import { InlineAssetCluster } from "@/components/shared/inline-asset-cluster";
 import { StatValue, StatDash } from "@/components/shared/stat-value";
-import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import { type HubTier } from "@/components/protocol/aave-v4/aave-v4-spoke-constants";
-import type { AaveSpokeCardInfo } from "@/lib/aave-v4/spoke-cards";
+import { type AaveSpokeCardInfo, liquidationBuffer } from "@/lib/aave-v4/spoke-cards";
+import { AaveV4LiquidationFootnote } from "@/components/protocol/aave-v4/aave-v4-liquidation-footnote";
 import { bucketForHealth } from "@/lib/aave-v4/health-bucket";
 import { LiquidatedBadge } from "@/components/aave-v4/LiquidatedBadge";
 import { WalletPill } from "@/components/aave-v4/wallet-pill";
-import { fmtUsd, hfLabel, hfColorClass, fmtLiqPrice } from "@/lib/aave-v4/format";
+import { fmtUsd, hfLabel, hfColorClass } from "@/lib/aave-v4/format";
 import { AaveV4PositionExplanation } from "@/components/protocol/aave-v4/aave-v4-position-explanation";
 import { InfoDisclosure } from "@/components/shared/info-disclosure";
 
@@ -220,31 +220,40 @@ function AaveV4SpokeCard({
                     },
                     null,
                     null,
-                    null,
                   ]
                 : [
                     {
-                      // "Collateral" is the full deposited market value — that's
-                      // what the collateral actually is. The liquidation-threshold
-                      // weighting (what can be borrowed against it) is expressed
-                      // by Health Factor + borrowing power, not by shrinking this
-                      // number.
+                      // "Collateral" is the full (un-LT-weighted) market value of
+                      // the supplies ENABLED as collateral — what actually backs
+                      // the loan. Supplied-but-not-collateral assets are excluded
+                      // (they can't be seized and don't move HF) and shown as a
+                      // separate footnote. The LT weighting lives in HF + borrowing
+                      // power, not in this number.
                       label: "Collateral",
                       assetIcons:
-                        spoke.supplyingSymbols.length > 0 ? (
-                          <InlineAssetCluster symbols={spoke.supplyingSymbols} />
+                        spoke.supplyBreakdown.collateralSymbols.length > 0 ? (
+                          <InlineAssetCluster symbols={spoke.supplyBreakdown.collateralSymbols} />
                         ) : undefined,
                       value: supplyUsdPending
                         ? supplyValueSkeleton
                         : (() => {
-                            const v = fmtUsd(spoke.totalSupplyUsd);
+                            const v = fmtUsd(spoke.supplyBreakdown.collateralUsd);
                             return (
                               <StatValue color="text-foreground/80" title={v.title}>
                                 {v.display}
                               </StatValue>
                             );
                           })(),
-                      footnote: <SupplyInterestFootnote spoke={spoke} />,
+                      footnote: (
+                        <>
+                          {spoke.supplyBreakdown.nonCollateralUsd > 0 && (
+                            <div className="text-xs mt-0.5 text-rb-500">
+                              + {fmtUsd(spoke.supplyBreakdown.nonCollateralUsd).display} supplied · not collateral
+                            </div>
+                          )}
+                          <SupplyInterestFootnote spoke={spoke} />
+                        </>
+                      ),
                     },
                     {
                       label: "Debt",
@@ -270,43 +279,12 @@ function AaveV4SpokeCard({
                         ) : (
                           <StatDash>{"∞"}</StatDash>
                         ),
-                      // Borrowing power intentionally omitted: it's the gap to a
-                      // 1.00 HF (the liquidation point), not a safe-to-borrow
-                      // figure, so it misreads as a stat. The honest framing lives
-                      // in the explanation panel instead.
-                      footnote: undefined,
-                    },
-                    {
-                      label: spoke.liqPrice ? `Liq Price (${spoke.liqPrice.symbol})` : "Liq Price",
-                      value: spoke.liqPrice ? (
-                        <StatValue color="text-foreground/80">
-                          <span className="inline-flex items-center gap-1.5">
-                            {fmtLiqPrice(spoke.liqPrice.liqPrice)}
-                            <TokenChipIcon symbol={spoke.liqPrice.symbol} size={28} />
-                          </span>
-                        </StatValue>
-                      ) : (
-                        <StatDash />
-                      ),
-                      // Headroom compares the live collateral price to the liq
-                      // price, so while the collateral price is still resolving
-                      // it reads a false "0% headroom" (looks like imminent
-                      // liquidation). The liq price itself is chain-derived and
-                      // stable, so keep it — only skeleton the headroom line.
-                      footnote: spoke.liqPrice ? (
-                        supplyUsdPending ? (
-                          <div className="text-xs mt-0.5">
-                            <span
-                              className="inline-block h-3 w-20 rounded bg-skeleton animate-pulse align-middle"
-                              aria-hidden="true"
-                            />
-                          </div>
-                        ) : (
-                          <div className="text-xs mt-0.5 text-rb-500">
-                            {spoke.liqPrice.headroomPct.toFixed(0)}% headroom
-                          </div>
-                        )
-                      ) : undefined,
+                      // The liquidation read sits beneath HF as its tangible
+                      // restatement (single collateral → price, multi → 1 − 1/HF
+                      // buffer), not as a peer column — it's derived from HF.
+                      // Borrowing power stays omitted (it's the gap to a 1.00 HF,
+                      // which misreads as a safe-to-borrow stat).
+                      footnote: <AaveV4LiquidationFootnote buf={liquidationBuffer(spoke)} />,
                     },
                   ]
             }

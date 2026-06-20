@@ -18,7 +18,7 @@
 import type { AaveSpokeCardInfo, ReserveStats } from "./spoke-cards";
 import type { AaveV4SpokePositionChainResponse } from "@/lib/api/fetch-aave-v4-spoke-position";
 import { scaleChainBalance } from "@/lib/api/fetch-aave-v4-spoke-position";
-import { simulateAaveV4Position, type SimPositionInputs } from "./utils/simulate";
+import { simulateAaveV4Position, computeSupplyBreakdown, type SimPositionInputs } from "./utils/simulate";
 import { resolvePrice, type PriceEntry } from "@/lib/aave/prices";
 
 /** Patch a ReserveStats[] so each row carries the chain-truth current
@@ -213,6 +213,7 @@ export function patchSpokeCardWithChain(
     liqPrice,
     assetLiqPrices,
     borrowingPowerUsd: sim.borrowCapacityUsd,
+    supplyBreakdown: computeSupplyBreakdown(simInputs.supplies),
     // Closed-position heuristic: chain says no supply AND no debt.
     isClosed: simInputs.supplies.length === 0 && simInputs.debts.length === 0,
   };

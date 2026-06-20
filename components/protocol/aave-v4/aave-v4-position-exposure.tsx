@@ -14,6 +14,7 @@ export function AaveV4PositionExposure({
   reserves,
   prices,
   blendedLt,
+  variant = "section",
 }: {
   reserves: ReserveStats[];
   prices?: Record<string, PriceEntry | number>;
@@ -22,6 +23,11 @@ export function AaveV4PositionExposure({
    *  recomputing, so it can't drift from the position-explanation panel that
    *  reads the same field. Omit to compute locally. */
   blendedLt?: number | null;
+  /** "section" (default) renders the labelled COLLATERAL EXPOSURE block.
+   *  "footnote" drops the heading and renders the sentence as a quiet footnote
+   *  beneath the price runways — the exposure read is a gloss on the runways
+   *  (what the collateral is made of), not its own panel. */
+  variant?: "section" | "footnote";
 }) {
   const inputs: ExposureInput[] = reserves
     .filter((r) => r.collateralEnabled ?? true)
@@ -33,6 +39,10 @@ export function AaveV4PositionExposure({
 
   const exposure = describeCollateralExposure(inputs, blendedLt);
   if (!exposure.sentence) return null;
+
+  if (variant === "footnote") {
+    return <p className="mt-3 text-[12px] leading-relaxed text-rb-500">{exposure.sentence}</p>;
+  }
 
   return (
     <div className="mb-4">

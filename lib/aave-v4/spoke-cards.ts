@@ -14,7 +14,7 @@ import type { AaveV4Context } from "@/lib/shared/types/protocols/aave-v4";
 import { type PriceEntry, resolvePrice } from "@/lib/aave/prices";
 import { SPOKE_HUB, type HubTier } from "@/components/protocol/aave-v4/aave-v4-spoke-constants";
 import { AAVE_V4_FALLBACK_LT } from "@/lib/aave-v4/liquidation-thresholds";
-import { simulateAaveV4Position } from "@/lib/aave-v4/utils/simulate";
+import { simulateAaveV4Position, computeSupplyBreakdown, type SupplyBreakdown } from "@/lib/aave-v4/utils/simulate";
 import { effectiveBorrowAPR } from "@/lib/aave-v4/borrow-rate";
 
 // ---- Types ----
@@ -135,6 +135,10 @@ export interface AaveSpokeCardInfo {
    *  a red LIQUIDATED indicator alongside the status pill — the position may
    *  still be active afterwards, but the history is permanent. */
   wasLiquidated: boolean;
+  /** Supplies split into collateral-enabled vs not. The headline "Collateral"
+   *  uses `collateralUsd`; non-collateral supplies are shown separately and never
+   *  counted as collateral (they can't be seized and don't move HF). */
+  supplyBreakdown: SupplyBreakdown;
   /** Chain-faithful lifetime interest carry — supply interest earned minus
    *  borrow interest paid. Present only when chain-truth balances have been
    *  applied (see computeAaveV4InterestPnl); null otherwise. */
@@ -698,6 +702,7 @@ export function buildSpokeCards(
       assetLiqPrices,
       borrowingPowerUsd: simResult.borrowCapacityUsd,
       wasLiquidated,
+      supplyBreakdown: computeSupplyBreakdown(simSupplies),
     };
   });
 }
@@ -709,4 +714,66 @@ export function buildAaveV4SpokeCards(
 ): AaveSpokeCardInfo[] {
   const groups = groupBySpoke(events, eventIndexMap, prices);
   return buildSpokeCards(groups, prices);
+}
+
+export interface LiquidationBuffer {
+  /** Uniform collateral drop, as a %, that takes the spoke to a 1.0 health
+   *  factor: `1 − 1/HF`. null when there's no debt / no HF. */
+  dropPct: number | null;
+  /** HF ≤ 1 — already liquidatable. */
+  liquidatable: boolean;
+  /** Present only when collateral is a SINGLE asset, where the buffer pins to a
+   *  concrete liquidation price. Derived chain-truth from HF (`currentPrice /
+   *  HF`) — no LT table — so it can't disagree with the health factor. */
+  single: { symbol: string; currentPrice: number; liqPrice: number } | null;
+}
+
+/**
+ * The one coherent liquidation read for an Aave V4 spoke, derived from the
+ * chain health factor — used by the position card's stat, the liquidation
+ * runway, and the explanation prose so all three tell the same story.
+ *
+ * Health factor is Aave's own liquidation trigger (liquidates at 1.0), so the
+ * universal headroom is the uniform collateral drop that reaches it: `1 − 1/HF`.
+ *
+ * Mode is set by how many assets are ENABLED AS COLLATERAL — the only assets a
+ * liquidation can seize, and the only ones that move the health factor:
+ *   • exactly one → `single` is set: we surface that asset's concrete liquidation
+ *     PRICE (clearer than a %). Derived chain-truth as `currentPrice / HF` — no LT
+ *     table — so it can't disagree with the health factor. This also covers a
+ *     position with one collateral asset plus other plain (non-collateral)
+ *     supplies, since those don't back the loan or affect liquidation.
+ *   • two or more → `single` is null: we show the `1 − 1/HF` percentage instead,
+ *     because a single asset's solo liq price holds the others fixed and so
+ *     systematically OVERSTATES safety for a correlated basket.
+ *
+ * Collateral-enabled is read off `assetLiqPrices`: a non-collateral supply has a
+ * null `liqPrice` (the simulator returns null for assets that don't back debt).
+ */
+export function liquidationBuffer(spoke: AaveSpokeCardInfo): LiquidationBuffer {
+  return liquidationBufferFrom(spoke.healthFactor, spoke.totalDebtUsd, spoke.assetLiqPrices);
+}
+
+/**
+ * Primitive form of {@link liquidationBuffer} over the minimal inputs, so the
+ * listing card (which holds a raw simulator result, not an AaveSpokeCardInfo)
+ * gets identical behaviour. `assetLiqPrices` entries with a non-null `liqPrice`
+ * are the collateral-enabled assets.
+ */
+export function liquidationBufferFrom(
+  healthFactor: number | null,
+  totalDebtUsd: number,
+  assetLiqPrices: { symbol: string; currentPrice: number; liqPrice: number | null }[],
+): LiquidationBuffer {
+  if (healthFactor == null || totalDebtUsd <= 0) return { dropPct: null, liquidatable: false, single: null };
+  if (healthFactor <= 1) return { dropPct: 0, liquidatable: true, single: null };
+
+  const dropPct = (1 - 1 / healthFactor) * 100;
+  const collateral = assetLiqPrices.filter((a) => a.liqPrice != null && a.currentPrice > 0);
+  let single: LiquidationBuffer["single"] = null;
+  if (collateral.length === 1) {
+    const a = collateral[0];
+    single = { symbol: a.symbol, currentPrice: a.currentPrice, liqPrice: a.currentPrice / healthFactor };
+  }
+  return { dropPct, liquidatable: false, single };
 }

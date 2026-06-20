@@ -5,7 +5,7 @@
 // aave-v4-spoke-card.tsx so it can render either inside the card or, in the
 // "About this position" layout, as a standalone panel above the stats card.
 
-import type { AaveSpokeCardInfo, AaveV4InterestPnl } from "@/lib/aave-v4/spoke-cards";
+import { type AaveSpokeCardInfo, type AaveV4InterestPnl, liquidationBuffer } from "@/lib/aave-v4/spoke-cards";
 import { fmtUsd, hfLabel, fmtLiqPrice, fmtSignedUsd, fmtTokenAmount } from "@/lib/aave-v4/format";
 import { aaveV4DisplaySymbol } from "@/lib/aave-v4/pt-tokens";
 import { LearnMore } from "@/components/shared/learn-more-modal";
@@ -174,16 +174,33 @@ function buildSpokePositionItems(spoke: AaveSpokeCardInfo): React.ReactNode[] {
         </span>,
       );
     }
-    if (spoke.liqPrice) {
-      items.push(
-        <span key="liq">
-          Liquidation tracks{" "}
-          <span className="text-foreground/90 font-medium">{aaveV4DisplaySymbol(spoke.liqPrice.symbol)}</span>: from
-          today&rsquo;s <strong className="text-foreground">{fmtLiqPrice(spoke.liqPrice.currentPrice)}</strong> it would
-          have to fall to <strong className="text-foreground">{fmtLiqPrice(spoke.liqPrice.liqPrice)}</strong> — about{" "}
-          {spoke.liqPrice.headroomPct.toFixed(0)}% below — to trigger one.
-        </span>,
-      );
+    {
+      const buf = liquidationBuffer(spoke);
+      if (buf.dropPct != null && !buf.liquidatable) {
+        if (buf.single) {
+          // Single collateral asset — pin the buffer to a concrete price
+          // (currentPrice / HF, chain-truth, no LT table).
+          items.push(
+            <span key="liq">
+              Liquidation tracks{" "}
+              <span className="text-foreground/90 font-medium">{aaveV4DisplaySymbol(buf.single.symbol)}</span>: from
+              today&rsquo;s <strong className="text-foreground">{fmtLiqPrice(buf.single.currentPrice)}</strong> it would
+              have to fall about <strong className="text-foreground">{buf.dropPct.toFixed(0)}%</strong> (to{" "}
+              <strong className="text-foreground">{fmtLiqPrice(buf.single.liqPrice)}</strong>) to trigger one.
+            </span>,
+          );
+        } else {
+          // Multiple collateral assets — no single asset drives liquidation, so
+          // the honest figure is the correlated drop across all of them.
+          items.push(
+            <span key="liq">
+              No single asset drives liquidation here — across the collateral as a whole, its value would have to fall
+              about <strong className="text-foreground">{buf.dropPct.toFixed(0)}%</strong> (a correlated drop across
+              every asset) before the health factor reaches 1.00.
+            </span>,
+          );
+        }
+      }
     }
     if (spoke.borrowingPowerUsd > 1) {
       items.push(

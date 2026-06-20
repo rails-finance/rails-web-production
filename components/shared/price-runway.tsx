@@ -103,9 +103,16 @@ const OFFSCREEN_STUB = 5; // width (% of window) of the pinned blue nub when the
 export interface PriceRunwayProps {
   currentPrice: number;
   liqPrice: number | null;
+  /** Overrides the right-side caption when safe (default `liquidation $<price>`).
+   *  Lets a non-price axis (e.g. an Aave health-factor runway, where the value
+   *  is HF and the line is HF 1.0) label the threshold in its own units. */
+  liqCaption?: React.ReactNode;
+  /** Overrides the right-side caption when underwater (default
+   *  `recovers at $<price> (+N%)`). */
+  underwaterCaption?: React.ReactNode;
 }
 
-export function PriceRunway({ currentPrice, liqPrice }: PriceRunwayProps) {
+export function PriceRunway({ currentPrice, liqPrice, liqCaption, underwaterCaption }: PriceRunwayProps) {
   const hasLiq = liqPrice != null && liqPrice > 0;
   if (!hasLiq) return null; // no debt / fully covered — nothing to plot
 
@@ -219,13 +226,13 @@ export function PriceRunway({ currentPrice, liqPrice }: PriceRunwayProps) {
           <>
             <span className="absolute left-0 font-semibold text-red-600 dark:text-red-400">Liquidatable now</span>
             <span className="absolute right-0">
-              recovers at {fmtPrice(liqPrice!)} (+{recoverPct}%)
+              {underwaterCaption ?? <>recovers at {fmtPrice(liqPrice!)} (+{recoverPct}%)</>}
             </span>
           </>
         ) : (
           <>
             <span className="absolute left-0">{pctFromLiq}% from liquidation</span>
-            <span className="absolute right-0">liquidation {fmtPrice(liqPrice!)}</span>
+            <span className="absolute right-0">{liqCaption ?? <>liquidation {fmtPrice(liqPrice!)}</>}</span>
             <div className={`pointer-events-none absolute inset-0 ${REVEAL}`}>
               {rulerTicks.map((t) => (
                 <span

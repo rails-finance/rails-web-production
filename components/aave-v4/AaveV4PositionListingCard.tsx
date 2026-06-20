@@ -22,7 +22,6 @@
 //   - Time-ago in the `identity` slot.
 
 import { InlineAssetCluster } from "@/components/shared/inline-asset-cluster";
-import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import { Icon } from "@/components/icons/icon";
 import { OpenPositionStats } from "@/components/shared/open-position-stats";
 import { StatValue, StatDash } from "@/components/shared/stat-value";
@@ -34,8 +33,10 @@ import { bucketForHealth } from "@/lib/aave-v4/health-bucket";
 import { SPOKE_HUB } from "@/components/protocol/aave-v4/aave-v4-spoke-constants";
 import { LiquidatedBadge } from "@/components/aave-v4/LiquidatedBadge";
 import { WalletPill } from "@/components/aave-v4/wallet-pill";
-import { fmtUsd, hfLabel, fmtLiqPrice } from "@/lib/aave-v4/format";
-import { simulateAaveV4Position, type SimPositionInputs } from "@/lib/aave-v4/utils/simulate";
+import { fmtUsd, hfLabel } from "@/lib/aave-v4/format";
+import { simulateAaveV4Position, computeSupplyBreakdown, type SimPositionInputs } from "@/lib/aave-v4/utils/simulate";
+import { liquidationBufferFrom } from "@/lib/aave-v4/spoke-cards";
+import { AaveV4LiquidationFootnote } from "@/components/protocol/aave-v4/aave-v4-liquidation-footnote";
 
 export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow }) {
   // Build sim inputs from the server's chain-truth reserves[]. Same inputs the
@@ -68,36 +69,18 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
 
     const result = simulateAaveV4Position({ supplies, debts });
 
-    // Dominant-collateral liq price: largest-USD supply with a non-null
-    // simulated liq price. Mirrors patchSpokeCardWithChain logic exactly so
-    // the listing's headline Liq Price tracks the detail's.
-    let liqPrice: { symbol: string; liqPrice: number; headroomPct: number } | null = null;
-    if (result.totalDebtUsd > 0) {
-      const ranked = supplies
-        .map((s, i) => ({
-          symbol: s.symbol,
-          usd: s.amount * s.price,
-          lp: result.assetLiqPrices[i],
-        }))
-        .filter((x) => x.lp?.liqPrice != null && x.lp.liqPrice > 0)
-        .sort((a, b) => b.usd - a.usd);
-      if (ranked.length > 0) {
-        const top = ranked[0];
-        liqPrice = {
-          symbol: top.symbol,
-          liqPrice: top.lp!.liqPrice!,
-          headroomPct: top.lp!.headroomPct ?? 0,
-        };
-      }
-    }
-
     return {
       ...result,
       supplyingSymbols,
       borrowingSymbols,
-      liqPrice,
+      breakdown: computeSupplyBreakdown(supplies),
     };
   }, [row.reserves]);
+
+  // Liquidation read — identical helper to the detail card. Single collateral
+  // asset → its price; two or more → the 1 − 1/HF buffer. Uses the chain HF the
+  // server shipped (row.healthFactor), not the sim's derived HF.
+  const buf = liquidationBufferFrom(row.healthFactor, sim.totalDebtUsd, sim.assetLiqPrices);
 
   // Prefer the chain HF the server already shipped (matches Aave UI by
   // construction) over the sim's derived HF. They agree when LTs are fresh;
@@ -116,9 +99,13 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
   const hubTier = SPOKE_HUB[row.spokeName] ?? "Core";
 
   const collateralValue = (() => {
-    // "Collateral" is the full deposited value — the LT weighting (what can be
-    // borrowed against it) lives in HF + borrowing power, not in this number.
-    const v = fmtUsd(sim.totalCollateralUsd);
+    // "Collateral" is the full (un-LT-weighted) value of the supplies enabled as
+    // collateral. Supply-only positions have no collateral concept yet, so show
+    // the full deposited value; once there's debt, non-collateral supplies are
+    // excluded (shown as a footnote). The LT weighting lives in HF + borrowing
+    // power, not in this number.
+    const usd = supplyOnly ? sim.totalCollateralUsd : sim.breakdown.collateralUsd;
+    const v = fmtUsd(usd);
     // Supply-only positions are still OPEN — render the value bright like any
     // active position. The muted (text-rb-500) tone is reserved for genuinely
     // closed positions, so using it here would falsely read as "closed."
@@ -150,17 +137,6 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
     );
   })();
 
-  const liqPriceValue = (() => {
-    if (!sim.liqPrice) return <StatDash />;
-    return (
-      <StatValue color="text-foreground/80">
-        <span className="inline-flex items-center gap-1.5">
-          {fmtLiqPrice(sim.liqPrice.liqPrice)}
-          <TokenChipIcon symbol={sim.liqPrice.symbol} size={28} filterable={false} />
-        </span>
-      </StatValue>
-    );
-  })();
 
   return (
     <OpenPositionStats
@@ -186,9 +162,17 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
       columns={[
         {
           label: supplyOnly ? "Supplied" : "Collateral",
-          assetIcons:
-            sim.supplyingSymbols.length > 0 ? <InlineAssetCluster symbols={sim.supplyingSymbols} /> : undefined,
+          assetIcons: (() => {
+            const symbols = supplyOnly ? sim.supplyingSymbols : sim.breakdown.collateralSymbols;
+            return symbols.length > 0 ? <InlineAssetCluster symbols={symbols} /> : undefined;
+          })(),
           value: collateralValue,
+          footnote:
+            !supplyOnly && sim.breakdown.nonCollateralUsd > 0 ? (
+              <div className="text-xs mt-0.5 text-rb-500">
+                + {fmtUsd(sim.breakdown.nonCollateralUsd).display} supplied · not collateral
+              </div>
+            ) : undefined,
         },
         {
           label: "Debt",
@@ -211,17 +195,10 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
             </span>
           ) : undefined,
           value: hfValue,
-          // Borrowing power intentionally omitted (matches the detail card): it's
-          // the gap to a 1.00 HF (the liquidation point), not a safe-to-borrow
-          // figure, so it misreads as a stat.
-          footnote: undefined,
-        },
-        {
-          label: sim.liqPrice ? `Liq Price (${sim.liqPrice.symbol})` : "Liq Price",
-          value: liqPriceValue,
-          footnote: sim.liqPrice ? (
-            <div className="text-xs mt-0.5 text-rb-500">{sim.liqPrice.headroomPct.toFixed(0)}% headroom</div>
-          ) : undefined,
+          // Liquidation read sits beneath HF as its tangible restatement (single
+          // collateral → price, multi → 1 − 1/HF buffer), mirroring the detail
+          // card. Borrowing power stays omitted (misreads as safe-to-borrow).
+          footnote: <AaveV4LiquidationFootnote buf={buf} />,
         },
       ]}
     />

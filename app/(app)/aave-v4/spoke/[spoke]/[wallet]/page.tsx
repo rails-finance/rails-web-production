@@ -53,9 +53,8 @@ import { isAaveV4Event } from "@/lib/shared/types/event-shape";
 import { AaveV4EventCard } from "@/components/protocol/aave-v4/aave-v4-event-card";
 import type { AaveV4TxGroup } from "@/components/protocol/aave-v4/aave-v4-event-header";
 import { AaveV4SpokeCardSelector } from "@/components/protocol/aave-v4/aave-v4-spoke-card";
-import { AaveV4SpokeRunwayStack } from "@/components/protocol/aave-v4/aave-v4-spoke-runway-stack";
+import { AaveV4SpokeRunway } from "@/components/protocol/aave-v4/aave-v4-spoke-runway";
 import { AaveV4PositionExposure } from "@/components/protocol/aave-v4/aave-v4-position-exposure";
-import { aaveV4RunwayExplanation } from "@/components/protocol/aave-v4/aave-v4-price-runway";
 import { InfoDisclosure } from "@/components/shared/info-disclosure";
 import { LearnMore } from "@/components/shared/learn-more-modal";
 import { aaveV4EconomicsContent } from "@/lib/shared/learn-more-content";
@@ -747,45 +746,7 @@ function AaveV4SpokeEconomicsBand({
   const [surplusSymbols, hideSurplus, setHideSurplus] = useSurplusState(simBase);
   const [runwayInfoOpen, setRunwayInfoOpen] = useState(false);
 
-  // Per-asset runway copy for the economics card's standard bottom-left (i) —
-  // relocated here from each price-runway bar. Mirrors the row filter used by
-  // AaveV4SpokeRunwayStack so the explanations match the bars shown.
-  const runwayInfo = useMemo(() => {
-    if (!runwayCard || runwayCard.totalDebtUsd <= 0) return [];
-    const shown = runwayCard.assetLiqPrices.filter((a) => a.usdShare > 1 && a.currentPrice > 0);
-    // When no single asset is the binding constraint — every shown asset is
-    // over-covered (liqPrice === 0) — the per-asset bullets all repeat the same
-    // "can fall to zero on its own" point. Collapse them into one line that names
-    // the assets and defers the real constraint to the combined runway above.
-    const allOverCovered = shown.length > 1 && shown.every((a) => a.liqPrice === 0);
-    if (allOverCovered) {
-      const symbols = shown.map((a) => a.symbol);
-      const joined =
-        symbols.length === 2
-          ? `${symbols[0]} or ${symbols[1]}`
-          : `${symbols.slice(0, -1).join(", ")}, or ${symbols[symbols.length - 1]}`;
-      return [
-        {
-          symbol: "__combined__",
-          node: (
-            <>
-              No single asset is the constraint — {joined} could each fall to zero on its own without tripping a
-              liquidation. Only a correlated drop across all of them does, shown by the{" "}
-              <span className="font-semibold text-foreground">All collateral</span> runway above.
-            </>
-          ),
-        },
-      ];
-    }
-    return shown.map((a) => ({
-      symbol: a.symbol,
-      node: aaveV4RunwayExplanation({
-        collateralSymbol: a.symbol,
-        currentPrice: a.currentPrice,
-        liqPrice: a.liqPrice,
-      }),
-    }));
-  }, [runwayCard]);
+  const showRunwayInfo = !!runwayCard && runwayCard.totalDebtUsd > 0 && runwayCard.healthFactor != null;
 
   return (
     <div className="space-y-3">
@@ -797,45 +758,47 @@ function AaveV4SpokeEconomicsBand({
         onToggleHideSurplus={() => setHideSurplus((v) => !v)}
       />
 
-      <AaveV4PositionExposure reserves={reserves} prices={prices} blendedLt={runwayCard?.blendedLt} />
+      {runwayCard && <AaveV4SpokeRunway spoke={runwayCard} />}
 
-      {runwayCard && <AaveV4SpokeRunwayStack spoke={runwayCard} />}
+      {/* Collateral-exposure read demoted to a footnote beneath the runway —
+          it glosses what the collateral is made of (its blended-LT parameter),
+          a caption to the runway rather than its own headed section. */}
+      <AaveV4PositionExposure
+        reserves={reserves}
+        prices={prices}
+        blendedLt={runwayCard?.blendedLt}
+        variant="footnote"
+      />
 
-      {runwayInfo.length > 0 && (
+      {showRunwayInfo && (
         <InfoDisclosure open={runwayInfoOpen} onToggle={setRunwayInfoOpen} label="liquidation runway">
-          {/* Muted body (text-rb-500) so the foreground highlights on
-              card-referenced figures — each asset's headroom % and liq price,
-              both surfaced on the runway bars and the Liq Price stat — stand
-              out. Distinct from the "This position" panel: this one explains
-              how to *read* the runways, not the headline HF / borrowing-power
-              numbers that panel already states. */}
+          {/* Muted body (text-rb-500); explains how to read the single combined
+              runway, distinct from the "This position" panel that states the
+              headline HF / borrowing-power numbers. */}
           <div className="space-y-2 text-sm text-rb-500">
             <div className="flex items-start gap-2 leading-relaxed">
               <span className="select-none text-rb-500">•</span>
               <span>
-                Each runway is an independent shock: it shows how far that one asset&apos;s price could fall — with
-                every other asset held at today&apos;s value — before this spoke&apos;s health factor reaches 1.0 and
-                the position turns liquidatable.
-              </span>
-            </div>
-            {runwayInfo.map((r) => (
-              <div key={r.symbol} className="flex items-start gap-2 leading-relaxed">
-                <span className="select-none text-rb-500">•</span>
-                <span>{r.node}</span>
-              </div>
-            ))}
-            <div className="flex items-start gap-2 leading-relaxed">
-              <span className="select-none text-rb-500">•</span>
-              <span>
-                The whole spoke shares one health factor, so a broad drop across several collaterals at once would trip
-                liquidation sooner than any single asset&apos;s runway implies.
+                The runway shows how close this position is to liquidation. With a single collateral asset it&apos;s a
+                price runway — that asset falling to its liquidation price. With several, it tracks the health factor
+                down to 1.0, Aave&apos;s liquidation trigger, read straight from chain. The marker is where you are now;
+                the red zone is liquidation.
               </span>
             </div>
             <div className="flex items-start gap-2 leading-relaxed">
               <span className="select-none text-rb-500">•</span>
               <span>
-                Reaching a liquidation price doesn&apos;t close the position — Aave liquidates only partially, repaying
-                enough debt to nudge the health factor back above 1.0.
+                Either way the gap is the same buffer — how far your collateral can fall before liquidation. With several
+                assets we show that as a percentage rather than one asset&apos;s price, since a single asset&apos;s solo
+                move would overstate the safety of a correlated basket. Assets you&apos;ve supplied but not enabled as
+                collateral don&apos;t back the loan, so they don&apos;t affect this.
+              </span>
+            </div>
+            <div className="flex items-start gap-2 leading-relaxed">
+              <span className="select-none text-rb-500">•</span>
+              <span>
+                Reaching that point doesn&apos;t close the position — Aave liquidates only partially, repaying enough
+                debt to nudge the health factor back above 1.0.
               </span>
             </div>
             <div className="flex items-start gap-2 leading-relaxed">

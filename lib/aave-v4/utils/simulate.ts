@@ -63,6 +63,47 @@ export interface SimResult {
   underwater: boolean;
 }
 
+export interface SupplyBreakdown {
+  /** Σ USD of supplies the user has ENABLED as collateral — what actually backs
+   *  the loan and can be seized in a liquidation. This is the honest "Collateral"
+   *  figure. */
+  collateralUsd: number;
+  collateralSymbols: string[];
+  /** Σ USD of supplies NOT enabled as collateral — real holdings earning yield,
+   *  but never seized in a liquidation and absent from the health factor (see
+   *  Aave V4 liquidation mechanics). Shown separately, never counted as
+   *  collateral. */
+  nonCollateralUsd: number;
+  nonCollateralSymbols: string[];
+}
+
+/**
+ * Split a position's supplies into collateral vs non-collateral by the on-chain
+ * `useAsCollateral` flag. A supplied-but-not-collateral asset doesn't back the
+ * loan, doesn't move the health factor, and can't be seized — so it must not be
+ * counted in the headline "Collateral".
+ */
+export function computeSupplyBreakdown(supplies: SimSupply[]): SupplyBreakdown {
+  const out: SupplyBreakdown = {
+    collateralUsd: 0,
+    collateralSymbols: [],
+    nonCollateralUsd: 0,
+    nonCollateralSymbols: [],
+  };
+  for (const s of supplies) {
+    if (s.amount <= 0) continue;
+    const usd = s.amount * s.price;
+    if (s.collateralEnabled) {
+      out.collateralUsd += usd;
+      out.collateralSymbols.push(s.symbol);
+    } else {
+      out.nonCollateralUsd += usd;
+      out.nonCollateralSymbols.push(s.symbol);
+    }
+  }
+  return out;
+}
+
 export function simulateAaveV4Position({ supplies, debts }: SimPositionInputs): SimResult {
   let totalCollateralUsd = 0;
   let weightedCollateralUsd = 0;
