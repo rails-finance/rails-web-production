@@ -113,10 +113,6 @@ export function OpenSummaryCard({
 
   const mcr = getLiquidationThreshold(trove.collateralType);
   const liqPrice = displayCollateral > 0 && displayDebt > 0 ? (displayDebt * (mcr / 100)) / displayCollateral : null;
-  const headroomPct =
-    liqPrice !== null && currentPrice && currentPrice > 0
-      ? Math.max(0, ((currentPrice - liqPrice) / currentPrice) * 100)
-      : null;
 
   const txCount = trove.activity.transactionCount - trove.activity.redemptionCount;
 
@@ -196,7 +192,7 @@ export function OpenSummaryCard({
           )}
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
           {/* Collateral */}
           <div>
             <div className="text-xs text-rb-500 font-semibold mb-1">Collateral</div>
@@ -273,23 +269,16 @@ export function OpenSummaryCard({
             ) : (
               <div className="text-2xl lg:text-3xl font-bold text-rb-500">—</div>
             )}
-            <div className="text-xs mt-0.5 text-rb-500">Min {mcr}% threshold</div>
-          </div>
-
-          {/* Liq Price */}
-          <div>
-            <div className="text-xs text-rb-500 font-semibold mb-1">Liq Price ({trove.collateralType})</div>
-            {liqPrice !== null ? (
-              <div className="flex items-center gap-1.5">
-                <span className="text-2xl lg:text-3xl font-bold text-foreground/80">{fmtLiqPrice(liqPrice)}</span>
-                <TokenIcon assetSymbol={trove.collateralType} className="inline-block w-7 h-7" />
-              </div>
-            ) : (
-              <div className="text-2xl lg:text-3xl font-bold text-rb-500">—</div>
-            )}
+            {/* Liquidation price sits beneath the ratio as its tangible restatement
+                (Liquity is always single-collateral, so a concrete price is the
+                clearest read — no headroom % needed). Mirrors the Aave V4 card's
+                liq-read-beneath-HF layout. */}
             <div className="text-xs mt-0.5 text-rb-500 min-h-[1rem]">
-              {headroomPct !== null ? (
-                <>{headroomPct.toFixed(0)}% headroom</>
+              {liqPrice !== null ? (
+                <span className="inline-flex items-center gap-1">
+                  <TokenIcon assetSymbol={trove.collateralType} className="inline-block w-3.5 h-3.5" />
+                  liq {fmtLiqPrice(liqPrice)}
+                </span>
               ) : expectsLiveState && !prices && displayDebt > 0 && displayCollateral > 0 ? (
                 <span className="inline-block h-3 w-20 rounded-md bg-rb-200 dark:bg-rb-700 animate-pulse" />
               ) : null}
