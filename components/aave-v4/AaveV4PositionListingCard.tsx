@@ -116,8 +116,14 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
     );
   })();
 
+  // Debt / HF values for positions that have (or once had) debt. Supply-only
+  // rows never reach these — their columns are `null`ed out below so the grid
+  // slot stays open without asserting an empty Debt/HF (matches the detail
+  // card and the closed-Liquity precedent: an absent dimension shows nothing,
+  // not a placeholder dash). The `!hasDebt` HF branch still fires for a
+  // liquidated-then-zeroed position (liquidationCount > 0), which is not
+  // supply-only.
   const debtValue = (() => {
-    if (supplyOnly) return <StatDash />;
     const v = fmtUsd(sim.totalDebtUsd);
     return (
       <StatValue color="text-foreground/80" title={v.title}>
@@ -127,7 +133,6 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
   })();
 
   const hfValue = (() => {
-    if (supplyOnly) return <StatDash />;
     if (!hasDebt) return <StatDash>{"∞"}</StatDash>;
     return (
       <StatValue color={bucket.valueColor}>
@@ -174,32 +179,36 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
               </div>
             ) : undefined,
         },
-        {
-          label: "Debt",
-          assetIcons:
-            !supplyOnly && sim.borrowingSymbols.length > 0 ? (
-              <InlineAssetCluster symbols={sim.borrowingSymbols} />
-            ) : undefined,
-          value: debtValue,
-          footnote: supplyOnly ? <div className="text-xs mt-0.5 text-rb-500">Supply only</div> : undefined,
-        },
-        {
-          label: "Health Factor",
-          headerIcon: hfStale ? (
-            <span
-              className="text-caution-500"
-              title="Approximate — live on-chain source unavailable. Shown value derived from indexed balances × off-chain prices."
-              aria-label="Health factor is approximate; live on-chain source unavailable"
-            >
-              <Icon name="triangle" size={10} />
-            </span>
-          ) : undefined,
-          value: hfValue,
-          // Liquidation read sits beneath HF as its tangible restatement (single
-          // collateral → price, multi → 1 − 1/HF buffer), mirroring the detail
-          // card. Borrowing power stays omitted (misreads as safe-to-borrow).
-          footnote: <AaveV4LiquidationFootnote buf={buf} />,
-        },
+        // Supply-only → null both columns. The grid slot stays open (so the
+        // card lines up with sibling borrowing cards) but renders nothing —
+        // no "Debt"/"Health Factor" label, no dash, no footnote.
+        supplyOnly
+          ? null
+          : {
+              label: "Debt",
+              assetIcons:
+                sim.borrowingSymbols.length > 0 ? <InlineAssetCluster symbols={sim.borrowingSymbols} /> : undefined,
+              value: debtValue,
+            },
+        supplyOnly
+          ? null
+          : {
+              label: "Health Factor",
+              headerIcon: hfStale ? (
+                <span
+                  className="text-caution-500"
+                  title="Approximate — live on-chain source unavailable. Shown value derived from indexed balances × off-chain prices."
+                  aria-label="Health factor is approximate; live on-chain source unavailable"
+                >
+                  <Icon name="triangle" size={10} />
+                </span>
+              ) : undefined,
+              value: hfValue,
+              // Liquidation read sits beneath HF as its tangible restatement (single
+              // collateral → price, multi → 1 − 1/HF buffer), mirroring the detail
+              // card. Borrowing power stays omitted (misreads as safe-to-borrow).
+              footnote: <AaveV4LiquidationFootnote buf={buf} />,
+            },
       ]}
     />
   );
