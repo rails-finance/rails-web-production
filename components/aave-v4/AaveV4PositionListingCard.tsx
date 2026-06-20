@@ -149,7 +149,7 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
       }
       leadingIdentity={
         <>
-          {row.liquidationCount > 0 && <LiquidatedBadge />}
+          {row.liquidationCount > 0 && <LiquidatedBadge count={row.liquidationCount} />}
           <span className="flex items-center gap-1.5 leading-none text-foreground">
             <span className="text-xs font-semibold">{row.spokeName}</span>
             <span className="text-xs font-bold uppercase tracking-wide">{hubTier}</span>

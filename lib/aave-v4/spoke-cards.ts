@@ -132,9 +132,15 @@ export interface AaveSpokeCardInfo {
   /** Remaining USD that can be borrowed before HF=1. */
   borrowingPowerUsd: number;
   /** True when the wallet has ever been liquidated on this spoke. Surfaces
-   *  a red LIQUIDATED indicator alongside the status pill — the position may
+   *  a red liquidation indicator alongside the status pill — the position may
    *  still be active afterwards, but the history is permanent. */
   wasLiquidated: boolean;
+  /** Lifetime count of liquidation events on this spoke (summed across
+   *  reserves). Drives the red triangle + count indicator; >0 ⟺ wasLiquidated.
+   *  Aave positions can be partially liquidated repeatedly, so the count is
+   *  meaningful — mirrors Liquity's redemption-count indicator (different tier:
+   *  red critical here, orange caution there). */
+  liquidationCount: number;
   /** Supplies split into collateral-enabled vs not. The headline "Collateral"
    *  uses `collateralUsd`; non-collateral supplies are shown separately and never
    *  counted as collateral (they can't be seized and don't move HF). */
@@ -663,7 +669,8 @@ export function buildSpokeCards(
       }))
       .sort((a, b) => b.usdShare - a.usdShare);
 
-    const wasLiquidated = g.result.reserves.some((r) => r.liquidationCount > 0);
+    const liquidationCount = g.result.reserves.reduce((n, r) => n + r.liquidationCount, 0);
+    const wasLiquidated = liquidationCount > 0;
 
     // Collateral-only blended LT on the chain-truth basis — same formula as the
     // exposure sentence (describeCollateralExposure) so the two readouts agree.
@@ -702,6 +709,7 @@ export function buildSpokeCards(
       assetLiqPrices,
       borrowingPowerUsd: simResult.borrowCapacityUsd,
       wasLiquidated,
+      liquidationCount,
       supplyBreakdown: computeSupplyBreakdown(simSupplies),
     };
   });

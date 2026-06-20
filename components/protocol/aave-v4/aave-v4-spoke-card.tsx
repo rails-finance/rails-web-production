@@ -196,7 +196,7 @@ function AaveV4SpokeCard({
             }
             leadingIdentity={
               <>
-                {spoke.wasLiquidated && <LiquidatedBadge />}
+                {spoke.liquidationCount > 0 && <LiquidatedBadge count={spoke.liquidationCount} />}
                 <SpokeIdentity name={spoke.name} hub={spoke.hub} />
                 {walletPill}
               </>
