@@ -17,6 +17,12 @@ export type TowerSegment = {
    *  parent `TowerSide.tooltipFooter` is rendered beneath, on every segment
    *  of that side. */
   tooltip?: ReactNode;
+  /** When true, the segment still occupies its slot in the tower layout
+   *  (so toggling it on/off never reflows the chart — the visible segments
+   *  stay pinned in place) but is painted `visibility: hidden` and is not
+   *  interactive. Used by the "Hide inactive / repaid" display toggle to mute
+   *  the lifetime-flow segments without rescaling the active ones. */
+  hidden?: boolean;
 };
 
 export type PositionedSegment = TowerSegment & {
@@ -181,10 +187,12 @@ export function TowerBar({
   sideBarTooltipSide = "left",
 }: {
   segments: PositionedSegment[];
-  /** Single-segment side bar (legacy) or stacked principal + accrued segments. */
+  /** Single-segment side bar (legacy) or stacked principal + accrued segments.
+   *  `hidden` keeps the bar's column reserved (no horizontal shift of the
+   *  tower) while painting it invisibly — same role as `TowerSegment.hidden`. */
   sideBar?:
-    | { heightPct: number; color: string }
-    | { segments: Array<{ heightPct: number; color: string; patternStyle?: CSSProperties }> };
+    | { heightPct: number; color: string; hidden?: boolean }
+    | { segments: Array<{ heightPct: number; color: string; patternStyle?: CSSProperties }>; hidden?: boolean };
   height?: number;
   /** Which side of the tower a *segment* tooltip floats out from. Left tower
    *  uses 'right'; right tower uses 'left' to keep the popover inside the chart. */
@@ -204,8 +212,9 @@ export function TowerBar({
         : []
     : [];
 
+  const sideBarHidden = !!sideBar?.hidden;
   const sideBarTotalHeight = sideBarSegments.reduce((s, seg) => s + seg.heightPct, 0);
-  const sideBarInteractive = !!sideBarTooltip && sideBarTotalHeight > 0;
+  const sideBarInteractive = !!sideBarTooltip && sideBarTotalHeight > 0 && !sideBarHidden;
 
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -240,6 +249,7 @@ export function TowerBar({
                       height: seg.heightPct,
                       backgroundColor: seg.color,
                       ...seg.patternStyle,
+                      visibility: sideBarHidden ? "hidden" : undefined,
                     }}
                   />,
                 );
@@ -280,12 +290,12 @@ export function TowerBar({
       )}
       <div className="relative w-16 sm:w-20" style={{ height }}>
         {segments.map((seg) => {
-          const interactive = !!seg.tooltip;
+          const interactive = !!seg.tooltip && !seg.hidden;
           return (
             <div
               key={seg.key}
               className={`absolute left-0 right-0 rounded-sm ${interactive ? "cursor-pointer" : ""}`}
-              style={{ bottom: seg.bottomPct, height: seg.heightPct }}
+              style={{ bottom: seg.bottomPct, height: seg.heightPct, visibility: seg.hidden ? "hidden" : undefined }}
               onMouseEnter={interactive ? () => setActiveKey(seg.key) : undefined}
               onMouseLeave={interactive ? () => setActiveKey((prev) => (prev === seg.key ? null : prev)) : undefined}
               onClick={
@@ -410,8 +420,8 @@ export interface TowerSide {
   segments: TowerSegment[];
   breakdownRows: BreakdownRow[];
   sideBar?:
-    | { heightPct: number; color: string }
-    | { segments: Array<{ heightPct: number; color: string; patternStyle?: CSSProperties }> };
+    | { heightPct: number; color: string; hidden?: boolean }
+    | { segments: Array<{ heightPct: number; color: string; patternStyle?: CSSProperties }>; hidden?: boolean };
   /** Placeholder element rendered in the tower area when segments are empty */
   placeholder?: ReactNode;
   /** Tooltip body shown when hovering / tapping the faded side bar — used

@@ -533,54 +533,45 @@ export function TroveEconomicsSummary({ events, currentPrice, hideHeader }: Trov
       colorClass: "bg-green-500",
       tooltip: debtTip(entireDebt, "out"),
     },
-    ...(!isLiveView
-      ? [
-          {
-            key: "debt-liquidated",
-            label: "Liquidated",
-            value: liquidation?.totalDebtCleared ?? 0,
-            colorClass: "",
-            patternStyle: LIQUIDATION_PATTERN,
-            tooltip: debtTip(liquidation?.totalDebtCleared ?? 0, "in"),
-          },
-        ]
-      : []),
-    ...(!isLiveView
-      ? [
-          {
-            key: "debt-redeemed",
-            label: "Redeemed",
-            value: redemption?.totalDebtCleared ?? 0,
-            colorClass: "",
-            patternStyle: REDEMPTION_PATTERN,
-            tooltip: debtTip(redemption?.totalDebtCleared ?? 0, "in"),
-          },
-        ]
-      : []),
-    ...(!isLiveView
-      ? [
-          {
-            key: "repaid",
-            label: "Repaid",
-            value: repaidPrincipal,
-            colorClass: "",
-            patternStyle: REPAID_PATTERN,
-            tooltip: debtTip(repaidPrincipal, "in"),
-          },
-        ]
-      : []),
-    ...(!isLiveView
-      ? [
-          {
-            key: "costs",
-            label: "Costs",
-            value: costsSettled,
-            colorClass: "",
-            patternStyle: COSTS_PATTERN,
-            tooltip: debtTip(costsSettled, "out"),
-          },
-        ]
-      : []),
+    // Lifetime-flow segments stay in the tower in both views (so toggling
+    // never reflows the stack) — `hidden` mutes them in live view via
+    // visibility:hidden, leaving Current Debt pinned exactly where it sat.
+    {
+      key: "debt-liquidated",
+      label: "Liquidated",
+      value: liquidation?.totalDebtCleared ?? 0,
+      colorClass: "",
+      patternStyle: LIQUIDATION_PATTERN,
+      tooltip: debtTip(liquidation?.totalDebtCleared ?? 0, "in"),
+      hidden: isLiveView,
+    },
+    {
+      key: "debt-redeemed",
+      label: "Redeemed",
+      value: redemption?.totalDebtCleared ?? 0,
+      colorClass: "",
+      patternStyle: REDEMPTION_PATTERN,
+      tooltip: debtTip(redemption?.totalDebtCleared ?? 0, "in"),
+      hidden: isLiveView,
+    },
+    {
+      key: "repaid",
+      label: "Repaid",
+      value: repaidPrincipal,
+      colorClass: "",
+      patternStyle: REPAID_PATTERN,
+      tooltip: debtTip(repaidPrincipal, "in"),
+      hidden: isLiveView,
+    },
+    {
+      key: "costs",
+      label: "Costs",
+      value: costsSettled,
+      colorClass: "",
+      patternStyle: COSTS_PATTERN,
+      tooltip: debtTip(costsSettled, "out"),
+      hidden: isLiveView,
+    },
   ];
 
   const debtSegmentSum = debtSegments.reduce((sum, s) => sum + Math.max(0, s.value), 0);
@@ -643,50 +634,44 @@ export function TroveEconomicsSummary({ events, currentPrice, hideHeader }: Trov
           colorClass: "bg-rb-400",
           tooltip: collTip(feesReceivedColl, feesReceivedColl * effectivePrice, "in"),
         },
-        ...(!isLiveView
-          ? [
-              {
-                key: "coll-redeemed",
-                label: "Redeemed",
-                value: (redemption?.totalCollateralLost ?? 0) * effectivePrice,
-                colorClass: "",
-                patternStyle: REDEMPTION_PATTERN,
-                tooltip: collTip(
-                  redemption?.totalCollateralLost ?? 0,
-                  (redemption?.totalCollateralLost ?? 0) * effectivePrice,
-                  "out",
-                ),
-              },
-            ]
-          : []),
-        ...(!isLiveView
-          ? [
-              {
-                key: "liquidated",
-                label: "Liquidated",
-                value: liquidatedSeized * effectivePrice,
-                colorClass: "",
-                patternStyle: LIQUIDATION_PATTERN,
-                tooltip: collTip(liquidatedSeized, liquidatedSeized * effectivePrice, "out"),
-              },
-            ]
-          : []),
-        ...(!isLiveView
-          ? [
-              {
-                key: "withdrawn",
-                label: "Withdrawn",
-                value: economics.position.totalCollateralWithdrawn * effectivePrice,
-                colorClass: "",
-                patternStyle: WITHDRAWN_PATTERN,
-                tooltip: collTip(
-                  economics.position.totalCollateralWithdrawn,
-                  economics.position.totalCollateralWithdrawn * effectivePrice,
-                  "out",
-                ),
-              },
-            ]
-          : []),
+        // Striped lifetime outflows stay in the stack across both views and are
+        // muted (visibility:hidden) in live mode, so In Trove / Claimable /
+        // Fees Received never shift when the toggle flips.
+        {
+          key: "coll-redeemed",
+          label: "Redeemed",
+          value: (redemption?.totalCollateralLost ?? 0) * effectivePrice,
+          colorClass: "",
+          patternStyle: REDEMPTION_PATTERN,
+          tooltip: collTip(
+            redemption?.totalCollateralLost ?? 0,
+            (redemption?.totalCollateralLost ?? 0) * effectivePrice,
+            "out",
+          ),
+          hidden: isLiveView,
+        },
+        {
+          key: "liquidated",
+          label: "Liquidated",
+          value: liquidatedSeized * effectivePrice,
+          colorClass: "",
+          patternStyle: LIQUIDATION_PATTERN,
+          tooltip: collTip(liquidatedSeized, liquidatedSeized * effectivePrice, "out"),
+          hidden: isLiveView,
+        },
+        {
+          key: "withdrawn",
+          label: "Withdrawn",
+          value: economics.position.totalCollateralWithdrawn * effectivePrice,
+          colorClass: "",
+          patternStyle: WITHDRAWN_PATTERN,
+          tooltip: collTip(
+            economics.position.totalCollateralWithdrawn,
+            economics.position.totalCollateralWithdrawn * effectivePrice,
+            "out",
+          ),
+          hidden: isLiveView,
+        },
       ]
     : [];
 
@@ -697,20 +682,23 @@ export function TroveEconomicsSummary({ events, currentPrice, hideHeader }: Trov
   );
   const towerMax = Math.max(debtPeak, collPeak) * 1.08;
 
-  // Side bars (lifetime totals — drop in live mode).
+  // Side bars (lifetime totals) — kept in both views so the tower column never
+  // shifts; `hidden` paints them invisibly in live mode.
   const debtSideBar =
-    !isLiveView && economics.position.totalBorrowed > 0
+    economics.position.totalBorrowed > 0
       ? {
           heightPct: (economics.position.totalBorrowed / towerMax) * CHART_HEIGHT,
           color: "rgba(74, 222, 128, 0.25)",
+          hidden: isLiveView,
         }
       : undefined;
 
   const collSideBar =
-    !isLiveView && effectivePrice && economics.position.totalCollateralDeposited > 0
+    effectivePrice && economics.position.totalCollateralDeposited > 0
       ? {
           heightPct: ((economics.position.totalCollateralDeposited * effectivePrice) / towerMax) * CHART_HEIGHT,
           color: "rgba(59, 130, 246, 0.25)",
+          hidden: isLiveView,
         }
       : undefined;
 

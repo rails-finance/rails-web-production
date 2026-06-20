@@ -245,7 +245,10 @@ export function AaveV4TowerChart({
   // ever (raw token amounts, so an unresolved price for the borrow asset
   // doesn't collapse a liquidated position back to a "supply only" chart).
   const hasHistoricDebt = allRows.some((r) => r.borrowed > 0 || r.repaid > 0 || r.liquidatedDebt > 0);
-  const supplyOnly = isLiveView ? debtAssets.length === 0 : !hasHistoricDebt && debtAssets.length === 0;
+  // Frozen to the historical shape regardless of the toggle: a wallet that ever
+  // held debt keeps its debt tower (now muted) in live view rather than
+  // collapsing to a single-tower layout.
+  const supplyOnly = !hasHistoricDebt && debtAssets.length === 0;
 
   // Asset grouping: collapse any single category (active collateral, active
   // debt, withdrawn, repaid, liquidated) that holds ≥2 assets into one block,
@@ -258,17 +261,17 @@ export function AaveV4TowerChart({
   // the Display menu's "Group assets" flips back to the full per-asset view.
   const nonSurplusSupply = supplyAssets.filter((r) => !isSurplus(r.symbol));
   const surplusSupply = supplyAssets.filter((r) => isSurplus(r.symbol));
-  const categoryCounts = isLiveView
-    ? [nonSurplusSupply.length, surplusSupply.length, debtAssets.length]
-    : [
-        nonSurplusSupply.length,
-        surplusSupply.length,
-        debtAssets.length,
-        withdrawnAssets.length,
-        liquidatedCollAssets.length,
-        repaidAssets.length,
-        liquidatedDebtAssets.length,
-      ];
+  // Frozen to the full category set so grouping (and therefore the active
+  // segments' positions) is identical whether or not flows are muted.
+  const categoryCounts = [
+    nonSurplusSupply.length,
+    surplusSupply.length,
+    debtAssets.length,
+    withdrawnAssets.length,
+    liquidatedCollAssets.length,
+    repaidAssets.length,
+    liquidatedDebtAssets.length,
+  ];
   const canGroup = categoryCounts.some((c) => c >= 2);
   const grouped = canGroup && (groupOverride ?? true);
 
@@ -377,17 +380,24 @@ export function AaveV4TowerChart({
     }));
   };
 
+  // Lifetime-flow segments are always built (so the tower's segment count,
+  // gaps and scale never change between views) and tagged `hidden` in live
+  // view — the primitive paints them `visibility: hidden` in place, so the
+  // active segments stay pinned exactly where the historical view drew them
+  // rather than rescaling to fill the freed height.
+  const markHidden = (segs: TowerSegment[]): TowerSegment[] => segs.map((s) => ({ ...s, hidden: isLiveView }));
+
   const collSegments: TowerSegment[] = [
     ...activeSegs(nonSurplusSupply, (r) => r.netSupplyUsd, "bg-blue-500", "coll", "Collateral", "in"),
     ...activeSegs(surplusSupply, (r) => r.netSupplyUsd, "bg-blue-500/60", "coll-surplus", "Surplus collateral", "in"),
-    ...(!isLiveView ? flowSegs(liquidatedCollAssets, LIQUIDATION_PATTERN, "coll-liquidated", "Liquidated", "out") : []),
-    ...(!isLiveView ? flowSegs(withdrawnAssets, WITHDRAWN_PATTERN, "coll-withdrawn", "Withdrawn", "out") : []),
+    ...markHidden(flowSegs(liquidatedCollAssets, LIQUIDATION_PATTERN, "coll-liquidated", "Liquidated", "out")),
+    ...markHidden(flowSegs(withdrawnAssets, WITHDRAWN_PATTERN, "coll-withdrawn", "Withdrawn", "out")),
   ];
 
   const debtSegments: TowerSegment[] = [
     ...activeSegs(debtAssets, (r) => r.netDebtUsd, "bg-green-400", "debt", "Debt", "out"),
-    ...(!isLiveView ? flowSegs(liquidatedDebtAssets, LIQUIDATION_PATTERN, "debt-liquidated", "Liquidated", "in") : []),
-    ...(!isLiveView ? flowSegs(repaidAssets, REPAID_PATTERN, "debt-repaid", "Repaid", "in") : []),
+    ...markHidden(flowSegs(liquidatedDebtAssets, LIQUIDATION_PATTERN, "debt-liquidated", "Liquidated", "in")),
+    ...markHidden(flowSegs(repaidAssets, REPAID_PATTERN, "debt-repaid", "Repaid", "in")),
   ];
 
   const collPeak = collSegments.reduce((s, seg) => s + Math.max(0, seg.value), 0);
@@ -397,16 +407,19 @@ export function AaveV4TowerChart({
   // no-op (bar ≈ tower), but it also covers the hide-surplus case (collPeak
   // drops below the still-full deposited total) and the brief pre-price-
   // hydration render where per-asset prices haven't streamed in yet.
-  const sideBarMax = isLiveView ? 0 : Math.max(totalDepositedUsd, totalBorrowedUsd);
+  // Side-bar max is folded in regardless of view so the tower scale is frozen
+  // across the toggle; the bars themselves render `hidden` in live view (column
+  // width still reserved → no horizontal shift of the tower).
+  const sideBarMax = Math.max(totalDepositedUsd, totalBorrowedUsd);
   const towerMax = Math.max(collPeak, debtPeak, sideBarMax) * 1.08;
 
   const collSideBar =
-    !isLiveView && totalDepositedUsd > 0
-      ? { heightPct: (totalDepositedUsd / towerMax) * CHART_HEIGHT, color: COLLATERAL_FADED }
+    totalDepositedUsd > 0
+      ? { heightPct: (totalDepositedUsd / towerMax) * CHART_HEIGHT, color: COLLATERAL_FADED, hidden: isLiveView }
       : undefined;
   const debtSideBar =
-    !isLiveView && totalBorrowedUsd > 0
-      ? { heightPct: (totalBorrowedUsd / towerMax) * CHART_HEIGHT, color: DEBT_GREEN_FADED }
+    totalBorrowedUsd > 0
+      ? { heightPct: (totalBorrowedUsd / towerMax) * CHART_HEIGHT, color: DEBT_GREEN_FADED, hidden: isLiveView }
       : undefined;
 
   // Breakdown-row counterparts to the segment builders: merge a category into a
