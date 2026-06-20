@@ -9,6 +9,7 @@ import { useState } from "react";
 import { CardSelectorShell, positionCardSurface } from "@/components/shared/card-selector-shell";
 import { ClosedPositionStats } from "@/components/shared/closed-position-stats";
 import { OpenPositionStats } from "@/components/shared/open-position-stats";
+import { Icon } from "@/components/icons/icon";
 import { InlineAssetCluster } from "@/components/shared/inline-asset-cluster";
 import { StatValue, StatDash } from "@/components/shared/stat-value";
 import { type HubTier } from "@/components/protocol/aave-v4/aave-v4-spoke-constants";
@@ -201,10 +202,21 @@ function AaveV4SpokeCard({
               </>
             }
             identity={
-              // Liquidation indicator sits top-right (the activity-meta
-              // position), not beside the status pill — matching where Liquity
-              // places its redemption triangle.
-              spoke.liquidationCount > 0 ? <LiquidatedBadge count={spoke.liquidationCount} /> : undefined
+              // Activity-meta cluster (top-right, matching Liquity's trove
+              // cards): a neutral event count, then the red liquidation triangle
+              // when present. The eventCount − liquidationCount split mirrors
+              // Liquity's transactionCount − redemptionCount, so liquidations
+              // (shown on the triangle) aren't double-counted in the activity
+              // tally beside them.
+              <span className="flex items-center gap-2 text-xs text-rb-500">
+                {spoke.eventCount - spoke.liquidationCount > 0 && (
+                  <span className="inline-flex items-center" title="Position events (excludes liquidations)">
+                    <Icon name="arrow-left-right" size={12} />
+                    <span className="ml-1">{spoke.eventCount - spoke.liquidationCount}</span>
+                  </span>
+                )}
+                {spoke.liquidationCount > 0 && <LiquidatedBadge count={spoke.liquidationCount} />}
+              </span>
             }
             columns={
               supplyOnly
