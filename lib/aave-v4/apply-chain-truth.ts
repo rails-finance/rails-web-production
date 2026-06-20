@@ -183,10 +183,28 @@ export function patchSpokeCardWithChain(
   // premium, premium-shares, etc.) our simulator doesn't model.
   const healthFactor = chain.healthFactor;
 
+  // Recompute the collateral-only blended LT from the SAME chain LTs the liq
+  // price and weighted collateral now use — Σ(collateralUsd × lt) / Σ(collateral
+  // Usd) over collateral-enabled reserves. Without this it would stay the stale
+  // event-derived value (the conservative 0.70 fallback when the indexer carried
+  // no LT), so the exposure footnote ("…% blended liquidation threshold") would
+  // contradict the chain-LT liq price shown alongside it. Falls back to the
+  // event card's value only when there's no priced collateral to blend.
+  let collValueUsd = 0;
+  let collWeightedLtUsd = 0;
+  for (const s of simInputs.supplies) {
+    if (!s.collateralEnabled || s.lt <= 0) continue;
+    const usd = s.amount * s.price;
+    collValueUsd += usd;
+    collWeightedLtUsd += usd * s.lt;
+  }
+  const blendedLt = collValueUsd > 0 ? collWeightedLtUsd / collValueUsd : card.blendedLt;
+
   return {
     ...card,
     totalSupplyUsd: sim.totalCollateralUsd,
     weightedCollateralUsd: sim.weightedCollateralUsd,
+    blendedLt,
     totalDebtUsd: sim.totalDebtUsd,
     collRatio: sim.totalDebtUsd > 0 ? sim.totalCollateralUsd / sim.totalDebtUsd : null,
     supplyingSymbols,
