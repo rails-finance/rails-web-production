@@ -276,9 +276,8 @@ export function OpenSummaryCard({
             <div className="text-xs mt-0.5 text-rb-500 min-h-[1rem]">
               {liqPrice !== null ? (
                 <span className="inline-flex items-center gap-1">
-                  {fmtLiqPrice(liqPrice)}
+                  Liquidates at {fmtLiqPrice(liqPrice)}
                   <TokenIcon assetSymbol={trove.collateralType} className="inline-block w-3.5 h-3.5" />
-                  Liquidation price
                 </span>
               ) : expectsLiveState && !prices && displayDebt > 0 && displayCollateral > 0 ? (
                 <span className="inline-block h-3 w-20 rounded-md bg-rb-200 dark:bg-rb-700 animate-pulse" />
