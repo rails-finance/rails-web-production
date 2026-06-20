@@ -66,7 +66,9 @@ export function ClosedSummaryCard({ trove, compact = false, showActivityMeta = t
         {/* Peak collateral first (mirrors OpenSummaryCard ordering), then peak debt. */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
           <div>
-            <div className="text-xs text-rb-500 font-semibold mb-1">Highest recorded Collateral</div>
+            <div className="text-xs text-rb-500 font-semibold mb-1">
+              Highest <span className="hidden sm:inline">Recorded </span>Collateral
+            </div>
             <div className="flex items-center gap-1.5">
               <span className="text-2xl lg:text-3xl font-bold">
                 <HighlightableValue
@@ -83,7 +85,9 @@ export function ClosedSummaryCard({ trove, compact = false, showActivityMeta = t
             </div>
           </div>
           <div>
-            <div className="text-xs text-rb-500 font-semibold mb-1">Highest recorded Debt</div>
+            <div className="text-xs text-rb-500 font-semibold mb-1">
+              Highest <span className="hidden sm:inline">Recorded </span>Debt
+            </div>
             <div className="flex items-center gap-1.5">
               <span className="text-2xl lg:text-3xl font-bold">
                 <HighlightableValue
