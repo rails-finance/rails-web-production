@@ -203,16 +203,16 @@ function AaveV4SpokeCard({
             }
             identity={
               // Activity-meta cluster (top-right, matching Liquity's trove
-              // cards): a neutral event count, then the red liquidation triangle
-              // when present. The eventCount − liquidationCount split mirrors
-              // Liquity's transactionCount − redemptionCount, so liquidations
-              // (shown on the triangle) aren't double-counted in the activity
-              // tally beside them.
+              // cards): the owner transaction count, then the red liquidation
+              // triangle when present. txCount counts distinct non-liquidation
+              // transactions — Liquity's metric — so it isn't inflated by the
+              // supply+enable merge and already excludes liquidations (no double
+              // count against the triangle beside it).
               <span className="flex items-center gap-2 text-xs text-rb-500">
-                {spoke.eventCount - spoke.liquidationCount > 0 && (
-                  <span className="inline-flex items-center" title="Position events (excludes liquidations)">
+                {spoke.txCount > 0 && (
+                  <span className="inline-flex items-center" title="Transactions (excludes liquidations)">
                     <Icon name="arrow-left-right" size={12} />
-                    <span className="ml-1">{spoke.eventCount - spoke.liquidationCount}</span>
+                    <span className="ml-1">{spoke.txCount}</span>
                   </span>
                 )}
                 {spoke.liquidationCount > 0 && <LiquidatedBadge count={spoke.liquidationCount} />}

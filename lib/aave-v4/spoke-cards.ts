@@ -69,6 +69,13 @@ export interface AaveEconomicsResult {
   totalGasCostEth: number;
   totalGasCostUsd: number;
   eventCount: number;
+  /** Distinct non-liquidation transaction count (COUNT DISTINCT txHash over
+   *  owner-driven events). The Liquity-faithful "transactions" metric the card
+   *  surfaces: unlike raw `eventCount` it isn't inflated by the supply+enable
+   *  merge (two event rows, one tx, one timeline card) and it matches the
+   *  timeline's per-tx "X OF Y" grouping. Liquidations are excluded — they're a
+   *  liquidator's transaction, shown separately on the liquidation triangle. */
+  txCount: number;
   firstTimestamp: number;
   lastTimestamp: number;
 }
@@ -83,6 +90,7 @@ export interface SpokeGroup {
   collRatio: number | null;
   isClosed: boolean;
   eventCount: number;
+  txCount: number;
 }
 
 export interface AaveSpokeCardInfo {
@@ -110,6 +118,10 @@ export interface AaveSpokeCardInfo {
   collRatio: number | null;
   isClosed: boolean;
   eventCount: number;
+  /** Distinct non-liquidation transaction count — see AaveEconomicsResult.txCount.
+   *  This is what the card's activity tally renders (the "transactions" metric),
+   *  matching Liquity's transactionCount and the timeline's per-tx grouping. */
+  txCount: number;
   supplyingSymbols: string[];
   borrowingSymbols: string[];
   latestBorrowRate: number | null;
@@ -296,6 +308,18 @@ export function calculateAaveEconomics(
   if (aaveEvents.length === 0) return null;
 
   const sorted = [...aaveEvents].sort((a, b) => a.timestamp - b.timestamp);
+
+  // Distinct owner transactions: count unique txHashes excluding liquidations
+  // (a liquidator's tx, surfaced on the triangle, not the owner's activity).
+  // Counting transactions — not raw event rows — makes the tally immune to the
+  // supply+enable merge (two rows, one tx, one card) and aligns it with the
+  // timeline's per-tx "X OF Y" grouping. Fall back to event id when a row has
+  // no txHash so it still counts once.
+  const txSet = new Set<string>();
+  for (const e of aaveEvents) {
+    if (e.context.data.eventType === "liquidation") continue;
+    txSet.add(e.txHash ?? e.id);
+  }
 
   const reserveMap = new Map<string, ReserveStats>();
   let totalGasCostEth = 0;
@@ -486,6 +510,7 @@ export function calculateAaveEconomics(
     totalGasCostEth,
     totalGasCostUsd,
     eventCount: aaveEvents.length,
+    txCount: txSet.size,
     firstTimestamp: sorted[0].timestamp,
     lastTimestamp: sorted[sorted.length - 1].timestamp,
   };
@@ -550,6 +575,7 @@ export function groupBySpoke(
       collRatio: totalDebtUsd > 0 && totalSupplyUsd > 0 ? (totalSupplyUsd / totalDebtUsd) * 100 : null,
       isClosed: totalSupplyUsd < 1 && totalDebtUsd < 1,
       eventCount: result.eventCount,
+      txCount: result.txCount,
     });
   }
 
@@ -701,6 +727,7 @@ export function buildSpokeCards(
       collRatio: g.collRatio,
       isClosed: g.isClosed,
       eventCount: g.eventCount,
+      txCount: g.txCount,
       supplyingSymbols,
       borrowingSymbols,
       latestBorrowRate: spokeBorrowRate,

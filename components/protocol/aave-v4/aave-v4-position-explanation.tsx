@@ -247,7 +247,7 @@ function buildSpokePositionItems(spoke: AaveSpokeCardInfo): React.ReactNode[] {
     }
     items.push(
       <span key="peaks">
-        Across {spoke.eventCount} event{spoke.eventCount === 1 ? "" : "s"}, {body}.
+        Across {spoke.txCount} transaction{spoke.txCount === 1 ? "" : "s"}, {body}.
       </span>,
     );
   }
