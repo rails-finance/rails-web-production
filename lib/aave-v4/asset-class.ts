@@ -33,10 +33,34 @@ export function assetClass(symbol: string): AssetClass {
   return "other";
 }
 
+// Sentence-case label — for inline prose ("Collateral is 60% stablecoin, 40%
+// eth-correlated…"). Lowercase on purpose so it reads naturally mid-sentence.
 export const ASSET_CLASS_LABEL: Record<AssetClass, string> = {
   eth: "ETH-correlated",
   btc: "BTC-correlated",
   stablecoin: "stablecoin",
   gold: "gold",
   other: "other",
+};
+
+// Title-case label — for standalone UI (legends, chips, table cells), where a
+// label is a noun, not part of a sentence.
+export const ASSET_CLASS_TITLE: Record<AssetClass, string> = {
+  eth: "ETH Correlated",
+  btc: "BTC Correlated",
+  stablecoin: "Stablecoin",
+  gold: "Gold Correlated",
+  other: "Other",
+};
+
+// Categorical grouping color per class — a grouping aid, NOT a risk valence
+// (green here means "stablecoin", never "safe"). Applied to supply-mix bars,
+// filter-chip dots and table class markers on the hub surfaces. Single hex per
+// class, legible on both light and dark `bg-raised`.
+export const ASSET_CLASS_COLOR: Record<AssetClass, string> = {
+  stablecoin: "#22c55e", // green
+  eth: "#3b82f6", // blue
+  btc: "#f97316", // orange
+  gold: "#eab308", // gold
+  other: "#8b5e34", // brown
 };

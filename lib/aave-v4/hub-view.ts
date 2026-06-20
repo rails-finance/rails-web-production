@@ -13,7 +13,7 @@
 // price for USD. Number() on the big raw strings loses only sub-display digits.
 
 import type { AaveV4HubsResponse, HubCreditLine, HubTierKey } from "@/lib/api/fetch-aave-v4-hubs";
-import { assetClass, ASSET_CLASS_LABEL, type AssetClass } from "@/lib/aave-v4/asset-class";
+import { assetClass, ASSET_CLASS_TITLE, type AssetClass } from "@/lib/aave-v4/asset-class";
 
 /** uint40 max — the protocol's "uncapped" sentinel (MAX_ALLOWED_SPOKE_CAP). */
 const MAX_CAP = 1_099_511_627_775;
@@ -139,8 +139,14 @@ function buildHubView(
       borrowed += toTokens(l.totalOwed, decimals);
       const ac = capValue(l.addCap);
       const dc = capValue(l.drawCap);
-      if (ac != null) { addCapSum += ac; anyAddCapped = true; }
-      if (dc != null) { drawCapSum += dc; anyDrawCapped = true; }
+      if (ac != null) {
+        addCapSum += ac;
+        anyAddCapped = true;
+      }
+      if (dc != null) {
+        drawCapSum += dc;
+        anyDrawCapped = true;
+      }
       if (l.lt != null) {
         ltMin = ltMin == null ? l.lt : Math.min(ltMin, l.lt);
         ltMax = ltMax == null ? l.lt : Math.max(ltMax, l.lt);
@@ -160,13 +166,12 @@ function buildHubView(
     const borrowApr = borrowRateRay != null ? Number(borrowRateRay) / 1e27 : null;
     const liquidityFee = liquidityFeeBps / 10_000;
     const rateUtil = supplied > 0 ? borrowed / supplied : 0;
-    const supplyApr =
-      borrowApr != null && supplied > 0 ? borrowApr * rateUtil * (1 - liquidityFee) : null;
+    const supplyApr = borrowApr != null && supplied > 0 ? borrowApr * rateUtil * (1 - liquidityFee) : null;
     assets.push({
       symbol,
       underlying,
       cls: assetClass(symbol),
-      classLabel: ASSET_CLASS_LABEL[assetClass(symbol)],
+      classLabel: ASSET_CLASS_TITLE[assetClass(symbol)],
       ltMin,
       ltMax,
       supplied,
@@ -198,7 +203,7 @@ function buildHubView(
   const composition =
     suppliedUsd > 0
       ? [...byClass.entries()]
-          .map(([cls, usd]) => ({ cls, label: ASSET_CLASS_LABEL[cls], pct: Math.round((usd / suppliedUsd) * 100) }))
+          .map(([cls, usd]) => ({ cls, label: ASSET_CLASS_TITLE[cls], pct: Math.round((usd / suppliedUsd) * 100) }))
           .filter((c) => c.pct >= 1)
           .sort((a, b) => b.pct - a.pct)
       : [];
@@ -228,19 +233,14 @@ function buildHubView(
 
 /** Build all hub views in canonical order from the API payload + a price map
  *  (keyed by lowercase token address — i.e. the prices-context PriceMap). */
-export function buildHubViews(
-  data: AaveV4HubsResponse,
-  prices: Record<string, number>,
-): HubView[] {
+export function buildHubViews(data: AaveV4HubsResponse, prices: Record<string, number>): HubView[] {
   const byHub = new Map<HubTierKey, HubCreditLine[]>();
   for (const l of data.lines) {
     const arr = byHub.get(l.hub);
     if (arr) arr.push(l);
     else byHub.set(l.hub, [l]);
   }
-  return data.hubs.map((hub) =>
-    buildHubView(hub, byHub.get(hub) ?? [], prices, data.positionCounts?.[hub] ?? 0),
-  );
+  return data.hubs.map((hub) => buildHubView(hub, byHub.get(hub) ?? [], prices, data.positionCounts?.[hub] ?? 0));
 }
 
 /** All distinct underlying addresses in the payload — for useRequestPrices. */

@@ -9,21 +9,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { fetchAaveV4Hubs, type AaveV4HubsResponse } from "@/lib/api/fetch-aave-v4-hubs";
 import { buildHubViews, hubUnderlyings } from "@/lib/aave-v4/hub-view";
-import { AaveV4HubColumn } from "@/components/protocol/aave-v4/aave-v4-hub-column";
+import { AaveV4HubViews } from "@/components/protocol/aave-v4/aave-v4-hub-views";
 import { PricesProvider, usePrices, useRequestPrices } from "@/lib/shared/prices-context";
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" as const } },
-};
 
 function HubsContent() {
   const [data, setData] = useState<AaveV4HubsResponse | null>(null);
@@ -71,8 +60,8 @@ function HubsContent() {
           <h1 className="text-2xl font-semibold text-foreground">Hub comparison</h1>
           <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-rb-500">
             Aave V4 lends through three hubs. Spokes hold collateral and draw liquidity from a hub; a single spoke can
-            draw from more than one. Below: each hub&apos;s size, what it&apos;s made of, and how much of each
-            asset&apos;s credit line is in use — presented side by side, not ranked.
+            draw from more than one. Below: each hub&apos;s size, what it&apos;s made of and who draws on it, side by
+            side — then every asset&apos;s credit line across all three hubs in one table you can filter and sort.
           </p>
           {data?.updatedAt && (
             <p className="mt-2 text-[11px] text-rb-500">
@@ -94,18 +83,7 @@ function HubsContent() {
             <p className="text-sm">The credit-line snapshot populates on the next refresh cycle.</p>
           </div>
         ) : (
-          <motion.div
-            className="grid grid-cols-1 gap-6 lg:grid-cols-3"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-          >
-            {views.map((hub) => (
-              <motion.div key={hub.hub} variants={itemVariants}>
-                <AaveV4HubColumn hub={hub} />
-              </motion.div>
-            ))}
-          </motion.div>
+          <AaveV4HubViews views={views} />
         )}
       </div>
     </main>
