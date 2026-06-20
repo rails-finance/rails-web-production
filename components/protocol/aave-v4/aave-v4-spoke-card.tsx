@@ -196,10 +196,15 @@ function AaveV4SpokeCard({
             }
             leadingIdentity={
               <>
-                {spoke.liquidationCount > 0 && <LiquidatedBadge count={spoke.liquidationCount} />}
                 <SpokeIdentity name={spoke.name} hub={spoke.hub} />
                 {walletPill}
               </>
+            }
+            identity={
+              // Liquidation indicator sits top-right (the activity-meta
+              // position), not beside the status pill — matching where Liquity
+              // places its redemption triangle.
+              spoke.liquidationCount > 0 ? <LiquidatedBadge count={spoke.liquidationCount} /> : undefined
             }
             columns={
               supplyOnly

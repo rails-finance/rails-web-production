@@ -149,7 +149,6 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
       }
       leadingIdentity={
         <>
-          {row.liquidationCount > 0 && <LiquidatedBadge count={row.liquidationCount} />}
           <span className="flex items-center gap-1.5 leading-none text-foreground">
             <span className="text-xs font-semibold">{row.spokeName}</span>
             <span className="text-xs font-bold uppercase tracking-wide">{hubTier}</span>
@@ -158,9 +157,15 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
         </>
       }
       identity={
-        <span className="inline-flex items-center gap-1 text-xs text-rb-500">
-          <Icon name="clock-zap" size={12} />
-          {formatDuration(row.lastActivityAt, new Date())} ago
+        // Liquidation indicator sits in the right-hand activity-meta cluster
+        // (with the time-ago), not beside the status pill — matching where
+        // Liquity places its redemption triangle on the trove cards.
+        <span className="flex items-center gap-2 text-xs text-rb-500">
+          <span className="inline-flex items-center gap-1">
+            <Icon name="clock-zap" size={12} />
+            {formatDuration(row.lastActivityAt, new Date())} ago
+          </span>
+          {row.liquidationCount > 0 && <LiquidatedBadge count={row.liquidationCount} />}
         </span>
       }
       columns={[
