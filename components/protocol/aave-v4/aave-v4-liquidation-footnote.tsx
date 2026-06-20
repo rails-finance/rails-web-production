@@ -19,8 +19,9 @@ export function AaveV4LiquidationFootnote({ buf }: { buf: LiquidationBuffer }) {
   if (buf.single) {
     return (
       <div className="text-xs mt-0.5 text-rb-500 inline-flex items-center gap-1">
+        {fmtLiqPrice(buf.single.liqPrice)}
         <TokenChipIcon symbol={buf.single.symbol} size={14} filterable={false} />
-        liq {fmtLiqPrice(buf.single.liqPrice)}
+        Liquidation price
       </div>
     );
   }
