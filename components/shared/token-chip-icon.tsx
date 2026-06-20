@@ -1,23 +1,31 @@
 "use client";
 
-// Token chip with a four-tier resolution:
-//   1. Local SVG sprite — covers Liquity V2's universe (ETH/WETH/wstETH/
-//      stETH/rETH/BOLD), already in the icons sprite.
-//   2. Trust Wallet CDN — looked up by address (caller-passed or resolved
-//      from TOKEN_ADDRESSES via the symbol). Covers most established assets.
-//   3. DeFiLlama icons CDN — fallback for DeFi-native assets Trust Wallet
-//      hasn't indexed (cbBTC, rsETH, LBTC at time of writing).
-//   4. UnknownTokenSvg placeholder — same visual vocabulary as Etherscan's
+// Token chip with a single render path and an ordered source fallback:
+//   1. Local PNG by symbol — the curated, self-hosted set in
+//      public/icons/tokens (e.g. usdc.png, wbtc.png, eth.png).
+//   2. Local PNG by address — for assets stored under their token address
+//      rather than a symbol (e.g. LINK/USDT/EURC).
+//   3. Trust Wallet CDN — by address, for anything not self-hosted.
+//   4. DeFiLlama icons CDN — for DeFi-native assets Trust Wallet hasn't
+//      indexed (cbBTC, rsETH, LBTC at time of writing).
+//   5. UnknownTokenSvg placeholder — same visual vocabulary as Etherscan's
 //      empty-token glyph; reads as "unknown" rather than a brand mark.
+//
+// Every source renders through the same <img> at the full `size` envelope —
+// no per-source scaling. Earlier code special-cased SVG sprites at 0.88x to
+// guess around CDN logo padding; that magic number was right for some logos
+// and wrong for others (sprites came out visibly smaller than CDN icons in
+// the same cluster). Consolidating onto the curated local PNGs, which are
+// uniformly full-bleed, removes the guesswork. See getLocalTokenIcon.
 //
 // Plain <img> with onError fallback (vs next/image) avoids needing a
 // next.config remotePatterns entry for raw.githubusercontent.com or
-// token-icons.llamao.fi. Icons are 16-20px so optimization isn't
+// token-icons.llamao.fi. Icons are 16-28px so optimization isn't
 // load-bearing.
 
 import { createContext, useContext, useState } from "react";
-import { TokenIcon as SpriteTokenIcon } from "@/components/icons/tokenIcon";
 import { UnknownTokenSvg } from "@/components/shared/unknown-token-svg";
+import { getLocalTokenIcon } from "@/lib/shared/local-token-icons";
 import { getTokenAddress } from "@/lib/shared/token-addresses";
 import { getDefiLlamaLogoUrl, getTokenLogoUrl } from "@/lib/shared/token-logo";
 
@@ -26,15 +34,6 @@ export const TokenFilterProvider = TokenFilterCtx.Provider;
 export function useTokenFilterCtx() {
   return useContext(TokenFilterCtx);
 }
-
-const SPRITE_SYMBOLS = new Set([
-  "ETH",
-  "WETH",
-  "wstETH",
-  "stETH",
-  "rETH",
-  "BOLD",
-]);
 
 // Trust Wallet doesn't host a logo for some assets, but the brand is shared
 // with another asset that IS hosted. For those, look up the icon under the
@@ -77,81 +76,59 @@ export function TokenChipIcon({ symbol, address, size = 16, onClick, filterable 
     ? "cursor-pointer hover:ring-2 hover:ring-rb-400 dark:hover:ring-rb-500 rounded-full transition-shadow"
     : "";
 
-  // Tier 1 — local sprite for the Liquity V2 universe. Sprite SVGs paint a
-  // full-bleed circle to the viewBox edge; CDN brand marks (USDC/USDT/BTC/…)
-  // have ~12% transparent padding inside their canvas. Render the sprite at
-  // a matching inset so its visible disc reads as the same size as a CDN
-  // icon when both are slotted into the same `size` envelope (e.g. inside
-  // InlineAssetCluster).
-  if (SPRITE_SYMBOLS.has(symbol)) {
-    const inner = Math.round(size * 0.88);
-    return (
-      <span
-        className={`inline-flex items-center justify-center shrink-0 ${clickClass}`}
-        style={{ width: size, height: size }}
-        {...clickProps}
-      >
-        <SpriteTokenIcon
-          assetSymbol={symbol}
-          className="block"
-          width={inner}
-          height={inner}
-          sized
-        />
-      </span>
-    );
+  // Build the ordered source list. Symbol-level address overrides win so
+  // brand-shared assets (frxUSD → FRAX) borrow another asset's logo without
+  // polluting the canonical TOKEN_ADDRESSES map.
+  const resolvedAddress = LOGO_ADDRESS_OVERRIDES[symbol] ?? address ?? getTokenAddress(symbol);
+
+  const srcs: string[] = [];
+  // 1. Local PNG by symbol (the curated set is mostly symbol-named).
+  const localBySymbol = getLocalTokenIcon(symbol);
+  if (localBySymbol) srcs.push(localBySymbol);
+  // 2. Local PNG by address (LINK/USDT/EURC etc. are address-named only).
+  if (resolvedAddress) {
+    const localByAddress = getLocalTokenIcon(resolvedAddress);
+    if (localByAddress && localByAddress !== localBySymbol) srcs.push(localByAddress);
+    // 3 + 4. CDN tiers, by address.
+    srcs.push(getTokenLogoUrl(resolvedAddress), getDefiLlamaLogoUrl(resolvedAddress));
   }
 
-  // Tier 2 — Trust Wallet CDN, from caller-passed address or symbol lookup.
-  // Symbol-level overrides win so brand-shared assets (frxUSD → FRAX) can
-  // share an icon without polluting the canonical TOKEN_ADDRESSES map.
-  // Tier 3 — UnknownTokenSvg placeholder when no address to look up (or, in
-  // CdnTokenIcon below, when the CDN load fails).
-  const resolvedAddress = LOGO_ADDRESS_OVERRIDES[symbol] ?? address ?? getTokenAddress(symbol);
-  if (resolvedAddress) {
-    return (
-      <CdnTokenIcon
-        symbol={symbol}
-        address={resolvedAddress}
-        size={size}
-        clickClass={clickClass}
-        clickProps={clickProps}
-      />
-    );
+  if (srcs.length === 0) {
+    return <UnknownTokenSvg size={size} symbol={symbol} clickProps={clickProps} clickClass={clickClass} />;
   }
-  return <UnknownTokenSvg size={size} symbol={symbol} clickProps={clickProps} clickClass={clickClass} />;
+  return <FallbackTokenIcon symbol={symbol} srcs={srcs} size={size} clickClass={clickClass} clickProps={clickProps} />;
 }
 
-/** Tiny inner component so we can localise the onError state per-image.
- *  Walks Trust Wallet → DeFiLlama → UnknownTokenSvg as each tier 404s. */
-function CdnTokenIcon({
+/** Renders the first source that loads, advancing through the ordered list on
+ *  each onError and ending at UnknownTokenSvg once every source has 404'd.
+ *  State is per-instance so one failed icon doesn't disturb its siblings. */
+function FallbackTokenIcon({
   symbol,
-  address,
+  srcs,
   size,
   clickClass,
   clickProps,
 }: {
   symbol: string;
-  address: string;
+  srcs: string[];
   size: number;
   clickClass: string;
   clickProps: Record<string, unknown>;
 }) {
-  const [tier, setTier] = useState<0 | 1 | 2>(0);
-  if (tier === 2) {
+  const [idx, setIdx] = useState(0);
+  if (idx >= srcs.length) {
     return <UnknownTokenSvg size={size} symbol={symbol} clickProps={clickProps} clickClass={clickClass} />;
   }
-  const src = tier === 0 ? getTokenLogoUrl(address) : getDefiLlamaLogoUrl(address);
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      key={tier}
-      src={src}
+      key={idx}
+      src={srcs[idx]}
       alt={symbol}
       width={size}
       height={size}
       className={`block shrink-0 rounded-full ${clickClass}`}
-      onError={() => setTier((t) => (t === 0 ? 1 : 2))}
+      onError={() => setIdx((i) => i + 1)}
       {...(clickProps as React.HTMLAttributes<HTMLImageElement>)}
     />
   );
