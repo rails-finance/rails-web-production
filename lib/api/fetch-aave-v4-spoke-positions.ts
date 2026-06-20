@@ -79,6 +79,11 @@ export interface AaveV4SpokePositionRow {
   liquidationCount: number;
   /** Epoch seconds of the most recent liquidation; null when never liquidated. */
   lastLiquidationAt: number | null;
+  /** Distinct non-liquidation transaction count for this (wallet, spoke) —
+   *  the activity tally shown beside the time-ago. Matches the detail card's
+   *  txCount and Liquity's transactionCount. From mv_aave_v4_events (server
+   *  migration 029); 0 on responses from an API that predates that migration. */
+  txCount: number;
   ensName: string | null;
   /** Per-reserve breakdown — chain-truth when overlay succeeded, MV-indexed
    *  fallback (with `chainHfStale=true`) otherwise. Feeds the listing card's

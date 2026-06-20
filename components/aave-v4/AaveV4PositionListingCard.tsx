@@ -157,14 +157,21 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
         </>
       }
       identity={
-        // Liquidation indicator sits in the right-hand activity-meta cluster
-        // (with the time-ago), not beside the status pill — matching where
-        // Liquity places its redemption triangle on the trove cards.
+        // Right-hand activity-meta cluster (matching Liquity's trove cards and
+        // the detail card): time-ago, then the owner transaction count, then the
+        // red liquidation triangle. txCount is distinct non-liquidation
+        // transactions — liquidations stay on the triangle, not in this tally.
         <span className="flex items-center gap-2 text-xs text-rb-500">
           <span className="inline-flex items-center gap-1">
             <Icon name="clock-zap" size={12} />
             {formatDuration(row.lastActivityAt, new Date())} ago
           </span>
+          {row.txCount > 0 && (
+            <span className="inline-flex items-center" title="Transactions (excludes liquidations)">
+              <Icon name="arrow-left-right" size={12} />
+              <span className="ml-1">{row.txCount}</span>
+            </span>
+          )}
           {row.liquidationCount > 0 && <LiquidatedBadge count={row.liquidationCount} />}
         </span>
       }
