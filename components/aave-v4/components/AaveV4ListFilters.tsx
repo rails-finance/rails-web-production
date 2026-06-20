@@ -1,10 +1,11 @@
 "use client";
 
-// Aave V4 list filters — per-section filter dropdowns (Risk / Market / Assets /
-// View) up top beside the wallet search and sort controls, with the active
-// predicates as removable chips in a row beneath. The filter predicates (health,
-// debt, liquidations, hubs, spokes, supply/borrow assets, visibility) are
-// declared as a dimension registry in lib/aave-v4/list-filter-dimensions and
+// Aave V4 list filters — per-section filter dropdowns (Status / Market /
+// Supply / Borrow / View) up top beside the wallet search and sort controls,
+// with the active predicates as removable chips in a row beneath. The filter
+// predicates (position state + liquidation history under Status, hubs, spokes,
+// supply/borrow assets, visibility) are declared as a dimension registry in
+// lib/aave-v4/list-filter-dimensions and
 // rendered by the shared <FilterSections> + <FilterChips>; this component only
 // owns search + sort and the async asset universe that feeds the asset
 // dimensions.

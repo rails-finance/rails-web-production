@@ -110,13 +110,19 @@ function AaveV4SpokeCard({
   // static detail card, or a non-selected card in a hoverless selector.
   const showInfo = !isClosed && ((noHover && !isSelected) || !!staticCard);
   const [infoOpen, setInfoOpen] = useState(false);
-  // A sub-$1 debt position normally reads as supply-only (dust debt is noise
-  // beside a real supply — e.g. after a near-full repay). The exception is an
-  // underwater position: HF < 1 is a liquidatable on-chain fact at any size, so
-  // it must keep the full risk readout (HF / Net APY / Debt / Liq Price) rather
-  // than collapse to a lone "Supplied" stat that contradicts its UNDERWATER pill.
+  // Supply-only collapses the card to a single "Supplied" stat (hiding the
+  // Debt / HF columns). Which question decides it depends on the card's mode:
+  //   - Closed card = history view: peak debt is the headline, so supply-only
+  //     means the position NEVER carried real debt (peakDebt < $1).
+  //   - Open card = live view: a position whose debt is now dust reads as
+  //     supply-only regardless of history — a past borrow or liquidation lives
+  //     in the badge + timeline, not as a live $0-Debt / ∞-HF / borrow-rate
+  //     triple on the headline.
+  // Underwater is the open-card exception: HF < 1 is a liquidatable fact at any
+  // size, so it keeps the full risk readout rather than collapse to a lone
+  // "Supplied" that contradicts its LIQUIDATABLE pill.
   const underwater = spoke.healthFactor != null && spoke.healthFactor < 1;
-  const supplyOnly = spoke.peakDebtUsd < 1 && spoke.totalDebtUsd < 1 && !underwater;
+  const supplyOnly = isClosed ? spoke.peakDebtUsd < 1 : spoke.totalDebtUsd < 1 && !underwater;
   const bucket = bucketForHealth(spoke.healthFactor);
   const walletPill = wallet ? <WalletPill wallet={wallet} ensName={ensName ?? null} href={walletHref} /> : null;
 
@@ -186,9 +192,7 @@ function AaveV4SpokeCard({
         ) : (
           <OpenPositionStats
             statusPill={
-              <span className={`font-bold px-2 py-0.5 rounded-sm text-xs ${bucket.pillClass}`}>
-                {bucket.pillLabel}
-              </span>
+              <span className={`font-bold px-2 py-0.5 rounded-sm text-xs ${bucket.pillClass}`}>{bucket.pillLabel}</span>
             }
             leadingIdentity={
               <>

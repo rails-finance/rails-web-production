@@ -88,11 +88,13 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
   const healthFactor = row.healthFactor;
   const hasDebt = healthFactor != null;
   const bucket = bucketForHealth(healthFactor);
-  // True supply-only: no debt now AND no liquidation in this position's
-  // history. Lifted from the detail card's `supplyOnly` heuristic — the
-  // listing wire doesn't carry peakDebt, so liquidationCount > 0 stands in
-  // for "has had debt at some point."
-  const supplyOnly = !hasDebt && row.liquidationCount === 0;
+  // Live view: a position whose current debt is dust (< $1) reads as supply-only
+  // regardless of any past borrow or liquidation — that history is carried by
+  // the LiquidatedBadge + timeline, not by a live $0-Debt / ∞-HF / borrow-rate
+  // triple on the headline. Underwater is the exception: HF < 1 is a
+  // liquidatable fact at any size, so it keeps the full risk readout.
+  const underwater = healthFactor != null && healthFactor < 1;
+  const supplyOnly = sim.totalDebtUsd < 1 && !underwater;
   // Chain overlay failed for this row → balances are MV-indexed (potentially
   // drifted from on-chain). The card still renders; the indicator warns.
   const hfStale = hasDebt && row.chainHfStale;
@@ -106,7 +108,7 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
     // power, not in this number.
     const usd = supplyOnly ? sim.totalCollateralUsd : sim.breakdown.collateralUsd;
     const v = fmtUsd(usd);
-    // Supply-only positions are still OPEN — render the value bright like any
+    // Supply-only positions are still live — render the value bright like any
     // active position. The muted (text-rb-500) tone is reserved for genuinely
     // closed positions, so using it here would falsely read as "closed."
     return (
@@ -116,13 +118,11 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
     );
   })();
 
-  // Debt / HF values for positions that have (or once had) debt. Supply-only
+  // Debt / HF values for positions carrying real (non-dust) debt. Supply-only
   // rows never reach these — their columns are `null`ed out below so the grid
   // slot stays open without asserting an empty Debt/HF (matches the detail
   // card and the closed-Liquity precedent: an absent dimension shows nothing,
-  // not a placeholder dash). The `!hasDebt` HF branch still fires for a
-  // liquidated-then-zeroed position (liquidationCount > 0), which is not
-  // supply-only.
+  // not a placeholder dash).
   const debtValue = (() => {
     const v = fmtUsd(sim.totalDebtUsd);
     return (
@@ -141,7 +141,6 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
       </StatValue>
     );
   })();
-
 
   return (
     <OpenPositionStats

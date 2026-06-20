@@ -4,8 +4,6 @@ import { joinOptionLabels } from "@/components/shared/filter-bar/types";
 import { PAGE_LINK } from "@/lib/shared/ui-grammar";
 import {
   type AaveV4ListFilterParams,
-  type AaveV4Debt,
-  type AaveV4Liquidations,
   type AaveV4Show,
   aaveV4ShowDefault,
   effectiveAaveV4Show,
@@ -67,33 +65,9 @@ export function pruneSpokesForHubs(spokes: string[], hubs: string[]): string[] {
 }
 
 /** Chip label that uses the option labels verbatim (no `Dimension:` prefix) —
- *  for self-describing single-select states like "Underwater" / "With debt". */
+ *  for self-describing single-select states like "Borrowing" / "Liquidatable". */
 function bareLabel(values: string[], options: FilterOptionDef[]): string {
   return joinOptionLabels(values, options);
-}
-
-/** A single-select enum dimension mapped onto one param field whose "off" value
- *  is the sentinel `all` (which the UI represents as the empty selection). */
-function enumDim<K extends string>(args: {
-  id: string;
-  label: string;
-  group: string;
-  field: "debt" | "liquidations";
-  options: { value: K; label: string }[];
-}): Dim {
-  return {
-    id: args.id,
-    label: args.label,
-    group: args.group,
-    cardinality: "single",
-    options: args.options,
-    get: (f) => {
-      const v = f[args.field] as string;
-      return v && v !== "all" ? [v] : [];
-    },
-    set: (f, values) => ({ ...f, [args.field]: (values[0] ?? "all") as K | "all" }),
-    chipLabel: bareLabel,
-  };
 }
 
 /**
@@ -113,38 +87,66 @@ export function aaveV4FilterDimensions({
   borrowOptions: FilterOptionDef[];
   spokeOptions: FilterOptionDef[];
 }): Dim[] {
-  const health: Dim = {
-    id: "health",
-    label: "Health",
+  // Position state — one mutually-exclusive axis read off the health factor,
+  // the filter twin of the card's status pill (lib/aave-v4/health-bucket). A
+  // position is exactly one of: Supply only (no borrow), Borrowing (has a
+  // loan), Liquidatable (HF < 1). Stored across the existing `debt` + `health`
+  // params so the page→backend mapping (noDebt / hasDebt / healthBelow) and the
+  // URL shape are unchanged; only the surfaced control changes.
+  //
+  // Caveat: the backend exposes `healthBelow` but no `healthAbove`, so
+  // "Borrowing" resolves to `hasDebt` — which still includes the (rare)
+  // liquidatable rows. "Liquidatable" narrows to exactly HF < 1. A strict
+  // healthy-only "Borrowing" would need a `healthAbove` predicate added
+  // server-side in rails-server-mig.
+  const state: Dim = {
+    id: "state",
+    label: "Position state",
     group: "Status",
     cardinality: "single",
-    options: [{ value: "underwater", label: "Underwater" }],
-    get: (f) => (f.health === "underwater" ? ["underwater"] : []),
-    set: (f, values) => ({ ...f, health: values[0] === "underwater" ? "underwater" : "all" }),
+    options: [
+      { value: "supplyOnly", label: "Supply only" },
+      { value: "borrowing", label: "Borrowing" },
+      { value: "liquidatable", label: "Liquidatable" },
+    ],
+    get: (f) => {
+      if (f.health === "underwater") return ["liquidatable"];
+      if (f.debt === "noDebt") return ["supplyOnly"];
+      if (f.debt === "withDebt") return ["borrowing"];
+      return [];
+    },
+    set: (f, values) => {
+      switch (values[0]) {
+        case "liquidatable":
+          return { ...f, debt: "all", health: "underwater" };
+        case "supplyOnly":
+          return { ...f, debt: "noDebt", health: "all" };
+        case "borrowing":
+          return { ...f, debt: "withDebt", health: "all" };
+        default:
+          return { ...f, debt: "all", health: "all" };
+      }
+    },
     chipLabel: bareLabel,
   };
 
-  const debt = enumDim<AaveV4Debt>({
-    id: "debt",
-    label: "Debt",
-    group: "Status",
-    field: "debt",
-    options: [
-      { value: "withDebt", label: "With debt" },
-      { value: "noDebt", label: "Supply only" },
-    ],
-  });
-
-  const liquidations = enumDim<AaveV4Liquidations>({
+  // Liquidation history — orthogonal to current state (a position can be
+  // Borrowing now AND have been liquidated before), so it's a separate toggle
+  // under its own "History" sub-header inside the Status panel, not a sibling
+  // of the state ladder and not its own top-level filter (a whole dropdown for
+  // one rare flag is too much chrome). A lone toggle: "Liquidated before" shows
+  // positions liquidated at least once; its absence is the silent majority
+  // (never liquidated), so that half isn't offered as a separate option.
+  const liquidated: Dim = {
     id: "liquidations",
-    label: "Liquidations",
+    label: "History",
     group: "Status",
-    field: "liquidations",
-    options: [
-      { value: "with", label: "Liquidated" },
-      { value: "without", label: "Never liquidated" },
-    ],
-  });
+    cardinality: "single",
+    options: [{ value: "with", label: "Liquidated before" }],
+    get: (f) => (f.liquidations === "with" ? ["with"] : []),
+    set: (f, values) => ({ ...f, liquidations: values[0] === "with" ? "with" : "all" }),
+    chipLabel: bareLabel,
+  };
 
   const hubs: Dim = {
     id: "hubs",
@@ -223,6 +225,7 @@ export function aaveV4FilterDimensions({
     chipLabel: bareLabel,
   };
 
-  // Within Status, Health (Underwater) sits last — Debt and Liquidations first.
-  return [debt, liquidations, health, hubs, spokes, supplying, borrowing, visibility];
+  // Status holds both Status dims (the state ladder, then the History toggle as
+  // a sub-section); then Market / Supply / Borrow / View.
+  return [state, liquidated, hubs, spokes, supplying, borrowing, visibility];
 }
