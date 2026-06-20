@@ -752,16 +752,39 @@ function AaveV4SpokeEconomicsBand({
   // AaveV4SpokeRunwayStack so the explanations match the bars shown.
   const runwayInfo = useMemo(() => {
     if (!runwayCard || runwayCard.totalDebtUsd <= 0) return [];
-    return runwayCard.assetLiqPrices
-      .filter((a) => a.usdShare > 1 && a.currentPrice > 0)
-      .map((a) => ({
-        symbol: a.symbol,
-        node: aaveV4RunwayExplanation({
-          collateralSymbol: a.symbol,
-          currentPrice: a.currentPrice,
-          liqPrice: a.liqPrice,
-        }),
-      }));
+    const shown = runwayCard.assetLiqPrices.filter((a) => a.usdShare > 1 && a.currentPrice > 0);
+    // When no single asset is the binding constraint — every shown asset is
+    // over-covered (liqPrice === 0) — the per-asset bullets all repeat the same
+    // "can fall to zero on its own" point. Collapse them into one line that names
+    // the assets and defers the real constraint to the combined runway above.
+    const allOverCovered = shown.length > 1 && shown.every((a) => a.liqPrice === 0);
+    if (allOverCovered) {
+      const symbols = shown.map((a) => a.symbol);
+      const joined =
+        symbols.length === 2
+          ? `${symbols[0]} or ${symbols[1]}`
+          : `${symbols.slice(0, -1).join(", ")}, or ${symbols[symbols.length - 1]}`;
+      return [
+        {
+          symbol: "__combined__",
+          node: (
+            <>
+              No single asset is the constraint — {joined} could each fall to zero on its own without tripping a
+              liquidation. Only a correlated drop across all of them does, shown by the{" "}
+              <span className="font-semibold text-foreground">All collateral</span> runway above.
+            </>
+          ),
+        },
+      ];
+    }
+    return shown.map((a) => ({
+      symbol: a.symbol,
+      node: aaveV4RunwayExplanation({
+        collateralSymbol: a.symbol,
+        currentPrice: a.currentPrice,
+        liqPrice: a.liqPrice,
+      }),
+    }));
   }, [runwayCard]);
 
   return (
