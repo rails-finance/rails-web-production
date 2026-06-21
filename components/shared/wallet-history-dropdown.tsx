@@ -142,6 +142,7 @@ export function WalletHistoryDropdown({ show, containerRef, onClose, onPick, pro
                   setTab("pinned");
                 }}
                 label="Favourites"
+                kind="pinned"
                 count={pinnedList.length}
               />
               <TabButton
@@ -151,6 +152,7 @@ export function WalletHistoryDropdown({ show, containerRef, onClose, onPick, pro
                   setTab("recent");
                 }}
                 label="Recent"
+                kind="recent"
                 count={recentList.length}
               />
             </div>
@@ -257,6 +259,51 @@ function CopyButton({ text }: { text: string }) {
         </svg>
       )}
     </button>
+  );
+}
+
+/** Tab-heading marker mirroring the listing-card affordances: a filled star
+ *  for the Favourites tab (matching FavouriteStar's resting filled state) and a
+ *  history clock for Recents. Colour is inherited from the tab so it tracks the
+ *  active/inactive state. */
+function RowKindIcon({ kind }: { kind: "pinned" | "recent" }) {
+  if (kind === "pinned") {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="13"
+        height="13"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="shrink-0"
+        aria-hidden="true"
+      >
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+      </svg>
+    );
+  }
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="13"
+      height="13"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="shrink-0"
+      aria-hidden="true"
+    >
+      <path d="M3 3v5h5" />
+      <path d="M3.05 13A9 9 0 1 0 6 5.3L3 8" />
+      <path d="M12 7v5l4 2" />
+    </svg>
   );
 }
 
@@ -404,23 +451,26 @@ function TabButton({
   active,
   onClick,
   label,
+  kind,
   count,
 }: {
   active: boolean;
   onClick: () => void;
   label: string;
+  kind: "pinned" | "recent";
   count: number;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`relative px-3 py-2 text-xs font-semibold cursor-pointer transition-colors ${
+      className={`relative flex items-center gap-1.5 px-3 py-2 text-xs font-semibold cursor-pointer transition-colors ${
         active ? "text-foreground" : "text-rb-500 hover:text-foreground"
       }`}
     >
+      <RowKindIcon kind={kind} />
       {label}
-      <span className="ml-1.5 text-[10px] text-rb-500">{count}</span>
+      <span className="text-[10px] text-rb-500">{count}</span>
       {active && <span className="absolute left-0 right-0 -bottom-px h-[2px] bg-blue-500" />}
     </button>
   );
