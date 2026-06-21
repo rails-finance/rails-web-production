@@ -3,105 +3,100 @@
 import { fmtPrice } from "@/components/shared/price-pill";
 
 /**
- * Price runway for a single collateral asset — shared across rails (an Aave V4
- * reserve, a Liquity V2 trove's collateral). Given a current price and the
- * price at which the position becomes liquidatable, it draws how much room the
- * price has left to fall.
+ * Liquidation runway — one shared bar for every rail and every collateral shape
+ * (a Liquity V2 trove, an Aave V4 single-asset reserve, an Aave V4 multi-asset
+ * basket). It answers "how close is this to liquidation?" at a glance, and the
+ * answer reads the same way no matter the protocol or the number of assets.
  *
- * The bar is a price axis anchored on the liquidation price: it spans from
- * `2 × liqPrice` (left, 100% above liquidation) down to `0.8 × liqPrice` (right,
- * 20% under water — a realistic floor, since liquidators close a position near
- * its liquidation price rather than letting it sink arbitrarily far). Because
- * the window is a fixed *multiple* of the liquidation price, the liquidation
- * line lands at the SAME horizontal position on every row — so a 9%-from-liq
- * asset visibly sits closer to the red than a 24% one, and the rows stay
- * comparable without any single shared scale.
+ * THE UNIFYING IDEA: the bar's horizontal axis *is* the "% from liquidation"
+ * metric itself — `m = (value − liq) / value` — not a price window with a number
+ * painted on top. That one choice makes the three cases collapse into one:
  *
- * The bar is three distinct pill-capped segments laid side-by-side on the card
- * surface (not painted inside a recessed track), separated by hairline gaps.
- * What reads off it:
- *   • **Collateral fill** — collateral-blue (the tower chart's structural
- *     collateral colour, an identity cue rather than risk valence), from the
- *     left edge to the current price; its rounded cap is the live-price marker.
- *     As price falls, the cap slides right toward the red. The price itself is
- *     labelled alongside the bar, not on it — nothing is drawn twice.
- *   • **Headroom** — a neutral segment from the live-price marker to the
- *     liquidation line: the distance the price can still fall. Zero-width once
- *     the price is at / inside the liquidation zone.
- *   • **Liquidation zone** — red, from the liquidation price to the right edge.
- *     The one deliberate colour: being at/below the liquidation price is a hard
- *     on-chain fact, not an opinion. It deepens once the live price is in it.
- *   • **Ruler** — a "% from liquidation" axis: a gridline every 10%, 0% ON the
- *     liquidation line and the numbers climbing leftward into the safe runway.
- *     Same basis as the resting "% from liquidation" readout — (price − liq) /
- *     price — so the live-price marker lands on exactly the value the caption
- *     states and the two can't disagree. Brightest at the liquidation line (where
- *     the runway runs out) and fading as the runway lengthens off the left edge.
- *     Revealed only on hover, and only on hover-capable (desktop) pointers — touch /
- *     mobile never shows it, so the resting readouts can't be crowded there. The
- *     resting "% from liquidation" / "liquidation $" readouts stay put under the
- *     ruler (desktop has the width). The reveal waits a beat then fades up slowly.
+ *   • Single asset (Liquity trove, Aave single reserve) → value = live price,
+ *     liq = liquidation price. `m` is the % the price can fall before liquidation.
+ *   • Multi-asset basket (Aave) → value = health factor, liq = HF 1.0. Here
+ *     `m = (HF − 1) / HF`, which is the % the collateral basket can fall before
+ *     liquidation (HF moves with collateral, so HF→1 happens when collateral has
+ *     fallen that much).
  *
- * Positions safer than the window top (`offscreen`) sit off the left edge, where
- * a precise fill can't be drawn. Rather than vanish — leaving an apparently empty
- * track whose only occupant is the red zone — the marker clamps to the left edge
- * as a small blue nub (the collateral fill is off-scale that way); headroom then
- * runs from the nub to the liquidation line, fading out toward the nub so the
- * unbounded safe runway reads as continuing off-scale rather than hard-edged.
- * The "% from liquidation" number — with the price shown alongside — carries the
- * exact (and unbounded) upside the fixed window can't draw, so the clamped nub is
- * an honest "off this way" affordance, not a measurement.
+ * For a single asset these are *mathematically identical*: `(price − liq)/price`
+ * ≡ `(HF − 1)/HF`. So all three are the same risk quantity, and a marker at the
+ * same spot means the same risk whether it's one asset or five. The only thing
+ * that changes per protocol is the threshold *caption* (a real liquidation price
+ * when there's a single asset; `HF 1.0` for a basket) — honest, not a fudge.
  *
- * Underwater (live price at / below the liquidation line) the runway is spent,
- * so the whole bar flips to the factual-liquidation red: lighter red for the
- * now-out-of-reach prices above the line, the deep-red breach from the line to
- * the live-price marker, lighter red for any downside below it. The readouts
- * drop the headroom ruler and instead state "Liquidatable now" plus the price
- * rise needed to clear the line (`recoverPct`, denominated in the live price).
+ * Because the axis is the metric, the live-price marker, the ruler ticks and the
+ * caption number are all the same scale — they physically cannot disagree, with
+ * no clever window-fitting. Layout, from right to left:
+ *   • **Liquidation line** — `m = 0`, at a FIXED position on every row (so rows
+ *     stay comparable). Red liquidation zone runs from it to the right edge,
+ *     covering a little way underwater (`AXIS_MIN_PCT`).
+ *   • **Headroom** — neutral, from the live marker to the liquidation line: the
+ *     distance the value can still fall. Zero once at / inside the zone.
+ *   • **Collateral fill** — collateral-blue, from the left edge to the marker;
+ *     its rounded cap is the live marker. The value/price is labelled alongside
+ *     the bar, never on it.
+ *   • **Ruler** — a "% from liquidation" axis: a gridline every 10%, labelled
+ *     0–50% (`RULER_MAX_PCT`), evenly spaced, climbing leftward into the safe
+ *     runway; the scale itself keeps running to `AXIS_MAX_PCT` past the last
+ *     label, so a very safe position sits far left exactly where its % lands.
+ *     Brightest at the liquidation line and fading as the runway lengthens.
+ *     Revealed only on hover, and only on hover-capable (desktop) pointers —
+ *     touch / mobile never shows it, so the resting readouts can't be crowded.
+ *     The reveal waits a beat then fades up slowly.
+ *
+ * Underwater (value at / below the liquidation line, `m ≤ 0`) the runway is
+ * spent, so the whole bar flips to the factual-liquidation red: lighter red for
+ * the now-out-of-reach values above the line, the deep-red breach from the line
+ * to the live marker, lighter red for any downside below it. The readouts drop
+ * the headroom ruler and state "Liquidatable now" plus the rise needed to clear
+ * the line (`recoverPct`, denominated in the live value).
  *
  * No safe/caution gradient (per the no-opinionated-colour principle): blue is a
  * structural collateral cue, red is the one factual liquidation colour, and the
- * numbers around the bar state the rest. Read-only — current oracle state.
+ * numbers around the bar state the rest. Read-only — current oracle / chain state.
  */
 
 // The bar is built from distinct rounded segments laid directly on the card
 // surface — not painted inside a recessed track (which read as the bars sinking
 // into a dark well in dark mode). Three segments, separated by hairline gaps:
-//   • FILL     — collateral-blue, window top → live price. Same structural
+//   • FILL     — collateral-blue, left edge → live marker. Same structural
 //                collateral colour as the tower chart: identity, not risk
 //                valence (red stays the only valence colour).
-//   • HEADROOM — neutral, live price → liquidation line (how far it can fall).
+//   • HEADROOM — neutral, live marker → liquidation line (how far it can fall).
 //   • LIQ      — red liquidation zone, beyond the liquidation line.
 // At this bar height every segment is fully pill-capped (`rounded-full`) on all
-// four corners — no per-corner caps to distinguish outer ends from internal
-// seams, since a 10px-tall segment reads as rounded either way. The hairline
+// four corners — a 10px-tall segment reads as rounded either way. The hairline
 // gaps still draw the seams between segments.
 const FILL = "bg-blue-500";
-// Headroom is neutral but must stay legible on the dark card: the old
-// `dark:bg-rb-700` (rgb 25 28 38) sat ~5 units off the rb-800 surface (rgb 20 22
-// 30) and read as empty — fatal for offscreen rows where headroom is the bar's
-// whole left ~83%. rb-500 (the brand blue-grey) at low alpha lifts it to a clear
-// but subordinate neutral that doesn't compete with the blue fill.
+// Headroom is neutral but must stay legible on the dark card: rb-500 (the brand
+// blue-grey) at low alpha lifts it to a clear but subordinate neutral that
+// doesn't compete with the blue fill (plain rb-700 sat too close to the surface).
 const HEADROOM = "bg-rb-200 dark:bg-rb-500/30";
-// Offscreen, the live price is >100% above liquidation and the true safe runway
-// extends unbounded off the left edge. Fade the headroom out toward the nub
-// (solid near the liquidation line → transparent toward the left) so the bar
-// reads as "runway continues off-scale this way" rather than a hard-edged fill.
-const HEADROOM_OFFSCREEN = "bg-gradient-to-l from-rb-200 to-transparent dark:from-rb-500/30";
 const LIQ = "bg-red-400/60 dark:bg-red-500/40";
 const LIQ_ACTIVE = "bg-red-500 dark:bg-red-500";
 const H_BAR = 10; // bar height in px (h-2.5)
 const SEG_GAP_PX = 1; // hairline gap between adjacent segments
 
-// Window bounds as multiples of the liquidation price.
-const WINDOW_TOP_MULT = 2.0; // left edge — 100% above liquidation
-const WINDOW_BOTTOM_MULT = 0.8; // right edge — 20% below liquidation
-const RULER_MAX_PCT = 50; // last labelled increment
+// Axis bounds, in "% from liquidation" units (the metric the bar plots directly).
+//   • Left edge = AXIS_MAX_PCT: the deep-safety end. `m` asymptotes at 100% (the
+//     value can never fall *more* than 100%), so 100 is the natural cap — a
+//     position that safe sits hard against the left edge.
+//   • Right edge = AXIS_MIN_PCT: a little way underwater, so the red liquidation
+//     zone has width and a freshly-liquidated position still shows its breach.
+// The liquidation line (m = 0) therefore lands at AXIS_MAX_PCT / span of the way
+// across — the SAME spot on every row, which is what keeps the rails comparable.
+const AXIS_MAX_PCT = 100; // left edge — deepest safety the axis draws
+const AXIS_MIN_PCT = -25; // right edge — 25% underwater, the red-zone floor
+const RULER_MAX_PCT = 50; // last labelled increment (the scale runs past it to AXIS_MAX_PCT)
 const RULER_FADE_DENOM = 60; // opacity = 1 − pct/denom; >MAX so 50% stays faintly visible
-const OFFSCREEN_STUB = 5; // width (% of window) of the pinned blue nub when the live price is offscreen
 
 export interface PriceRunwayProps {
+  /** The live value being tracked: a collateral price (single asset) or a health
+   *  factor (multi-asset basket). Named `currentPrice` for the common case. */
   currentPrice: number;
+  /** The value at which the position liquidates: the liquidation price, or `1`
+   *  for a health-factor runway. Null when there's no debt — nothing to plot. */
   liqPrice: number | null;
   /** Overrides the right-side caption when safe (default `liquidation $<price>`).
    *  Lets a non-price axis (e.g. an Aave health-factor runway, where the value
@@ -116,52 +111,39 @@ export function PriceRunway({ currentPrice, liqPrice, liqCaption, underwaterCapt
   const hasLiq = liqPrice != null && liqPrice > 0;
   if (!hasLiq) return null; // no debt / fully covered — nothing to plot
 
-  // Geometry: left = high/safe price, right = low price (toward & past liq).
-  const windowTop = liqPrice! * WINDOW_TOP_MULT;
-  const windowBottom = liqPrice! * WINDOW_BOTTOM_MULT;
-  const range = windowTop - windowBottom;
-  const posFromLeft = (p: number) => Math.max(0, Math.min(100, ((windowTop - p) / range) * 100));
+  // The axis IS the "% from liquidation" scale — `m = (value − liq) / value` —
+  // so a value maps straight onto the bar. m = 0 is the liquidation line; m > 0
+  // is safe runway (climbing left); m < 0 is underwater (to the right). Because
+  // the marker, the ruler and the caption all read off this one scale, they can't
+  // disagree — for a collateral price or a health factor alike (`(p − liq)/p` ≡
+  // `(HF − 1)/HF`).
+  const AXIS_SPAN = AXIS_MAX_PCT - AXIS_MIN_PCT;
+  const posFromPct = (m: number) => Math.max(0, Math.min(100, ((AXIS_MAX_PCT - m) / AXIS_SPAN) * 100));
 
-  const liqPos = posFromLeft(liqPrice!); // constant across every row
-  const offscreen = currentPrice > windowTop;
-  const fillPct = offscreen ? 0 : posFromLeft(currentPrice);
+  const mPct = ((currentPrice - liqPrice!) / currentPrice) * 100; // signed % from liquidation
   const underwater = currentPrice <= liqPrice!;
-  // Distance to liquidation as a share of the LIVE price — (current − liq) /
-  // current — so this readout matches each rail's "% headroom" stat exactly
-  // (Aave's spoke-card header, Liquity's OpenSummaryCard) instead of dividing by
-  // the liq price and disagreeing with it (a 19% headroom vs a 24% runway for
-  // the same gap). It also shares the live-price basis the recoverPct already uses.
-  const pctFromLiq = Math.round(((currentPrice - liqPrice!) / currentPrice) * 100);
-  // Once underwater the runway is spent — the only figure that matters is how
-  // far the price must RISE to clear liquidation, denominated in the live price
-  // (not the liq price). E.g. $7.81 vs a $9.30 line → +19% to recover.
+  const liqPos = posFromPct(0); // liquidation line — constant across every row
+  const markerPos = posFromPct(mPct); // live marker — left of liqPos when safe, right when underwater
+
+  const pctFromLiq = Math.round(mPct);
+  // Once underwater the runway is spent — the only figure that matters is how far
+  // the value must RISE to clear liquidation, denominated in the live value.
   const recoverPct = underwater ? Math.round(((liqPrice! - currentPrice) / currentPrice) * 100) : 0;
 
-  // Segment extents (% from left). Blue never extends past the liquidation line;
-  // headroom is the gap between the live-price marker and that line (zero once
-  // the price is at / inside the zone). Red runs from the line to the right edge.
-  // Offscreen, the fill clamps to a fixed nub at the left edge and headroom takes
-  // the rest up to the line — so the row shows a marker + headroom + zone like any
-  // other, instead of an all-headroom (and so apparently empty) track.
-  const fillEnd = offscreen ? OFFSCREEN_STUB : Math.min(fillPct, liqPos);
+  // Safe-side segment extents (% from left). Blue runs from the left edge to the
+  // marker; headroom is the gap from the marker to the liquidation line (zero once
+  // at / inside the zone); red runs from the line to the right edge.
+  const fillEnd = Math.min(markerPos, liqPos);
   const headroomW = Math.max(0, liqPos - fillEnd);
 
-  // A "% from liquidation" axis in the SAME basis as the readout — each tick is
-  // the % a price sits above the liquidation line, (p − liq) / p — with 0% ON the
-  // liquidation line and the numbers climbing LEFTWARD into the safe runway. So
-  // the live-price marker lands on exactly the "X% from liquidation" the resting
-  // caption states (the two can't disagree), instead of the inverse "% drop from
-  // today" reading whose big numbers pointed at the red. Brightest at the
-  // liquidation line — where the runway runs out — and fading as the runway
-  // lengthens. Ticks past the window's left edge are dropped, not clamped.
+  // Ruler ticks, evenly spaced because the axis is the metric: a gridline every
+  // 10% from 0% (the liquidation line) up to RULER_MAX_PCT, climbing leftward.
+  // Brightest at the liquidation line and fading as the runway lengthens.
   const rulerTicks = [];
   for (let n = 0; n <= RULER_MAX_PCT; n += 10) {
-    const price = liqPrice! / (1 - n / 100); // (price − liq) / price = n/100
-    const raw = ((windowTop - price) / range) * 100;
-    if (raw < 0 || raw > 100) continue;
     rulerTicks.push({
       pct: n,
-      pos: raw,
+      pos: posFromPct(n),
       opacity: Math.max(0, 1 - n / RULER_FADE_DENOM),
     });
   }
@@ -176,39 +158,35 @@ export function PriceRunway({ currentPrice, liqPrice, liqCaption, underwaterCapt
   return (
     <div className="group/runway relative" style={{ paddingTop: 6 }}>
       {/* Flow segments laid side-by-side: each is a flex child grown by its
-          share of the price window, the flex gap drawing the hairline seams.
+          share of the % axis, the flex gap drawing the hairline seams.
           Widths are proportional, not pixel-exact — close enough to read. */}
       <div className="flex" style={{ height: H_BAR, gap: SEG_GAP_PX }}>
         {underwater ? (
           // Underwater: the runway is gone, so the whole bar reads in the
           // factual-liquidation red (the one sanctioned colour). The hairline
-          // seam at the liquidation line keeps the breach legible: prices above
+          // seam at the liquidation line keeps the breach legible: values above
           // the line — now out of reach — sit in lighter red on the left; the
-          // deep-red breach runs from the line to the live-price marker (its
-          // rounded cap), with any remaining downside trailing in lighter red.
+          // deep-red breach runs from the line to the live marker (its rounded
+          // cap), with any remaining downside trailing in lighter red.
           <>
             {liqPos > 0 && <div className={`${LIQ} rounded-full`} style={{ flexGrow: liqPos, flexBasis: 0 }} />}
             <div
               className={`${LIQ_ACTIVE} rounded-full`}
-              style={{ flexGrow: Math.max(0.5, fillPct - liqPos), flexBasis: 0 }}
+              style={{ flexGrow: Math.max(0.5, markerPos - liqPos), flexBasis: 0 }}
             />
-            {fillPct < 100 && (
-              <div className={`${LIQ} rounded-full`} style={{ flexGrow: 100 - fillPct, flexBasis: 0 }} />
+            {markerPos < 100 && (
+              <div className={`${LIQ} rounded-full`} style={{ flexGrow: 100 - markerPos, flexBasis: 0 }} />
             )}
           </>
         ) : (
           <>
-            {/* Collateral fill — window top → live price. Its rounded right cap
-                is the live-price marker. Offscreen, it's the clamped left-edge nub
-                (OFFSCREEN_STUB wide) marking "off-scale this way". */}
+            {/* Collateral fill — left edge → live marker. Its rounded right cap
+                is the live marker. */}
             {fillEnd > 0 && <div className={`${FILL} rounded-full`} style={{ flexGrow: fillEnd, flexBasis: 0 }} />}
-            {/* Headroom — live price → liquidation line. The neutral distance the
-                price can still fall; absent once at / inside the zone. */}
+            {/* Headroom — live marker → liquidation line. The neutral distance the
+                value can still fall; absent once at / inside the zone. */}
             {headroomW > 0 && (
-              <div
-                className={`${offscreen ? HEADROOM_OFFSCREEN : HEADROOM} rounded-full`}
-                style={{ flexGrow: headroomW, flexBasis: 0 }}
-              />
+              <div className={`${HEADROOM} rounded-full`} style={{ flexGrow: headroomW, flexBasis: 0 }} />
             )}
             {/* Liquidation zone — from the liquidation line to the right edge. */}
             <div className={`${LIQ} rounded-full`} style={{ flexGrow: 100 - liqPos, flexBasis: 0 }} />
@@ -216,13 +194,13 @@ export function PriceRunway({ currentPrice, liqPrice, liqCaption, underwaterCapt
         )}
       </div>
 
-      {/* Label strip: the resting "% from liquidation" + "liquidation $" readouts
-          stay put; on hover (desktop) the faded % ruler reveals across the same row. */}
+      {/* Label strip: the resting "% from liquidation" + threshold readouts stay
+          put; on hover (desktop) the faded % ruler reveals across the same row. */}
       <div className="relative mt-2 h-4 text-[11px] tabular-nums text-rb-500">
         {underwater ? (
           // Past the liquidation line the "% from liquidation" ruler is
           // meaningless — replace it with the factual state and the rise the
-          // price needs to clear the line.
+          // value needs to clear the line.
           <>
             <span className="absolute left-0 font-semibold text-red-600 dark:text-red-400">Liquidatable now</span>
             <span className="absolute right-0">
