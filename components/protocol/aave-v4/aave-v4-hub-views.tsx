@@ -18,7 +18,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowUpDown, ChevronUp, ChevronDown, Search } from "lucide-react";
+import { ArrowUpDown, Ban, ChevronUp, ChevronDown, Search } from "lucide-react";
 import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import { fmtUsd } from "@/lib/aave-v4/format";
 import type { HubView, HubAssetAgg } from "@/lib/aave-v4/hub-view";
@@ -330,8 +330,18 @@ export function AaveV4HubViews({ views }: { views: HubView[] }) {
                         <Link href={listingHref(hub, { symbol: a.symbol, side: "borrow" })} className={LINK}>
                           {bUsd.display}
                         </Link>
+                      ) : a.canBorrow === false ? (
+                        // Structurally not borrowable (collateral-only) — a no-entry
+                        // mark, distinct from a borrowable asset that just has no
+                        // draws yet.
+                        <span
+                          className="inline-flex items-center justify-end gap-1 text-rb-500/70"
+                          title="Not borrowable in this hub"
+                        >
+                          <Ban className="h-3.5 w-3.5" aria-label="Not borrowable" />
+                        </span>
                       ) : (
-                        <span className="text-rb-500">not borrowed</span>
+                        <span className="text-rb-500">no borrows</span>
                       )}
                     </td>
                     <td
