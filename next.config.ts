@@ -1,6 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Next 15.5.7 dev: webpack reports framer-motion's server vendor chunk as
+  // compiled but never writes `.next/server/vendor-chunks/framer-motion@….js`,
+  // so any route that SSRs a framer-motion component 500s with
+  // "Cannot find module './vendor-chunks/framer-motion…'". Transpiling it bundles
+  // framer-motion into each route's own chunks instead of the vendor-chunk split,
+  // sidestepping the unwritten-chunk bug. (Drop once on a Next that emits it.)
+  transpilePackages: ["framer-motion"],
   async redirects() {
     return [
       // Legacy explorer paths — collapsed to a single hop to the new canonical
