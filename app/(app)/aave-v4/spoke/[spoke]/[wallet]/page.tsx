@@ -74,7 +74,8 @@ import type { ReserveStats } from "@/lib/aave-v4/spoke-cards";
 import { TimelineDisplayProvider, useTimelineDisplay } from "@/components/shared/timeline-display-context";
 import { FilterDropdown, DisplaySettingsIcon, type FilterOption } from "@/components/shared/filter-dropdown";
 import { TransactionHeatmap } from "@/components/shared/transaction-heatmap";
-import { CsvDownloadButton, ENABLE_CSV_EXPORT } from "@/components/shared/csv-download-button";
+import { ExportMenu } from "@/components/shared/export-menu";
+import { spokeToMarkdown } from "@/lib/aave-v4/spoke-to-markdown";
 import {
   NAV_BUTTON,
   NAV_LINK,
@@ -489,9 +490,31 @@ function AaveV4SpokePageInner() {
   return (
     <>
       <div className="py-8 space-y-6">
-        {/* Smart back: in-app history → browser back; fresh-tab / direct entry
+        {/* Top toolbar: smart back on the left, export control aligned to the
+            right edge — mirrors the Liquity trove page's placement so the two
+            rails carry the export affordance in the same spot.
+            Smart back: in-app history → browser back; fresh-tab / direct entry
             → up to the wallet's spokes (never dead-ends or leaves the site). */}
-        <SmartBackButton walletFilterHref={walletFilterHref} />
+        <div className="flex items-center justify-between gap-2">
+          <SmartBackButton walletFilterHref={walletFilterHref} />
+          {activeCard && (
+            <ExportMenu
+              buildMarkdown={() =>
+                spokeToMarkdown({
+                  spokeName,
+                  wallet,
+                  card: activeCard,
+                  reserves: activeGroup?.result.reserves ?? [],
+                  prices,
+                  events: spokeScopedEvents,
+                  generatedAt: new Date(),
+                })
+              }
+              events={spokeScopedEvents}
+              csvFilename={`aave-v4-${rawSpoke}-${wallet.slice(0, 10)}-activity.csv`}
+            />
+          )}
+        </div>
 
         {/* Position card in its own rounded panel — owner address sits in its
             top row, and the (i) at its bottom-right expands the explanation. */}
@@ -592,12 +615,6 @@ function AaveV4SpokePageInner() {
               >
                 {dateLabel}
               </button>
-              {ENABLE_CSV_EXPORT && (
-                <CsvDownloadButton
-                  events={spokeScopedEvents}
-                  filename={`aave-v4-${rawSpoke}-${wallet.slice(0, 10)}-activity.csv`}
-                />
-              )}
               <AaveV4TimelineDisplayToggle />
             </div>
           </div>
@@ -788,10 +805,10 @@ function AaveV4SpokeEconomicsBand({
             <div className="flex items-start gap-2 leading-relaxed">
               <span className="select-none text-rb-500">•</span>
               <span>
-                Either way the gap is the same buffer — how far your collateral can fall before liquidation. With several
-                assets we show that as a percentage rather than one asset&apos;s price, since a single asset&apos;s solo
-                move would overstate the safety of a correlated basket. Assets you&apos;ve supplied but not enabled as
-                collateral don&apos;t back the loan, so they don&apos;t affect this.
+                Either way the gap is the same buffer — how far your collateral can fall before liquidation. With
+                several assets we show that as a percentage rather than one asset&apos;s price, since a single
+                asset&apos;s solo move would overstate the safety of a correlated basket. Assets you&apos;ve supplied
+                but not enabled as collateral don&apos;t back the loan, so they don&apos;t affect this.
               </span>
             </div>
             <div className="flex items-start gap-2 leading-relaxed">
