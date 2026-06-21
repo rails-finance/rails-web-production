@@ -28,9 +28,9 @@ export function TroveListLoadingSkeleton() {
         {/* Card stack — same 24px gap and lg radius as the live grid. */}
         <div className="space-y-6">
           <div className="animate-pulse h-40 bg-skeleton rounded-lg" />
-          <div className="animate-pulse h-40 bg-rb-200/75 dark:bg-rb-800/75 rounded-lg" />
-          <div className="animate-pulse h-40 bg-rb-200/50 dark:bg-rb-800/50 rounded-lg" />
-          <div className="animate-pulse h-40 bg-rb-200/25 dark:bg-rb-800/25 rounded-lg" />
+          <div className="animate-pulse h-40 bg-rb-100/75 dark:bg-rb-800/75 rounded-lg" />
+          <div className="animate-pulse h-40 bg-rb-100/50 dark:bg-rb-800/50 rounded-lg" />
+          <div className="animate-pulse h-40 bg-rb-100/25 dark:bg-rb-800/25 rounded-lg" />
         </div>
       </div>
     </main>
