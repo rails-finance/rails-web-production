@@ -18,7 +18,7 @@ import { useState, useRef, useEffect } from "react";
 import { Copy, Check, FileText, Download, ChevronDown } from "lucide-react";
 import { eventsToCsv } from "@/lib/shared/events-to-csv";
 import type { BaseActivityEvent } from "@/lib/shared/types/event-shape";
-import { CTRL_GHOST, CTRL_ON, CTRL_OFF } from "@/lib/shared/ui-grammar";
+import { CTRL_GHOST } from "@/lib/shared/ui-grammar";
 
 type Props = {
   /** Builds the Markdown snapshot. Called at click time so `new Date()` inside
@@ -130,7 +130,7 @@ export function ExportMenu({ buildMarkdown, events, csvFilename, ariaLabel = "Ex
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label={ariaLabel}
-        className={`${CTRL_GHOST} ${open ? CTRL_ON : CTRL_OFF} h-8 gap-2 rounded-md px-3 text-xs font-medium`}
+        className={`${CTRL_GHOST} h-8 gap-2 rounded-md bg-rb-100 px-3 text-xs font-medium text-foreground hover:bg-rb-200/60 dark:bg-rb-800 dark:hover:bg-rb-700/50`}
       >
         <span>{copied ? "Copied" : "Copy for LLM"}</span>
         {copied ? (
