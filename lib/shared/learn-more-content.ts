@@ -975,3 +975,39 @@ export function getVaultsLearnMore(): LearnMoreContent {
     ],
   };
 }
+
+// Page-level explainer for the cross-hub comparison surface (/aave-v4/hubs).
+// Layer-2 mechanic only — no snapshot numbers, so it reads identically on any
+// block. Concepts mirror what the band + table actually show: hubs, spokes,
+// credit lines / utilisation, and the LT range.
+export function aaveV4HubsContent(): LearnMoreContent {
+  return {
+    title: "How hubs and spokes work",
+    intro:
+      "Aave V4 splits lending into Liquidity Hubs — the shared pools that hold supplied assets and set each market's caps and rates — and Spokes, the markets people supply to and borrow from. A Spoke draws liquidity from a Hub over a credit line, and can hold lines to more than one Hub.",
+    detailsHeading: "Key concepts:",
+    details: [
+      {
+        bold: "Liquidity Hub",
+        text: "the pool that custodies supplied assets and backs borrowing. Core, Plus and Prime are separate hubs that don't co-mingle liquidity.",
+      },
+      {
+        bold: "Spoke",
+        text: "a market users interact with, drawing from a Hub. One spoke can draw from more than one — Bluechip keeps collateral in Prime but borrows from Core.",
+      },
+      {
+        bold: "Credit line & utilisation",
+        text: "the cap a Hub grants a Spoke to draw an asset; utilisation is how much of that line is currently drawn.",
+      },
+      {
+        bold: "Liquidation threshold (LT)",
+        text: "the share of an asset's value borrowable against it before liquidation; shown as a range when spokes set it differently.",
+      },
+    ],
+    links: [
+      { label: "Aave V4 architecture", url: AAVE_FAQ_URLS.V4_ARCHITECTURE },
+      { label: "Hubs & liquidity model", url: AAVE_FAQ_URLS.V4_LIQUIDITY_MODEL },
+      { label: "Aave V4 docs", url: AAVE_FAQ_URLS.V4_DOCS },
+    ],
+  };
+}

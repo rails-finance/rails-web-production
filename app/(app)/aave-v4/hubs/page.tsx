@@ -12,6 +12,8 @@ import Link from "next/link";
 import { fetchAaveV4Hubs, type AaveV4HubsResponse } from "@/lib/api/fetch-aave-v4-hubs";
 import { buildHubViews, hubUnderlyings } from "@/lib/aave-v4/hub-view";
 import { AaveV4HubViews } from "@/components/protocol/aave-v4/aave-v4-hub-views";
+import { LearnMore } from "@/components/shared/learn-more-modal";
+import { aaveV4HubsContent } from "@/lib/shared/learn-more-content";
 import { PricesProvider, usePrices, useRequestPrices } from "@/lib/shared/prices-context";
 
 function HubsContent() {
@@ -57,15 +59,30 @@ function HubsContent() {
             </Link>{" "}
             / Hubs
           </div>
-          <h1 className="text-2xl font-semibold text-foreground">Hub comparison</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-semibold text-foreground">Hub comparison</h1>
+            <LearnMore content={aaveV4HubsContent()} />
+          </div>
           <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-rb-500">
             Aave V4 lends through three hubs. Spokes hold collateral and draw liquidity from a hub; a single spoke can
-            draw from more than one. Below: each hub&apos;s size, what it&apos;s made of and who draws on it, side by
-            side — then every asset&apos;s credit line across all three hubs in one table you can filter and sort.
+            draw from more than one.
           </p>
           {data?.updatedAt && (
             <p className="mt-2 text-[11px] text-rb-500">
-              Chain snapshot{data.blockNumber ? ` · block ${data.blockNumber.toLocaleString()}` : ""}
+              Chain snapshot
+              {data.blockNumber ? (
+                <>
+                  {" · block "}
+                  <a
+                    href={`https://etherscan.io/block/${data.blockNumber}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline"
+                  >
+                    {data.blockNumber.toLocaleString()}
+                  </a>
+                </>
+              ) : null}
             </p>
           )}
         </header>

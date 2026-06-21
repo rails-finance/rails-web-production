@@ -18,7 +18,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowUpDown, Ban, ChevronUp, ChevronDown, Search } from "lucide-react";
+import { ArrowUpDown, Ban, ChevronUp, ChevronDown } from "lucide-react";
 import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import { fmtUsd } from "@/lib/aave-v4/format";
 import type { HubView, HubAssetAgg } from "@/lib/aave-v4/hub-view";
@@ -104,7 +104,6 @@ type SortKey = "asset" | "hub" | "lt" | "supplied" | "borrowed" | "rate" | "supp
 export function AaveV4HubViews({ views }: { views: HubView[] }) {
   const [classes, setClasses] = useState<Set<AssetClass>>(new Set());
   const [hubFilter, setHubFilter] = useState<Set<HubTierKey>>(new Set());
-  const [query, setQuery] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("supplied");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
@@ -137,18 +136,13 @@ export function AaveV4HubViews({ views }: { views: HubView[] }) {
   }, [allRows]);
   const presentHubs = useMemo(() => views.map((v) => ({ hub: v.hub, label: v.label })), [views]);
 
-  const q = query.trim().toLowerCase();
-
   // The band is static — every hub, always. Filters scope the table only.
   const filteredRows = useMemo(
     () =>
       allRows.filter(
-        (r) =>
-          (classes.size === 0 || classes.has(r.asset.cls)) &&
-          (hubFilter.size === 0 || hubFilter.has(r.hub)) &&
-          (q === "" || r.asset.symbol.toLowerCase().includes(q)),
+        (r) => (classes.size === 0 || classes.has(r.asset.cls)) && (hubFilter.size === 0 || hubFilter.has(r.hub)),
       ),
-    [allRows, classes, hubFilter, q],
+    [allRows, classes, hubFilter],
   );
 
   const sortedRows = useMemo(() => {
@@ -177,11 +171,10 @@ export function AaveV4HubViews({ views }: { views: HubView[] }) {
     return [...filteredRows].sort((a, b) => (sortDir === "asc" ? cmp(a, b) : -cmp(a, b)));
   }, [filteredRows, sortKey, sortDir]);
 
-  const filtersActive = classes.size > 0 || hubFilter.size > 0 || q !== "";
+  const filtersActive = classes.size > 0 || hubFilter.size > 0;
   const clearFilters = () => {
     setClasses(new Set());
     setHubFilter(new Set());
-    setQuery("");
   };
 
   // Sortable header cell. A render helper, not a component, so it shares the
@@ -224,17 +217,12 @@ export function AaveV4HubViews({ views }: { views: HubView[] }) {
       )}
 
       {/* Section 2 — cross-hub asset table */}
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-3">
         <h2 className="text-[11px] uppercase tracking-wider text-rb-500">Credit lines</h2>
-        <label className="relative">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-rb-500" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search asset…"
-            className="h-8 w-44 rounded-full border border-rb-200 bg-transparent pl-8 pr-3 text-[13px] text-foreground placeholder:text-rb-500 transition-colors focus:border-blue-500 focus:outline-none dark:border-rb-700"
-          />
-        </label>
+        <p className="mt-1 max-w-2xl text-[13px] leading-relaxed text-rb-500">
+          Every asset&apos;s credit line across all three hubs in one table — filter by class or hub, and sort any
+          column.
+        </p>
       </div>
 
       {/* Filters: asset class + hub. Quiet chips; "All" clears that dimension. */}
