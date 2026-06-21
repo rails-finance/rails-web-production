@@ -12,6 +12,7 @@ import Link from "next/link";
 import { fetchAaveV4Hubs, type AaveV4HubsResponse } from "@/lib/api/fetch-aave-v4-hubs";
 import { buildHubViews, hubUnderlyings } from "@/lib/aave-v4/hub-view";
 import { AaveV4HubViews } from "@/components/protocol/aave-v4/aave-v4-hub-views";
+import { AaveV4HubsLoadingSkeleton } from "@/components/protocol/aave-v4/aave-v4-hubs-loading-skeleton";
 import { LearnMore } from "@/components/shared/learn-more-modal";
 import { aaveV4HubsContent } from "@/lib/shared/learn-more-content";
 import { PricesProvider, usePrices, useRequestPrices } from "@/lib/shared/prices-context";
@@ -61,9 +62,9 @@ function HubsContent() {
           </div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-semibold text-foreground">Hub comparison</h1>
-            <LearnMore content={aaveV4HubsContent()} />
+            <LearnMore content={aaveV4HubsContent()} inline />
           </div>
-          <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-rb-500">
+          <p className="mt-2 text-[14px] leading-relaxed text-rb-500">
             Aave V4 lends through three hubs. Spokes hold collateral and draw liquidity from a hub; a single spoke can
             draw from more than one.
           </p>
@@ -88,7 +89,7 @@ function HubsContent() {
         </header>
 
         {loading && !data ? (
-          <div className="py-12 text-center text-rb-500">Loading hubs…</div>
+          <AaveV4HubsLoadingSkeleton />
         ) : error ? (
           <div className="py-12 text-center text-rb-500">
             <p className="mb-1">Couldn&apos;t load hub data.</p>

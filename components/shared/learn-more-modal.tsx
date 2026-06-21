@@ -187,13 +187,16 @@ export function LearnMoreModal({ content, onClose }: { content: LearnMoreContent
 
 // ── Convenience wrapper: ? button + modal together ───────────────────────────
 
-export function LearnMore({ content }: { content: LearnMoreContent }) {
+// `inline` drops the bottom-right panel placement (justify-end + mt-3) so the
+// "?" trigger can sit centered next to a heading instead of anchored to the
+// corner of an explainer panel.
+export function LearnMore({ content, inline = false }: { content: LearnMoreContent; inline?: boolean }) {
   const [open, setOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
 
   return (
     <>
-      <div className="flex justify-end mt-3">
+      <div className={inline ? "flex items-center" : "flex justify-end mt-3"}>
         <LearnMoreButton onClick={() => setOpen(true)} />
       </div>
       {open && <LearnMoreModal content={content} onClose={close} />}
