@@ -28,7 +28,7 @@ import { dayKey, shortDate, shortDateYear } from "@/lib/shared/format-event";
 import { TimelineDisplayProvider, useTimelineDisplay } from "@/components/shared/timeline-display-context";
 import { usePreferences } from "@/lib/shared/preferences-context";
 import { ratioLabel } from "@/lib/shared/ratio-format";
-import { CsvDownloadButton, ENABLE_CSV_EXPORT } from "@/components/shared/csv-download-button";
+import { TroveExportMenu } from "@/components/trove/TroveExportMenu";
 import { NAV_BUTTON, CTRL_GHOST, CTRL_OFF, CTRL_ON, CTRL_ON_ACCENT, PILL_META } from "@/lib/shared/ui-grammar";
 import { LiquityTroveBarsProvider } from "@/lib/liquity/use-trove-bars";
 import { FilterDropdown, DisplaySettingsIcon, type FilterOption } from "@/components/shared/filter-dropdown";
@@ -444,7 +444,22 @@ export default function TrovePage() {
   return (
     <>
       <div className="space-y-6 py-8">
-        {walletFilterHref && <SmartBackButton walletFilterHref={walletFilterHref} />}
+        {/* Top toolbar: back affordance on the left, export control aligned to
+            the right edge — mirrors Aave's docs "Copy for LLM" placement. The
+            row renders even without a wallet href so the export menu keeps its
+            right-aligned home. */}
+        <div className="flex items-center justify-between gap-2">
+          {walletFilterHref ? <SmartBackButton walletFilterHref={walletFilterHref} /> : <span />}
+          <TroveExportMenu
+            trove={troveData}
+            liveState={liveState}
+            prices={prices}
+            debtInFront={debtInFront}
+            trovesAhead={trovesAhead}
+            events={sortedEvents}
+            csvFilename={`liquity-v2-${collateralType}-trove-${troveId.slice(0, 12)}-activity.csv`}
+          />
+        </div>
         <TroveSummaryStack
           trove={troveData}
           liveState={liveState}
@@ -547,12 +562,6 @@ export default function TrovePage() {
                   </button>
                 );
               })()}
-              {ENABLE_CSV_EXPORT && (
-                <CsvDownloadButton
-                  events={sortedEvents}
-                  filename={`liquity-v2-${collateralType}-trove-${troveId.slice(0, 12)}-activity.csv`}
-                />
-              )}
               <TimelineDisplayToggle />
             </div>
           </div>
