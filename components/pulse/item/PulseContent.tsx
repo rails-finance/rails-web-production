@@ -117,11 +117,7 @@ export function PulseContent({ event }: { event: TimelineEvent }) {
             <div className="mt-1 flex items-center">
               <Handle
                 handle={event.author ?? "@rails_account"}
-                className={
-                  isInternal
-                    ? "[.group:hover:not(:has(.group\/nested:hover))_&]:!text-blue-400"
-                    : "[.group:hover:not(:has(.group\/nested:hover))_&]:!text-pink-400"
-                }
+                className={isInternal ? "group-hover:!text-blue-400" : "group-hover:!text-pink-400"}
                 platform={event.platform}
                 avatarSize={22}
               />
@@ -163,9 +159,7 @@ export function PulseContent({ event }: { event: TimelineEvent }) {
           {event.postUrl && (
             <ArrowUpRight
               className={`size-4 text-rb-500 transition-colors ${
-                isInternal
-                  ? "[.group:hover:not(:has(.group\/nested:hover))_&]:text-blue-500"
-                  : "[.group:hover:not(:has(.group\/nested:hover))_&]:text-pink-500"
+                isInternal ? "group-hover:text-blue-500" : "group-hover:text-pink-500"
               }`}
               aria-hidden="true"
             />
