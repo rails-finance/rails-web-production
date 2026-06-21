@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Image as ImageIcon, Link2 } from "lucide-react";
 import { Icon } from "@/components/icons/icon";
 import { Facehash } from "@/components/shared/facehash";
+import { FavouriteStar } from "@/components/shared/favourite-star";
 import { getTroveNftUrl } from "@/lib/utils/nft-utils";
 
 /**
@@ -21,12 +22,17 @@ export function TroveIdentityRow({
   owner,
   lastOwner,
   ownerEns,
+  showFavourite = true,
 }: {
   troveId?: string;
   collateralType?: string;
   owner?: string | null;
   lastOwner?: string | null;
   ownerEns?: string | null;
+  /** Favourite-star toggle after the owner. On by default — every trove card
+   *  (listing + detail, open/closed/liquidated) carries it. Pass false to
+   *  suppress in a context that shouldn't offer favouriting. */
+  showFavourite?: boolean;
 }) {
   const router = useRouter();
   const [copiedTrove, setCopiedTrove] = useState(false);
@@ -80,6 +86,9 @@ export function TroveIdentityRow({
           >
             <Icon name={copiedOwner ? "check" : "copy"} size={12} />
           </button>
+          {showFavourite && (
+            <FavouriteStar wallet={ownerAddress} ensName={ownerEns ?? null} protocol="liquity-v2" size={12} />
+          )}
         </span>
       )}
       {troveLabel && troveId && (

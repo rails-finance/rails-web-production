@@ -9,6 +9,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Facehash } from "@/components/shared/facehash";
 import { Icon } from "@/components/icons/icon";
+import { FavouriteStar } from "@/components/shared/favourite-star";
+import type { SessionProtocol } from "@/lib/shared/sessions";
 
 function shortAddr(addr: string): string {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
@@ -18,6 +20,7 @@ export function WalletPill({
   wallet,
   ensName,
   href,
+  favouriteProtocol,
 }: {
   wallet: string;
   ensName: string | null;
@@ -26,6 +29,10 @@ export function WalletPill({
    *  when the listing card wraps the whole row in a Next <Link> — a nested anchor
    *  would be invalid HTML. Both the listing card and the detail card pass it. */
   href?: string;
+  /** When set, a favourite-star toggle renders after the copy button. Opt-in so
+   *  only surfaces that want it (the listing card) get the star; the detail card
+   *  leaves it off. */
+  favouriteProtocol?: SessionProtocol;
 }) {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
@@ -71,6 +78,9 @@ export function WalletPill({
         >
           <Icon name={copied ? "check" : "copy"} size={12} />
         </button>
+        {favouriteProtocol && (
+          <FavouriteStar wallet={wallet} ensName={ensName} protocol={favouriteProtocol} size={12} />
+        )}
       </span>
     </span>
   );

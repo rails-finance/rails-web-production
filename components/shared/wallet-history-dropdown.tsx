@@ -34,7 +34,10 @@ interface Props {
  *  vice versa. */
 export function WalletHistoryDropdown({ show, containerRef, onClose, onPick, protocol }: Props) {
   const [sessions, setSessions] = useState<WalletSession[]>([]);
-  const [tab, setTab] = useState<"pinned" | "recent">("recent");
+  const [tab, setTab] = useState<"pinned" | "recent">("pinned");
+  // True once the user clicks a tab — after that we stop auto-defaulting so
+  // their choice sticks. Reset each time the dropdown closes (below).
+  const [tabPicked, setTabPicked] = useState(false);
 
   useEffect(() => {
     const sync = () => setSessions(loadSessions(protocol));
@@ -61,10 +64,20 @@ export function WalletHistoryDropdown({ show, containerRef, onClose, onPick, pro
     };
   }, [sessions]);
 
-  // No auto-flip between tabs when one is empty — that was preventing the
-  // user from focusing a tab they wanted to see. The empty-state placeholder
-  // ("No pinned wallets yet." / "No recent wallets.") below covers the case
-  // where the chosen tab has no entries.
+  // Default tab: Favourites when any exist, otherwise Recents. This only runs
+  // until the user manually picks a tab (tabPicked) — after that their choice
+  // is respected, so we never yank them off a tab they're reading. Switching
+  // *within* a tab that later empties is fine: the empty-state placeholder
+  // below covers it, we don't auto-flip mid-browse.
+  useEffect(() => {
+    if (!tabPicked) setTab(pinnedList.length > 0 ? "pinned" : "recent");
+  }, [pinnedList.length, tabPicked]);
+
+  // Re-default the next time the dropdown opens, so a session where the user
+  // poked around in Recents doesn't pin them there forever.
+  useEffect(() => {
+    if (!show) setTabPicked(false);
+  }, [show]);
 
   useEffect(() => {
     if (!show) return;
@@ -84,23 +97,16 @@ export function WalletHistoryDropdown({ show, containerRef, onClose, onPick, pro
     };
   }, [show, containerRef, onClose]);
 
+  // Favouriting now happens on the position cards themselves (the star on each
+  // listing row), not in this dropdown — the dropdown is a destination for
+  // browsing Favourites / Recents, not the place you fiddle with pins. The
+  // Remove (trash) action below still un-lists a wallet entirely, which is how
+  // a favourite gets cleared from here.
+  //
   // saveSessions runs *after* setSessions returns — calling it inside the
   // updater would put a side-effecting dispatchEvent in React's render path
   // (and double-fire it in strict mode), which is what produces the "cannot
   // update HeaderBar while rendering WalletHistoryDropdown" warning.
-  const togglePin = useCallback(
-    (key: string) => {
-      const target = sessions.find((s) => s.key === key);
-      if (!target) return;
-      const toggled = { ...target, pinned: !target.pinned };
-      const rest = sessions.filter((s) => s.key !== key);
-      const next = [...rest.filter((s) => s.pinned), toggled, ...rest.filter((s) => !s.pinned)];
-      setSessions(next);
-      saveSessions(next, protocol);
-    },
-    [sessions, protocol],
-  );
-
   const removeSessionLocal = useCallback(
     (key: string) => {
       const next = sessions.filter((s) => s.key !== key);
@@ -130,21 +136,27 @@ export function WalletHistoryDropdown({ show, containerRef, onClose, onPick, pro
           <>
             <div className="flex items-center gap-1 border-b border-rb-200 dark:border-rb-800">
               <TabButton
-                active={tab === "recent"}
-                onClick={() => setTab("recent")}
-                label="Recent"
-                count={recentList.length}
+                active={tab === "pinned"}
+                onClick={() => {
+                  setTabPicked(true);
+                  setTab("pinned");
+                }}
+                label="Favourites"
+                count={pinnedList.length}
               />
               <TabButton
-                active={tab === "pinned"}
-                onClick={() => setTab("pinned")}
-                label="Pinned"
-                count={pinnedList.length}
+                active={tab === "recent"}
+                onClick={() => {
+                  setTabPicked(true);
+                  setTab("recent");
+                }}
+                label="Recent"
+                count={recentList.length}
               />
             </div>
             {visible.length === 0 ? (
               <p className="text-xs text-rb-500 py-2">
-                {tab === "pinned" ? "No pinned wallets yet." : "No recent wallets."}
+                {tab === "pinned" ? "No favourites yet — tap the star on a position card." : "No recent wallets."}
               </p>
             ) : (
               <div className="flex flex-col gap-1">
@@ -152,7 +164,6 @@ export function WalletHistoryDropdown({ show, containerRef, onClose, onPick, pro
                   <SessionRow
                     key={s.key}
                     session={s}
-                    onTogglePin={togglePin}
                     onRemove={removeSessionLocal}
                     onRename={renameSessionLocal}
                     onPick={onPick}
@@ -251,13 +262,11 @@ function CopyButton({ text }: { text: string }) {
 
 function SessionRow({
   session,
-  onTogglePin,
   onRemove,
   onRename,
   onPick,
 }: {
   session: WalletSession;
-  onTogglePin: (key: string) => void;
   onRemove: (key: string) => void;
   onRename: (key: string, customName: string) => void;
   onPick: (address: string) => void;
@@ -360,26 +369,6 @@ function SessionRow({
             <path d="M3 6h18" />
             <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
             <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-          </svg>
-        }
-      />
-      <VerbButton
-        onClick={() => onTogglePin(session.key)}
-        title={session.pinned ? "Unpin" : "Pin"}
-        icon={
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill={session.pinned ? "currentColor" : "none"}
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M12 17v5" />
-            <path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z" />
           </svg>
         }
       />

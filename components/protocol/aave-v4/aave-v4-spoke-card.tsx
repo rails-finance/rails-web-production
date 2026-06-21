@@ -125,7 +125,9 @@ function AaveV4SpokeCard({
   const underwater = spoke.healthFactor != null && spoke.healthFactor < 1;
   const supplyOnly = isClosed ? spoke.peakDebtUsd < 1 : spoke.totalDebtUsd < 1 && !underwater;
   const bucket = bucketForHealth(spoke.healthFactor);
-  const walletPill = wallet ? <WalletPill wallet={wallet} ensName={ensName ?? null} href={walletHref} /> : null;
+  const walletPill = wallet ? (
+    <WalletPill wallet={wallet} ensName={ensName ?? null} href={walletHref} favouriteProtocol="aave-v4" />
+  ) : null;
 
   // Collateral USD lags when the supply asset's price is still resolving:
   // stablecoin debt prices in instantly via the categorical-price fallback, but
