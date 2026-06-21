@@ -706,7 +706,7 @@ export function TroveEconomicsSummary({ events, currentPrice, hideHeader }: Trov
   const debtBreakdownRows: BreakdownRow[] = [
     {
       sign: "",
-      label: "Borrowed",
+      label: "Borrowed (all time)",
       amount: formatPrice(economics.position.totalBorrowed),
       symbol: stableSymbol,
       hidden: isLiveView,
@@ -783,7 +783,7 @@ export function TroveEconomicsSummary({ events, currentPrice, hideHeader }: Trov
     ? [
         {
           sign: "",
-          label: "Deposited",
+          label: "Deposited (all time)",
           amount: economics.position.totalCollateralDeposited.toFixed(2),
           symbol: collateralSymbol,
           usdHint: `[${formatCompactUsd(economics.position.totalCollateralDeposited * effectivePrice)}]`,
@@ -1152,7 +1152,7 @@ export function TroveEconomicsSummary({ events, currentPrice, hideHeader }: Trov
                   collSideBar && effectivePrice ? (
                     <div className="space-y-0.5">
                       <div className="flex items-center gap-1.5">
-                        <span>Total</span>
+                        <span>Deposited (all time)</span>
                         {dirArrow("in")}
                         <span className="ml-auto tabular-nums">
                           {economics.position.totalCollateralDeposited.toFixed(4)} {collateralSymbol}
@@ -1165,7 +1165,7 @@ export function TroveEconomicsSummary({ events, currentPrice, hideHeader }: Trov
                   ) : undefined;
                 const debtSideBarTooltip = debtSideBar ? (
                   <div className="flex items-center gap-1.5">
-                    <span>Total</span>
+                    <span>Borrowed (all time)</span>
                     {dirArrow("out")}
                     <span className="ml-auto tabular-nums">
                       {formatPrice(economics.position.totalBorrowed)} {stableSymbol}

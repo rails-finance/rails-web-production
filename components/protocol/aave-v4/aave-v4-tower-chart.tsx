@@ -471,7 +471,7 @@ export function AaveV4TowerChart({
       ? [
           {
             sign: "",
-            label: "Deposited",
+            label: "Deposited (all time)",
             amount: fmtUsd(totalDepositedUsd).display,
             swatchStyle: { backgroundColor: COLLATERAL_FADED },
           } as BreakdownRow,
@@ -494,7 +494,7 @@ export function AaveV4TowerChart({
       ? [
           {
             sign: "",
-            label: "Borrowed",
+            label: "Borrowed (all time)",
             amount: fmtUsd(totalBorrowedUsd).display,
             swatchStyle: { backgroundColor: DEBT_GREEN_FADED },
           } as BreakdownRow,
@@ -553,7 +553,7 @@ export function AaveV4TowerChart({
           placeholder: collPlaceholder,
           sideBarTooltip: collSideBar ? (
             <div className="flex items-center gap-1.5">
-              <span>Total</span>
+              <span>Deposited (all time)</span>
               {dirArrow("in")}
               <span className="ml-auto tabular-nums">{fmtUsd(totalDepositedUsd).title}</span>
             </div>
@@ -576,7 +576,7 @@ export function AaveV4TowerChart({
                 placeholder: debtPlaceholder,
                 sideBarTooltip: debtSideBar ? (
                   <div className="flex items-center gap-1.5">
-                    <span>Total</span>
+                    <span>Borrowed (all time)</span>
                     {dirArrow("out")}
                     <span className="ml-auto tabular-nums">{fmtUsd(totalBorrowedUsd).title}</span>
                   </div>

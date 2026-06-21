@@ -78,6 +78,17 @@ export interface AaveEconomicsResult {
   txCount: number;
   firstTimestamp: number;
   lastTimestamp: number;
+  /** Largest the spoke's combined collateral ever was at a SINGLE moment, in
+   *  USD at current prices — the running token balances across all reserves,
+   *  summed and priced at every event, maxed over the timeline. This is a real
+   *  high-water mark: unlike Σ(per-asset peak) it never exceeds a value the
+   *  portfolio actually held, since per-asset peaks can occur at different times
+   *  (and would sum to a moment that never existed). Event-derived history —
+   *  chain truth deliberately doesn't recompute it. */
+  peakSupplyUsd: number;
+  /** Peak combined debt at a single moment, in USD at current prices. See
+   *  `peakSupplyUsd`. */
+  peakDebtUsd: number;
 }
 
 export interface SpokeGroup {
@@ -303,6 +314,7 @@ function isAaveV4Event(
 export function calculateAaveEconomics(
   events: BaseActivityEvent[],
   eventIndexMap?: Map<string, number>,
+  prices?: Record<string, PriceEntry | number>,
 ): AaveEconomicsResult | null {
   const aaveEvents = events.filter(isAaveV4Event);
   if (aaveEvents.length === 0) return null;
@@ -327,6 +339,12 @@ export function calculateAaveEconomics(
 
   const runningDebt = new Map<string, number>();
   const runningSupply = new Map<string, number>();
+  // Portfolio-wide high-water marks: the largest the SUMMED running balances
+  // (priced at current prices) ever reached at a single moment. Tracked across
+  // the whole timeline rather than per-reserve so two assets that peaked at
+  // different times don't add up to a portfolio value that never existed.
+  let peakSupplyUsd = 0;
+  let peakDebtUsd = 0;
   let fallbackSeq = 0;
 
   for (const event of sorted) {
@@ -503,6 +521,16 @@ export function calculateAaveEconomics(
         stats.peakDebtTimestamp = event.timestamp;
       }
     }
+
+    // Portfolio-wide high-water marks. Recompute the priced sum across all
+    // reserves after each event (reserve counts are tiny) and keep the max —
+    // this is a true single-instant peak, not a sum of per-asset peaks.
+    let supplyUsdNow = 0;
+    for (const [sym, bal] of runningSupply) supplyUsdNow += Math.max(0, bal) * (resolvePrice(sym, prices) ?? 1);
+    if (supplyUsdNow > peakSupplyUsd) peakSupplyUsd = supplyUsdNow;
+    let debtUsdNow = 0;
+    for (const [sym, bal] of runningDebt) debtUsdNow += Math.max(0, bal) * (resolvePrice(sym, prices) ?? 1);
+    if (debtUsdNow > peakDebtUsd) peakDebtUsd = debtUsdNow;
   }
 
   return {
@@ -513,6 +541,8 @@ export function calculateAaveEconomics(
     txCount: txSet.size,
     firstTimestamp: sorted[0].timestamp,
     lastTimestamp: sorted[sorted.length - 1].timestamp,
+    peakSupplyUsd,
+    peakDebtUsd,
   };
 }
 
@@ -555,7 +585,7 @@ export function groupBySpoke(
 
   const groups: SpokeGroup[] = [];
   for (const [name, spokeEvents] of spokeMap) {
-    const result = calculateAaveEconomics(spokeEvents, eventIndexMap);
+    const result = calculateAaveEconomics(spokeEvents, eventIndexMap, prices);
     if (!result) continue;
     const totalSupplyUsd = result.reserves.reduce(
       (s, r) => s + Math.max(0, r.supplied - r.withdrawn) * (resolvePrice(r.symbol, prices) ?? 1),
@@ -596,11 +626,11 @@ export function buildSpokeCards(
   prices?: Record<string, PriceEntry | number>,
 ): AaveSpokeCardInfo[] {
   return spokeGroups.map((g) => {
-    const peakSupplyUsd = g.result.reserves.reduce(
-      (s, r) => s + r.peakSupply * (resolvePrice(r.symbol, prices) ?? 1),
-      0,
-    );
-    const peakDebtUsd = g.result.reserves.reduce((s, r) => s + r.peakDebt * (resolvePrice(r.symbol, prices) ?? 1), 0);
+    // Portfolio-wide single-instant high-water marks (computed in
+    // calculateAaveEconomics over the running balances) — NOT a sum of per-asset
+    // peaks, which would overstate by combining peaks from different moments.
+    const peakSupplyUsd = g.result.peakSupplyUsd;
+    const peakDebtUsd = g.result.peakDebtUsd;
     const liveSupplying = g.result.reserves
       .map((r) => ({
         symbol: r.symbol,
