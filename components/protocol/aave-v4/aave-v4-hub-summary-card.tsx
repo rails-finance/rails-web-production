@@ -27,7 +27,7 @@ const LINK = "text-blue-500 hover:underline";
 // Spoke pill — an obvious, tappable link into the listing filtered to that
 // spoke. Full set always shown (never truncated): they wrap.
 const SPOKE_PILL =
-  "inline-flex items-center gap-1 rounded-full border border-rb-200 dark:border-rb-700 px-2 py-0.5 text-[12px] " +
+  "inline-flex items-center gap-1 rounded-full border border-rb-200 dark:border-rb-700 bg-background px-2 py-0.5 text-[12px] " +
   "text-foreground/80 transition-colors hover:border-blue-500/50 hover:text-blue-500";
 
 /** Listing URL filtered to one hub (`/aave-v4?hubs=core`). `hub` is already the
