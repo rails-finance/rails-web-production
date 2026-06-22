@@ -71,7 +71,7 @@ function getOperationStyle(operation: string, ctx?: LiquityContext): OperationSt
     case "transferTrove":
       return { label: "Transfer", color: "", bg: "", badge: false };
     case "setBatchManagerAnnualInterestRate":
-      return { label: "Batch rate", color: "", bg: "", badge: false };
+      return { label: "Interest rate", color: "", bg: "", badge: false };
     default:
       return { label: operation, color: "", bg: "", badge: false };
   }
@@ -83,8 +83,11 @@ function formatNumber(n: number): string {
   return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
-/** Small "people" glyph used inside the pink delegate / batch rate pills. */
-function UsersGlyph() {
+/** Small "people" glyph used inside the pink delegate / batch rate pills, and
+ *  reused as the event-filter suffix that marks the delegate-set "Interest
+ *  rate" row apart from the owner's own. Stroke is currentColor so it inherits
+ *  the surrounding text color (pink in the pill, muted in the filter menu). */
+export function UsersGlyph() {
   return (
     <svg
       width="12"
