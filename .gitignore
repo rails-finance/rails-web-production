@@ -51,6 +51,12 @@ reference/*
 rails*.zip
 app/(site)/blog/README.md
 
+# Internal working docs + dev tooling — kept local for reference, never published
+PROGRESS.md
+PROGRESS-2026-05-18-prices.md
+migration/
+scripts/
+
 # Slideshow demo tool (lives in slideshow-tool branch only, never merge to main)
 slideshow/
 app/api/slideshow/
