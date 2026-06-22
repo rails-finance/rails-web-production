@@ -41,15 +41,21 @@ export function TroveSummaryCardSelector({
   // reserves the chevron column slot in both cases, so the position card
   // sits at a consistent inner width and the supplementary stats below
   // (`pl-5 pr-12` in TroveSummaryStack) line up to its grid.
+  // TroveIds are unique only within a collateral branch, so an owner holding
+  // troves across WETH/wstETH/rETH can produce the same numeric id twice. Key
+  // the selector by the composite (collateral + id) the trove URL already uses
+  // — otherwise the shell duplicates React keys and `find(selected)` can match
+  // the wrong-branch trove.
+  const itemId = (t: { collateralType: string; id: string }) => `${t.collateralType}-${t.id}`;
   const items: TroveItem[] =
     ownerTroves && ownerTroves.length > 0
-      ? ownerTroves.map((t) => ({ id: t.id, trove: t }))
-      : [{ id: trove.id, trove }];
+      ? ownerTroves.map((t) => ({ id: itemId(t), trove: t }))
+      : [{ id: itemId(trove), trove }];
 
   return (
     <CardSelectorShell
       items={items}
-      selected={trove.id}
+      selected={itemId(trove)}
       onSelect={() => {
         /* chooser rows navigate via their <Link> wrapper */
       }}
