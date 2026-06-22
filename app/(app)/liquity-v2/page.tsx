@@ -395,7 +395,7 @@ function TrovesPageContent() {
               exit="exit"
             >
               {troves.map((trove) => (
-                <motion.div key={trove.id} variants={itemVariants}>
+                <motion.div key={`${trove.collateralType}-${trove.id}`} variants={itemVariants}>
                   <Link
                     href={`/liquity-v2/trove/${trove.collateralType}/${trove.id}`}
                     onClick={() => {
