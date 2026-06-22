@@ -21,12 +21,9 @@ import {
 } from "@/components/shared/economics-chart-primitives";
 import { FilterDropdown, DisplaySettingsIcon, type FilterOption } from "@/components/shared/filter-dropdown";
 import { usePreferences } from "@/lib/shared/preferences-context";
-import { trovePriceRunwayExplanation } from "@/components/protocol/liquity/trove-price-axis";
-import { PriceRunway } from "@/components/shared/price-runway";
 import { InfoDisclosure } from "@/components/shared/info-disclosure";
 import { LearnMore } from "@/components/shared/learn-more-modal";
 import { liquityEconomicsContent } from "@/lib/shared/learn-more-content";
-import { getLiquidationThreshold } from "@/lib/utils/liquidation-utils";
 import { LIQUIDATION_RESERVE_ETH } from "@/components/transaction-timeline/explanation/shared/eventHelpers";
 import { formatRatio, ratioLabel, useLiquityRatioColorClass } from "@/lib/shared/ratio-format";
 // ---- Types ----
@@ -615,7 +612,7 @@ export function TroveEconomicsSummary({ events, currentPrice, hideHeader }: Trov
             }
           : {
               key: "in-trove",
-              label: "In Trove",
+              label: "Current Collateral",
               value: meta.collateralAmount * effectivePrice,
               colorClass: "bg-blue-500",
               tooltip: collTip(meta.collateralAmount, meta.collateralAmount * effectivePrice, "in"),
@@ -841,7 +838,7 @@ export function TroveEconomicsSummary({ events, currentPrice, hideHeader }: Trov
         },
         {
           sign: "",
-          label: isZombie ? "Claimable" : "In Trove",
+          label: isZombie ? "Claimable" : "Current Collateral",
           amount: meta.collateralAmount.toFixed(2),
           symbol: collateralSymbol,
           usdHint: `[${formatCompactUsd(meta.collateralAmount * effectivePrice)}]`,
@@ -903,31 +900,6 @@ export function TroveEconomicsSummary({ events, currentPrice, hideHeader }: Trov
   const dailyCostMgmt = mgmtRate > 0 ? (entireDebt * mgmtRate) / 365 : 0;
   const yearlyCostMgmt = mgmtRate > 0 ? entireDebt * mgmtRate : 0;
 
-  // Plain-language runway copy for the economics card's bottom-left (i) —
-  // mirrors the conditions under which the price axis renders below.
-  const runwayExplanation = (() => {
-    if (
-      !(
-        meta.status === "open" &&
-        meta.collateralAmount > 0 &&
-        meta.currentDebt > 0 &&
-        effectivePrice &&
-        effectivePrice > 0
-      )
-    ) {
-      return null;
-    }
-    const mcr = getLiquidationThreshold(meta.collateralType);
-    const liqPrice = (meta.currentDebt * (mcr / 100)) / meta.collateralAmount;
-    if (!(liqPrice > 0)) return null;
-    return trovePriceRunwayExplanation({
-      collateralSymbol,
-      debtSymbol: stableSymbol,
-      oraclePrice: effectivePrice,
-      liquidationPrice: liqPrice,
-    });
-  })();
-
   // Plain-language economics footnote. Muted prose; figures that mirror the
   // breakdown tables above render foreground-bold (the same bold-only-on-
   // mirrored-values grammar the position panel uses). Covers what the position
@@ -973,10 +945,17 @@ export function TroveEconomicsSummary({ events, currentPrice, hideHeader }: Trov
       </span>,
     );
   }
-  if (runwayExplanation) {
-    economicsItems.push(<span key="runway">{runwayExplanation}</span>);
+  // Lifetime gas total — muted (not a breakdown-table value, so no fig() bold).
+  // Per-transaction gas lives on each timeline event's footnote; this is the
+  // sum across the trove's owner-paid transactions.
+  if (economics.gas.totalGasCostEth > 0) {
+    economicsItems.push(
+      <span key="gas">
+        A total of {economics.gas.totalGasCostEth.toFixed(4)} ETH ({formatUsdValue(economics.gas.totalGasCostUsd)}) has
+        been spent on gas fees across these transactions.
+      </span>,
+    );
   }
-
   return (
     <>
       {!hideHeader && (
@@ -1208,52 +1187,18 @@ export function TroveEconomicsSummary({ events, currentPrice, hideHeader }: Trov
                   />
                 );
               })()}
-              {/* Liquidation-price axis — open troves only, requires a
-                    current oracle price. Read-only: shows the current
-                    oracle position relative to the trove's liquidation
-                    price derived from current collateral/debt. */}
-              {meta.status === "open" &&
-                meta.collateralAmount > 0 &&
-                meta.currentDebt > 0 &&
-                effectivePrice &&
-                effectivePrice > 0 &&
-                (() => {
-                  // MCR varies per collateral branch — 110% on WETH, 120% on
-                  // wstETH/rETH. Always derive from the trove's collateralType.
-                  const mcr = getLiquidationThreshold(meta.collateralType);
-                  const liqPrice = (meta.currentDebt * (mcr / 100)) / meta.collateralAmount;
-                  if (!(liqPrice > 0)) return null;
-
-                  return (
-                    <div className="mt-4">
-                      <PriceRunway currentPrice={effectivePrice} liqPrice={liqPrice} />
-                    </div>
-                  );
-                })()}
-              {/* Reserve the runway's footprint while the oracle price is still
-                    pending, so the real runway slots in without shifting the
-                    footer/disclosure below. Mirrors the collateral tower's
-                    TowerBarSkeleton — hold the space, don't pop. Heights match
-                    PriceRunway: 6px pad + 10px bar + (8px + 16px) label strip. */}
-              {meta.status === "open" &&
-                meta.collateralAmount > 0 &&
-                meta.currentDebt > 0 &&
-                !(effectivePrice && effectivePrice > 0) && (
-                  <div className="mt-4" aria-hidden="true">
-                    <div style={{ paddingTop: 6 }}>
-                      <div className="rounded-full bg-skeleton animate-pulse" style={{ height: 10 }} />
-                      <div className="mt-2 h-4" />
-                    </div>
-                  </div>
-                )}
+              {/* The liquidation/price runway moved to the position card (it's a
+                    current-state gauge that belongs with the headline stats);
+                    this panel is now lifetime flows only. */}
             </>
           )}
         </div>
-        {/* Footer: redemption / gas summary. The live collateral price rides
-                above the TrovePriceAxis marker (and the page price strip) — no
-                need to duplicate it here. */}
-        <div className="mt-3 space-y-1">
-          {redemption && (
+        {/* Footer: redemption summary only (gas moved into the economics
+                footnote below). The live collateral price rides above the
+                TrovePriceAxis marker and the page price strip, so it isn't
+                duplicated here. */}
+        {redemption && (
+          <div className="mt-3 space-y-1">
             <div className="flex flex-wrap items-center gap-1.5 text-xs mb-1 text-rb-500">
               <span className="">Borrower&apos;s net outcome from redemptions was</span>
               <span className={redemption.realizedPL >= 0 ? "text-green-400" : "text-red-400"}>
@@ -1271,19 +1216,15 @@ export function TroveEconomicsSummary({ events, currentPrice, hideHeader }: Trov
                 </>
               )}
             </div>
-          )}
-          {economics.gas.totalGasCostEth > 0 && (
-            <p className="text-xs text-rb-500 flex items-center gap-0.5">
-              A total of {economics.gas.totalGasCostEth.toFixed(4)} <TokenChipIcon symbol="ETH" size={16} /> (
-              {formatUsdValue(economics.gas.totalGasCostUsd)}) has been spent on gas fees
-            </p>
-          )}
-        </div>
+          </div>
+        )}
         {/* Standard bottom-left (i): plain-language economics help — the tower
-                decomposition, lifetime costs, liquidation reserve, and price
-                runway. Muted prose; foreground figures mirror the breakdown
-                tables. Distinct from the position panel's "position" (i), which
-                explains the headline stats this panel doesn't restate. */}
+                decomposition, lifetime costs, and liquidation reserve. Muted
+                prose; foreground figures mirror the breakdown tables. Distinct
+                from the position panel's "position" (i), which explains the
+                headline stats this panel doesn't restate. Per-transaction gas
+                lives on each timeline event's footnote, not as a lifetime total
+                here. */}
         {economicsItems.length > 0 && (
           <div className="mt-3">
             <InfoDisclosure open={runwayInfoOpen} onToggle={setRunwayInfoOpen} label="economics">

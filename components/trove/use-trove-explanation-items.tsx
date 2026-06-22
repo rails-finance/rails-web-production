@@ -10,6 +10,7 @@ import { formatPrice, formatUsdValue, formatApproximate } from "@/lib/utils/form
 import { formatDateRange, formatDuration } from "@/lib/date";
 import { getBatchManagerByAddress } from "@/lib/services/batch-manager-service";
 import { getLiquidationThreshold } from "@/lib/utils/liquidation-utils";
+import { trovePriceRunwayExplanation } from "@/components/protocol/liquity/trove-price-axis";
 import { getTroveNftUrl } from "@/lib/utils/nft-utils";
 import { HighlightableValue } from "@/components/transaction-timeline/explanation/HighlightableValue";
 
@@ -266,6 +267,26 @@ function buildOpenItems({
           {currentCollateralRatio}%
         </HighlightableValue>{" "}
         means the collateral is worth {currentCollateralRatio}% more than the debt (minimum {mcr}% to avoid liquidation)
+      </span>,
+    );
+  }
+
+  // Liquidation-price runway gloss — the footnote for the runway bar that now
+  // lives in the position card beneath the stats (moved up from the economics
+  // panel so the gauge sits with the current-state numbers it reads).
+  const liqPrice =
+    hasLiveData && currentPrice && displayCollateral > 0
+      ? (displayRecordedDebt * (mcr / 100)) / displayCollateral
+      : null;
+  if (currentPrice && liqPrice && liqPrice > 0) {
+    items.push(
+      <span key="price-runway" className="text-rb-500">
+        {trovePriceRunwayExplanation({
+          collateralSymbol: trove.collateralType,
+          debtSymbol: "BOLD",
+          oraclePrice: currentPrice,
+          liquidationPrice: liqPrice,
+        })}
       </span>,
     );
   }

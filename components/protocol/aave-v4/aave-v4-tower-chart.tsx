@@ -29,6 +29,57 @@ import { fmtUsd } from "@/lib/aave-v4/format";
 
 const CHART_HEIGHT = 180;
 
+/** Lifetime USD totals that mirror the chart's breakdown-legend rows
+ *  (Deposited / Withdrawn / Liquidated / In Protocol; Borrowed / Repaid /
+ *  Liquidated / Outstanding). Pulled out so the footnote narration can quote
+ *  the exact figures the towers draw without re-deriving them — surplus-
+ *  included always (a lifetime summary doesn't honour the chart's hide-surplus
+ *  display toggle). Anchored to chain-truth net balances + flows, matching the
+ *  reconciled side-bar math in the chart body. */
+export interface AaveLifetimeTotals {
+  depositedUsd: number;
+  withdrawnUsd: number;
+  liquidatedCollUsd: number;
+  inProtocolUsd: number;
+  borrowedUsd: number;
+  repaidUsd: number;
+  liquidatedDebtUsd: number;
+  outstandingUsd: number;
+  hasDebtHistory: boolean;
+}
+
+export function computeAaveLifetimeTotals(
+  reserves: ReserveStats[],
+  prices?: Record<string, PriceEntry | number>,
+): AaveLifetimeTotals {
+  const t: AaveLifetimeTotals = {
+    depositedUsd: 0,
+    withdrawnUsd: 0,
+    liquidatedCollUsd: 0,
+    inProtocolUsd: 0,
+    borrowedUsd: 0,
+    repaidUsd: 0,
+    liquidatedDebtUsd: 0,
+    outstandingUsd: 0,
+    hasDebtHistory: false,
+  };
+  for (const r of reserves) {
+    const price = resolvePrice(r.symbol, prices) ?? 1;
+    const netSupply = r.currentSupplied ?? Math.max(0, r.supplied - r.withdrawn - r.liquidatedCollateral);
+    const netDebt = r.currentBorrowed ?? Math.max(0, r.borrowed - r.repaid - r.liquidatedDebt);
+    t.depositedUsd += (netSupply + r.withdrawn + r.liquidatedCollateral) * price;
+    t.withdrawnUsd += r.withdrawn * price;
+    t.liquidatedCollUsd += r.liquidatedCollateral * price;
+    t.inProtocolUsd += netSupply * price;
+    t.borrowedUsd += (netDebt + r.repaid + r.liquidatedDebt) * price;
+    t.repaidUsd += r.repaid * price;
+    t.liquidatedDebtUsd += r.liquidatedDebt * price;
+    t.outstandingUsd += netDebt * price;
+    if (r.borrowed > 0 || r.repaid > 0 || r.liquidatedDebt > 0) t.hasDebtHistory = true;
+  }
+  return t;
+}
+
 const COLLATERAL_FADED = "rgba(59,130,246,0.2)";
 const DEBT_GREEN_FADED = "rgba(74, 222, 128,0.2)";
 
@@ -48,7 +99,7 @@ interface AssetRow {
   liquidatedDebt: number;
   liquidatedCollateral: number;
   // Current state — drives the solid tower segments and the "In Protocol" /
-  // "Outstanding" totals. Sourced from chain-truth when present, otherwise
+  // "Current Debt" totals. Sourced from chain-truth when present, otherwise
   // derived from lifetime fields.
   netSupply: number;
   netDebt: number;
@@ -486,7 +537,15 @@ export function AaveV4TowerChart({
       "bg-blue-500",
       "Combined Collateral",
     ),
-    { sign: "", label: isLiveView ? "Total" : "In Protocol", amount: fmtUsd(totalSupplyUsd).display, isResult: true },
+    {
+      sign: "",
+      // Parity with Liquity's "Current Collateral" total for borrow positions;
+      // a never-borrowed wallet has nothing collateralised, so it reads as a
+      // plain supply balance instead.
+      label: supplyOnly ? "Currently Supplied" : "Current Collateral",
+      amount: fmtUsd(totalSupplyUsd).display,
+      isResult: true,
+    },
   ];
 
   const debtRows: BreakdownRow[] = [
@@ -509,7 +568,7 @@ export function AaveV4TowerChart({
       "bg-green-400",
       "Debt",
     ),
-    { sign: "", label: "Outstanding", amount: fmtUsd(totalDebtUsd).display, isResult: true },
+    { sign: "", label: "Current Debt", amount: fmtUsd(totalDebtUsd).display, isResult: true },
   ];
 
   const placeholderClass =

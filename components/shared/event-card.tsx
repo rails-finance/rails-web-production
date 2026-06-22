@@ -6,7 +6,6 @@ import { ExpandChevron } from "@/components/shared/expand-chevron";
 import { EventCardFooter } from "@/components/shared/event-card-footer";
 import { InfoDisclosure } from "@/components/shared/info-disclosure";
 import { isCardOpen, setCardOpen } from "@/lib/shared/card-open-store";
-import type { GasCost } from "@/lib/shared/types/activity";
 
 export interface EventCardProps {
   avatar: React.ReactNode;
@@ -36,8 +35,6 @@ export interface EventCardProps {
   txHash?: string;
   /** Wallet address — enables TransferLoungeLink in footer */
   wallet?: string;
-  /** Gas cost — shown in footer */
-  gas?: GasCost;
   /** Extra content in the footer row (e.g., Liquity collateral price) */
   footerExtra?: React.ReactNode;
   /** Suppress the expand/collapse chevron and the header's click-to-toggle
@@ -70,7 +67,6 @@ export function EventCard({
   explainerTeaser,
   txHash,
   wallet,
-  gas,
   footerExtra,
   hideDetailChevron,
   persistKey,
@@ -208,9 +204,7 @@ export function EventCard({
                     open={isExplainerOpen}
                     onToggle={toggleExplainer}
                     footer={
-                      txHash ? (
-                        <EventCardFooter txHash={txHash} wallet={wallet} gas={gas} extra={footerExtra} />
-                      ) : undefined
+                      txHash ? <EventCardFooter txHash={txHash} wallet={wallet} extra={footerExtra} /> : undefined
                     }
                   >
                     {hasExplainer ? (

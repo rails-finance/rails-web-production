@@ -58,7 +58,7 @@ import { AaveV4PositionExposure } from "@/components/protocol/aave-v4/aave-v4-po
 import { InfoDisclosure } from "@/components/shared/info-disclosure";
 import { LearnMore } from "@/components/shared/learn-more-modal";
 import { aaveV4EconomicsContent } from "@/lib/shared/learn-more-content";
-import { AaveV4TowerChart } from "@/components/protocol/aave-v4/aave-v4-tower-chart";
+import { AaveV4TowerChart, computeAaveLifetimeTotals } from "@/components/protocol/aave-v4/aave-v4-tower-chart";
 import {
   buildAaveV4SpokeCards,
   buildSpokeCards,
@@ -70,6 +70,7 @@ import {
 import { AAVE_V4_FALLBACK_LT, isStable } from "@/lib/aave-v4/liquidation-thresholds";
 import { simulateAaveV4Position, type SimPositionInputs } from "@/lib/aave-v4/utils/simulate";
 import { resolvePrice, type PriceEntry } from "@/lib/aave/prices";
+import { fmtUsd } from "@/lib/aave-v4/format";
 import { PriceStrip, type PriceStripAsset } from "@/components/shared/price-strip";
 import type { ReserveStats } from "@/lib/aave-v4/spoke-cards";
 import { TimelineDisplayProvider, useTimelineDisplay } from "@/components/shared/timeline-display-context";
@@ -518,7 +519,9 @@ function AaveV4SpokePageInner() {
         </div>
 
         {/* Position card in its own rounded panel — owner address sits in its
-            top row, and the (i) at its bottom-right expands the explanation. */}
+            top row, and the (i) at its bottom-right expands the explanation. The
+            liquidation/price runway lives here too, beneath the stats: it's the
+            gauge for the same current-state HF / borrowing-power numbers. */}
         {activeCard && (
           <div className="rounded-2xl bg-raised">
             <AaveV4SpokeCardSelector
@@ -529,20 +532,21 @@ function AaveV4SpokePageInner() {
               walletHref={walletFilterHref}
             />
             <RiskPremiumNotice raw={chainPosition?.riskPremiumRaw ?? null} spokeName={spokeName} />
+            {activeGroup && hasUiHydrated && (
+              <AaveV4SpokeRunwayBlock reserves={activeGroup.result.reserves} prices={prices} runwayCard={activeCard} />
+            )}
           </div>
         )}
 
-        {/* Economics (tower chart + liquidation/price runway) in its own
-            rounded panel — contained now, no full-bleed w-screen section. */}
+        {/* Lifetime-flow towers sit directly above the timeline — the towers are
+            the aggregate of the same flows the event list itemizes below. */}
         {activeGroup && hasUiHydrated ? (
-          <div className="rounded-2xl bg-raised px-4 md:px-6 py-6">
-            <AaveV4SpokeEconomicsBand
-              activeName={activeGroup.name}
-              reserves={activeGroup.result.reserves}
-              prices={prices}
-              runwayCard={activeCard}
-            />
-          </div>
+          <AaveV4SpokeTowerBlock
+            reserves={activeGroup.result.reserves}
+            prices={prices}
+            gasEth={activeGroup.result.totalGasCostEth}
+            gasUsd={activeGroup.result.totalGasCostUsd}
+          />
         ) : null}
 
         <TimelineDisplayProvider>
@@ -723,18 +727,128 @@ function RiskPremiumNotice({ raw, spokeName }: { raw: string | null; spokeName: 
   );
 }
 
-// ── Spoke economics band ─────────────────────────────────────────────────────
-function AaveV4SpokeEconomicsBand({
-  activeName,
+// ── Liquidation / price runway (current state) ───────────────────────────────
+// Lives inside the position card, beneath the headline HF / borrowing-power
+// stats: the runway is the gauge for those same chain-truth numbers, so it
+// belongs next to them rather than a panel away. Renders nothing when there's
+// no debt — there's no liquidation story to show.
+function AaveV4SpokeRunwayBlock({
   reserves,
   prices,
   runwayCard,
 }: {
-  activeName: string;
   reserves: ReserveStats[];
   prices: Record<string, PriceEntry | number>;
   runwayCard: import("@/lib/aave-v4/spoke-cards").AaveSpokeCardInfo | undefined;
 }) {
+  const [infoOpen, setInfoOpen] = useState(false);
+
+  const showRunway = !!runwayCard && runwayCard.totalDebtUsd > 0 && runwayCard.healthFactor != null;
+  // Which runway mode is ACTUALLY on screen — drives the explainer copy so it
+  // describes only what's shown (a single-collateral price runway OR a
+  // health-factor runway), never both as a "with one asset… with several…"
+  // hypothetical the reader can't see. Mirrors AaveV4SpokeRunway's own branch.
+  const runwaySingle = showRunway && runwayCard ? !!liquidationBuffer(runwayCard).single : false;
+  // Only gloss non-collateral supplies when the position has some — otherwise
+  // it's another absent-state aside.
+  const hasNonCollateralSupply = reserves.some((r) => {
+    const netSupply = r.currentSupplied ?? Math.max(0, r.supplied - r.withdrawn - r.liquidatedCollateral);
+    return netSupply > 0.0001 && (r.collateralEnabled ?? true) === false;
+  });
+
+  if (!showRunway || !runwayCard) return null;
+
+  return (
+    <div className="border-t border-rb-200 px-4 md:px-6 py-5 space-y-3">
+      <AaveV4SpokeRunway spoke={runwayCard} />
+
+      {/* Collateral-exposure read as a quiet caption to the runway — what the
+          collateral is made of (its blended-LT parameter), not its own panel. */}
+      <AaveV4PositionExposure reserves={reserves} prices={prices} blendedLt={runwayCard.blendedLt} variant="footnote" />
+
+      {/* Footnote scoped to the runway only; the lifetime-flow towers carry
+          their own footnote down by the timeline now. */}
+      <InfoDisclosure
+        open={infoOpen}
+        onToggle={setInfoOpen}
+        label={runwaySingle ? "collateral price runway" : "liquidation runway"}
+      >
+        <div className="space-y-2 text-sm text-rb-500">
+          <div className="flex items-start gap-2 leading-relaxed">
+            <span className="select-none text-rb-500">•</span>
+            <span>
+              {runwaySingle ? (
+                <>
+                  The runway shows how close this position is to liquidation. It tracks the collateral asset&apos;s
+                  price: liquidation triggers if it falls to the liquidation price shown. The marker is the current
+                  price; the red zone is liquidation.
+                </>
+              ) : (
+                <>
+                  The runway shows how close this position is to liquidation. It tracks the health factor down to 1.0 —
+                  Aave&apos;s liquidation trigger, read straight from chain. The marker is the current health factor;
+                  the red zone is liquidation.
+                </>
+              )}
+            </span>
+          </div>
+          <div className="flex items-start gap-2 leading-relaxed">
+            <span className="select-none text-rb-500">•</span>
+            <span>
+              {runwaySingle ? (
+                <>The gap is the buffer — how far the collateral&apos;s price can fall before liquidation.</>
+              ) : (
+                <>
+                  The gap is the buffer — how far the collateral can fall before liquidation. It&apos;s shown as a
+                  percentage across all collateral rather than one asset&apos;s price, since a single asset&apos;s solo
+                  move would overstate the safety of a correlated basket.
+                </>
+              )}
+              {hasNonCollateralSupply && (
+                <>
+                  {" "}
+                  Supplied assets not enabled as collateral don&apos;t back the loan, so they don&apos;t affect this.
+                </>
+              )}
+            </span>
+          </div>
+          <div className="flex items-start gap-2 leading-relaxed">
+            <span className="select-none text-rb-500">•</span>
+            <span>
+              Reaching that point doesn&apos;t close the position — Aave liquidates only partially, repaying enough debt
+              to nudge the health factor back above 1.0.
+            </span>
+          </div>
+          <div className="flex items-start gap-2 leading-relaxed">
+            <span className="select-none text-rb-500">•</span>
+            <span>
+              Outstanding debt already includes accrued borrow interest — it&apos;s the live on-chain balance.
+            </span>
+          </div>
+          <LearnMore content={aaveV4EconomicsContent({ hasRunway: true })} />
+        </div>
+      </InfoDisclosure>
+    </div>
+  );
+}
+
+// ── Lifetime-flow towers (history) ───────────────────────────────────────────
+// Sits directly above the event timeline: the towers are the aggregate of the
+// same lifetime flows the timeline itemizes (every supply, withdrawal, borrow
+// and repayment), so the two read as summary-then-detail.
+function AaveV4SpokeTowerBlock({
+  reserves,
+  prices,
+  gasEth,
+  gasUsd,
+}: {
+  reserves: ReserveStats[];
+  prices: Record<string, PriceEntry | number>;
+  gasEth: number;
+  gasUsd: number;
+}) {
+  const [infoOpen, setInfoOpen] = useState(false);
+
   const simBase: SimPositionInputs = useMemo(
     () => ({
       supplies: reserves
@@ -758,24 +872,22 @@ function AaveV4SpokeEconomicsBand({
         })
         .filter(Boolean) as SimPositionInputs["debts"],
     }),
-    [reserves, prices, activeName],
+    [reserves, prices],
   );
 
   const [surplusSymbols, hideSurplus, setHideSurplus] = useSurplusState(simBase);
-  const [runwayInfoOpen, setRunwayInfoOpen] = useState(false);
 
-  const showRunwayInfo = !!runwayCard && runwayCard.totalDebtUsd > 0 && runwayCard.healthFactor != null;
-  // Which runway mode is ACTUALLY on screen — drives the explainer copy so it
-  // describes only what's shown (a single-collateral price runway OR a
-  // health-factor runway), never both as a "with one asset… with several…"
-  // hypothetical the reader can't see. Mirrors AaveV4SpokeRunway's own branch.
-  const runwaySingle = showRunwayInfo && runwayCard ? !!liquidationBuffer(runwayCard).single : false;
-  // Only gloss non-collateral supplies when the position has some — otherwise
-  // it's another absent-state aside.
-  const hasNonCollateralSupply = simBase.supplies.some((s) => !s.collateralEnabled);
+  // Lifetime totals that mirror the tower legend, narrated in the footnote.
+  const totals = useMemo(() => computeAaveLifetimeTotals(reserves, prices), [reserves, prices]);
+  // Figures mirrored in the breakdown legend render foreground-bold; the rest of
+  // the prose stays muted (same grammar as the Liquity economics footnote).
+  const fig = (n: number) => <span className="font-semibold text-foreground tabular-nums">{fmtUsd(n).title}</span>;
 
   return (
-    <div className="space-y-3">
+    <div className="rounded-2xl bg-raised px-4 md:px-6 py-6 space-y-3">
+      {/* Section header mirrors the runway's (same 11px uppercase tracking) now
+          that the towers stand alone rather than sharing the old band. */}
+      <div className="text-[11px] uppercase tracking-wider text-rb-500">Lifetime flows</div>
       <AaveV4TowerChart
         reserves={reserves}
         prices={prices}
@@ -784,98 +896,52 @@ function AaveV4SpokeEconomicsBand({
         onToggleHideSurplus={() => setHideSurplus((v) => !v)}
       />
 
-      {runwayCard && <AaveV4SpokeRunway spoke={runwayCard} />}
-
-      {/* Collateral-exposure read demoted to a footnote beneath the runway —
-          it glosses what the collateral is made of (its blended-LT parameter),
-          a caption to the runway rather than its own headed section. */}
-      <AaveV4PositionExposure
-        reserves={reserves}
-        prices={prices}
-        blendedLt={runwayCard?.blendedLt}
-        variant="footnote"
-      />
-
-      {/* One expandable footnote for the whole band. With debt it reads as the
-          "liquidation runway" explainer; for supply-only positions there's no
-          runway, so the label + body drop every runway reference and just
-          gloss the lifetime-flow towers. The "Learn more" affordance is nested
-          inside it (revealed when open) rather than floating below the band. */}
-      <InfoDisclosure
-        open={runwayInfoOpen}
-        onToggle={setRunwayInfoOpen}
-        label={showRunwayInfo ? "liquidation runway" : "economics"}
-      >
-        {/* Muted body (text-rb-500); explains how to read the single combined
-            runway, distinct from the "This position" panel that states the
-            headline HF / borrowing-power numbers. */}
+      <InfoDisclosure open={infoOpen} onToggle={setInfoOpen} label="lifetime flows">
         <div className="space-y-2 text-sm text-rb-500">
-          {showRunwayInfo ? (
-            <>
-              <div className="flex items-start gap-2 leading-relaxed">
-                <span className="select-none text-rb-500">•</span>
-                <span>
-                  {runwaySingle ? (
-                    <>
-                      The runway shows how close this position is to liquidation. It tracks the collateral asset&apos;s
-                      price: liquidation triggers if it falls to the liquidation price shown. The marker is the current
-                      price; the red zone is liquidation.
-                    </>
-                  ) : (
-                    <>
-                      The runway shows how close this position is to liquidation. It tracks the health factor down to
-                      1.0 — Aave&apos;s liquidation trigger, read straight from chain. The marker is the current health
-                      factor; the red zone is liquidation.
-                    </>
-                  )}
-                </span>
-              </div>
-              <div className="flex items-start gap-2 leading-relaxed">
-                <span className="select-none text-rb-500">•</span>
-                <span>
-                  {runwaySingle ? (
-                    <>The gap is the buffer — how far the collateral&apos;s price can fall before liquidation.</>
-                  ) : (
-                    <>
-                      The gap is the buffer — how far the collateral can fall before liquidation. It&apos;s shown as a
-                      percentage across all collateral rather than one asset&apos;s price, since a single asset&apos;s
-                      solo move would overstate the safety of a correlated basket.
-                    </>
-                  )}
-                  {hasNonCollateralSupply && (
-                    <>
-                      {" "}
-                      Supplied assets not enabled as collateral don&apos;t back the loan, so they don&apos;t affect
-                      this.
-                    </>
-                  )}
-                </span>
-              </div>
-              <div className="flex items-start gap-2 leading-relaxed">
-                <span className="select-none text-rb-500">•</span>
-                <span>
-                  Reaching that point doesn&apos;t close the position — Aave liquidates only partially, repaying enough
-                  debt to nudge the health factor back above 1.0.
-                </span>
-              </div>
-              <div className="flex items-start gap-2 leading-relaxed">
-                <span className="select-none text-rb-500">•</span>
-                <span>
-                  Outstanding debt already includes accrued borrow interest — it&apos;s the live on-chain balance, so
-                  there&apos;s no separate fee to add on top.
-                </span>
-              </div>
-            </>
-          ) : (
+          {/* Value-bearing narration of the tower legend — figures that mirror
+              the breakdown rows render foreground-bold (the same grammar the
+              Liquity economics footnote uses). Two bullets: the collateral
+              story, then the debt story when this position ever held debt. */}
+          <div className="flex items-start gap-2 leading-relaxed">
+            <span className="select-none text-rb-500">•</span>
+            <span>
+              {fig(totals.depositedUsd)} of collateral has moved through this position over its life
+              {totals.withdrawnUsd > 0.01 && <> — {fig(totals.withdrawnUsd)} withdrawn</>}
+              {totals.liquidatedCollUsd > 0.01 && (
+                <>
+                  {totals.withdrawnUsd > 0.01 ? " and " : " — "}
+                  {fig(totals.liquidatedCollUsd)} liquidated
+                </>
+              )}
+              , leaving {fig(totals.inProtocolUsd)} in protocol today.
+            </span>
+          </div>
+          {totals.hasDebtHistory && (
             <div className="flex items-start gap-2 leading-relaxed">
               <span className="select-none text-rb-500">•</span>
               <span>
-                The towers trace this position&apos;s supply flows over its lifetime — every supply and withdrawal, not
-                just the current balance. With no debt, there&apos;s no liquidation runway to show.
+                {fig(totals.borrowedUsd)} borrowed over the position&apos;s life
+                {totals.repaidUsd > 0.01 && <>, then {fig(totals.repaidUsd)} repaid</>}
+                {totals.liquidatedDebtUsd > 0.01 && (
+                  <>
+                    {totals.repaidUsd > 0.01 ? " and " : ", then "}
+                    {fig(totals.liquidatedDebtUsd)} cleared by liquidation
+                  </>
+                )}
+                , leaving {fig(totals.outstandingUsd)} owed today.
               </span>
             </div>
           )}
-          <LearnMore content={aaveV4EconomicsContent({ hasRunway: showRunwayInfo })} />
+          {gasEth > 0 && (
+            <div className="flex items-start gap-2 leading-relaxed">
+              <span className="select-none text-rb-500">•</span>
+              <span>
+                A total of {gasEth.toFixed(4)} ETH (${gasUsd.toFixed(2)}) has been spent on gas fees across these
+                transactions — each event&apos;s own gas is in its footnote below.
+              </span>
+            </div>
+          )}
+          <LearnMore content={aaveV4EconomicsContent({ hasRunway: false })} />
         </div>
       </InfoDisclosure>
     </div>

@@ -1,7 +1,8 @@
 "use client";
 
 import type { LiquityContext } from "@/lib/shared/types/protocols/liquity";
-import type { BaseActivityEvent } from "@/lib/shared/types/activity";
+import type { BaseActivityEvent, GasCost } from "@/lib/shared/types/activity";
+import { formatGasCost } from "@/lib/shared/format-event";
 import { calculateInterestBetweenTransactions } from "@/lib/liquity/utils/interest-calculator";
 import { LearnMore } from "@/components/shared/learn-more-modal";
 import { LinkedAddress } from "@/components/shared/linked-address";
@@ -1366,6 +1367,10 @@ export interface LiquityEventExplainerProps {
   currentEvent?: BaseActivityEvent;
   /** Live oracle price — adds the "today" leg to the redemption P/L bullet. */
   currentPrice?: number;
+  /** This transaction's gas cost — rendered as the trailing explainer bullet.
+   *  Passed only for owner-paid events (passive redemption/liquidation gas is
+   *  the third party's, so the card omits it). */
+  gas?: GasCost;
 }
 
 function getLearnMoreContent(ctx: LiquityContext) {
@@ -1423,10 +1428,18 @@ export function LiquityEventExplainer({
   previousEvent,
   currentEvent,
   currentPrice,
+  gas,
   skipFirst,
 }: LiquityEventExplainerProps & { skipFirst?: boolean }) {
   const allItems = generateItems(ctx, previousEvent, currentEvent, currentPrice);
-  const items = skipFirst ? allItems.slice(1) : allItems;
+  const baseItems = skipFirst ? allItems.slice(1) : allItems;
+  // Per-transaction gas as the closing bullet (muted — not a header/grid value,
+  // so no <V> emphasis per the highlight rule). Appended here, not in
+  // generateItems, so it stays last regardless of skipFirst/teaser handling.
+  const items: ExplainerItem[] =
+    gas && gas.gasCostEth > 0
+      ? [...baseItems, { content: <span>Gas for this transaction: {formatGasCost(gas)}.</span> }]
+      : baseItems;
   const learnMore = getLearnMoreContent(ctx);
 
   if (items.length === 0 && !learnMore) return null;

@@ -10,6 +10,8 @@ import { TroveContextRow } from "@/components/trove/TroveContextRow";
 import { useTroveExplanationItems } from "@/components/trove/use-trove-explanation-items";
 import { liquityPositionContent } from "@/lib/shared/learn-more-content";
 import { TroveEconomicsSummary } from "@/components/protocol/liquity/trove-economics";
+import { PriceRunway } from "@/components/shared/price-runway";
+import { getLiquidationThreshold } from "@/lib/utils/liquidation-utils";
 import { formatDate, formatDuration } from "@/lib/date";
 import { Icon } from "@/components/icons/icon";
 import { TroveStateData, TroveStateResponse } from "@/types/api/troveState";
@@ -23,6 +25,7 @@ import { fetchTroveTimeline } from "@/lib/api/fetch-timeline";
 import type { BaseActivityEvent } from "@/lib/shared/types/event-shape";
 import { isLiquityEvent } from "@/lib/shared/types/event-shape";
 import { LiquityEventCard } from "@/components/protocol/liquity/liquity-event-card";
+import { UsersGlyph } from "@/components/protocol/liquity/liquity-event-header";
 import { EventDateContext } from "@/components/shared/event-time";
 import { dayKey, shortDate, shortDateYear } from "@/lib/shared/format-event";
 import { TimelineDisplayProvider, useTimelineDisplay } from "@/components/shared/timeline-display-context";
@@ -134,6 +137,21 @@ function TroveSummaryStack({
 }) {
   const items = useTroveExplanationItems({ trove, liveState, prices, debtInFront, trovesAhead });
   const showBand = trove.status === "open";
+
+  // Liquidation/price runway — the current-state risk gauge, now hosted in the
+  // position card beneath the stats (mirrors the Aave spoke page, where the
+  // runway sits with the HF/borrowing-power numbers it reads rather than down
+  // in the lifetime-flow panel). Open troves only, needs a live oracle price.
+  const collPrice =
+    liveState && prices ? prices[trove.collateralType.toLowerCase() as keyof OraclePricesData] : undefined;
+  const recordedDebt = liveState?.debt.recorded ?? trove.debt.current;
+  const collAmount = liveState?.collateral.entire ?? trove.collateral.amount;
+  const liqPrice =
+    showBand && collPrice && collAmount > 0 && recordedDebt > 0
+      ? (recordedDebt * (getLiquidationThreshold(trove.collateralType) / 100)) / collAmount
+      : null;
+  const showRunway = showBand && !!collPrice && collPrice > 0 && !!liqPrice && liqPrice > 0;
+
   const hasDetail = showBand || items.length > 0;
   return (
     // Position stats card: the headline grid plus the detail band and the
@@ -146,31 +164,36 @@ function TroveSummaryStack({
     <div className="rounded-2xl bg-raised">
       <TroveSummaryCardSelector trove={trove} liveState={liveState} prices={prices} loadingStatus={loadingStatus} />
       {hasDetail && (
-        // px-5 mirrors the card's inner padding; the divider + pt match Aave's
-        // in-card explanation separator so detail reads as a continuation of
-        // the stats rather than a detached band.
-        <div className="px-5 pb-5">
-          <div className="border-t border-rb-300/40 dark:border-rb-700/40 pt-4 space-y-4">
-            {showBand && (
-              <TroveDetailsBand
-                trove={trove}
-                liveState={liveState}
-                debtInFront={debtInFront}
-                trovesAhead={trovesAhead}
-                debtInFrontLoading={debtInFrontLoading}
-              />
-            )}
-            <TroveContextRow
-              items={items}
-              isOpen={summaryExplanationOpen}
-              onToggle={onToggleSummaryExplanation}
-              learnMore={liquityPositionContent({
-                collateralType: trove.collateralType,
-                status: trove.status === "liquidated" ? "liquidated" : trove.status === "closed" ? "closed" : "open",
-                isBatched: trove.batch.isMember,
-              })}
+        // px-5 mirrors the card's inner padding. The costs/debt-in-front band
+        // flows straight under the stats (no divider) — the only divider sits
+        // above the runway, matching the Aave spoke card where the runway is
+        // the one current-state gauge separated from the headline stats.
+        <div className="px-5 pb-5 pt-4 space-y-4">
+          {showBand && (
+            <TroveDetailsBand
+              trove={trove}
+              liveState={liveState}
+              debtInFront={debtInFront}
+              trovesAhead={trovesAhead}
+              debtInFrontLoading={debtInFrontLoading}
             />
-          </div>
+          )}
+          {showRunway && liqPrice && collPrice && (
+            <div className="border-t border-rb-300/40 dark:border-rb-700/40 pt-4">
+              <div className="mb-3 text-[11px] uppercase tracking-wider text-rb-500">Collateral price runway</div>
+              <PriceRunway currentPrice={collPrice} liqPrice={liqPrice} />
+            </div>
+          )}
+          <TroveContextRow
+            items={items}
+            isOpen={summaryExplanationOpen}
+            onToggle={onToggleSummaryExplanation}
+            learnMore={liquityPositionContent({
+              collateralType: trove.collateralType,
+              status: trove.status === "liquidated" ? "liquidated" : trove.status === "closed" ? "closed" : "open",
+              isBatched: trove.batch.isMember,
+            })}
+          />
         </div>
       )}
     </div>
@@ -386,6 +409,9 @@ export default function TrovePage() {
         label: actionLabel(key),
         count,
         demoted: demoted.has(key),
+        // Delegate-set rate shares the "Interest rate" label with the owner's
+        // own rate change; the people glyph marks it as the delegate's action.
+        suffix: key === "setBatchManagerAnnualInterestRate" ? <UsersGlyph /> : undefined,
       }));
   }, [sortedEvents]);
 
@@ -475,10 +501,13 @@ export default function TrovePage() {
           }}
         />
 
-        {/* Economics in its own contained rounded panel — mirrors the Aave
-            spoke page (no full-bleed w-screen section) so the two rails share
-            one shell. */}
-        <div className="rounded-2xl bg-raised px-4 md:px-6 py-6">
+        {/* Lifetime-flow towers in their own contained rounded panel, directly
+            above the timeline — the towers are the aggregate of the same flows
+            the event list itemizes. The runway that used to share this panel
+            now lives in the position card with the current-state stats. Header
+            mirrors the Aave tower section (same 11px uppercase tracking). */}
+        <div className="rounded-2xl bg-raised px-4 md:px-6 py-6 space-y-3">
+          <div className="text-[11px] uppercase tracking-wider text-rb-500">Lifetime flows</div>
           <TroveEconomicsSummary
             events={sortedEvents}
             currentPrice={prices?.[troveData.collateralType.toLowerCase() as keyof OraclePricesData]}

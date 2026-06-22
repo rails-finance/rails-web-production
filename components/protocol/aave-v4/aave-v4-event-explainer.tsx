@@ -11,7 +11,8 @@ import {
   aaveV4CollateralToggleContent,
   aaveV4EventFallbackContent,
 } from "@/lib/shared/learn-more-content";
-import { shortAddr } from "@/lib/shared/format-event";
+import { shortAddr, formatGasCost } from "@/lib/shared/format-event";
+import type { GasCost } from "@/lib/shared/types/activity";
 import { aaveV4DisplaySymbol } from "@/lib/aave-v4/pt-tokens";
 import { effectiveBorrowAPR } from "@/lib/aave-v4/borrow-rate";
 
@@ -38,9 +39,11 @@ function H({ children }: { children: ReactNode }) {
 
 export interface AaveV4EventExplainerProps {
   ctx: AaveV4Context;
+  /** This transaction's gas cost — rendered as the trailing explainer bullet. */
+  gas?: GasCost;
 }
 
-export function AaveV4EventExplainer({ ctx }: AaveV4EventExplainerProps) {
+export function AaveV4EventExplainer({ ctx, gas }: AaveV4EventExplainerProps) {
   const amount = ctx.amount ? fmt(ctx.amount) : "0";
   const token = aaveV4DisplaySymbol(ctx.reserveSymbol) || "???";
   const market = ctx.spokeName ?? "unknown";
@@ -292,6 +295,12 @@ export function AaveV4EventExplainer({ ctx }: AaveV4EventExplainerProps) {
           Aave V4 <H>{token}</H> event on <H>{market}</H> market.
         </span>,
       );
+  }
+
+  // Per-transaction gas as the closing bullet (muted — not a header/grid value,
+  // so no <H> emphasis per the highlight rule).
+  if (gas && gas.gasCostEth > 0) {
+    items.push(<span>Gas for this transaction: {formatGasCost(gas)}.</span>);
   }
 
   // Never-empty floor: every event type maps to a mechanic modal; the default

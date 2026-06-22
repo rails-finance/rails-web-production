@@ -1,5 +1,16 @@
 /** Shared formatting helpers for protocol event cards */
 
+import type { GasCost } from "@/lib/shared/types/activity";
+
+/** Format a transaction's gas cost as "0.0276 ETH ($57.68)" — the ($usd) tail
+ *  is dropped below a cent. Used as the trailing bullet in each event's
+ *  plain-language explainer (gas is per-transaction, not a position total). */
+export function formatGasCost(gas: GasCost): string {
+  const eth = gas.gasCostEth < 0.001 ? gas.gasCostEth.toFixed(6) : gas.gasCostEth.toFixed(4);
+  const usd = gas.gasCostUsd > 0.01 ? ` ($${gas.gasCostUsd.toFixed(2)})` : "";
+  return `${eth} ETH${usd}`;
+}
+
 /** Format a unix timestamp as "14:30" (24-hour) */
 export function formatTimestamp(unix: number): string {
   const d = new Date(unix * 1000);

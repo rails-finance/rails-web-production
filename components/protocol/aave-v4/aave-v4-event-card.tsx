@@ -74,11 +74,10 @@ export function AaveV4EventCard({ event, isFirst, isLast, txGroup, eventNumber }
       headerBars={<AaveV4BarsSlot eventId={event.id} />}
       detail={<AaveV4EventDetail ctx={ctx} txHash={event.txHash} wallet={event.wallet} />}
       detailLabel="Aave V4 Details"
-      explainer={<AaveV4EventExplainer ctx={ctx} />}
+      explainer={<AaveV4EventExplainer ctx={ctx} gas={event.gas} />}
       explainerLabel="Plain English"
       txHash={event.txHash}
       wallet={event.wallet}
-      gas={event.gas}
       persistKey={`aave-v4:${event.id}`}
     />
   );
