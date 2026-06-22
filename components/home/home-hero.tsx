@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
+
+// The inline blocking script in app/layout.tsx flips `data-hero-seen` on <html>
+// before paint on hard loads, but it can't run on App Router soft navigations.
+// Mirror that here with a layout effect (runs before paint, so no replay flash)
+// and fall back to useEffect during SSR.
+const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 /**
  * Home hero — platform-level brand statement; Rails is a mono-rail-producing
@@ -14,11 +20,21 @@ import { useEffect } from "react";
  * time a user lands on the site, then stays static on every subsequent visit.
  * Doing the gate purely in CSS keeps SSR markup identical to post-hydration
  * markup so there's no flicker.
+ *
+ * The blocking script only runs on hard loads, so on soft navigations back to
+ * the home page we replay the gate here: if the flag is already stored, set the
+ * <html> attribute synchronously before paint so the animation stays suppressed.
+ * On the genuine first play the flag is absent, so we leave the attribute alone
+ * and let the animation finish, then store the flag for next time.
  */
 export function HomeHero() {
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     try {
-      localStorage.setItem("rails-hero-seen", "1");
+      if (localStorage.getItem("rails-hero-seen")) {
+        document.documentElement.dataset.heroSeen = "1";
+      } else {
+        localStorage.setItem("rails-hero-seen", "1");
+      }
     } catch {
       /* ignore */
     }
