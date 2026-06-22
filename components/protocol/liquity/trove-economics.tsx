@@ -109,8 +109,12 @@ function calculateEconomicsFromEvents(events: MinimalEvent[]): (TroveEconomicsTy
   for (const event of sorted) {
     const c = event.context.data;
 
-    // Gas
-    if (event.gas) {
+    // Gas — only count gas the Trove owner actually paid. Passive events
+    // (redemption/liquidation/pending-debt application) are sent by a third party
+    // (the redeemer or liquidator pays), so their gas is not the owner's cost.
+    const isPassiveOp =
+      c.operation === "redeemCollateral" || c.operation === "liquidate" || c.operation === "applyPendingDebt";
+    if (event.gas && !isPassiveOp) {
       totalGasCostEth += event.gas.gasCostEth;
       totalGasCostUsd += event.gas.gasCostUsd;
     }

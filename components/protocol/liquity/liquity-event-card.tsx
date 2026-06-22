@@ -187,7 +187,10 @@ export function LiquityEventCard({
       explainerTeaser={liquityTeaser}
       txHash={event.txHash}
       wallet={wallet}
-      gas={event.gas}
+      // Passive events (redemption/liquidation/pending-debt application) are sent by a
+      // third party — the redeemer or liquidator pays the gas, not the Trove owner — so
+      // attributing this tx's gas to the owner would be misleading.
+      gas={isPassive ? undefined : event.gas}
       persistKey={`liquity-v2:${event.id}`}
     />
   );
