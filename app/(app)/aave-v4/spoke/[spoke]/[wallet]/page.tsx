@@ -759,7 +759,7 @@ function AaveV4SpokeRunwayBlock({
   if (!showRunway || !runwayCard) return null;
 
   return (
-    <div className="border-t border-rb-200 px-4 md:px-6 py-5 space-y-3">
+    <div className="border-t border-rb-200 dark:border-rb-800 px-4 md:px-6 py-5 space-y-3">
       <AaveV4SpokeRunway spoke={runwayCard} />
 
       {/* Collateral-exposure read as a quiet caption to the runway — what the
