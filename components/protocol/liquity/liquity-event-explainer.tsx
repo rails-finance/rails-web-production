@@ -1388,7 +1388,14 @@ function getLearnMoreContent(ctx: LiquityContext) {
       return liquityAdjustTroveContent();
     case "adjustTroveInterestRate":
     case "applyPendingDebt":
-      return liquityInterestRateContent();
+      return liquityInterestRateContent(
+        ctx.isInBatch
+          ? {
+              delegated: true,
+              delegateName: ctx.batchManager ? getBatchManagerByAddress(ctx.batchManager)?.name : undefined,
+            }
+          : undefined,
+      );
     case "setInterestBatchManager":
     case "removeFromBatch":
     case "setBatchManagerAnnualInterestRate":

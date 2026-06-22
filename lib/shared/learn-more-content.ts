@@ -13,33 +13,33 @@ export function cowSwapContent(orderClass?: string | null): LearnMoreContent {
   const extra: string[] = [];
   if (isLimit) {
     extra.push(
-      "This is a limit order — it specifies an exact price. It stays open until filled, expired, or cancelled. Solvers only execute when the market reaches the target price. You may get a better price if the solver finds a favourable batch.",
+      "This is a limit order — it specifies an exact price. It stays open until filled, expired, or cancelled. Solvers only execute when the market reaches the target price. The trader may get a better price if the solver finds a favourable batch.",
     );
   }
   if (isMarket) {
     extra.push(
-      "This is a market order — it aims to fill immediately at the best available price. It includes slippage tolerance to protect against unfavourable price movements. Any price improvement (surplus) is typically returned to you.",
+      "This is a market order — it aims to fill immediately at the best available price. It includes slippage tolerance to protect against unfavourable price movements. Any price improvement (surplus) is typically returned to the trader.",
     );
   }
 
   return {
     title: `How ${isLimit ? "Limit" : isMarket ? "Market" : "CoW Swap"} Orders Work`,
     intro:
-      "CoW Protocol (Coincidence of Wants) is a trading protocol that finds the best execution for your order by batching multiple trades together.",
+      "CoW Protocol (Coincidence of Wants) is a trading protocol that finds the best execution for an order by batching multiple trades together.",
     stepsHeading: "How it works:",
     steps: [
-      "You sign an off-chain intent describing what you want to trade and at what price.",
-      'Solvers compete in a batch auction to find the best way to fill your order \u2014 matching traders peer-to-peer (a "Coincidence of Wants") or routing through on-chain liquidity like Uniswap, Curve, or Balancer.',
-      "The winning solver submits the settlement on-chain. You only pay if your order is filled, and the solver covers gas costs.",
+      "The trader signs an off-chain intent describing what to trade and at what price.",
+      'Solvers compete in a batch auction to find the best way to fill the order \u2014 matching traders peer-to-peer (a "Coincidence of Wants") or routing through on-chain liquidity like Uniswap, Curve, or Balancer.',
+      "The winning solver submits the settlement on-chain. The trader only pays if the order is filled, and the solver covers gas costs.",
     ],
     extraParagraphs: extra.length > 0 ? extra : undefined,
     detailsHeading: "Key benefits:",
     details: [
       { bold: "MEV protection", text: "off-chain signing prevents front-running and sandwich attacks." },
-      { bold: "Gasless trading", text: "you sign a message, not a transaction. The solver pays gas." },
+      { bold: "Gasless trading", text: "the trader signs a message, not a transaction. The solver pays gas." },
       {
         bold: "Surplus",
-        text: "if the solver can execute at a price better than your limit, the extra value can be returned to you.",
+        text: "if the solver can execute at a price better than the limit, the extra value can be returned to the trader.",
       },
       { bold: "Batch settlement", text: "multiple orders settle in a single transaction, reducing overall costs." },
     ],
@@ -126,9 +126,12 @@ export function liquityOpenTroveContent(): LearnMoreContent {
     details: [
       {
         bold: "Collateral ratio",
-        text: "the value of your collateral relative to your debt. Must stay above the liquidation threshold.",
+        text: "the value of the collateral relative to the debt. Must stay above the liquidation threshold.",
       },
-      { bold: "Interest rate", text: "you choose your own rate. Lower rates save money but increase redemption risk." },
+      {
+        bold: "Interest rate",
+        text: "the borrower chooses the rate. Lower rates save money but increase redemption risk.",
+      },
       {
         bold: "Upfront fee",
         text: "a one-time borrowing fee equivalent to 7 days of average interest, deducted from the borrowed amount.",
@@ -240,7 +243,7 @@ export function liquityPositionContent(opts: {
   } else {
     details.push({
       bold: "Interest rate",
-      text: "you set your own rate. Lower rates cost less but sit earlier in the redemption queue.",
+      text: "the borrower sets the rate. Lower rates cost less but sit earlier in the redemption queue.",
     });
   }
   details.push(
@@ -293,7 +296,7 @@ export function liquityEconomicsContent(opts: { isBatched?: boolean } = {}): Lea
         bold: "Carrying cost",
         text: opts.isBatched
           ? "the interest plus the delegate's management fee that accrue to the debt each day and year."
-          : "the interest that accrues to the debt each day and year at your chosen rate.",
+          : "the interest that accrues to the debt each day and year at the trove's chosen rate.",
       },
       {
         bold: "Upfront fee",
@@ -381,16 +384,26 @@ export function liquityAdjustTroveContent(): LearnMoreContent {
   };
 }
 
-export function liquityInterestRateContent(): LearnMoreContent {
+// A trove's rate is controlled either by the borrower directly or, when the
+// trove is delegated to a batch manager, by that delegate (it sets one shared
+// rate across its batch). `delegated`/`delegateName` come from the position in
+// view so the copy names who actually controls THIS trove's rate, rather than
+// asserting only the borrower can — see feedback-position-copy-voice.
+export function liquityInterestRateContent(opts?: { delegated?: boolean; delegateName?: string }): LearnMoreContent {
+  const delegated = opts?.delegated ?? false;
+  const delegateLabel = opts?.delegateName ? `the ${opts.delegateName} delegate` : "a batch-manager delegate";
   return {
     title: "How Interest Rates Work",
-    intro:
-      "Each trove carries a user-set annual interest rate that accrues continuously to its debt. You can change the rate at any time.",
+    intro: delegated
+      ? `Each trove carries an annual interest rate that accrues continuously to its debt. This trove's rate is managed by ${delegateLabel} the borrower appointed, which sets one shared rate across a group of troves; the borrower can take back direct control by removing the trove from the batch.`
+      : "Each trove carries an annual interest rate that accrues continuously to its debt. The borrower can change the rate at any time, or delegate that to a batch manager that runs one shared rate for a group of troves.",
     detailsHeading: "Key concepts:",
     details: [
       {
-        bold: "User-set rate",
-        text: "you choose your own rate. Lower rates cost less but sit earlier in the redemption queue.",
+        bold: "Who sets the rate",
+        text: delegated
+          ? "the appointed delegate sets the rate on the borrower's behalf, until the borrower leaves the batch. Lower rates cost less but sit earlier in the redemption queue."
+          : "the borrower sets the rate, or delegates it to a batch manager. Lower rates cost less but sit earlier in the redemption queue.",
       },
       {
         bold: "Continuous accrual",
@@ -467,12 +480,12 @@ export function liquityEventFallbackContent(): LearnMoreContent {
   return {
     title: "How Liquity V2 Troves Work",
     intro:
-      "Liquity V2 lets you borrow BOLD against collateral in a trove — a self-custodied position represented by an NFT.",
+      "Liquity V2 lets a borrower take out BOLD against collateral in a trove — a self-custodied position represented by an NFT.",
     detailsHeading: "Key concepts:",
     details: [
       {
         bold: "Trove",
-        text: "your borrowing position — collateral in, BOLD out, with a collateral ratio to keep above the threshold.",
+        text: "the borrowing position — collateral in, BOLD out, with a collateral ratio to keep above the threshold.",
       },
       {
         bold: "Interest rate",
@@ -498,16 +511,16 @@ export function aaveV4EventFallbackContent(): LearnMoreContent {
   return {
     title: "How Aave V4 Positions Work",
     intro:
-      "Aave V4 lets you supply assets as collateral and borrow against them inside an isolated spoke, where one shared health factor governs the whole position.",
+      "Aave V4 lets a user supply assets as collateral and borrow against them inside an isolated spoke, where one shared health factor governs the whole position.",
     detailsHeading: "Key concepts:",
     details: [
       {
         bold: "Supply & collateral",
-        text: "supplied assets earn interest and, when enabled, back your borrowing.",
+        text: "supplied assets earn interest and, when enabled, back the borrowing.",
       },
       {
         bold: "Borrowing & health factor",
-        text: "borrowing draws against your collateral; the health factor measures how safely the debt is covered.",
+        text: "borrowing draws against the collateral; the health factor measures how safely the debt is covered.",
       },
       {
         bold: "Hub & spoke",
@@ -536,7 +549,7 @@ export function aaveV4SupplyContent(): LearnMoreContent {
     details: [
       {
         bold: "Supplied balance",
-        text: "your deposit, which accrues supply interest continuously and stays withdrawable unless it's backing a borrow.",
+        text: "the deposit, which accrues supply interest continuously and stays withdrawable unless it's backing a borrow.",
       },
       {
         bold: "Collateral toggle",
@@ -544,7 +557,7 @@ export function aaveV4SupplyContent(): LearnMoreContent {
       },
       {
         bold: "Withdrawing",
-        text: "you can withdraw any supply not currently needed to keep your borrows covered.",
+        text: "any supply not currently needed to keep borrows covered can be withdrawn.",
       },
     ],
     links: [
@@ -559,16 +572,16 @@ export function aaveV4BorrowContent(): LearnMoreContent {
   return {
     title: "How Borrowing Works",
     intro:
-      "Borrowing draws an asset against your supplied collateral within a spoke. Repaying returns the asset and frees up that collateral.",
+      "Borrowing draws an asset against the supplied collateral within a spoke. Repaying returns the asset and frees up that collateral.",
     detailsHeading: "Key concepts:",
     details: [
       {
         bold: "Borrowing power",
-        text: "how much you can borrow depends on your collateral's value weighted by each asset's risk parameters.",
+        text: "how much can be borrowed depends on the collateral's value weighted by each asset's risk parameters.",
       },
       {
         bold: "Health factor",
-        text: "borrowing lowers your health factor; if it falls below 1.0 the position can be liquidated.",
+        text: "borrowing lowers the health factor; if it falls below 1.0 the position can be liquidated.",
       },
       {
         bold: "Borrow interest",
@@ -587,16 +600,16 @@ export function aaveV4CollateralToggleContent(): LearnMoreContent {
   return {
     title: "How Collateral Works",
     intro:
-      "Each supplied asset can be enabled or disabled as collateral. Only enabled assets back your borrowing and count toward your health factor.",
+      "Each supplied asset can be enabled or disabled as collateral. Only enabled assets back borrowing and count toward the health factor.",
     detailsHeading: "Key concepts:",
     details: [
       {
         bold: "Collateral toggle",
-        text: "turning an asset on lets it back borrows; turning it off removes it from your borrowing power.",
+        text: "turning an asset on lets it back borrows; turning it off removes it from borrowing power.",
       },
       {
         bold: "Health-factor impact",
-        text: "disabling collateral lowers your health factor, so it's blocked if doing so would leave the position unsafe.",
+        text: "disabling collateral lowers the health factor, so it's blocked if doing so would leave the position unsafe.",
       },
       {
         bold: "Isolated per spoke",
@@ -623,11 +636,11 @@ export function aaveV4PositionFallbackContent(): LearnMoreContent {
     details: [
       {
         bold: "Supply & collateral",
-        text: "supplied assets earn interest and, when enabled, back your borrowing.",
+        text: "supplied assets earn interest and, when enabled, back the borrowing.",
       },
       {
         bold: "Health factor",
-        text: "measures how safely your debt is covered; below 1.0 the position can be liquidated.",
+        text: "measures how safely the debt is covered; below 1.0 the position can be liquidated.",
       },
       {
         bold: "Hub & spoke",
@@ -647,25 +660,38 @@ export function aaveV4PositionFallbackContent(): LearnMoreContent {
 // State-explainer for the spoke economics band (lifetime towers + price
 // runways + health factor). Scoped to that band, distinct from the position
 // panel's "About this position".
-export function aaveV4EconomicsContent(): LearnMoreContent {
+// `hasRunway` is false for supply-only positions (no debt → no liquidation
+// price runway). In that case the copy drops every runway / liquidation-cushion
+// reference so the modal doesn't promise a band the position never shows.
+export function aaveV4EconomicsContent({ hasRunway = true }: { hasRunway?: boolean } = {}): LearnMoreContent {
   return {
     title: "About the Economics",
-    intro:
-      "This band traces the position's supply and borrow flows over its lifetime and shows how much price cushion each collateral asset has before liquidation.",
+    intro: hasRunway
+      ? "This band traces the position's supply and borrow flows over its lifetime and shows how much price cushion each collateral asset has before liquidation."
+      : "This band traces the position's supply and borrow flows over its lifetime — every supply and withdrawal, not just the current balance.",
     detailsHeading: "Key concepts:",
     details: [
       {
         bold: "Lifetime flows",
         text: "the towers show every supply, withdrawal, borrow, and repayment over the position's life — not just the current balance.",
       },
-      {
-        bold: "Price runway",
-        text: "how far each collateral asset's price can fall before it reaches the liquidation price.",
-      },
-      {
-        bold: "Health factor",
-        text: "the single safety number for the whole spoke; a runway is exhausted when the position's health factor would hit 1.0.",
-      },
+      ...(hasRunway
+        ? [
+            {
+              bold: "Price runway",
+              text: "how far each collateral asset's price can fall before it reaches the liquidation price.",
+            },
+            {
+              bold: "Health factor",
+              text: "the single safety number for the whole spoke; a runway is exhausted when the position's health factor would hit 1.0.",
+            },
+          ]
+        : [
+            {
+              bold: "No debt, no liquidation",
+              text: "this position carries no borrows, so there's no health factor or liquidation runway to track — the supplied assets aren't backing a loan.",
+            },
+          ]),
     ],
     links: [
       { label: "Aave V4 positions", url: AAVE_FAQ_URLS.V4_POSITIONS },
@@ -750,7 +776,7 @@ export function curveSwapContent(): LearnMoreContent {
       },
       {
         bold: "Slippage (basis points)",
-        text: "the difference between the expected 1:1 rate and the actual execution price. 1 bps = 0.01%. Positive means you got a better price than par.",
+        text: "the difference between the expected 1:1 rate and the actual execution price. 1 bps = 0.01%. Positive means the trade got a better price than par.",
       },
       {
         bold: "Pool fee",
@@ -788,13 +814,13 @@ export function curveLiquidityContent(eventType: CurveEventType): LearnMoreConte
   return {
     title: isAdd ? "How Curve Liquidity Provision Works" : "How Curve Liquidity Withdrawal Works",
     intro: isAdd
-      ? "When you deposit tokens into the Curve BOLD/USDC pool, you receive LP tokens representing your share of the pool. LPs earn trading fees on every swap proportional to their share."
-      : "Withdrawing from a Curve pool burns your LP tokens and returns the underlying assets. You can withdraw balanced (both tokens proportionally) or single-sided (one token only).",
+      ? "Depositing tokens into the Curve BOLD/USDC pool returns LP tokens representing a proportional share of the pool. LPs earn trading fees on every swap proportional to their share."
+      : "Withdrawing from a Curve pool burns the LP tokens and returns the underlying assets. Withdrawals can be balanced (both tokens proportionally) or single-sided (one token only).",
     detailsHeading: "Key concepts:",
     details: [
       {
         bold: "LP tokens",
-        text: "represent your proportional share of the pool. As fees accumulate, each LP token becomes worth more underlying assets.",
+        text: "represent a proportional share of the pool. As fees accumulate, each LP token becomes worth more underlying assets.",
       },
       {
         bold: "Balanced vs single-sided",
@@ -865,13 +891,13 @@ export function uniswapLiquidityContent(eventType: UniswapEventType): LearnMoreC
     intro: isMint
       ? "In Uniswap V3, LPs provide liquidity within a specific price range (tick range). The position only earns fees when the price is within that range, but capital is used much more efficiently than full-range liquidity."
       : isBurn
-        ? "Burning a V3 position removes your liquidity from the pool. The underlying tokens are returned proportionally based on the current price relative to your tick range."
-        : "Collecting fees from a V3 position gathers accumulated trading fees earned while the price was within your tick range. Fees accrue continuously but must be explicitly collected.",
+        ? "Burning a V3 position removes its liquidity from the pool. The underlying tokens are returned proportionally based on the current price relative to the position's tick range."
+        : "Collecting fees from a V3 position gathers accumulated trading fees earned while the price was within its tick range. Fees accrue continuously but must be explicitly collected.",
     detailsHeading: "Key concepts:",
     details: [
       {
         bold: "Tick ranges",
-        text: "define the price boundaries of your position. Narrower ranges earn more fees per unit of capital but are more likely to go out of range.",
+        text: "define the price boundaries of the position. Narrower ranges earn more fees per unit of capital but are more likely to go out of range.",
       },
       {
         bold: "Concentrated vs full-range",
@@ -883,7 +909,7 @@ export function uniswapLiquidityContent(eventType: UniswapEventType): LearnMoreC
       },
       {
         bold: "Impermanent loss",
-        text: "concentrated positions amplify IL compared to full-range. If the price moves outside your range, you hold 100% of one token.",
+        text: "concentrated positions amplify IL compared to full-range. If the price moves outside the range, the position holds 100% of one token.",
       },
     ],
     links: [{ label: "Uniswap V3 LP guide", url: "https://docs.uniswap.org/concepts/protocol/concentrated-liquidity" }],
@@ -904,18 +930,21 @@ export function getStabilityLearnMore(): LearnMoreContent {
       "The Stability Pool is the first line of defence in Liquity V2. Depositors provide BOLD which is used to absorb debt from liquidated Troves. In return, depositors earn collateral at a discount and a share of borrower interest payments.",
     stepsHeading: "How it works:",
     steps: [
-      "You deposit BOLD into one of three Stability Pools (WETH, wstETH, or rETH).",
-      "When a Trove in that collateral branch is liquidated, your deposit absorbs a proportional share of the debt.",
-      "In return, you receive the liquidated collateral at a discount — typically 5-10% below market price.",
-      "You also earn a continuous yield from borrower interest payments in BOLD.",
+      "A depositor places BOLD into one of three Stability Pools (WETH, wstETH, or rETH).",
+      "When a Trove in that collateral branch is liquidated, the deposit absorbs a proportional share of the debt.",
+      "In return, the depositor receives the liquidated collateral at a discount — typically 5-10% below market price.",
+      "The deposit also earns a continuous yield from borrower interest payments in BOLD.",
     ],
     detailsHeading: "Key concepts:",
     details: [
       {
         bold: "Deposit loss",
-        text: "when a liquidation occurs, your BOLD balance decreases. This is offset by collateral gained at a discount.",
+        text: "when a liquidation occurs, the BOLD balance decreases. This is offset by collateral gained at a discount.",
       },
-      { bold: "Yield gains", text: "your share of interest payments from borrowers in the same collateral branch." },
+      {
+        bold: "Yield gains",
+        text: "the depositor's share of interest payments from borrowers in the same collateral branch.",
+      },
       { bold: "Collateral gains", text: "discounted collateral received from liquidations — the main profit source." },
     ],
   };
@@ -931,7 +960,7 @@ export function getGovernanceLearnMore(): LearnMoreContent {
     stepsHeading: "How it works:",
     steps: [
       "Stake LQTY in the governance contract to receive voting power.",
-      "Allocate your voting power to one or more registered initiatives.",
+      "Allocate the voting power to one or more registered initiatives.",
       "At the end of each epoch, BOLD incentives are distributed proportionally to initiatives based on their vote share.",
       "Initiatives claim their BOLD allocation and use it according to their purpose (e.g., liquidity incentives, protocol development).",
     ],
@@ -962,7 +991,7 @@ export function getVaultsLearnMore(): LearnMoreContent {
       "Deposit BOLD into the vault and receive vault shares in return.",
       "The vault deploys BOLD into yield strategies (e.g., Stability Pool deposits, lending).",
       "As strategies earn yield, the share price increases — each share represents more BOLD.",
-      "Withdraw anytime by burning shares to receive your BOLD plus earned yield.",
+      "Withdraw anytime by burning shares to receive the BOLD plus earned yield.",
     ],
     detailsHeading: "Key concepts:",
     details: [

@@ -65,6 +65,7 @@ import {
   groupBySpoke,
   computeAaveV4InterestPnl,
   resolveFallbackCollateral,
+  liquidationBuffer,
 } from "@/lib/aave-v4/spoke-cards";
 import { AAVE_V4_FALLBACK_LT, isStable } from "@/lib/aave-v4/liquidation-thresholds";
 import { simulateAaveV4Position, type SimPositionInputs } from "@/lib/aave-v4/utils/simulate";
@@ -716,7 +717,7 @@ function RiskPremiumNotice({ raw, spokeName }: { raw: string | null; spokeName: 
       <span className={PILL_META}>Risk premium {(frac * 100).toFixed(2)}%</span>
       <p className="mt-1.5 text-xs text-rb-500 max-w-prose">
         Aave V4 prices risk per position. The collateral held here carries a risk premium that increases the borrow
-        interest you accrue on top of the {spokeName} hub&rsquo;s base rate.
+        interest accruing on top of the {spokeName} hub&rsquo;s base rate.
       </p>
     </div>
   );
@@ -764,6 +765,14 @@ function AaveV4SpokeEconomicsBand({
   const [runwayInfoOpen, setRunwayInfoOpen] = useState(false);
 
   const showRunwayInfo = !!runwayCard && runwayCard.totalDebtUsd > 0 && runwayCard.healthFactor != null;
+  // Which runway mode is ACTUALLY on screen — drives the explainer copy so it
+  // describes only what's shown (a single-collateral price runway OR a
+  // health-factor runway), never both as a "with one asset… with several…"
+  // hypothetical the reader can't see. Mirrors AaveV4SpokeRunway's own branch.
+  const runwaySingle = showRunwayInfo && runwayCard ? !!liquidationBuffer(runwayCard).single : false;
+  // Only gloss non-collateral supplies when the position has some — otherwise
+  // it's another absent-state aside.
+  const hasNonCollateralSupply = simBase.supplies.some((s) => !s.collateralEnabled);
 
   return (
     <div className="space-y-3">
@@ -787,49 +796,88 @@ function AaveV4SpokeEconomicsBand({
         variant="footnote"
       />
 
-      {showRunwayInfo && (
-        <InfoDisclosure open={runwayInfoOpen} onToggle={setRunwayInfoOpen} label="liquidation runway">
-          {/* Muted body (text-rb-500); explains how to read the single combined
-              runway, distinct from the "This position" panel that states the
-              headline HF / borrowing-power numbers. */}
-          <div className="space-y-2 text-sm text-rb-500">
+      {/* One expandable footnote for the whole band. With debt it reads as the
+          "liquidation runway" explainer; for supply-only positions there's no
+          runway, so the label + body drop every runway reference and just
+          gloss the lifetime-flow towers. The "Learn more" affordance is nested
+          inside it (revealed when open) rather than floating below the band. */}
+      <InfoDisclosure
+        open={runwayInfoOpen}
+        onToggle={setRunwayInfoOpen}
+        label={showRunwayInfo ? "liquidation runway" : "economics"}
+      >
+        {/* Muted body (text-rb-500); explains how to read the single combined
+            runway, distinct from the "This position" panel that states the
+            headline HF / borrowing-power numbers. */}
+        <div className="space-y-2 text-sm text-rb-500">
+          {showRunwayInfo ? (
+            <>
+              <div className="flex items-start gap-2 leading-relaxed">
+                <span className="select-none text-rb-500">•</span>
+                <span>
+                  {runwaySingle ? (
+                    <>
+                      The runway shows how close this position is to liquidation. It tracks the collateral asset&apos;s
+                      price: liquidation triggers if it falls to the liquidation price shown. The marker is the current
+                      price; the red zone is liquidation.
+                    </>
+                  ) : (
+                    <>
+                      The runway shows how close this position is to liquidation. It tracks the health factor down to
+                      1.0 — Aave&apos;s liquidation trigger, read straight from chain. The marker is the current health
+                      factor; the red zone is liquidation.
+                    </>
+                  )}
+                </span>
+              </div>
+              <div className="flex items-start gap-2 leading-relaxed">
+                <span className="select-none text-rb-500">•</span>
+                <span>
+                  {runwaySingle ? (
+                    <>The gap is the buffer — how far the collateral&apos;s price can fall before liquidation.</>
+                  ) : (
+                    <>
+                      The gap is the buffer — how far the collateral can fall before liquidation. It&apos;s shown as a
+                      percentage across all collateral rather than one asset&apos;s price, since a single asset&apos;s
+                      solo move would overstate the safety of a correlated basket.
+                    </>
+                  )}
+                  {hasNonCollateralSupply && (
+                    <>
+                      {" "}
+                      Supplied assets not enabled as collateral don&apos;t back the loan, so they don&apos;t affect
+                      this.
+                    </>
+                  )}
+                </span>
+              </div>
+              <div className="flex items-start gap-2 leading-relaxed">
+                <span className="select-none text-rb-500">•</span>
+                <span>
+                  Reaching that point doesn&apos;t close the position — Aave liquidates only partially, repaying enough
+                  debt to nudge the health factor back above 1.0.
+                </span>
+              </div>
+              <div className="flex items-start gap-2 leading-relaxed">
+                <span className="select-none text-rb-500">•</span>
+                <span>
+                  Outstanding debt already includes accrued borrow interest — it&apos;s the live on-chain balance, so
+                  there&apos;s no separate fee to add on top.
+                </span>
+              </div>
+            </>
+          ) : (
             <div className="flex items-start gap-2 leading-relaxed">
               <span className="select-none text-rb-500">•</span>
               <span>
-                The runway shows how close this position is to liquidation. With a single collateral asset it&apos;s a
-                price runway — that asset falling to its liquidation price. With several, it tracks the health factor
-                down to 1.0, Aave&apos;s liquidation trigger, read straight from chain. The marker is where you are now;
-                the red zone is liquidation.
+                The towers trace this position&apos;s supply flows over its lifetime — every supply and withdrawal, not
+                just the current balance. With no debt, there&apos;s no liquidation runway to show.
               </span>
             </div>
-            <div className="flex items-start gap-2 leading-relaxed">
-              <span className="select-none text-rb-500">•</span>
-              <span>
-                Either way the gap is the same buffer — how far your collateral can fall before liquidation. With
-                several assets we show that as a percentage rather than one asset&apos;s price, since a single
-                asset&apos;s solo move would overstate the safety of a correlated basket. Assets you&apos;ve supplied
-                but not enabled as collateral don&apos;t back the loan, so they don&apos;t affect this.
-              </span>
-            </div>
-            <div className="flex items-start gap-2 leading-relaxed">
-              <span className="select-none text-rb-500">•</span>
-              <span>
-                Reaching that point doesn&apos;t close the position — Aave liquidates only partially, repaying enough
-                debt to nudge the health factor back above 1.0.
-              </span>
-            </div>
-            <div className="flex items-start gap-2 leading-relaxed">
-              <span className="select-none text-rb-500">•</span>
-              <span>
-                Outstanding debt already includes accrued borrow interest — it&apos;s the live on-chain balance, so
-                there&apos;s no separate fee to add on top.
-              </span>
-            </div>
-          </div>
-        </InfoDisclosure>
-      )}
-
-      <LearnMore content={aaveV4EconomicsContent()} />
+          )}
+          <LearnMore content={aaveV4EconomicsContent({ hasRunway: showRunwayInfo })} />
+        </div>
+      </InfoDisclosure>
     </div>
   );
 }

@@ -28,17 +28,12 @@ function joinSymbols(syms: string[]): string {
  */
 function buildInterestItems(pnl: AaveV4InterestPnl): React.ReactNode[] {
   const items: React.ReactNode[] = [];
-  if (pnl.hasData) {
-    const net = fmtSignedUsd(pnl.netUsd);
-    items.push(
-      <span key="net-interest">
-        Net interest to date: {net.display} — supply interest earned minus borrow interest paid, read from on-chain
-        balances against indexed deposits rather than an annualized rate.
-      </span>,
-    );
-  }
-  // Per-asset earned/paid folded into a single bullet rather than one line each
-  // (a multi-asset position otherwise spawns four+ near-identical bullets).
+  // Per-asset earned/paid folded into a single phrase rather than one line each
+  // (a multi-asset position otherwise spawns four+ near-identical bullets). The
+  // phrase is woven into the net-interest bullet rather than standing as its own
+  // line — a separate "$0.00 net" line beside an "earned 0.0000229 GHO" line
+  // reads as a contradiction (the net just rounds the same sub-cent figure), so
+  // the two are stated together as one fact.
   const earned = pnl.assets.filter((a) => a.supplyInterest > 0);
   const paid = pnl.assets.filter((a) => a.borrowInterest > 0);
   const leg = (amount: number, symbol: string, usd: number) => (
@@ -54,25 +49,37 @@ function buildInterestItems(pnl: AaveV4InterestPnl): React.ReactNode[] {
         {n}
       </span>
     ));
-  if (earned.length > 0 || paid.length > 0) {
-    items.push(
-      <span key="interest-breakdown">
+  const breakdown = (capital: boolean) =>
+    earned.length > 0 || paid.length > 0 ? (
+      <>
         {earned.length > 0 && (
           <>
-            Earned {joinLegs(earned.map((a) => leg(a.supplyInterest, a.symbol, a.supplyInterestUsd)))} in supply
-            interest
+            {capital ? "Earned " : "earned "}
+            {joinLegs(earned.map((a) => leg(a.supplyInterest, a.symbol, a.supplyInterestUsd)))} in supply interest
           </>
         )}
         {earned.length > 0 && paid.length > 0 && "; "}
         {paid.length > 0 && (
           <>
-            {earned.length > 0 ? "paid " : "Paid "}
+            {earned.length > 0 || !capital ? "paid " : "Paid "}
             {joinLegs(paid.map((a) => leg(a.borrowInterest, a.symbol, a.borrowInterestUsd)))} in borrow interest
           </>
         )}
-        .
+      </>
+    ) : null;
+
+  if (pnl.hasData) {
+    const net = fmtSignedUsd(pnl.netUsd);
+    const bd = breakdown(false);
+    items.push(
+      <span key="net-interest">
+        Net interest to date: {net.display}
+        {bd ? <> — {bd}</> : null}, read from on-chain balances against indexed deposits rather than an annualized rate.
       </span>,
     );
+  } else {
+    const bd = breakdown(true);
+    if (bd) items.push(<span key="interest-breakdown">{bd}.</span>);
   }
   if (pnl.unattributed) {
     items.push(

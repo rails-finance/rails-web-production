@@ -517,9 +517,15 @@ export function AaveV4TowerChart({
   const ghostTower = <div className={placeholderClass} style={{ height: CHART_HEIGHT }} />;
   // Labelled ghost for the pure supply-side case — the dashed tower stands in
   // for the absent debt side, with a faded "No debt" so the emptiness reads as
-  // intentional rather than a loading gap.
+  // intentional rather than a loading gap. Sized to match the collateral tower's
+  // filled height (never taller): debt is always ≤ collateral, so a full-height
+  // ghost beside a shorter supply tower read as illogically large. Clamped to a
+  // floor so the "No debt" label stays legible when collateral is tiny. Both
+  // towers are bottom-aligned, so the shorter ghost shares the baseline.
+  const collTowerPx = towerMax > 0 ? Math.min(CHART_HEIGHT, (collPeak / towerMax) * CHART_HEIGHT) : CHART_HEIGHT;
+  const ghostDebtHeight = Math.max(40, collTowerPx);
   const ghostDebtTower = (
-    <div className={`${placeholderClass} flex items-center justify-center`} style={{ height: CHART_HEIGHT }}>
+    <div className={`${placeholderClass} flex items-center justify-center`} style={{ height: ghostDebtHeight }}>
       <span className="text-[11px] font-medium text-rb-500/60 select-none">No debt</span>
     </div>
   );
