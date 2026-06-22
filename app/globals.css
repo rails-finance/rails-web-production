@@ -282,6 +282,9 @@ html.dark {
 @utility bg-raised {
   background-color: var(--surface-raised);
 }
+@utility border-raised {
+  border-color: var(--surface-raised);
+}
 @utility bg-sunken {
   background-color: var(--surface-sunken);
 }

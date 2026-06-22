@@ -78,7 +78,7 @@ function HubsContent() {
                     href={`https://etherscan.io/block/${data.blockNumber}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-500 hover:underline"
+                    className="link-external"
                   >
                     {data.blockNumber.toLocaleString()}
                   </a>
