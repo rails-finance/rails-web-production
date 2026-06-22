@@ -35,18 +35,22 @@ function Screen({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-// ── Position card: one header + two prominent figures + secondary labels ─────
+// ── Position card: header + two prominent figures + the liquidation runway ───
 function PositionCardBody() {
   return (
-    <div className="flex h-full w-full flex-col gap-3 p-4">
+    <div className="flex h-full w-full flex-col p-4">
       <div className="flex items-center gap-2">
         <div className="h-3.5 w-20 rounded bg-green-500/55" />
         <div className="h-3.5 w-20 rounded bg-rb-400 dark:bg-rb-600" />
         <div className="ml-auto h-3.5 w-28 rounded bg-rb-300 dark:bg-rb-700" />
       </div>
-      <div className="grid flex-1 grid-cols-2 gap-6">
+      {/* Two equal flex spacers — one above the figures, one above the runway —
+          so the gap over the runway matches the gap between the header and the
+          collateral/debt figures, without changing the card's height. */}
+      <div className="flex-1" />
+      <div className="grid grid-cols-2 gap-6">
         {["bg-blue-500/55", "bg-green-500/55"].map((coin, i) => (
-          <div key={i} className="flex flex-col justify-center gap-2">
+          <div key={i} className="flex flex-col gap-2">
             <div className="h-2.5 w-16 rounded bg-rb-200 dark:bg-rb-800" />
             <div className="flex items-center gap-3">
               <div className="h-7 w-24 rounded-lg bg-rb-300 dark:bg-rb-700" />
@@ -56,6 +60,18 @@ function PositionCardBody() {
           </div>
         ))}
       </div>
+      <div className="flex-1" />
+      {/* Liquidation / price-runway bar — lives with the current-state figures
+          now, mirroring the real position card: short blue lead, long neutral
+          middle, red liquidation tail. */}
+      <div className="flex h-2 w-full gap-1">
+        <div className="h-full flex-[0.25] rounded-full bg-blue-500/55" />
+        <div className="h-full flex-[2.25] rounded-full bg-rb-200 dark:bg-rb-500/30" />
+        <div className="h-full flex-[0.5] rounded-full bg-red-500/55" />
+      </div>
+      {/* Fixed pad below the runway — pulls it up ~32px while the two flex-1
+          spacers above stay equal, keeping their gaps matched. */}
+      <div className="h-8 shrink-0" />
     </div>
   );
 }
@@ -89,13 +105,12 @@ function EconomicsBody() {
           ))}
         </div>
       </div>
-      {/* Liquidation / price-runway bar: short blue lead, long neutral middle, red liquidation tail. */}
-      <div className="flex h-2 w-full gap-1">
-        <div className="h-full flex-[0.25] rounded-full bg-blue-500/55" />
-        <div className="h-full flex-[2.25] rounded-full bg-rb-200 dark:bg-rb-500/30" />
-        <div className="h-full flex-[0.5] rounded-full bg-red-500/55" />
+      {/* The runway bar moved to the position card; what remains here is the
+          small teal "?" info dot that hosts the towers' explainer. */}
+      <div className="flex items-center justify-start">
+        <div className="h-3 w-3 rounded-full bg-teal-500/70 dark:bg-teal-400/70" />
       </div>
-      {/* breathing room beneath the runway bar */}
+      {/* breathing room beneath the info dot */}
       <div className="flex-1" />
     </div>
   );

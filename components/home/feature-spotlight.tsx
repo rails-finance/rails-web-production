@@ -18,21 +18,21 @@ import { FeatureSkeleton } from "./feature-skeletons";
 
 const FEATURES = [
   {
-    name: "Position card",
-    heading: "Live positions at a glance",
+    name: "Position status",
+    heading: "A position's status, at a glance",
     description:
       "Supply, debt, health factor, liquidation price, and net interest earned — one card, computed from current on-chain state.",
     slide: "position-card",
   },
   {
     name: "Economics",
-    heading: "Position health, visualised",
+    heading: "The economics, visualised",
     description:
-      "Health, liquidation price, and rate exposure, each derived from on-chain state with the inputs visible. No estimates, no hypotheticals.",
+      "Lifetime flows — peak supply and debt, interest paid and earned, and rate exposure — every figure traceable to on-chain events. No estimates, no hypotheticals.",
     slide: "economics",
   },
   {
-    name: "Timeline",
+    name: "History",
     heading: "The full history, event by event",
     description: "A chronological feed of every event, with asset flow and plain-language context.",
     slide: "timeline",
