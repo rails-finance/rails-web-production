@@ -1,6 +1,6 @@
 "use client";
 
-import { TokenIcon } from "@/components/icons/tokenIcon";
+import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import { Icon } from "@/components/icons/icon";
 import { TroveIdentityRow } from "./trove-identity-row";
 import { TroveSummary } from "@/types/api/trove";
@@ -125,7 +125,7 @@ export function OpenSummaryCard({
             {deprecation.isPast ? (
               <>
                 The {batchManagerInfo?.name} delegate is no longer maintained and has been removed from the frontend.
-                Please move your position to a new delegate. <AnnouncementLink />
+                This position should be moved to a new delegate. <AnnouncementLink />
               </>
             ) : (
               <>
@@ -135,7 +135,7 @@ export function OpenSummaryCard({
                   day: "numeric",
                   year: "numeric",
                 })}
-                . Please move your position to a new delegate before this date. <AnnouncementLink />
+                . This position should be moved to a new delegate before this date. <AnnouncementLink />
               </>
             )}
           </p>
@@ -209,7 +209,7 @@ export function OpenSummaryCard({
                   <FadeNumber value={displayCollateral} animateOnMount={animateValues} />
                 </HighlightableValue>
               </span>
-              <TokenIcon assetSymbol={trove.collateralType} className="inline-block w-7 h-7" />
+              <TokenChipIcon symbol={trove.collateralType} size={28} filterable={false} />
             </div>
             <div className="text-xs mt-0.5 min-h-[1rem]">
               {collateralUsd !== null && collateralUsd > 0 ? (
@@ -242,7 +242,7 @@ export function OpenSummaryCard({
                   />
                 </HighlightableValue>
               </span>
-              <TokenIcon assetSymbol="BOLD" className="inline-block w-7 h-7" />
+              <TokenChipIcon symbol="BOLD" size={28} filterable={false} />
             </div>
             <div className="text-xs mt-0.5 text-rb-500">
               <HighlightableValue type="interestRate" state="after" value={displayInterestRate} className="text-rb-500">
@@ -279,7 +279,7 @@ export function OpenSummaryCard({
               {liqPrice !== null ? (
                 <span className="inline-flex items-center gap-1">
                   Liquidates at
-                  <TokenIcon assetSymbol={trove.collateralType} className="inline-block w-3.5 h-3.5" />
+                  <TokenChipIcon symbol={trove.collateralType} size={14} filterable={false} />
                   {fmtLiqPrice(liqPrice)}
                 </span>
               ) : expectsLiveState && !prices && displayDebt > 0 && displayCollateral > 0 ? (
