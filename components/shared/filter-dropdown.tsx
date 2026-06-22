@@ -127,7 +127,12 @@ export function FilterDropdown({
   // Normalize selected into a set for rendering
   const selectedSet = selected instanceof Set ? selected : selected ? new Set([selected]) : new Set<string>();
   const allKeys = options.map((o) => o.key);
-  const isAll = multi ? selectedSet.size === 0 || selectedSet.size === allKeys.length : selectedSet.size === 0;
+  // Multi-select callers pass `selected` as the explicit set of *shown* keys, so
+  // "all" means every key is present — NOT the empty set. Treating size 0 as
+  // "all" (the old shortcut) painted every row checked + an "All" label + no
+  // Reset when the user had actually filtered *everything* out, stranding them
+  // with 0 events and no way back. Empty now reads correctly as "none shown".
+  const isAll = multi ? selectedSet.size === allKeys.length : selectedSet.size === 0;
 
   // Build trigger label: "All", or "X, Y, and N more" when many selected
   const selectedLabels = (() => {
