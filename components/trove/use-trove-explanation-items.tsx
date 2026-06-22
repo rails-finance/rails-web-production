@@ -292,31 +292,46 @@ function buildOpenItems({
   }
 
   if (trove.batch.isMember) {
+    // Rate + delegate + cost folded into one bullet: the interest rate, who
+    // manages it and at what fee, and what the base interest plus delegate fee
+    // actually cost — one continuous thought rather than two split bullets.
     items.push(
-      <span key="delegated-rate" className="text-rb-500">
+      <span key="rate-cost" className="text-rb-500">
         <HighlightableValue type="interestRate" state="after" value={displayInterestRate}>
           {displayInterestRate}%
         </HighlightableValue>{" "}
         interest rate managed by{" "}
-        <HighlightableValue type="delegateName" state="after">
-          {batchManagerInfo?.name || "Batch Manager"}
-        </HighlightableValue>
-        {batchManagerInfo?.website && (
+        {batchManagerInfo?.website ? (
           <a
             href={batchManagerInfo.website}
             target="_blank"
             rel="noopener noreferrer"
-            className="-rotate-45 inline-flex items-center justify-center ml-0.5 bg-blue-500 w-4 h-4 rounded-full transition-colors hover:bg-blue-600 text-white"
-            aria-label={`Visit ${batchManagerInfo.name} website`}
+            title={`Visit ${batchManagerInfo.name} website`}
+            className="inline-flex items-center gap-0.5 hover:text-pink-500 transition-colors"
           >
-            <Link2 className="w-3 h-3" />
+            <HighlightableValue type="delegateName" state="after">
+              {batchManagerInfo.name}
+            </HighlightableValue>
+            <Link2 size={11} className="-rotate-45" aria-hidden="true" />
           </a>
+        ) : (
+          <HighlightableValue type="delegateName" state="after">
+            {batchManagerInfo?.name || "Batch Manager"}
+          </HighlightableValue>
         )}{" "}
-        with +
+        with a +
         <HighlightableValue type="managementFeeRate" state="after" value={trove.batch.managementFee}>
           {trove.batch.managementFee}%
         </HighlightableValue>{" "}
-        management fee costing ~
+        management fee. Base interest costs approximately{" "}
+        <HighlightableValue type="dailyInterest" state="after" value={dailyInterestCost}>
+          {formatPrice(dailyInterestCost)} BOLD
+        </HighlightableValue>{" "}
+        per day or{" "}
+        <HighlightableValue type="annualInterest" state="after" value={annualInterestCost}>
+          {formatPrice(annualInterestCost)} BOLD
+        </HighlightableValue>{" "}
+        per year, plus{" "}
         <HighlightableValue type="dailyManagementFee" state="after" value={dailyManagementFee}>
           {formatPrice(dailyManagementFee)} BOLD
         </HighlightableValue>{" "}
@@ -324,39 +339,34 @@ function buildOpenItems({
         <HighlightableValue type="annualManagementFee" state="after" value={annualManagementFee}>
           {formatPrice(annualManagementFee)} BOLD
         </HighlightableValue>{" "}
-        per year
+        per year in delegate fees
       </span>,
     );
   } else {
     items.push(
-      <span key="self-managed-rate" className="text-rb-500">
+      <span key="rate-cost" className="text-rb-500">
         Self-managed interest rate of{" "}
         <HighlightableValue type="interestRate" state="after" value={displayInterestRate}>
           {displayInterestRate}%
         </HighlightableValue>{" "}
-        accrues continuously on the principal debt
+        accrues continuously on the principal debt, costing approximately{" "}
+        <HighlightableValue type="dailyInterest" state="after" value={dailyInterestCost}>
+          {formatPrice(dailyInterestCost)} BOLD
+        </HighlightableValue>{" "}
+        per day or{" "}
+        <HighlightableValue type="annualInterest" state="after" value={annualInterestCost}>
+          {formatPrice(annualInterestCost)} BOLD
+        </HighlightableValue>{" "}
+        per year
       </span>,
     );
   }
 
-  items.push(
-    <span key="interest-cost" className="text-rb-500">
-      {trove.batch.isMember ? "Base interest" : "Current interest"} costs approximately{" "}
-      <HighlightableValue type="dailyInterest" state="after" value={dailyInterestCost}>
-        {formatPrice(dailyInterestCost)} BOLD
-      </HighlightableValue>{" "}
-      per day or{" "}
-      <HighlightableValue type="annualInterest" state="after" value={annualInterestCost}>
-        {formatPrice(annualInterestCost)} BOLD
-      </HighlightableValue>{" "}
-      per year
-    </span>,
-  );
-
   if (debtInFront !== null && debtInFront !== undefined) {
     items.push(
       <span key="debt-in-front" className="text-rb-500">
-        <span className="font-bold">{formatApproximate(debtInFront)} BOLD</span> of debt sits at the same or lower
+        <span className="font-bold text-foreground">{formatApproximate(debtInFront)} BOLD</span> of debt sits at the same
+        or lower
         interest rate and is exposed to redemption alongside this trove
         {trovesAhead !== null && trovesAhead !== undefined && (
           <span>
@@ -377,9 +387,18 @@ function buildOpenItems({
     items.push(
       <span key="nft-info" className="text-rb-500">
         A transferable{" "}
-        <HighlightableValue type="nftToken" state="after">
-          NFT
-        </HighlightableValue>{" "}
+        <a
+          href={nftUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          title="View NFT on OpenSea"
+          className="inline-flex items-center gap-0.5 hover:text-pink-500 transition-colors"
+        >
+          <HighlightableValue type="nftToken" state="after">
+            NFT
+          </HighlightableValue>
+          <Link2 size={11} className="-rotate-45" aria-hidden="true" />
+        </a>{" "}
         representing trove{" "}
         <HighlightableValue
           type="troveId"

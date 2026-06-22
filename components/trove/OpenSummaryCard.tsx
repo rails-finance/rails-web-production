@@ -155,6 +155,10 @@ export function OpenSummaryCard({
               owner={trove.owner}
               lastOwner={trove.lastOwner}
               ownerEns={trove.ownerEns}
+              // Detail page (expectsLiveState) carries the OpenSea link in its
+              // footnote NFT bullet, so drop the redundant header chip there;
+              // listing cards have no footnote and keep it.
+              showNftLink={!expectsLiveState}
             />
             {/* Delegate marker — name lives in the row below the card, the
                 pink icon here is just a status flag (pink = external party). */}

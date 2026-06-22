@@ -23,6 +23,7 @@ export function TroveIdentityRow({
   lastOwner,
   ownerEns,
   showFavourite = true,
+  showNftLink = true,
 }: {
   troveId?: string;
   collateralType?: string;
@@ -33,6 +34,11 @@ export function TroveIdentityRow({
    *  (listing + detail, open/closed/liquidated) carries it. Pass false to
    *  suppress in a context that shouldn't offer favouriting. */
   showFavourite?: boolean;
+  /** OpenSea NFT icon-link after the trove-id chip. On by default for listing
+   *  cards. The open detail card passes false — its footnote carries the NFT
+   *  link in plain language, so the header chip would be a redundant second
+   *  copy. */
+  showNftLink?: boolean;
 }) {
   const router = useRouter();
   const [copiedTrove, setCopiedTrove] = useState(false);
@@ -110,7 +116,7 @@ export function TroveIdentityRow({
           </button>
         </span>
       )}
-      {nftUrl && (
+      {nftUrl && showNftLink && (
         // <button> instead of <a> because this row renders inside cards that
         // are wrapped in a Next <Link> on the listing pages — nested anchors
         // are invalid HTML and trigger a hydration warning. window.open with

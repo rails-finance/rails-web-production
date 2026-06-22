@@ -6,18 +6,26 @@ import { useHover, ValueType, ValueState } from "../context/HoverContext";
 // (the headline grid + identity row). Per the highlight rule — see <V> in
 // liquity-event-explainer and the matching comment in the Aave sibling
 // aave-v4-position-explanation — a value in explanation prose renders
-// foreground (+ the always-on bold) ONLY when the same figure is shown on the
-// card, so a bold figure in the prose always maps to one the reader can locate
-// above it. Derived figures the card never shows (principal, accrued interest,
-// daily/annual cost, management fee, spot price, durations, …) stay in the
-// muted body tone. Callers can still override with an explicit `className`
-// (the card-side stats do, e.g. text-foreground/80, text-green-400).
+// foreground AND bold (the two travel together) ONLY when the same figure is
+// shown on the card, so a bold figure in the prose always maps to one the
+// reader can locate above it. Derived figures the card never shows (principal,
+// accrued interest, daily/annual cost, management fee, spot price, durations,
+// …) stay regular-weight in the muted body tone — they're never bold-but-muted.
+// Callers can still override with an explicit `className` (the card-side stats
+// do, e.g. text-foreground/80, text-green-400); an override implies emphasis,
+// so it keeps the bold weight.
 const CARD_MIRRORED_TYPES: ReadonlySet<ValueType> = new Set<ValueType>([
   "collateral",
   "collateralUsd",
   "collRatio",
   "debt",
   "interestRate",
+  // The trove card's costs line now surfaces the annual base-interest cost
+  // ("Costs: ~595.18 year") and the delegate fee rate ("+0.3%"), so both lift
+  // to the mirrored bold+foreground style. The per-day and BOLD/yr fee figures
+  // the card omits stay muted body tone.
+  "annualInterest",
+  "managementFeeRate",
   "peakDebt",
   "peakCollateral",
   "troveId",
@@ -48,7 +56,12 @@ export function HighlightableValue({
 
   // When no explicit color is passed, derive it from the type: card-mirrored
   // values lift to foreground, everything else stays muted body tone.
-  const colorClass = className ?? (CARD_MIRRORED_TYPES.has(type) ? "text-foreground" : "text-rb-500");
+  const isMirrored = CARD_MIRRORED_TYPES.has(type);
+  const colorClass = className ?? (isMirrored ? "text-foreground" : "text-rb-500");
+  // Weight tracks the foreground lift so bold ⟺ foreground: emphasise only
+  // mirrored values (or where a caller opts in via className). Derived prose
+  // figures stay regular weight — never bold-but-muted.
+  const weightClass = asBlock ? "inline-block" : className || isMirrored ? "font-bold" : "font-normal";
 
   // Enable hover interactions when hover is enabled
   const shouldEnableHover = hoverEnabled;
@@ -70,7 +83,7 @@ export function HighlightableValue({
 
   return (
     <Component
-      className={`${asBlock ? "inline-block" : "font-bold"} ${shouldEnableHover ? "cursor-pointer " : ""} ${colorClass} ${getHighlightClass()} whitespace-nowrap`}
+      className={`${weightClass} ${shouldEnableHover ? "cursor-pointer " : ""} ${colorClass} ${getHighlightClass()} whitespace-nowrap`}
       onMouseEnter={shouldEnableHover ? () => setHoveredValue({ type, state, value }) : undefined}
       onMouseLeave={shouldEnableHover ? () => setHoveredValue(null) : undefined}
     >
