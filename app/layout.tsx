@@ -59,7 +59,7 @@ export const metadata: Metadata = {
     siteName: "Rails",
     images: [
       {
-        url: "/og-image.png",
+        url: "/rails-og.png",
         width: 1200,
         height: 630,
         alt: "Rails - DeFi Protocol Explorers",
@@ -71,7 +71,7 @@ export const metadata: Metadata = {
     title: "Rails - DeFi Protocol Explorers",
     description:
       "Dedicated explorers for DeFi protocols — on-chain-verifiable positions, timelines, and event detail. Live now: Liquity V2 and Aave V4.",
-    images: ["/twitter-image.png"],
+    images: ["/rails-og.png"],
     creator: "@rails_finance",
     site: "@rails_finance",
   },

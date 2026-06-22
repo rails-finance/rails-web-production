@@ -8,6 +8,7 @@ export const metadata: Metadata = {
     title: "Terms of Service | Rails",
     description: "Rails Terms of Service. Read about acceptable use, disclaimers, and limitations.",
     url: "https://rails.finance/terms",
+    images: ["/rails-og.png"],
   },
   robots: {
     index: true,

@@ -11,6 +11,7 @@ export const metadata: Metadata = {
     description:
       "Insights and updates from the Rails team about DeFi analytics, transaction explanations, and building better support infrastructure.",
     url: "https://rails.finance/blog",
+    images: ["/rails-og.png"],
   },
 };
 

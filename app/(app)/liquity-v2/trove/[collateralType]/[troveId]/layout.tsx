@@ -25,11 +25,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: `View detailed transaction timeline and analytics for Trove ${troveId} with ${collateralDisplay} collateral.`,
       url: `https://rails.finance/liquity-v2/trove/${collateralType}/${troveId}`,
       type: "website",
+      images: ["/rails-og.png"],
     },
     twitter: {
       card: "summary_large_image",
       title: `Liquity V2 ${collateralDisplay}/BOLD ${truncatedTroveId}`,
       description: `View detailed transaction timeline and analytics for Trove ${troveId} with ${collateralDisplay} collateral.`,
+      images: ["/rails-og.png"],
     },
   };
 }

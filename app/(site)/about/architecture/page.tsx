@@ -10,6 +10,7 @@ export const metadata: Metadata = {
     title: "Technical Architecture — Rails",
     description: "How Rails processes and serves blockchain data accurately, layer by layer.",
     url: "https://rails.finance/about/architecture",
+    images: ["/rails-og.png"],
   },
 };
 
