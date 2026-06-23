@@ -69,7 +69,7 @@ export function AaveV4PaginationControls({
             aria-label={`Page ${num}${num === currentPage ? ", current page" : ""}`}
             aria-current={num === currentPage ? "page" : undefined}
             className={`cursor-pointer text-foreground px-2 sm:px-3 py-0.5 font-bold rounded-lg transition-colors ${focusStyles} ${
-              num === currentPage ? "bg-rb-200 dark:bg-rb-700 text-foreground" : "hover:bg-rb-200 dark:hover:bg-rb-800"
+              num === currentPage ? "bg-rb-200 dark:bg-rb-900 text-foreground" : "hover:bg-rb-200 dark:hover:bg-rb-800"
             }`}
           >
             {num}
@@ -82,7 +82,7 @@ export function AaveV4PaginationControls({
             <button
               onClick={() => onPageChange(totalPages)}
               aria-label="Go to last page"
-              className={`cursor-pointer px-2 sm:px-3 py-0.5 font-bold text-foreground rounded-lg dark:bg-rb-800 hover:bg-rb-200 dark:hover:bg-rb-800 transition-colors duration-150 ${focusStyles}`}
+              className={`cursor-pointer px-2 sm:px-3 py-0.5 font-bold text-foreground rounded-lg hover:bg-rb-200 dark:hover:bg-rb-800 transition-colors duration-150 ${focusStyles}`}
             >
               {totalPages}
             </button>
