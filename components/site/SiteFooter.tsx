@@ -1,7 +1,12 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { FooterThemeToggle } from "@/components/shared/FooterThemeToggle";
+import { DonateModal } from "@/components/site/DonateModal";
 
 export function SiteFooter() {
+  const [donateOpen, setDonateOpen] = useState(false);
   // Footer rail links are deliberately dumb — they land on the protocol's
   // home page (`/aave-v4`, `/liquity-v2`) where the search box is the wallet
   // entry point (with recent/pinned in its dropdown). The chrome stays
@@ -138,15 +143,15 @@ export function SiteFooter() {
           <div>
             <h4 className="text-sm font-semibold text-foreground mb-3">Support Rails</h4>
             <p className="body-text mb-3">Help us continue building tools for the DeFi community</p>
-            <a
-              href="https://etherscan.io/name-lookup-search?id=donate.rails.eth"
-              className="inline-block bg-pink-600 hover:bg-pink-700 dark:bg-pink-500 dark:hover:bg-pink-600 text-white text-sm font-bold px-4 py-2 rounded-full transition-colors duration-150"
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={() => setDonateOpen(true)}
+              className="inline-block bg-pink-600 hover:bg-pink-700 dark:bg-pink-500 dark:hover:bg-pink-600 text-white text-sm font-bold px-4 py-2 rounded-full transition-colors duration-150 cursor-pointer"
             >
               donate.rails.eth
-            </a>
+            </button>
           </div>
+
+          {donateOpen && <DonateModal onClose={() => setDonateOpen(false)} />}
         </div>
 
         {/* Bottom Section */}
