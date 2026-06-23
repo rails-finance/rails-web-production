@@ -109,7 +109,9 @@ function buildInterestItems(pnl: AaveV4InterestPnl): React.ReactNode[] {
  */
 function buildSpokePositionItems(spoke: AaveSpokeCardInfo): React.ReactNode[] {
   const items: React.ReactNode[] = [];
-  const supplyOnly = spoke.totalDebtUsd < 1;
+  // Any live debt = borrowing (no dust floor) so the "no debt drawn" prose only
+  // appears when debt is genuinely 0 — matches the card headline + runway.
+  const supplyOnly = spoke.totalDebtUsd <= 0;
   const supplyStr = joinSymbols(spoke.supplyingSymbols);
   const borrowStr = joinSymbols(spoke.borrowingSymbols);
 

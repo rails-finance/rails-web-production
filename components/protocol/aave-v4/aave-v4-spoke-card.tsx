@@ -115,15 +115,13 @@ function AaveV4SpokeCard({
   // Debt / HF columns). Which question decides it depends on the card's mode:
   //   - Closed card = history view: peak debt is the headline, so supply-only
   //     means the position NEVER carried real debt (peakDebt < $1).
-  //   - Open card = live view: a position whose debt is now dust reads as
-  //     supply-only regardless of history — a past borrow or liquidation lives
-  //     in the badge + timeline, not as a live $0-Debt / ∞-HF / borrow-rate
-  //     triple on the headline.
-  // Underwater is the open-card exception: HF < 1 is a liquidatable fact at any
-  // size, so it keeps the full risk readout rather than collapse to a lone
-  // "Supplied" that contradicts its LIQUIDATABLE pill.
-  const underwater = spoke.healthFactor != null && spoke.healthFactor < 1;
-  const supplyOnly = isClosed ? spoke.peakDebtUsd < 1 : spoke.totalDebtUsd < 1 && !underwater;
+  //   - Open card = live view: ANY live debt counts as borrowing — there is no
+  //     dust floor here. A sub-dollar leftover borrow still shows its Debt + HF
+  //     columns, so the headline agrees with the "Borrowing" pill and the
+  //     liquidation runway beneath it (both key off debt > 0). An earlier `< $1`
+  //     collapse made those three disagree: a ~$0.57 loan read as a lone
+  //     "Supplied" up top while the pill + runway called it an active loan.
+  const supplyOnly = isClosed ? spoke.peakDebtUsd < 1 : spoke.totalDebtUsd <= 0;
   const bucket = bucketForHealth(spoke.healthFactor);
   const walletPill = wallet ? (
     <WalletPill wallet={wallet} ensName={ensName ?? null} href={walletHref} favouriteProtocol="aave-v4" />

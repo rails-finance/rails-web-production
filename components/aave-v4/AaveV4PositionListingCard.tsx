@@ -88,13 +88,12 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
   const healthFactor = row.healthFactor;
   const hasDebt = healthFactor != null;
   const bucket = bucketForHealth(healthFactor);
-  // Live view: a position whose current debt is dust (< $1) reads as supply-only
-  // regardless of any past borrow or liquidation — that history is carried by
-  // the LiquidatedBadge + timeline, not by a live $0-Debt / ∞-HF / borrow-rate
-  // triple on the headline. Underwater is the exception: HF < 1 is a
-  // liquidatable fact at any size, so it keeps the full risk readout.
-  const underwater = healthFactor != null && healthFactor < 1;
-  const supplyOnly = sim.totalDebtUsd < 1 && !underwater;
+  // Live view: ANY live debt counts as borrowing — no dust floor. A sub-dollar
+  // leftover borrow still shows its full Debt / HF readout so the headline
+  // agrees with the "Borrowing" pill (both key off debt > 0). Past borrows or
+  // liquidations on an otherwise debt-free position stay carried by the
+  // LiquidatedBadge + timeline, since debt is genuinely 0 there.
+  const supplyOnly = sim.totalDebtUsd <= 0;
   // Chain overlay failed for this row → balances are MV-indexed (potentially
   // drifted from on-chain). The card still renders; the indicator warns.
   const hfStale = hasDebt && row.chainHfStale;
