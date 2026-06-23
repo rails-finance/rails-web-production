@@ -142,7 +142,7 @@ export function SiteFooter() {
           {/* Support */}
           <div>
             <h4 className="text-sm font-semibold text-foreground mb-3">Support Rails</h4>
-            <p className="body-text mb-3">Help us continue building tools for the DeFi community</p>
+            <p className="body-text mb-3">Help us continue building tools for DeFi users</p>
             <button
               onClick={() => setDonateOpen(true)}
               className="inline-block bg-pink-600 hover:bg-pink-700 dark:bg-pink-500 dark:hover:bg-pink-600 text-white text-sm font-bold px-4 py-2 rounded-full transition-colors duration-150 cursor-pointer"
