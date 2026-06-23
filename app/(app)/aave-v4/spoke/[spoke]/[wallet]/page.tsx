@@ -825,7 +825,7 @@ function AaveV4SpokeRunwayBlock({
               Outstanding debt already includes accrued borrow interest — it&apos;s the live on-chain balance.
             </span>
           </div>
-          <LearnMore content={aaveV4EconomicsContent({ hasRunway: true })} />
+          <LearnMore content={aaveV4EconomicsContent()} />
         </div>
       </InfoDisclosure>
     </div>
@@ -941,7 +941,7 @@ function AaveV4SpokeTowerBlock({
               </span>
             </div>
           )}
-          <LearnMore content={aaveV4EconomicsContent({ hasRunway: false })} />
+          <LearnMore content={aaveV4EconomicsContent()} />
         </div>
       </InfoDisclosure>
     </div>

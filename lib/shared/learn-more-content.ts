@@ -657,41 +657,34 @@ export function aaveV4PositionFallbackContent(): LearnMoreContent {
 
 // ── Aave V4 — Economics panel ────────────────────────────────────────────────
 //
-// State-explainer for the spoke economics band (lifetime towers + price
-// runways + health factor). Scoped to that band, distinct from the position
+// State-explainer for the spoke economics section (lifetime towers + price
+// runways + health factor). Scoped to that section, distinct from the position
 // panel's "About this position".
-// `hasRunway` is false for supply-only positions (no debt → no liquidation
-// price runway). In that case the copy drops every runway / liquidation-cushion
-// reference so the modal doesn't promise a band the position never shows.
-export function aaveV4EconomicsContent({ hasRunway = true }: { hasRunway?: boolean } = {}): LearnMoreContent {
+//
+// Layer-2 modal: it explains how the economics section works *in general* and
+// must read identically on every position — so it takes no per-position arguments
+// and never branches on live state (e.g. whether this wallet currently carries
+// debt). A supply-only position simply doesn't render the runway sub-section; the
+// modal still teaches what it shows. See migration/learn-more-modal-grammar.md §1.
+export function aaveV4EconomicsContent(): LearnMoreContent {
   return {
     title: "About the Economics",
-    intro: hasRunway
-      ? "This band traces the position's supply and borrow flows over its lifetime and shows how much price cushion each collateral asset has before liquidation."
-      : "This band traces the position's supply and borrow flows over its lifetime — every supply and withdrawal, not just the current balance.",
+    intro:
+      "This section traces a position's supply and borrow flows over its lifetime and shows how much price cushion each collateral asset has before liquidation.",
     detailsHeading: "Key concepts:",
     details: [
       {
         bold: "Lifetime flows",
         text: "the towers show every supply, withdrawal, borrow, and repayment over the position's life — not just the current balance.",
       },
-      ...(hasRunway
-        ? [
-            {
-              bold: "Price runway",
-              text: "how far each collateral asset's price can fall before it reaches the liquidation price.",
-            },
-            {
-              bold: "Health factor",
-              text: "the single safety number for the whole spoke; a runway is exhausted when the position's health factor would hit 1.0.",
-            },
-          ]
-        : [
-            {
-              bold: "No debt, no liquidation",
-              text: "this position carries no borrows, so there's no health factor or liquidation runway to track — the supplied assets aren't backing a loan.",
-            },
-          ]),
+      {
+        bold: "Price runway",
+        text: "for a borrowing position, how far each collateral asset's price can fall before it reaches the liquidation price.",
+      },
+      {
+        bold: "Health factor",
+        text: "the single safety number for the whole spoke; a runway is exhausted when the position's health factor would hit 1.0. A position with no borrows has no health factor or liquidation risk to track.",
+      },
     ],
     links: [
       { label: "Aave V4 positions", url: AAVE_FAQ_URLS.V4_POSITIONS },
