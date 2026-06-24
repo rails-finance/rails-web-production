@@ -43,8 +43,6 @@ const SPOKE_SLUG_TO_NAME: Record<string, string> = {
   etherfi: "EtherFi",
   kelp: "Kelp",
   lido: "Lido",
-  // API emits "Lombard BTC" as the display name; spoke-meta keys it under
-  // "Lombard" (older copy). Both aliases resolve to the same slug below.
   lombard: "Lombard BTC",
   treasury: "Treasury",
   "global-dollar": "Global Dollar",
@@ -52,8 +50,8 @@ const SPOKE_SLUG_TO_NAME: Record<string, string> = {
 
 const SPOKE_NAME_TO_SLUG: Record<string, string> = {
   ...Object.fromEntries(Object.entries(SPOKE_SLUG_TO_NAME).map(([slug, name]) => [name, slug])),
-  // Alias: the older "Lombard" label (used by SPOKE_META keys) maps to the
-  // same slug as the API's "Lombard BTC".
+  // Alias: the older "Lombard" label maps to the same slug as the API's
+  // "Lombard BTC".
   Lombard: "lombard",
 };
 
@@ -209,8 +207,8 @@ export const SPOKE_META: Record<string, SpokeMeta> = {
     // TODO copy: confirm lido LST scope.
     narrative: ["Lido Spoke on the Core Hub.", "Built around stETH / wstETH liquid-staking collateral."],
   },
-  Lombard: {
-    name: "Lombard",
+  "Lombard BTC": {
+    name: "Lombard BTC",
     archetype: "ecosystem",
     collateralHub: "Core",
     borrowHub: "Core",
@@ -235,7 +233,8 @@ export const SPOKE_META: Record<string, SpokeMeta> = {
 };
 
 export function getSpokeMeta(name: string): SpokeMeta | null {
-  return SPOKE_META[name] ?? null;
+  const canonicalName = name === "Lombard" ? "Lombard BTC" : name;
+  return SPOKE_META[canonicalName] ?? null;
 }
 
 export const ARCHETYPE_LABEL: Record<SpokeArchetype, string> = {
