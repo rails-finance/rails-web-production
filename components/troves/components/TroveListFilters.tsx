@@ -13,6 +13,7 @@ import { ChevronDown, Search, X, ArrowUp, ArrowDown } from "lucide-react";
 import { CTRL_GHOST, CTRL_OFF, CTRL_ON, OVERLAY_HEADING } from "@/lib/shared/ui-grammar";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { WalletHistoryDropdown } from "@/components/shared/wallet-history-dropdown";
+import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import { upsertSession } from "@/lib/shared/sessions";
 import { FilterSections } from "@/components/shared/filter-bar/filter-sections";
 import { FilterChips } from "@/components/shared/filter-bar/filter-chips";
@@ -124,23 +125,15 @@ export function TroveListFilters({
     onFiltersChange({ ...filters, troveId: undefined, ownerAddress: undefined, ownerEns: undefined });
   };
 
-  // Collateral options carry the token + BOLD overlay icon pair used across the
-  // Liquity rail.
+  // Collateral options use the same single-token chip icon the position view
+  // renders (TokenChipIcon) so the dropdown matches the protocol view — no BOLD
+  // badge overlay.
   const collateralOptions = useMemo<FilterOptionDef[]>(
     () =>
       availableCollateralTypes.map((type) => ({
         value: type,
         label: type,
-        icon: (
-          <span className="inline-flex">
-            <svg className="w-5 h-5" aria-hidden="true">
-              <use href={`#icon-${type.toLowerCase().replace("weth", "eth")}`} />
-            </svg>
-            <svg className="w-5 h-5 -ml-2.5" aria-hidden="true">
-              <use href="#icon-bold" />
-            </svg>
-          </span>
-        ),
+        icon: <TokenChipIcon symbol={type} size={20} filterable={false} />,
       })),
     [availableCollateralTypes],
   );
