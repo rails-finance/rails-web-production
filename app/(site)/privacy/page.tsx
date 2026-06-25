@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     title: "Privacy Policy | Rails",
     description: "Rails Privacy Policy. Learn how we handle data and protect your privacy.",
     url: "https://rails.finance/privacy",
-    images: ["/rails-og.png"],
+    images: ["/og/home.png"],
   },
   robots: {
     index: true,

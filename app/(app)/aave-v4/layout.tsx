@@ -10,13 +10,13 @@ export const metadata: Metadata = {
       "Explore Aave V4 wallet activity across all 11 spokes — supply, borrow, liquidations, and collateral toggles per market.",
     url: "https://rails.finance/aave-v4",
     type: "website",
-    images: ["/rails-og.png"],
+    images: ["/og/explore-aave-v4.png"],
   },
   twitter: {
     card: "summary_large_image",
     title: "Rails | Explore Aave V4",
     description: "Explore Aave V4 wallet activity across all 11 spokes.",
-    images: ["/rails-og.png"],
+    images: ["/og/explore-aave-v4.png"],
   },
 };
 

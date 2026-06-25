@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     description:
       "Insights and updates from the Rails team about DeFi analytics, transaction explanations, and building better support infrastructure.",
     url: "https://rails.finance/blog",
-    images: ["/rails-og.png"],
+    images: ["/og/home.png"],
   },
 };
 
@@ -22,9 +22,7 @@ export default function BlogPage() {
         <h1 className="font-sans font-semibold tracking-tight leading-tight text-foreground text-[clamp(28px,4.5vw,48px)] mb-4">
           Blog
         </h1>
-        <p className="text-xl text-rb-500">
-          Insights, updates, and stories from the Rails team.
-        </p>
+        <p className="text-xl text-rb-500">Insights, updates, and stories from the Rails team.</p>
       </div>
 
       <div className="grid sm:grid-cols-2 gap-8">

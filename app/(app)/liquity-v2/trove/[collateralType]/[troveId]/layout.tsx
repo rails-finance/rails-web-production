@@ -25,13 +25,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: `View detailed transaction timeline and analytics for Trove ${troveId} with ${collateralDisplay} collateral.`,
       url: `https://rails.finance/liquity-v2/trove/${collateralType}/${troveId}`,
       type: "website",
-      images: ["/rails-og.png"],
+      // No trove-specific share image: reuse the Explore Liquity V2 card. This
+      // must be set explicitly — a defined openGraph block shadows the parent's
+      // images rather than merging them in.
+      images: ["/og/explore-liquity-v2.png"],
     },
     twitter: {
       card: "summary_large_image",
       title: `Liquity V2 ${collateralDisplay}/BOLD ${truncatedTroveId}`,
       description: `View detailed transaction timeline and analytics for Trove ${troveId} with ${collateralDisplay} collateral.`,
-      images: ["/rails-og.png"],
+      images: ["/og/explore-liquity-v2.png"],
     },
   };
 }

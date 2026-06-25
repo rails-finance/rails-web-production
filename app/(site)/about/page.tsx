@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     title: "About Rails",
     description: "Dedicated explorers for DeFi protocols. What Rails does, the roadmap, the team, the supporters.",
     url: "https://rails.finance/about",
-    images: ["/rails-og.png"],
+    images: ["/og/home.png"],
   },
 };
 
