@@ -14,6 +14,23 @@
     }
   },
   {
+    "id": "rails-2026-stani-aave-v4",
+    "date": "2026-06-24T00:00:00Z",
+    "type": "post",
+    "platform": "x",
+    "author": "StaniKulechov",
+    "authorUrl": "https://x.com/StaniKulechov",
+    "postUrl": "https://x.com/StaniKulechov/status/2069669677379293206",
+    "content": "New explorer dropped for Aave V4.",
+    "subtitle": "Aave founder Stani Kulechov quote-tweeting the Rails Aave V4 explorer launch",
+    "metrics": {
+      "likes": 102,
+      "reposts": 6,
+      "replies": 13,
+      "views": 15000
+    }
+  },
+  {
     "id": "rails-2025-001",
     "date": "2025-07-30T16:13:00Z",
     "type": "post",

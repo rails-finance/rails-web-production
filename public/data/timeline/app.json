@@ -26,6 +26,7 @@
     "author": "rails.finance",
     "iconUrl": "/icons/protocols/aave-v4.png",
     "postUrl": "/aave-v4",
-    "content": "Soft launch: the Aave V4 explorer is live. Browse multi-spoke positions with chain-truth health factors, liquidation prices, net APY, and full event timelines."
+    "content": "Soft launch: the Aave V4 explorer is live.",
+    "subtitle": "Browse multi-spoke positions with chain-truth health factors, liquidation prices, net APY, and full event timelines."
   }
 ]

@@ -108,7 +108,7 @@ export function PulseContent({ event }: { event: TimelineEvent }) {
           ) : (
             <div>
               <p>
-                <span className="text-rb-500 font-medium">{event.content}</span>
+                <span className="text-foreground font-medium">{event.content}</span>
               </p>
               {event.subtitle && <p className="mt-1.5 text-sm text-rb-500 font-normal">{event.subtitle}</p>}
             </div>
