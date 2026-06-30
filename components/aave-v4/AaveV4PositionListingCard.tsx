@@ -34,7 +34,12 @@ import { SPOKE_HUB } from "@/components/protocol/aave-v4/aave-v4-spoke-constants
 import { LiquidatedBadge } from "@/components/aave-v4/LiquidatedBadge";
 import { WalletPill } from "@/components/aave-v4/wallet-pill";
 import { fmtUsd, hfLabel } from "@/lib/aave-v4/format";
-import { simulateAaveV4Position, computeSupplyBreakdown, type SimPositionInputs } from "@/lib/aave-v4/utils/simulate";
+import {
+  simulateAaveV4Position,
+  computeSupplyBreakdown,
+  type SimPositionInputs,
+  type BreakdownAsset,
+} from "@/lib/aave-v4/utils/simulate";
 import { liquidationBufferFrom } from "@/lib/aave-v4/spoke-cards";
 import { AaveV4LiquidationFootnote } from "@/components/protocol/aave-v4/aave-v4-liquidation-footnote";
 
@@ -44,8 +49,8 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
   const sim = useMemo(() => {
     const supplies: SimPositionInputs["supplies"] = [];
     const debts: SimPositionInputs["debts"] = [];
-    const supplyingSymbols: string[] = [];
-    const borrowingSymbols: string[] = [];
+    const supplyingSymbols: BreakdownAsset[] = [];
+    const borrowingSymbols: BreakdownAsset[] = [];
 
     for (const r of row.reserves) {
       const price = r.usdPrice ?? 0;
@@ -54,16 +59,17 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
       if (supply > 0) {
         supplies.push({
           symbol: r.symbol,
+          hub: r.hub,
           amount: supply,
           price,
           lt: r.lt ?? 0,
           collateralEnabled: r.isCollateral,
         });
-        supplyingSymbols.push(r.symbol);
+        supplyingSymbols.push({ symbol: r.symbol, hub: r.hub });
       }
       if (debt > 0) {
-        debts.push({ symbol: r.symbol, amount: debt, price });
-        borrowingSymbols.push(r.symbol);
+        debts.push({ symbol: r.symbol, hub: r.hub, amount: debt, price });
+        borrowingSymbols.push({ symbol: r.symbol, hub: r.hub });
       }
     }
 

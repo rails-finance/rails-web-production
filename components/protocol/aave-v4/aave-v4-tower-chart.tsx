@@ -91,6 +91,9 @@ const LIFETIME_DUST_USD = 0.01;
 
 interface AssetRow {
   symbol: string;
+  /** Hub (Core/Plus/Prime). Same asset can appear under two hubs as two
+   *  distinct reserves; carried so segments/legends key and label them apart. */
+  hub?: "core" | "plus" | "prime";
   // Lifetime totals — drive the historical-view side bars and breakdown rows.
   supplied: number;
   withdrawn: number;
@@ -108,6 +111,12 @@ interface AssetRow {
   netDebtUsd: number;
   isClosed: boolean;
   hasHistoricActivity: boolean;
+}
+
+/** " · Core" etc. — appended to a reserve's label so two same-symbol reserves
+ *  drawn from different hubs read as distinct rows. Empty when hub is unknown. */
+function hubSuffix(hub?: "core" | "plus" | "prime" | null): string {
+  return hub ? ` · ${hub.charAt(0).toUpperCase()}${hub.slice(1)}` : "";
 }
 
 function AaveChartDisplayMenu({
@@ -216,6 +225,7 @@ export function AaveV4TowerChart({
         r.liquidatedCollateral > 0;
       return {
         symbol: r.symbol,
+        hub: r.hub,
         supplied: r.supplied,
         withdrawn: r.withdrawn,
         borrowed: r.borrowed,
@@ -267,19 +277,24 @@ export function AaveV4TowerChart({
   const totalBorrowedUsd = allRows.reduce((s, r) => s + (r.netDebt + r.repaid + r.liquidatedDebt) * r.price, 0);
 
   const withdrawnAssets = allRows
-    .map((r) => ({ symbol: r.symbol, amount: r.withdrawn, usd: r.withdrawn * r.price }))
+    .map((r) => ({ symbol: r.symbol, hub: r.hub, amount: r.withdrawn, usd: r.withdrawn * r.price }))
     .filter((r) => r.usd > LIFETIME_DUST_USD)
     .sort((a, b) => b.usd - a.usd);
   const repaidAssets = allRows
-    .map((r) => ({ symbol: r.symbol, amount: r.repaid, usd: r.repaid * r.price }))
+    .map((r) => ({ symbol: r.symbol, hub: r.hub, amount: r.repaid, usd: r.repaid * r.price }))
     .filter((r) => r.usd > LIFETIME_DUST_USD)
     .sort((a, b) => b.usd - a.usd);
   const liquidatedCollAssets = allRows
-    .map((r) => ({ symbol: r.symbol, amount: r.liquidatedCollateral, usd: r.liquidatedCollateral * r.price }))
+    .map((r) => ({
+      symbol: r.symbol,
+      hub: r.hub,
+      amount: r.liquidatedCollateral,
+      usd: r.liquidatedCollateral * r.price,
+    }))
     .filter((r) => r.usd > LIFETIME_DUST_USD)
     .sort((a, b) => b.usd - a.usd);
   const liquidatedDebtAssets = allRows
-    .map((r) => ({ symbol: r.symbol, amount: r.liquidatedDebt, usd: r.liquidatedDebt * r.price }))
+    .map((r) => ({ symbol: r.symbol, hub: r.hub, amount: r.liquidatedDebt, usd: r.liquidatedDebt * r.price }))
     .filter((r) => r.usd > LIFETIME_DUST_USD)
     .sort((a, b) => b.usd - a.usd);
 
@@ -347,16 +362,23 @@ export function AaveV4TowerChart({
 
   // Tooltip for a merged block: the category total, then the per-asset
   // constituents that were folded in (capped, with an "+N more" overflow).
-  const mergedTip = (items: { symbol: string; usd: number }[], total: number, dir: "in" | "out") => (
+  const mergedTip = (
+    items: { symbol: string; hub?: "core" | "plus" | "prime"; usd: number }[],
+    total: number,
+    dir: "in" | "out",
+  ) => (
     <div className="space-y-1">
       <div className="flex items-center gap-1.5 font-medium">
         {dirArrow(dir)}
         <span className="ml-auto tabular-nums">{fmtUsd(total).title}</span>
       </div>
       {items.slice(0, 6).map((i) => (
-        <div key={i.symbol} className="flex items-center gap-1.5 text-rb-500">
+        <div key={`${i.symbol}-${i.hub ?? ""}`} className="flex items-center gap-1.5 text-rb-500">
           <TokenChipIcon symbol={i.symbol} size={12} filterable={false} />
-          <span>{aaveV4DisplaySymbol(i.symbol)}</span>
+          <span>
+            {aaveV4DisplaySymbol(i.symbol)}
+            {hubSuffix(i.hub)}
+          </span>
           <span className="ml-auto tabular-nums">{fmtUsd(i.usd).title}</span>
         </div>
       ))}
@@ -382,7 +404,7 @@ export function AaveV4TowerChart({
           value: total,
           colorClass,
           tooltip: mergedTip(
-            assets.map((r) => ({ symbol: r.symbol, usd: usdOf(r) })),
+            assets.map((r) => ({ symbol: r.symbol, hub: r.hub, usd: usdOf(r) })),
             total,
             dir,
           ),
@@ -390,8 +412,8 @@ export function AaveV4TowerChart({
       ];
     }
     return assets.map((r) => ({
-      key: `${keyPrefix}-${r.symbol}`,
-      label: aaveV4DisplaySymbol(r.symbol),
+      key: `${keyPrefix}-${r.symbol}-${r.hub ?? ""}`,
+      label: `${aaveV4DisplaySymbol(r.symbol)}${hubSuffix(r.hub)}`,
       value: usdOf(r),
       colorClass,
       tooltip: tipBody(r.symbol, usdOf(r), dir),
@@ -402,7 +424,7 @@ export function AaveV4TowerChart({
   // block when grouped & ≥2, else one hatched segment per asset (reversed so the
   // largest sits nearest the active segments, as before).
   const flowSegs = (
-    items: { symbol: string; amount: number; usd: number }[],
+    items: { symbol: string; hub?: "core" | "plus" | "prime"; amount: number; usd: number }[],
     pattern: CSSProperties,
     keyPrefix: string,
     mergedLabel: string,
@@ -422,8 +444,8 @@ export function AaveV4TowerChart({
       ];
     }
     return [...items].reverse().map((i) => ({
-      key: `${keyPrefix}-${i.symbol}`,
-      label: `${aaveV4DisplaySymbol(i.symbol)} ${mergedLabel.toLowerCase()}`,
+      key: `${keyPrefix}-${i.symbol}-${i.hub ?? ""}`,
+      label: `${aaveV4DisplaySymbol(i.symbol)}${hubSuffix(i.hub)} ${mergedLabel.toLowerCase()}`,
       value: i.usd,
       colorClass: "",
       patternStyle: pattern,
@@ -477,7 +499,7 @@ export function AaveV4TowerChart({
   // single USD row when grouped & ≥2 (no icon — the row is a sum across assets),
   // else per-asset rows with the native amount + icon as before.
   const flowRows = (
-    items: { symbol: string; amount: number; usd: number }[],
+    items: { symbol: string; hub?: "core" | "plus" | "prime"; amount: number; usd: number }[],
     pattern: CSSProperties,
     mergedLabel: string,
   ): BreakdownRow[] => {
@@ -488,7 +510,9 @@ export function AaveV4TowerChart({
     return items.map((i) => ({
       sign: "−",
       label:
-        mergedLabel === "Liquidated" ? `${aaveV4DisplaySymbol(i.symbol)} liquidated` : aaveV4DisplaySymbol(i.symbol),
+        mergedLabel === "Liquidated"
+          ? `${aaveV4DisplaySymbol(i.symbol)}${hubSuffix(i.hub)} liquidated`
+          : `${aaveV4DisplaySymbol(i.symbol)}${hubSuffix(i.hub)}`,
       amount: fmt(i.amount),
       usdHint: hideUsd ? undefined : fmtUsd(i.usd).display,
       swatchStyle: pattern,
@@ -509,7 +533,7 @@ export function AaveV4TowerChart({
     }
     return [...assets].reverse().map((r) => ({
       sign: "",
-      label: aaveV4DisplaySymbol(r.symbol),
+      label: `${aaveV4DisplaySymbol(r.symbol)}${hubSuffix(r.hub)}`,
       amount: fmt(nativeOf(r)),
       usdHint: hideUsd ? undefined : fmtUsd(usdOf(r)).display,
       swatchClass,

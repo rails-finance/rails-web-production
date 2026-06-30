@@ -14,8 +14,13 @@
  * debt — the asset in question can go to zero without liquidating.
  */
 
+import type { HubTierKey } from "@/lib/api/fetch-aave-v4-hubs";
+
 export interface SimSupply {
   symbol: string;
+  /** Hub (Core/Plus/Prime) this reserve draws from; carried through so the UI
+   *  can distinguish two same-symbol reserves from different hubs. */
+  hub?: HubTierKey | null;
   amount: number;
   price: number;
   lt: number;
@@ -26,8 +31,16 @@ export interface SimSupply {
 
 export interface SimDebt {
   symbol: string;
+  hub?: HubTierKey | null;
   amount: number;
   price: number;
+}
+
+/** A symbol tagged with its hub — structurally an `AssetClusterItem`, so these
+ *  arrays can be passed straight to `<InlineAssetCluster symbols=…>`. */
+export interface BreakdownAsset {
+  symbol: string;
+  hub?: HubTierKey | null;
 }
 
 export interface SimPositionInputs {
@@ -68,13 +81,13 @@ export interface SupplyBreakdown {
    *  the loan and can be seized in a liquidation. This is the honest "Collateral"
    *  figure. */
   collateralUsd: number;
-  collateralSymbols: string[];
+  collateralSymbols: BreakdownAsset[];
   /** Σ USD of supplies NOT enabled as collateral — real holdings earning yield,
    *  but never seized in a liquidation and absent from the health factor (see
    *  Aave V4 liquidation mechanics). Shown separately, never counted as
    *  collateral. */
   nonCollateralUsd: number;
-  nonCollateralSymbols: string[];
+  nonCollateralSymbols: BreakdownAsset[];
 }
 
 /**
@@ -95,10 +108,10 @@ export function computeSupplyBreakdown(supplies: SimSupply[]): SupplyBreakdown {
     const usd = s.amount * s.price;
     if (s.collateralEnabled) {
       out.collateralUsd += usd;
-      out.collateralSymbols.push(s.symbol);
+      out.collateralSymbols.push({ symbol: s.symbol, hub: s.hub });
     } else {
       out.nonCollateralUsd += usd;
-      out.nonCollateralSymbols.push(s.symbol);
+      out.nonCollateralSymbols.push({ symbol: s.symbol, hub: s.hub });
     }
   }
   return out;

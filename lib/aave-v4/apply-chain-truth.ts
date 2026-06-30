@@ -43,14 +43,22 @@ export function patchReservesWithChain(
   // symbol appears once in chain that's the only candidate; if it doesn't
   // appear at all we leave the existing event-derived numbers alone (with
   // a hint that they may be stale).
-  const chainBySymbol = new Map<string, (typeof chain.reserves)[number]>();
+  // Key by (symbol, hub), not symbol: a spoke can list the same asset under
+  // two hubs (e.g. USDT from Prime AND Core) — two distinct reserves with
+  // independent balances. A symbol-only map would collapse them, dropping one
+  // reserve's balance from the per-asset breakdown (the bug this fixes). Hub is
+  // null-consistent across event and chain data (same backfill source), so the
+  // composite matches on both sides.
+  const ckey = (symbol: string, hub: ReserveStats["hub"] | null) => `${symbol}|${hub ?? ""}`;
+  const chainByKey = new Map<string, (typeof chain.reserves)[number]>();
   for (const r of chain.reserves) {
-    if (!chainBySymbol.has(r.symbol)) chainBySymbol.set(r.symbol, r);
+    const k = ckey(r.symbol, r.hub);
+    if (!chainByKey.has(k)) chainByKey.set(k, r);
   }
 
   const seenChainAddrs = new Set<string>();
   const patched: ReserveStats[] = reserves.map((r) => {
-    const c = chainBySymbol.get(r.symbol);
+    const c = chainByKey.get(ckey(r.symbol, r.hub));
     if (!c) {
       // No chain row for this symbol → wallet has no current position in it
       // (or the symbol just doesn't exist on this spoke). Pin current state
@@ -77,6 +85,7 @@ export function patchReservesWithChain(
     if (live <= 0 && debt <= 0) continue;
     patched.push({
       symbol: c.symbol,
+      hub: c.hub ?? undefined,
       supplied: 0,
       withdrawn: 0,
       borrowed: 0,
@@ -116,6 +125,7 @@ export function patchSpokeCardWithChain(
       .filter((r) => scaleChainBalance(r.supplyBalanceRaw, r.decimals) > 0)
       .map((r) => ({
         symbol: r.symbol,
+        hub: r.hub,
         amount: scaleChainBalance(r.supplyBalanceRaw, r.decimals),
         price: resolvePrice(r.symbol, prices) ?? 0,
         lt: r.lt ?? 0,
@@ -125,6 +135,7 @@ export function patchSpokeCardWithChain(
       .filter((r) => scaleChainBalance(r.debtBalanceRaw, r.decimals) > 0)
       .map((r) => ({
         symbol: r.symbol,
+        hub: r.hub,
         amount: scaleChainBalance(r.debtBalanceRaw, r.decimals),
         price: resolvePrice(r.symbol, prices) ?? 0,
       })),
@@ -133,8 +144,8 @@ export function patchSpokeCardWithChain(
 
   // Symbol lists from chain. supplyingSymbols = currently-active supplies
   // (positive balance), borrowingSymbols = currently-active debts.
-  const supplyingSymbols = simInputs.supplies.map((s) => s.symbol);
-  const borrowingSymbols = simInputs.debts.map((d) => d.symbol);
+  const supplyingSymbols = simInputs.supplies.map((s) => ({ symbol: s.symbol, hub: s.hub }));
+  const borrowingSymbols = simInputs.debts.map((d) => ({ symbol: d.symbol, hub: d.hub }));
 
   // Dominant-collateral liq price = the largest USD supply with a valid
   // simulated liq price. Matches what the listing/detail headline expects.

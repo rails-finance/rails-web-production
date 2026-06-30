@@ -79,6 +79,13 @@ function toNum(v: string | number | undefined): number {
 
 /** Current net balance for a reserve: chain-truth when present, else derived
  *  from lifetime flows (mirrors the economics band's fallback). */
+/** "USDT (Core)" when the reserve's hub is known, else "USDT". Disambiguates
+ *  two same-symbol reserves drawn from different hubs in the export. */
+function fmtAssetWithHub(a: { symbol: string; hub?: "core" | "plus" | "prime" | null }): string {
+  if (!a.hub) return a.symbol;
+  return `${a.symbol} (${a.hub.charAt(0).toUpperCase()}${a.hub.slice(1)})`;
+}
+
 function netSupply(r: ReserveStats): number {
   return r.currentSupplied ?? Math.max(0, r.supplied - r.withdrawn - r.liquidatedCollateral);
 }
@@ -172,13 +179,13 @@ function openHeadlines(args: AaveV4SpokeMarkdownArgs): string[] {
   }
   out.push(collLine);
   if (card.supplyingSymbols.length) {
-    out.push(`- **Supplying:** ${card.supplyingSymbols.join(", ")}`);
+    out.push(`- **Supplying:** ${card.supplyingSymbols.map(fmtAssetWithHub).join(", ")}`);
   }
 
   // Debt + what's borrowed.
   out.push(`- **Debt:** ${usd(card.totalDebtUsd)}`);
   if (card.borrowingSymbols.length) {
-    out.push(`- **Borrowing:** ${card.borrowingSymbols.join(", ")}`);
+    out.push(`- **Borrowing:** ${card.borrowingSymbols.map(fmtAssetWithHub).join(", ")}`);
   }
   if (card.latestBorrowRate != null) {
     out.push(`- **Borrow rate:** ${num(card.latestBorrowRate, 2)}% APR on current debt`);

@@ -12,6 +12,8 @@
 // `SpokePositionChainResponse`. Balances are TEXT to preserve numeric(78,0)
 // precision; scale by `decimals` at render time.
 
+import type { HubTierKey } from "./fetch-aave-v4-hubs";
+
 export interface AaveV4SpokeChainReserve {
   reserveId: number;
   address: string; // underlying token, lowercase
@@ -27,6 +29,11 @@ export interface AaveV4SpokeChainReserve {
    *  but not chain-fetched yet; switch to on-chain `getReserveConfig` if/when
    *  governance LT updates drift past acceptable tolerance. */
   lt: number | null;
+  /** Hub this reserve draws from (Core / Plus / Prime). A spoke can list the
+   *  same asset under two reserve_ids — one per hub — so the same symbol can
+   *  appear as two distinct reserves; `hub` is how the UI tells them apart.
+   *  null when the (spoke, reserve_id) → hub mapping isn't indexed yet. */
+  hub: HubTierKey | null;
 }
 
 export interface AaveV4SpokePositionChainResponse {

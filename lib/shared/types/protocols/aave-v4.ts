@@ -4,13 +4,7 @@
 // `lib/shared/types/event-shape.ts` (and is duplicated below to avoid a
 // cross-file re-export shuffle in lifted components).
 
-export type AaveV4EventType =
-  | "supply"
-  | "withdraw"
-  | "borrow"
-  | "repay"
-  | "liquidation"
-  | "collateral_toggle";
+export type AaveV4EventType = "supply" | "withdraw" | "borrow" | "repay" | "liquidation" | "collateral_toggle";
 
 /** Snapshot row carried in `allSupplies` / `allDebts`. Optional `price` is
  *  populated for every reserve that has an `aave_v4_historic_prices` row at
@@ -34,6 +28,9 @@ export interface AaveV4Context {
   reserveSymbol?: string;
   spokeName?: string;
   spokeAddress?: string;
+  /** Hub this event's reserve draws from (Core / Plus / Prime); disambiguates
+   *  two same-symbol reserves drawn from different hubs. */
+  hub?: "core" | "plus" | "prime";
   enabled?: boolean;
   collateralSymbol?: string;
   debtToCover?: string;
@@ -70,9 +67,4 @@ export interface AaveV4Context {
  *    rows from the wire response, so the UI never sees them. The variant
  *    stays in the union so any historical row queried directly still
  *    parses. */
-export type AaveV4PriceSource =
-  | "chainlink"
-  | "chainlink-eth-derived"
-  | "iaave-oracle"
-  | "stablecoin"
-  | "defillama";
+export type AaveV4PriceSource = "chainlink" | "chainlink-eth-derived" | "iaave-oracle" | "stablecoin" | "defillama";

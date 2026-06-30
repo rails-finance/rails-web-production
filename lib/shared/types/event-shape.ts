@@ -229,6 +229,12 @@ export interface AaveV4Context {
   spokeName?: string;
   /** Spoke contract address (lowercase). */
   spokeAddress?: string;
+  /** Hub this event's reserve draws from (Core / Plus / Prime). A spoke can
+   *  list the same asset under multiple reserve_ids — one per hub — so the same
+   *  symbol can appear as two distinct reserves; `hub` disambiguates them.
+   *  Resolved from (spoke, reserve_id) → aave_v4_hub_spoke_credit. Absent when
+   *  the credit mapping hasn't been indexed for the reserve yet. */
+  hub?: "core" | "plus" | "prime";
   /** collateral_toggle: whether collateral was enabled. */
   enabled?: boolean;
   /** liquidation: collateral reserve symbol. */

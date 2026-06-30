@@ -112,8 +112,8 @@ function buildSpokePositionItems(spoke: AaveSpokeCardInfo): React.ReactNode[] {
   // Any live debt = borrowing (no dust floor) so the "no debt drawn" prose only
   // appears when debt is genuinely 0 — matches the card headline + runway.
   const supplyOnly = spoke.totalDebtUsd <= 0;
-  const supplyStr = joinSymbols(spoke.supplyingSymbols);
-  const borrowStr = joinSymbols(spoke.borrowingSymbols);
+  const supplyStr = joinSymbols(spoke.supplyingSymbols.map((s) => s.symbol));
+  const borrowStr = joinSymbols(spoke.borrowingSymbols.map((s) => s.symbol));
 
   if (supplyOnly) {
     items.push(

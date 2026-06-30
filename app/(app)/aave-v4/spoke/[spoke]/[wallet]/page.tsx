@@ -310,7 +310,7 @@ function AaveV4SpokePageInner() {
   // priced symbols make the cut (resolvePrice → null for unknowns).
   const stripAssets = useMemo<PriceStripAsset[]>(() => {
     if (!activeCard) return [];
-    const symbols = [...new Set([...activeCard.supplyingSymbols, ...activeCard.borrowingSymbols])];
+    const symbols = [...new Set([...activeCard.supplyingSymbols, ...activeCard.borrowingSymbols].map((a) => a.symbol))];
     return symbols.flatMap((symbol) => {
       const price = resolvePrice(symbol, prices);
       return price != null ? [{ symbol, address: TOKEN_ADDR[symbol], price }] : [];

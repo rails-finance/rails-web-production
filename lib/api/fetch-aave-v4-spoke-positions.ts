@@ -16,6 +16,8 @@
 // file in sync with the SpokePositionRow / SpokePositionsResponse types
 // there — both halves change together when filters or columns shift.
 
+import type { HubTierKey } from "./fetch-aave-v4-hubs";
+
 /** Per-reserve breakdown shipped with every listing row. Mirrors the detail
  *  page's chain-truth shape so the listing card can build the same sim inputs
  *  (HF / liq price / borrowing power) the detail card uses — no per-row chain
@@ -27,6 +29,9 @@
  *  server used to compute the row's totals — using it client-side means the
  *  listing's sim arrives at the same totals the server reports. */
 export interface AaveV4SpokeReserveSummary {
+  /** Chain-canonical reserve id — disambiguates same-symbol reserves drawn
+   *  from different hubs. */
+  reserveId: number;
   symbol: string;
   address: string;
   decimals: number;
@@ -35,6 +40,8 @@ export interface AaveV4SpokeReserveSummary {
   isCollateral: boolean;
   lt: number | null;
   usdPrice: number | null;
+  /** Hub (Core / Plus / Prime) this reserve draws from; null until backfilled. */
+  hub: HubTierKey | null;
 }
 
 export interface AaveV4SpokePositionRow {

@@ -14,7 +14,12 @@ import type { AaveV4Context } from "@/lib/shared/types/protocols/aave-v4";
 import { type PriceEntry, resolvePrice } from "@/lib/aave/prices";
 import { SPOKE_HUB, type HubTier } from "@/components/protocol/aave-v4/aave-v4-spoke-constants";
 import { AAVE_V4_FALLBACK_LT } from "@/lib/aave-v4/liquidation-thresholds";
-import { simulateAaveV4Position, computeSupplyBreakdown, type SupplyBreakdown } from "@/lib/aave-v4/utils/simulate";
+import {
+  simulateAaveV4Position,
+  computeSupplyBreakdown,
+  type SupplyBreakdown,
+  type BreakdownAsset,
+} from "@/lib/aave-v4/utils/simulate";
 import { effectiveBorrowAPR } from "@/lib/aave-v4/borrow-rate";
 
 // ---- Types ----
@@ -35,6 +40,12 @@ interface FlowEvent {
 
 export interface ReserveStats {
   symbol: string;
+  /** Hub (Core / Plus / Prime) this reserve draws from. A spoke can list the
+   *  same asset under two reserve_ids — one per hub — so `symbol` alone is not
+   *  a unique key; reserves are aggregated by (symbol, hub). Undefined on
+   *  events whose hub wasn't indexed (older data) or on liquidation collateral
+   *  rows (the event carries only the debt-side hub). */
+  hub?: AaveV4Context["hub"];
   supplied: number;
   withdrawn: number;
   borrowed: number;
@@ -133,8 +144,8 @@ export interface AaveSpokeCardInfo {
    *  This is what the card's activity tally renders (the "transactions" metric),
    *  matching Liquity's transactionCount and the timeline's per-tx grouping. */
   txCount: number;
-  supplyingSymbols: string[];
-  borrowingSymbols: string[];
+  supplyingSymbols: BreakdownAsset[];
+  borrowingSymbols: BreakdownAsset[];
   latestBorrowRate: number | null;
   /** Aave-native HF = weightedCollateralUsd / totalDebtUsd. null when no debt. */
   healthFactor: number | null;
@@ -311,6 +322,23 @@ function isAaveV4Event(
 
 // ---- Calculation ----
 
+/** Composite reserve key. The same asset can be drawn from two hubs in one
+ *  spoke (distinct reserves, independent balances), so (symbol, hub) — not
+ *  symbol alone — uniquely identifies a reserve. Hub-less events (older data)
+ *  fall back to symbol, preserving the previous collapse behaviour. */
+function reserveKey(symbol: string, hub: AaveV4Context["hub"]): string {
+  return hub ? `${symbol} ${hub}` : symbol;
+}
+
+/** First reserve in the map matching `symbol` regardless of hub. Used for the
+ *  liquidation collateral side, which carries no hub on the event — so a
+ *  seizure reuses the entry the asset's supply events already created (which
+ *  do carry a hub) instead of spawning a hub-less duplicate row. */
+function findReserveBySymbol(map: Map<string, ReserveStats>, symbol: string): ReserveStats | undefined {
+  for (const s of map.values()) if (s.symbol === symbol) return s;
+  return undefined;
+}
+
 export function calculateAaveEconomics(
   events: BaseActivityEvent[],
   eventIndexMap?: Map<string, number>,
@@ -333,6 +361,11 @@ export function calculateAaveEconomics(
     txSet.add(e.txHash ?? e.id);
   }
 
+  // Reserves are aggregated by (symbol, hub): the same asset can be borrowed
+  // from two hubs in one spoke (e.g. USDT from Prime AND Core), and those are
+  // distinct on-chain reserves with independent balances. Keying by symbol
+  // alone would merge them into one (wrong) row. The map key is this composite;
+  // `symbol`/`hub` are carried on the value for display and price lookup.
   const reserveMap = new Map<string, ReserveStats>();
   let totalGasCostEth = 0;
   let totalGasCostUsd = 0;
@@ -351,6 +384,8 @@ export function calculateAaveEconomics(
     const ctx = event.context.data;
     const amount = parseFloat(ctx.amount ?? "0");
     const symbol = ctx.reserveSymbol ?? "?";
+    const hub = ctx.hub;
+    const key = reserveKey(symbol, hub);
     fallbackSeq++;
     const eventSeq = eventIndexMap?.get(event.id) ?? fallbackSeq;
 
@@ -359,10 +394,11 @@ export function calculateAaveEconomics(
       totalGasCostUsd += event.gas.gasCostUsd || 0;
     }
 
-    let stats = reserveMap.get(symbol);
+    let stats = reserveMap.get(key);
     if (!stats) {
       stats = {
         symbol,
+        hub,
         supplied: 0,
         withdrawn: 0,
         borrowed: 0,
@@ -377,17 +413,17 @@ export function calculateAaveEconomics(
         peakSupply: 0,
         flowEvents: [],
       };
-      reserveMap.set(symbol, stats);
-      runningDebt.set(symbol, 0);
-      runningSupply.set(symbol, 0);
+      reserveMap.set(key, stats);
+      runningDebt.set(key, 0);
+      runningSupply.set(key, 0);
     }
     stats.eventCount++;
 
     switch (ctx.eventType) {
       case "supply": {
         stats.supplied += amount;
-        const supply = (runningSupply.get(symbol) ?? 0) + amount;
-        runningSupply.set(symbol, supply);
+        const supply = (runningSupply.get(key) ?? 0) + amount;
+        runningSupply.set(key, supply);
         if (supply > stats.peakSupply) stats.peakSupply = supply;
         if (amount > 0)
           stats.flowEvents.push({
@@ -402,7 +438,7 @@ export function calculateAaveEconomics(
       }
       case "withdraw": {
         stats.withdrawn += amount;
-        runningSupply.set(symbol, Math.max(0, (runningSupply.get(symbol) ?? 0) - amount));
+        runningSupply.set(key, Math.max(0, (runningSupply.get(key) ?? 0) - amount));
         if (amount > 0)
           stats.flowEvents.push({
             timestamp: event.timestamp,
@@ -416,7 +452,7 @@ export function calculateAaveEconomics(
       }
       case "borrow":
         stats.borrowed += amount;
-        runningDebt.set(symbol, (runningDebt.get(symbol) ?? 0) + amount);
+        runningDebt.set(key, (runningDebt.get(key) ?? 0) + amount);
         if (amount > 0)
           stats.flowEvents.push({
             timestamp: event.timestamp,
@@ -429,7 +465,7 @@ export function calculateAaveEconomics(
         break;
       case "repay":
         stats.repaid += amount;
-        runningDebt.set(symbol, (runningDebt.get(symbol) ?? 0) - amount);
+        runningDebt.set(key, (runningDebt.get(key) ?? 0) - amount);
         if (amount > 0)
           stats.flowEvents.push({
             timestamp: event.timestamp,
@@ -452,7 +488,7 @@ export function calculateAaveEconomics(
 
         stats.liquidatedDebt += debtCovered;
         stats.liquidationCount++;
-        runningDebt.set(symbol, (runningDebt.get(symbol) ?? 0) - debtCovered);
+        runningDebt.set(key, (runningDebt.get(key) ?? 0) - debtCovered);
         if (debtCovered > 0)
           stats.flowEvents.push({
             timestamp: event.timestamp,
@@ -469,10 +505,15 @@ export function calculateAaveEconomics(
           // debt-side stats so the seizure isn't lost.
           let collStats = stats;
           if (collSym && collSym !== symbol) {
-            let cs = reserveMap.get(collSym);
+            // The event carries no hub for the collateral side, so reuse the
+            // entry the asset's supply events created (which do carry a hub)
+            // rather than spawning a hub-less duplicate. Only create a fresh
+            // (hub-less) row when the collateral was never supplied in-window.
+            let cs = findReserveBySymbol(reserveMap, collSym);
             if (!cs) {
               cs = {
                 symbol: collSym,
+                hub: undefined,
                 supplied: 0,
                 withdrawn: 0,
                 borrowed: 0,
@@ -487,14 +528,15 @@ export function calculateAaveEconomics(
                 peakSupply: 0,
                 flowEvents: [],
               };
-              reserveMap.set(collSym, cs);
-              runningDebt.set(collSym, 0);
-              runningSupply.set(collSym, 0);
+              reserveMap.set(reserveKey(collSym, undefined), cs);
+              runningDebt.set(reserveKey(collSym, undefined), 0);
+              runningSupply.set(reserveKey(collSym, undefined), 0);
             }
             collStats = cs;
           }
+          const collKey = reserveKey(collStats.symbol, collStats.hub);
           collStats.liquidatedCollateral += collSeized;
-          runningSupply.set(collStats.symbol, Math.max(0, (runningSupply.get(collStats.symbol) ?? 0) - collSeized));
+          runningSupply.set(collKey, Math.max(0, (runningSupply.get(collKey) ?? 0) - collSeized));
           collStats.flowEvents.push({
             timestamp: event.timestamp,
             amount: collSeized,
@@ -514,7 +556,7 @@ export function calculateAaveEconomics(
     }
 
     if (ctx.eventType === "borrow" || ctx.eventType === "repay" || ctx.eventType === "liquidation") {
-      const debt = Math.max(0, runningDebt.get(symbol) ?? 0);
+      const debt = Math.max(0, runningDebt.get(key) ?? 0);
       stats.debtSeries.push({ timestamp: event.timestamp, debt, eventIndex: eventSeq });
       if (debt > stats.peakDebt) {
         stats.peakDebt = debt;
@@ -525,11 +567,15 @@ export function calculateAaveEconomics(
     // Portfolio-wide high-water marks. Recompute the priced sum across all
     // reserves after each event (reserve counts are tiny) and keep the max —
     // this is a true single-instant peak, not a sum of per-asset peaks.
+    // Iterate reserveMap (not the composite-keyed running maps) so price
+    // resolves by the reserve's symbol, not the "symbol hub" key.
     let supplyUsdNow = 0;
-    for (const [sym, bal] of runningSupply) supplyUsdNow += Math.max(0, bal) * (resolvePrice(sym, prices) ?? 1);
+    for (const [k, st] of reserveMap)
+      supplyUsdNow += Math.max(0, runningSupply.get(k) ?? 0) * (resolvePrice(st.symbol, prices) ?? 1);
     if (supplyUsdNow > peakSupplyUsd) peakSupplyUsd = supplyUsdNow;
     let debtUsdNow = 0;
-    for (const [sym, bal] of runningDebt) debtUsdNow += Math.max(0, bal) * (resolvePrice(sym, prices) ?? 1);
+    for (const [k, st] of reserveMap)
+      debtUsdNow += Math.max(0, runningDebt.get(k) ?? 0) * (resolvePrice(st.symbol, prices) ?? 1);
     if (debtUsdNow > peakDebtUsd) peakDebtUsd = debtUsdNow;
   }
 
@@ -631,38 +677,40 @@ export function buildSpokeCards(
     // peaks, which would overstate by combining peaks from different moments.
     const peakSupplyUsd = g.result.peakSupplyUsd;
     const peakDebtUsd = g.result.peakDebtUsd;
-    const liveSupplying = g.result.reserves
+    const liveSupplying: BreakdownAsset[] = g.result.reserves
       .map((r) => ({
         symbol: r.symbol,
+        hub: r.hub,
         usd: Math.max(0, r.supplied - r.withdrawn) * (resolvePrice(r.symbol, prices) ?? 1),
       }))
       .filter((r) => r.usd > SPOKE_ICON_USD_MIN)
       .sort((a, b) => b.usd - a.usd)
-      .map((r) => r.symbol);
-    const liveBorrowing = g.result.reserves
+      .map((r) => ({ symbol: r.symbol, hub: r.hub }));
+    const liveBorrowing: BreakdownAsset[] = g.result.reserves
       .map((r) => ({
         symbol: r.symbol,
+        hub: r.hub,
         usd: Math.max(0, r.borrowed - r.repaid) * (resolvePrice(r.symbol, prices) ?? 1),
       }))
       .filter((r) => r.usd > SPOKE_ICON_USD_MIN)
       .sort((a, b) => b.usd - a.usd)
-      .map((r) => r.symbol);
-    const supplyingSymbols =
+      .map((r) => ({ symbol: r.symbol, hub: r.hub }));
+    const supplyingSymbols: BreakdownAsset[] =
       liveSupplying.length > 0
         ? liveSupplying
         : g.result.reserves
-            .map((r) => ({ symbol: r.symbol, usd: r.peakSupply * (resolvePrice(r.symbol, prices) ?? 1) }))
+            .map((r) => ({ symbol: r.symbol, hub: r.hub, usd: r.peakSupply * (resolvePrice(r.symbol, prices) ?? 1) }))
             .filter((r) => r.usd > SPOKE_ICON_USD_MIN)
             .sort((a, b) => b.usd - a.usd)
-            .map((r) => r.symbol);
-    const borrowingSymbols =
+            .map((r) => ({ symbol: r.symbol, hub: r.hub }));
+    const borrowingSymbols: BreakdownAsset[] =
       liveBorrowing.length > 0
         ? liveBorrowing
         : g.result.reserves
-            .map((r) => ({ symbol: r.symbol, usd: r.peakDebt * (resolvePrice(r.symbol, prices) ?? 1) }))
+            .map((r) => ({ symbol: r.symbol, hub: r.hub, usd: r.peakDebt * (resolvePrice(r.symbol, prices) ?? 1) }))
             .filter((r) => r.usd > SPOKE_ICON_USD_MIN)
             .sort((a, b) => b.usd - a.usd)
-            .map((r) => r.symbol);
+            .map((r) => ({ symbol: r.symbol, hub: r.hub }));
 
     // Most-recent borrow rate on this spoke — the true per-block on-chain rate
     // (effectiveBorrowAPR prefers allDebts[].borrowAPR, falls back to inferred).
@@ -685,17 +733,24 @@ export function buildSpokeCards(
         // conservative fallback (no per-spoke table any more — see liquidation-thresholds).
         const lt = r.lt ?? AAVE_V4_FALLBACK_LT;
         const collateralEnabled = r.collateralEnabled ?? true;
-        return { symbol: r.symbol, amount: netSupply, price, lt, collateralEnabled };
+        return { symbol: r.symbol, hub: r.hub, amount: netSupply, price, lt, collateralEnabled };
       })
-      .filter(Boolean) as { symbol: string; amount: number; price: number; lt: number; collateralEnabled: boolean }[];
+      .filter(Boolean) as {
+      symbol: string;
+      hub?: AaveV4Context["hub"];
+      amount: number;
+      price: number;
+      lt: number;
+      collateralEnabled: boolean;
+    }[];
     const simDebts = g.result.reserves
       .map((r) => {
         const netDebt = Math.max(0, r.borrowed - r.repaid);
         if (netDebt <= 0.0001) return null;
         const price = resolvePrice(r.symbol, prices) ?? 1;
-        return { symbol: r.symbol, amount: netDebt, price };
+        return { symbol: r.symbol, hub: r.hub, amount: netDebt, price };
       })
-      .filter(Boolean) as { symbol: string; amount: number; price: number }[];
+      .filter(Boolean) as { symbol: string; hub?: AaveV4Context["hub"]; amount: number; price: number }[];
 
     const simResult = simulateAaveV4Position({ supplies: simSupplies, debts: simDebts });
 
