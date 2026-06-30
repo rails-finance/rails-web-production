@@ -7,8 +7,9 @@ import type { HubTierKey } from "@/lib/api/fetch-aave-v4-hubs";
 //
 // Items may carry a `hub` (Core/Plus/Prime). A spoke can list the same asset
 // under two hubs — two distinct reserves with the same symbol and the same
-// icon — so when a hub is present we stamp a small corner badge (C/+/P) on the
-// icon and a hover title, so the two otherwise-identical icons read as distinct.
+// icon. The hub badge (C/+/P) exists only to tell those apart, so we stamp it
+// ONLY on symbols that appear more than once in the cluster. A lone asset needs
+// no disambiguation, so it renders a clean icon even when its hub is known.
 
 export interface AssetClusterItem {
   symbol: string;
@@ -37,10 +38,15 @@ function toItem(s: string | AssetClusterItem): AssetClusterItem {
 export function InlineAssetCluster({ symbols, size = 28, overlap = 9 }: InlineAssetClusterProps) {
   if (symbols.length === 0) return null;
   const items = symbols.map(toItem);
+  // A hub badge only earns its place when it disambiguates: count occurrences of
+  // each symbol and badge only the repeated ones (same asset from two hubs).
+  const symbolCounts = new Map<string, number>();
+  for (const it of items) symbolCounts.set(it.symbol, (symbolCounts.get(it.symbol) ?? 0) + 1);
   return (
     <span className="inline-flex items-center">
       {items.map((item, i) => {
-        const badge = item.hub ? HUB_BADGE[item.hub] : null;
+        const isRepeated = (symbolCounts.get(item.symbol) ?? 0) > 1;
+        const badge = item.hub && isRepeated ? HUB_BADGE[item.hub] : null;
         return (
           <span
             key={`${item.symbol}-${item.hub ?? ""}-${i}`}
