@@ -179,6 +179,14 @@ function AaveV4ListPageContent() {
       // server-side); "nodust" raises the floor to the dust line.
       excludeClosed: effectiveAaveV4Show(filters) === "active",
       minTotalUsd: effectiveAaveV4Show(filters) === "nodust" ? AAVE_V4_DUST_USD : undefined,
+      // Lifecycle status (server migration 034). A wallet-scoped view is a
+      // history view — surface closed/liquidated positions alongside open ones
+      // so a wallet's full lifecycle is visible (matches the "all" show tier
+      // that wallet scope already defaults to). The bare directory omits this
+      // and takes the server's 'open' default: showing every closed position
+      // ever would balloon the list. `show`'s USD-dust gate still applies to
+      // the open positions within either scope.
+      status: filters.wallet || filters.ownerEns ? ["open", "closed", "liquidated"] : undefined,
       sortBy: filters.sortBy as AaveV4SpokePositionSort,
       sortOrder: filters.sortOrder,
       limit: ITEMS_PER_PAGE,
