@@ -18,6 +18,12 @@
 
 import type { HubTierKey } from "./fetch-aave-v4-hubs";
 
+/** Lifecycle status of a (wallet, spoke) position (server migration 034).
+ *  'open' — ≥1 reserve still carries a live balance. 'closed' — every balance
+ *  was repaid/withdrawn to zero. 'liquidated' — the terminal event that emptied
+ *  the position was a liquidation. Mirrors the server's AaveV4SpokePositionStatus. */
+export type AaveV4SpokePositionStatus = "open" | "closed" | "liquidated";
+
 /** Per-reserve breakdown shipped with every listing row. Mirrors the detail
  *  page's chain-truth shape so the listing card can build the same sim inputs
  *  (HF / liq price / borrowing power) the detail card uses — no per-row chain
@@ -86,6 +92,15 @@ export interface AaveV4SpokePositionRow {
   liquidationCount: number;
   /** Epoch seconds of the most recent liquidation; null when never liquidated. */
   lastLiquidationAt: number | null;
+  /** Lifecycle status (server migration 034). The directory listing only
+   *  returns 'open'; the wallet view returns all three so a closed/liquidated
+   *  position stays visible in a wallet's history. The card renders a
+   *  CLOSED / LIQUIDATED pill and a muted treatment when this isn't 'open'. */
+  status: AaveV4SpokePositionStatus;
+  /** Epoch seconds of the first event on this (wallet, spoke). */
+  openedAt: number | null;
+  /** Epoch seconds of the closing event; null while the position is open. */
+  closedAt: number | null;
   /** Distinct non-liquidation transaction count for this (wallet, spoke) —
    *  the activity tally shown beside the time-ago. Matches the detail card's
    *  txCount and Liquity's transactionCount. From mv_aave_v4_events (server
@@ -126,6 +141,10 @@ export interface FetchAaveV4SpokePositionsParams {
   excludeClosed?: boolean;
   /** Hide dust positions whose combined supply + debt USD is below this. */
   minTotalUsd?: number;
+  /** Lifecycle statuses to include (server migration 034). Empty/undefined
+   *  lets the server apply its contextual default ('open' on the bare
+   *  directory, all statuses on a wallet-scoped view). */
+  status?: AaveV4SpokePositionStatus[];
   activeWithin?: number;
   /** Multi-asset filter on the supply side. Position must hold at least one
    *  of these symbols with a non-zero supply balance. "???" matches reserves
@@ -157,6 +176,7 @@ export async function fetchAaveV4SpokePositions(
   if (p.healthBelow != null) qs.set("healthBelow", String(p.healthBelow));
   if (p.excludeClosed) qs.set("excludeClosed", "true");
   if (p.minTotalUsd != null) qs.set("minTotalUsd", String(p.minTotalUsd));
+  if (p.status && p.status.length > 0) qs.set("status", p.status.join(","));
   if (p.activeWithin != null) qs.set("activeWithin", String(p.activeWithin));
   if (p.supplyAssets && p.supplyAssets.length > 0) qs.set("supplyAssets", p.supplyAssets.join(","));
   if (p.borrowAssets && p.borrowAssets.length > 0) qs.set("borrowAssets", p.borrowAssets.join(","));
