@@ -190,6 +190,11 @@ export interface AaveSpokeCardInfo {
  *  exact (no rate needed); USD is the token figure at the current price. */
 export interface AaveV4AssetInterest {
   symbol: string;
+  /** Hub the reserve draws from (Core/Plus/Prime). The same asset borrowed from
+   *  two hubs is two reserves with independent carry, so `symbol` alone doesn't
+   *  identify the row — callers disambiguate with the hub. Undefined when the
+   *  reserve's hub wasn't indexed. */
+  hub?: AaveV4Context["hub"];
   /** Supply interest earned, in underlying tokens (≥ 0 in normal operation). */
   supplyInterest: number;
   /** Borrow interest paid, in underlying tokens (≥ 0 in normal operation). */
@@ -304,7 +309,7 @@ export function computeAaveV4InterestPnl(
     netUsd += supplyInterestUsd - borrowInterestUsd;
     if (price > 0) hasData = true;
 
-    assets.push({ symbol: r.symbol, supplyInterest, borrowInterest, supplyInterestUsd, borrowInterestUsd });
+    assets.push({ symbol: r.symbol, hub: r.hub, supplyInterest, borrowInterest, supplyInterestUsd, borrowInterestUsd });
   }
 
   // Nothing reliable to show and no gap to explain → let callers render nothing.

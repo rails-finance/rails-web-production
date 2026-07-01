@@ -65,13 +65,26 @@ function PricePill({ symbol, usd, source }: { symbol: string; usd: number; sourc
 /** A single held-debt asset's borrow rate — `4.35% [icon] USDC`. Mirrors the
  *  Debt card's `PositionRow` grammar so a multi-debt position reads its rates
  *  the same way it reads its balances: one labelled row per asset. */
-function BorrowRateRow({ symbol, apr }: { symbol: string; apr: string }) {
+const HUB_LABEL: Record<"core" | "plus" | "prime", string> = { core: "Core", plus: "Plus", prime: "Prime" };
+
+function BorrowRateRow({
+  symbol,
+  apr,
+  hub,
+}: {
+  symbol: string;
+  apr: string;
+  /** When set, the reserve's hub — rendered as a suffix to tell two same-symbol
+   *  rates apart. Omitted for a lone (non-repeated) asset. */
+  hub?: "core" | "plus" | "prime";
+}) {
   const { showTickerLabels } = useTimelineDisplay();
   return (
     <span className="inline-flex items-center gap-1.5 text-sm">
       <span className="font-semibold">{(parseFloat(apr) * 100).toFixed(2)}%</span>
       <TokenChipIcon symbol={symbol} size={16} />
       {showTickerLabels && <span className="text-xs">{aaveV4DisplaySymbol(symbol)}</span>}
+      {hub && <span className="text-xs text-rb-text-500">· {HUB_LABEL[hub]}</span>}
     </span>
   );
 }
@@ -299,13 +312,23 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
   // silently switch between them event to event (see borrowRatesByDebt).
   const debtRates = borrowRatesByDebt(ctx);
   if (debtRates.length > 0) {
+    // Label the hub only where a symbol repeats — the same asset borrowed from
+    // two hubs shows as two rows at different rates, so the hub is what tells
+    // them apart. A lone rate needs no label (matches the icon-badge rule).
+    const symbolCounts = new Map<string, number>();
+    for (const r of debtRates) symbolCounts.set(r.symbol, (symbolCounts.get(r.symbol) ?? 0) + 1);
     snapshotCards.push({
       key: "borrow-rate",
       label: debtRates.length > 1 ? "Borrow Rates" : "Borrow Rate",
       body: (
         <div className="flex flex-col gap-1">
           {debtRates.map((r) => (
-            <BorrowRateRow key={r.symbol} symbol={r.symbol} apr={r.apr} />
+            <BorrowRateRow
+              key={`${r.symbol} ${r.hub ?? ""}`}
+              symbol={r.symbol}
+              apr={r.apr}
+              hub={(symbolCounts.get(r.symbol) ?? 0) > 1 ? r.hub : undefined}
+            />
           ))}
         </div>
       ),

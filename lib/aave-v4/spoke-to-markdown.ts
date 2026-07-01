@@ -217,11 +217,12 @@ function openHeadlines(args: AaveV4SpokeMarkdownArgs): string[] {
     const verb = pnl.netUsd >= 0 ? "earned" : "paid";
     econ.push(`- **Net interest carry:** ${usd(Math.abs(pnl.netUsd))} ${verb} (supply interest − borrow interest)`);
     for (const a of pnl.assets) {
+      const label = fmtAssetWithHub(a);
       if (a.supplyInterest > 0) {
-        econ.push(`  - ${a.symbol}: +${amt(a.supplyInterest)} earned (${usd(a.supplyInterestUsd)})`);
+        econ.push(`  - ${label}: +${amt(a.supplyInterest)} earned (${usd(a.supplyInterestUsd)})`);
       }
       if (a.borrowInterest > 0) {
-        econ.push(`  - ${a.symbol}: −${amt(a.borrowInterest)} paid (${usd(a.borrowInterestUsd)})`);
+        econ.push(`  - ${label}: −${amt(a.borrowInterest)} paid (${usd(a.borrowInterestUsd)})`);
       }
     }
     if (pnl.unattributed) {
@@ -240,7 +241,7 @@ function openHeadlines(args: AaveV4SpokeMarkdownArgs): string[] {
     const parts: string[] = [];
     if (s > 0.0001) parts.push(`${amt(s)} supplied${price != null ? ` (${usd(s * price)})` : ""}`);
     if (d > 0.0001) parts.push(`${amt(d)} borrowed${price != null ? ` (${usd(d * price)})` : ""}`);
-    balLines.push(`- **${r.symbol}:** ${parts.join(", ")}`);
+    balLines.push(`- **${fmtAssetWithHub(r)}:** ${parts.join(", ")}`);
   }
   if (econ.length || balLines.length) {
     out.push("## Economics");
@@ -278,19 +279,30 @@ function timelineTable(events: BaseActivityEvent[]): string[] {
     out.push("_No transaction history available._");
     return out;
   }
-  out.push(`| # | Date | Action | Asset | Amount | Supply after | Debt after | Transaction |`);
-  out.push("|---|------|--------|-------|--------|--------------|------------|-------------|");
+  out.push(`| # | Date | Action | Asset | Amount | Supply after | Debt after | Borrow rate | Transaction |`);
+  out.push("|---|------|--------|-------|--------|--------------|------------|-------------|-------------|");
   events.forEach((e, i) => {
     if (!isAaveV4Event(e)) return;
     const d = e.context.data;
     const label = actionLabel(getEventActionKey(e));
-    const asset = d.reserveSymbol ?? d.collateralSymbol ?? "—";
+    // Hub belongs to the primary (reserve) side the event's ctx.hub describes; a
+    // liquidation's collateral fallback carries no hub, so leave it unlabeled.
+    const asset = d.reserveSymbol
+      ? fmtAssetWithHub({ symbol: d.reserveSymbol, hub: d.hub })
+      : (d.collateralSymbol ?? "—");
     const amount = d.amount != null ? amt(toNum(d.amount)) : "—";
     const supplyAfter = d.supplyAfter != null ? amt(toNum(d.supplyAfter)) : "—";
     const debtAfter = d.debtAfter != null ? amt(toNum(d.debtAfter)) : "—";
+    // Borrow rate of the exact reserve this event acted on — matched by symbol
+    // AND hub so two same-symbol reserves don't cross-read each other's rate.
+    // "—" when the moved asset isn't a debt the position holds (supply/withdraw).
+    const rateItem = (d.allDebts ?? []).find(
+      (x) => x.symbol === d.reserveSymbol && (x.hub ?? undefined) === (d.hub ?? undefined),
+    );
+    const rate = rateItem?.borrowAPR != null ? `${(parseFloat(rateItem.borrowAPR) * 100).toFixed(2)}%` : "—";
     const tx = e.etherscanUrl ? `[${e.txHash.slice(0, 10)}…](${e.etherscanUrl})` : e.txHash.slice(0, 10) + "…";
     out.push(
-      `| ${i + 1} | ${fmtUtc(e.timestamp)} | ${label} | ${asset} | ${amount} | ${supplyAfter} | ${debtAfter} | ${tx} |`,
+      `| ${i + 1} | ${fmtUtc(e.timestamp)} | ${label} | ${asset} | ${amount} | ${supplyAfter} | ${debtAfter} | ${rate} | ${tx} |`,
     );
   });
   out.push("");
