@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import type { AaveV4Context, AaveV4PriceSource } from "@/lib/shared/types/protocols/aave-v4";
 import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import { usePreferences } from "@/lib/shared/preferences-context";
-import { formatRatio, ratioLabel, ratioColorClass } from "@/lib/shared/ratio-format";
+import { formatRatio, ratioLabel } from "@/lib/shared/ratio-format";
 import { DeltaToggle, StatCard } from "@/components/shared/state-transition";
 import { resolvePrice } from "@/lib/aave/prices";
 import { usePrices } from "@/lib/shared/prices-context";
@@ -67,7 +67,7 @@ function BorrowRateRow({
   const { showTickerLabels } = useTimelineDisplay();
   return (
     <span className="inline-flex items-center gap-1.5 text-sm">
-      <span className="font-semibold">{(parseFloat(apr) * 100).toFixed(2)}%</span>
+      <span className="font-semibold text-rb-500">{(parseFloat(apr) * 100).toFixed(2)}%</span>
       <TokenChipIcon symbol={symbol} size={16} />
       {showTickerLabels && <span className="text-xs">{aaveV4DisplaySymbol(symbol)}</span>}
       {hub && <span className="text-xs text-rb-text-500">· {HUB_LABEL[hub]}</span>}
@@ -293,16 +293,12 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
       key: "ratio",
       label: ratioLabel(ratioMode),
       body: (
-        <div
-          className={`text-sm font-semibold ${ratioColorClass(collRatio * 100, {
-            danger: 120,
-            warn: 150,
-            warnClass: "text-foreground",
-            safeClass: "",
-          })}`}
-        >
-          {formatRatio(collRatio * 100, ratioMode, 0)}
-        </div>
+        // Muted (rb-500) like every other carried-over / derived readout: the
+        // collateral ratio is a consequence of the event, not the thing the
+        // event *did*, so it shouldn't compete with the highlighted before→after
+        // legs. Same rule the borrow-rate rows follow. (Rails doesn't color-code
+        // ratio risk, so there's no hue to preserve here.)
+        <div className="text-sm font-semibold text-rb-500">{formatRatio(collRatio * 100, ratioMode, 0)}</div>
       ),
     });
   }
