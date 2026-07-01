@@ -141,6 +141,18 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
   const isSupplySide = ctx.eventType === "supply" || ctx.eventType === "withdraw";
   const isDebtSide = ctx.eventType === "borrow" || ctx.eventType === "repay";
 
+  // A snapshot row is the reserve this event *acted on* only when BOTH its
+  // symbol and its hub match the event's. Same-symbol reserves in different
+  // hubs (e.g. USDT in Core and Prime) are independent positions with their own
+  // balances, so matching on symbol alone wrongly flags the untouched hub as
+  // "changed" and diffs it against the acted reserve's before-balance — e.g. a
+  // borrow of 4,400 USDT into Core makes a standing 50-USDT Prime debt render a
+  // spurious `−8,650 = 50`. Falls back to symbol-only when either hub is unknown
+  // (older payloads) so non-hub data doesn't regress. Not gated on liquidations,
+  // where `ctx.hub` tracks the debt leg and can't disambiguate the seized
+  // collateral's hub.
+  const hubMatches = (rowHub?: string) => rowHub == null || ctx.hub == null || rowHub === ctx.hub;
+
   const supplyBeforeVal = parseFloat(ctx.supplyBefore ?? "0");
   const supplyAfterVal = parseFloat(ctx.supplyAfter ?? "0");
   const debtBeforeVal = parseFloat(ctx.debtBefore ?? "0");
@@ -225,8 +237,12 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
         <div className="flex flex-col gap-1">
           {supplies.map((s) => {
             // The changed asset is the supply side's primary asset for
-            // supply/withdraw, or the collateral asset for liquidations.
-            const isThisChanged = (isSupplySide || isLiq) && s.symbol === (isLiq ? ctx.collateralSymbol : token);
+            // supply/withdraw, or the collateral asset for liquidations — and,
+            // for supply/withdraw, only in the hub the event acted on.
+            const isThisChanged =
+              (isSupplySide || isLiq) &&
+              s.symbol === (isLiq ? ctx.collateralSymbol : token) &&
+              (isLiq || hubMatches(s.hub));
             // Prefer the per-row price (server enriches every snapshot item with
             // its historic USD price). Fall back to the event's primary price on
             // the changed row so older clients / payloads without per-row prices
@@ -235,7 +251,7 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
               s.price?.usd ?? (!isThisChanged ? undefined : isLiq ? ctx.collateralPrice?.usd : ctx.price?.usd);
             return (
               <PositionRow
-                key={s.symbol}
+                key={`${s.symbol}-${s.hub ?? "?"}`}
                 symbol={s.symbol}
                 amount={s.amount}
                 before={isThisChanged ? supplyBefore : undefined}
@@ -255,11 +271,11 @@ export function AaveV4EventDetail({ ctx }: AaveV4EventDetailProps) {
       body: (
         <div className="flex flex-col gap-1">
           {debts.map((d) => {
-            const isThisChanged = (isDebtSide || isLiq) && d.symbol === token;
+            const isThisChanged = (isDebtSide || isLiq) && d.symbol === token && (isLiq || hubMatches(d.hub));
             const priceUsd = d.price?.usd ?? (!isThisChanged ? undefined : isLiq ? ctx.debtPrice?.usd : ctx.price?.usd);
             return (
               <PositionRow
-                key={d.symbol}
+                key={`${d.symbol}-${d.hub ?? "?"}`}
                 symbol={d.symbol}
                 amount={d.amount}
                 before={isThisChanged ? debtBefore : undefined}
