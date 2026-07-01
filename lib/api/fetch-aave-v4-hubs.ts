@@ -5,7 +5,7 @@
 // The protocol-aggregate view of Aave V4's three hubs (Core / Plus / Prime):
 // per-(hub, asset, spoke) credit lines, supply caps, current utilisation and
 // per-hub active-position counts. Feeds the neutral side-by-side surface at
-// /aave-v4/hubs — see migration/aave-v4-hub-comparison.md.
+// /aave-v4/hubs — see aave-v4-hub-comparison.md.
 //
 // Wire shape mirrors rails-server-mig's api/src/services/aave-v4-hubs.ts. Big
 // integers ride as STRINGS (caps in whole-token units; addedAssets / totalOwed

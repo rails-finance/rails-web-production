@@ -5,7 +5,7 @@
 // per-asset credit-line utilisation and spoke summary. Distinct from every
 // other Aave V4 surface (which is position-level); this is the researcher /
 // governance view. Framing: present, don't rank — fixed canonical column order,
-// no score, no risk valence. See migration/aave-v4-hub-comparison.md.
+// no score, no risk valence. See aave-v4-hub-comparison.md.
 
 import { useEffect, useState } from "react";
 import Link from "next/link";

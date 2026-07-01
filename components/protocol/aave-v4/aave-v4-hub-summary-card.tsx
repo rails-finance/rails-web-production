@@ -12,7 +12,7 @@
 // sits on the same baseline and the band scans across as cleanly as it scans
 // down. See the parent grid in aave-v4-hub-views.tsx.
 //
-// Strictly descriptive — present, don't rank (see migration/aave-v4-hub-
+// Strictly descriptive — present, don't rank (see aave-v4-hub-
 // comparison.md). The hub name links in the app's interaction color (navigation,
 // not a verdict). Supply-mix bars carry per-class grouping color (a grouping
 // aid, never a risk valence — see ASSET_CLASS_COLOR).

@@ -326,7 +326,7 @@ export function liquityEconomicsContent(opts: { isBatched?: boolean } = {}): Lea
 // One content function per mechanic, mapped from operation types by the event
 // explainer's resolver. Process-event titles read "How … works"; each follows
 // the slot grammar (Intro → Key Concepts → Quick Links) with no instance
-// numbers. See migration/learn-more-modal-grammar.md.
+// numbers. See learn-more-modal-grammar.md.
 
 export function liquityCloseTroveContent(): LearnMoreContent {
   return {
@@ -665,7 +665,7 @@ export function aaveV4PositionFallbackContent(): LearnMoreContent {
 // must read identically on every position — so it takes no per-position arguments
 // and never branches on live state (e.g. whether this wallet currently carries
 // debt). A supply-only position simply doesn't render the runway sub-section; the
-// modal still teaches what it shows. See migration/learn-more-modal-grammar.md §1.
+// modal still teaches what it shows. See learn-more-modal-grammar.md §1.
 export function aaveV4EconomicsContent(): LearnMoreContent {
   return {
     title: "About the Economics",

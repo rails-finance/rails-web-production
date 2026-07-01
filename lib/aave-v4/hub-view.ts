@@ -2,7 +2,7 @@
 // model for the /aave-v4/hubs comparison surface. Kept side-effect-free and out
 // of the component so the aggregation logic is one readable place.
 //
-// Framing: present, don't rank (see migration/aave-v4-hub-comparison.md). This
+// Framing: present, don't rank (see aave-v4-hub-comparison.md). This
 // module computes only descriptive aggregates — sizes, composition, utilisation,
 // LT ranges. No score, no ordering by a risk metric (hubs stay in canonical
 // order). Utilisation is a ratio, rendered with a single neutral fill.
@@ -254,7 +254,7 @@ export function hubUnderlyings(data: AaveV4HubsResponse): string[] {
  * liquidation threshold. Adds the two facts the composition bar and per-asset
  * list don't give at a glance — concentration and a single portfolio LT.
  *
- * Strictly descriptive (present, don't rank — see migration/aave-v4-hub-
+ * Strictly descriptive (present, don't rank — see aave-v4-hub-
  * comparison.md): no "risky"/"safe", no verdict, just stated figures. Returns
  * null when the hub has no supply to describe.
  */
