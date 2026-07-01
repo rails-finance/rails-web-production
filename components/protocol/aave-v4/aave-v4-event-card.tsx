@@ -17,6 +17,7 @@ import { AaveV4EventDetail } from "./aave-v4-event-detail";
 import { AaveV4EventExplainer } from "./aave-v4-event-explainer";
 import { AaveV4BarsSlot } from "./aave-v4-bars-slot";
 import { fmtTokenAmount } from "@/lib/aave-v4/format";
+import type { AaveV4Migration } from "@/lib/aave-v4/cross-spoke-moves";
 
 export interface AaveV4EventCardProps {
   event: BaseActivityEvent & { context: { protocol: "aave-v4"; data: AaveV4Context } };
@@ -26,9 +27,11 @@ export interface AaveV4EventCardProps {
   txGroup?: AaveV4TxGroup;
   /** 1-based chronological position within the spoke's event list. */
   eventNumber?: number;
+  /** Set when this event is one leg of a same-tx cross-spoke migration. */
+  migration?: AaveV4Migration;
 }
 
-export function AaveV4EventCard({ event, isFirst, isLast, txGroup, eventNumber }: AaveV4EventCardProps) {
+export function AaveV4EventCard({ event, isFirst, isLast, txGroup, eventNumber, migration }: AaveV4EventCardProps) {
   const ctx = event.context.data;
   const isLiquidation = ctx.eventType === "liquidation";
   const isCollateralToggle = ctx.eventType === "collateral_toggle";
@@ -75,7 +78,16 @@ export function AaveV4EventCard({ event, isFirst, isLast, txGroup, eventNumber }
     <EventCard
       avatar={null}
       iconColumn={iconSlot}
-      header={<AaveV4EventHeader ctx={ctx} timestamp={event.timestamp} txGroup={txGroup} eventNumber={eventNumber} />}
+      header={
+        <AaveV4EventHeader
+          ctx={ctx}
+          timestamp={event.timestamp}
+          txGroup={txGroup}
+          eventNumber={eventNumber}
+          migration={migration}
+          wallet={event.wallet}
+        />
+      }
       headerBars={<AaveV4BarsSlot eventId={event.id} />}
       detail={<AaveV4EventDetail ctx={ctx} txHash={event.txHash} wallet={event.wallet} />}
       detailLabel="Aave V4 Details"

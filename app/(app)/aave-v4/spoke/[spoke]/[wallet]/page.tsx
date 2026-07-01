@@ -52,6 +52,7 @@ import type { BaseActivityEvent } from "@/lib/shared/types/event-shape";
 import { isAaveV4Event } from "@/lib/shared/types/event-shape";
 import { AaveV4EventCard } from "@/components/protocol/aave-v4/aave-v4-event-card";
 import type { AaveV4TxGroup } from "@/components/protocol/aave-v4/aave-v4-event-header";
+import { buildCrossSpokeMoves } from "@/lib/aave-v4/cross-spoke-moves";
 import { AaveV4SpokeCardSelector } from "@/components/protocol/aave-v4/aave-v4-spoke-card";
 import { AaveV4SpokeRunway } from "@/components/protocol/aave-v4/aave-v4-spoke-runway";
 import { AaveV4PositionExposure } from "@/components/protocol/aave-v4/aave-v4-position-exposure";
@@ -245,6 +246,12 @@ function AaveV4SpokePageInner() {
     () => [...events].sort((a, b) => a.blockNumber - b.blockNumber || a.timestamp - b.timestamp),
     [events],
   );
+
+  // Cross-spoke migration links, derived from the wallet's FULL timeline (all
+  // spokes) — so a leg shown on this spoke page can point at the other spoke
+  // it moved to/from in the same tx. Built off `events`, not the spoke-filtered
+  // list, because the counterpart leg lives on a different spoke by definition.
+  const crossSpokeMoves = useMemo(() => buildCrossSpokeMoves(events), [events]);
 
   const prices = usePrices();
   const spokeGroups = useMemo(() => groupBySpoke(sortedEvents, undefined, prices), [sortedEvents, prices]);
@@ -651,6 +658,7 @@ function AaveV4SpokePageInner() {
                         isLast={idx === displayedEvents.length - 1}
                         txGroup={txGroups.get(event.id)}
                         eventNumber={eventNumbers.get(event.id)}
+                        migration={crossSpokeMoves.get(event.id)}
                       />
                     </EventDateContext.Provider>
                   );

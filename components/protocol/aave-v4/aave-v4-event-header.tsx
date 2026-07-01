@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { ArrowRight, ArrowLeft } from "lucide-react";
 import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import { fmtTokenAmount } from "@/lib/aave-v4/format";
 import { useHeaderValueHideClass } from "@/lib/shared/header-values";
@@ -7,6 +9,8 @@ import { EventTime } from "@/components/shared/event-time";
 import { useTimelineDisplay } from "@/components/shared/timeline-display-context";
 import { aaveV4DisplaySymbol } from "@/lib/aave-v4/pt-tokens";
 import { effectiveBorrowAPR } from "@/lib/aave-v4/borrow-rate";
+import { slugifySpoke } from "@/lib/aave-v4/spoke-meta";
+import type { AaveV4Migration } from "@/lib/aave-v4/cross-spoke-moves";
 import type { AaveV4Context } from "@/lib/shared/types/protocols/aave-v4";
 
 /** 1-based position + total within a shared tx_hash. `count > 1` triggers
@@ -41,9 +45,14 @@ export interface AaveV4EventHeaderProps {
   /** 1-based chronological position within the spoke's event list. Stable
    * across asc/desc display order. */
   eventNumber?: number;
+  /** Present when this leg is one side of a same-tx cross-spoke migration —
+   *  renders a linked "Moved to/from <spoke>" chip. */
+  migration?: AaveV4Migration;
+  /** Owner wallet — needed to build the cross-spoke link target. */
+  wallet?: string;
 }
 
-export function AaveV4EventHeader({ ctx, timestamp, txGroup, eventNumber }: AaveV4EventHeaderProps) {
+export function AaveV4EventHeader({ ctx, timestamp, txGroup, eventNumber, migration, wallet }: AaveV4EventHeaderProps) {
   const style = STYLES[ctx.eventType] ?? { label: ctx.eventType, color: "", bg: "", badge: false };
   const amount = parseFloat(ctx.amount ?? "0") || 0;
   const hideVal = useHeaderValueHideClass({ isPassive: ctx.eventType === "liquidation" });
@@ -60,6 +69,31 @@ export function AaveV4EventHeader({ ctx, timestamp, txGroup, eventNumber }: Aave
       >
         {txGroup.index} of {txGroup.count}
       </span>
+    ) : null;
+
+  // Cross-spoke migration chip — a linked breadcrumb to the other leg's spoke.
+  // "Moved to <spoke> →" when the asset left this spoke this tx; "← Moved from
+  // <spoke>" when it arrived. Neutral styling: it's a navigational fact, not a
+  // cost/risk signal (house rule — no hue-coded meaning).
+  const migrationSlug = migration ? slugifySpoke(migration.spokeName) : null;
+  const migrationChip =
+    migration && migrationSlug && wallet ? (
+      <Link
+        href={`/aave-v4/spoke/${migrationSlug}/${wallet}`}
+        onClick={(e) => e.stopPropagation()}
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-sunken text-rb-500 hover:text-foreground transition-colors"
+        title={
+          migration.direction === "to"
+            ? `Moved to the ${migration.spokeName} spoke in this transaction`
+            : `Moved from the ${migration.spokeName} spoke in this transaction`
+        }
+      >
+        {migration.direction === "from" && <ArrowLeft size={11} className="flex-shrink-0" />}
+        <span>
+          Moved {migration.direction} {migration.spokeName}
+        </span>
+        {migration.direction === "to" && <ArrowRight size={11} className="flex-shrink-0" />}
+      </Link>
     ) : null;
 
   const counter =
@@ -147,6 +181,7 @@ export function AaveV4EventHeader({ ctx, timestamp, txGroup, eventNumber }: Aave
           </>
         )}
         <span className="ml-auto inline-flex items-center gap-2">
+          {migrationChip}
           {timestamp > 0 && (
             <span className="text-xs ">
               <EventTime ts={timestamp} />
