@@ -41,6 +41,59 @@ export function formatNum(v: string | number, decimals = 2): string {
   return n.toLocaleString(undefined, { maximumFractionDigits: decimals });
 }
 
+// The single source of truth for a token amount on every event-card surface
+// (event header, event-detail rows, the timeline spine — across protocols).
+// Returns the bare number; callers append the symbol/icon.
+//
+// Precision is chosen so a small amount of a high-unit-price asset never
+// underflows to "0" while a stablecoin never grows a decimal tail:
+//   • With a per-unit `priceUsd`, decimals are dollar-anchored — enough places
+//     that the last shown digit is worth ~$1. BTC @ $58,749 → 5 decimals
+//     (0.001 reads "0.001", not "0"); ETH @ $3,000 → 4; a $1 stablecoin → 0
+//     (so 5,784 stays "5,784"). Sub-unit amounts keep a 2-decimal floor so a
+//     $1 stablecoin still shows "0.61".
+//   • Without a price, decimals scale to the number's own magnitude — so
+//     interest figures (0.0312 ETH, 0.00041 WBTC) render legibly with no price.
+// A genuinely non-zero amount is never shown as "0": if it rounds away at the
+// chosen precision it surfaces the smallest representable unit as "< 0.0000…1".
+// ≥ 1M compacts ("1.2M", "34.5M", "2.1B") so a whale balance can't push the
+// narrow timeline spine out of layout; below 1M stays fully grouped.
+export function fmtTokenAmount(v: string | number | undefined, priceUsd?: number): string {
+  if (v == null || v === "") return "0";
+  const n = typeof v === "string" ? parseFloat(v) : v;
+  if (!isFinite(n) || n === 0) return "0";
+  const abs = Math.abs(n);
+
+  // ≥ 1M units: compact ("1.2M", "34.5M", "2.1B"). Bounds the string width on
+  // the narrow timeline spine — a whale's 7-figure balance would otherwise
+  // render in full ("12,345,678") and push the icon rail out. Below 1M stays
+  // fully grouped (see below), so no current value changes.
+  if (abs >= 1_000_000) return Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(n);
+
+  // 1,000–999,999: whole number with grouping, no fractional tail — regardless
+  // of price (nobody needs 5 decimals on a 5,784 balance).
+  if (abs >= 1_000) return n.toLocaleString(undefined, { maximumFractionDigits: 0 });
+
+  const decimals =
+    priceUsd && priceUsd > 0
+      ? // Dollar-anchored: last digit ≈ $1. Floor at 2 decimals for sub-unit
+        // amounts so sub-dollar stablecoin balances stay legible. Capped at 8.
+        Math.min(8, Math.max(abs < 1 ? 2 : 0, Math.ceil(Math.log10(priceUsd))))
+      : abs >= 1
+        ? 4
+        : Math.min(8, Math.ceil(-Math.log10(abs)) + 2);
+
+  // Non-zero underflow guard: if rounding to `decimals` would print "0", show
+  // the smallest representable unit as a "< …" floor instead of a false zero.
+  const smallest = Math.pow(10, -decimals);
+  if (abs < 0.5 * smallest) {
+    const floor = smallest.toLocaleString(undefined, { maximumFractionDigits: decimals });
+    return (n < 0 ? "> −" : "< ") + floor;
+  }
+
+  return n.toLocaleString(undefined, { maximumFractionDigits: decimals });
+}
+
 /** Format a USD value: "< $0.01", "$0.50", "$1,234" */
 export function formatUsd(value: number | undefined | null): string {
   if (value == null || isNaN(value) || value < 0.01) return "< $0.01";

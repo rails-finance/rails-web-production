@@ -6,6 +6,11 @@
 
 import { formatCompact } from "@/lib/shared/format-event";
 
+// `fmtTokenAmount` now lives in lib/shared/format-event.ts (it is protocol-
+// neutral — the same price-anchored rule serves Aave and Liquity). Re-exported
+// here so existing `@/lib/aave-v4/format` imports keep working unchanged.
+export { fmtTokenAmount } from "@/lib/shared/format-event";
+
 // Sub-$1 values use 2 decimals ("$0.40") so a $2.48-of-which-$0.40-debt test
 // position stays legible. Only collapse to "< $0.01" for true dust where the
 // cents-rounding would lie ("$0.00" is worse than "< $0.01").
@@ -25,18 +30,6 @@ export function fmtSignedUsd(n: number): { display: string; title: string } {
   const sign = n < 0 ? "−" : "+";
   const c = formatCompact(Math.abs(n), { decimals: 2 });
   return { display: `${sign}$${c.display}`, title: `${sign}$${c.title}` };
-}
-
-// Compact token amount for interest figures — scales decimals to the magnitude
-// so sub-unit interest (0.0312 ETH, 0.00041 WBTC) stays legible without
-// underflowing to "0". Returns the bare number; callers append the symbol/icon.
-export function fmtTokenAmount(n: number): string {
-  const abs = Math.abs(n);
-  if (abs === 0) return "0";
-  if (abs >= 1_000) return n.toLocaleString(undefined, { maximumFractionDigits: 0 });
-  if (abs >= 1) return n.toLocaleString(undefined, { maximumFractionDigits: 4 });
-  const decimals = Math.min(8, Math.ceil(-Math.log10(abs)) + 2);
-  return n.toLocaleString(undefined, { maximumFractionDigits: decimals });
 }
 
 export function hfLabel(hf: number | null): string {

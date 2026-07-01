@@ -5,6 +5,7 @@ import type { BaseActivityEvent } from "@/lib/shared/types/activity";
 import type { LiquityContext } from "@/lib/shared/types/protocols/liquity";
 import { EventCard } from "@/components/shared/event-card";
 import { SpineColumn } from "@/components/shared/spine-column";
+import { fmtTokenAmount } from "@/lib/shared/format-event";
 import { Facehash } from "@/components/shared/facehash";
 import { LiquityEventHeader } from "./liquity-event-header";
 import { LiquityEventDetail } from "./liquity-event-detail";
@@ -149,9 +150,17 @@ export function LiquityEventCard({
       const collVal = isActiveOp ? Math.abs(collOp) : undefined;
       const debtVal = isActiveOp ? Math.abs(debtOp) : undefined;
 
+      // Render the spine value with the same price-anchored formatter (and the
+      // same price) the header uses, so the spine and header never disagree —
+      // collateral anchors to the oracle price, BOLD debt to $1.
+      const collDisplay = collVal != null ? fmtTokenAmount(collVal, currentPrice) : undefined;
+      const debtDisplay = debtVal != null ? fmtTokenAmount(debtVal, 1) : undefined;
+
       const tokens = [
-        ...(showColl ? [{ symbol: ctx.collateralType, direction: collDir, value: collVal }] : []),
-        ...(showBold ? [{ symbol: "BOLD", direction: boldDir, value: debtVal }] : []),
+        ...(showColl
+          ? [{ symbol: ctx.collateralType, direction: collDir, value: collVal, valueDisplay: collDisplay }]
+          : []),
+        ...(showBold ? [{ symbol: "BOLD", direction: boldDir, value: debtVal, valueDisplay: debtDisplay }] : []),
       ] as import("@/components/shared/spine-column").SpineTokenRow[];
 
       return <SpineColumn tokens={tokens} isFirst={isFirst} isLast={!!isLast} />;
@@ -164,7 +173,14 @@ export function LiquityEventCard({
     <EventCard
       avatar={avatarOverride ?? avatarSlot}
       iconColumn={iconSlot}
-      header={<LiquityEventHeader ctx={ctx} timestamp={event.timestamp} eventNumber={eventNumber} />}
+      header={
+        <LiquityEventHeader
+          ctx={ctx}
+          timestamp={event.timestamp}
+          eventNumber={eventNumber}
+          currentPrice={currentPrice}
+        />
+      }
       headerBars={<TroveBarsSlot eventId={event.id} />}
       detail={
         <LiquityEventDetail

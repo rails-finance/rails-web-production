@@ -87,18 +87,22 @@ export function fmtSpine(v: string | number | undefined): string {
  *  values are editable in sim mode. */
 export function SpineVal({
   value,
+  displayOverride,
   side,
   onChange,
   decimals = 4,
   max,
 }: {
   value?: string | number;
+  /** When set, render this exact string instead of the compact `fmtSpine`
+   *  form — lets a caller keep the spine value identical to its card header. */
+  displayOverride?: string;
   side: "left" | "right";
   onChange?: (v: number) => void;
   decimals?: number;
   max?: number;
 }) {
-  const txt = fmtSpine(value);
+  const txt = displayOverride ?? fmtSpine(value);
   if (!txt) return <span />;
   const sideClass = side === "left" ? "justify-self-end pr-5" : "justify-self-start pl-5";
   if (onChange && typeof value === "number") {

@@ -5,25 +5,13 @@ import type { AaveV4Context, AaveV4PriceSource } from "@/lib/shared/types/protoc
 import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import { usePreferences } from "@/lib/shared/preferences-context";
 import { formatRatio, ratioLabel, ratioColorClass } from "@/lib/shared/ratio-format";
-import { TransitionArrow as SharedTransitionArrow, StatCard } from "@/components/shared/state-transition";
+import { DeltaToggle, StatCard } from "@/components/shared/state-transition";
 import { resolvePrice } from "@/lib/aave/prices";
 import { usePrices } from "@/lib/shared/prices-context";
 import { useTimelineDisplay } from "@/components/shared/timeline-display-context";
 import { aaveV4DisplaySymbol } from "@/lib/aave-v4/pt-tokens";
 import { borrowRatesByDebt } from "@/lib/aave-v4/borrow-rate";
-
-function fmt(v: string | number | undefined): string {
-  if (!v) return "0";
-  const n = typeof v === "string" ? parseFloat(v) : v;
-  if (!isFinite(n)) return "0";
-  if (n === 0) return "0";
-  const abs = Math.abs(n);
-  if (abs >= 1_000) return n.toLocaleString(undefined, { maximumFractionDigits: 0 });
-  if (abs >= 1) return n.toLocaleString(undefined, { maximumFractionDigits: 4 });
-  // Sub-unit: scale decimals so BTC-family / wei-fractional amounts don't underflow to "0".
-  const decimals = Math.min(8, Math.ceil(-Math.log10(abs)) + 2);
-  return n.toLocaleString(undefined, { maximumFractionDigits: decimals });
-}
+import { fmtTokenAmount } from "@/lib/aave-v4/format";
 
 /** USD value formatter matching Liquity V2's detail-row style:
  *  `< $0.01` for sub-cent, `$0.XX` for sub-dollar, integer dollars otherwise. */
@@ -32,8 +20,6 @@ function formatUsd(value: number | undefined | null): string {
   if (value < 1) return `$${value.toFixed(2)}`;
   return "$" + value.toLocaleString(undefined, { maximumFractionDigits: 0 });
 }
-
-const TransitionArrow = () => <SharedTransitionArrow size="sm" />;
 
 /** Per-unit asset-price pill shown in the event-detail footer — one per
  *  distinct asset in the snapshot (collateral + debt), each carrying the
@@ -116,16 +102,20 @@ function PositionRow({
   const { showTickerLabels, showUsdValues } = useTimelineDisplay();
   const afterN = parseFloat(amount) || 0;
   const afterUsd = priceUsd != null && afterN > 0 ? afterN * priceUsd : undefined;
+  // Same arrow-as-toggle as Liquity: clicking swaps `before →` for `+delta =`,
+  // where delta is this asset's balance change (after − before) in token units.
+  const beforeN = before != null ? parseFloat(before) || 0 : 0;
+  const delta = afterN - beforeN;
+  const deltaStr = `${delta >= 0 ? "+" : "−"}${fmtTokenAmount(Math.abs(delta), priceUsd)}`;
   return (
     <span className="inline-flex items-center gap-1.5 text-sm">
       {isChanged && before != null ? (
         <>
-          <span className="font-semibold text-rb-500">{fmt(before)}</span>
-          <TransitionArrow />
-          <span className="font-semibold">{fmt(amount)}</span>
+          <DeltaToggle before={fmtTokenAmount(before, priceUsd)} delta={deltaStr} size="sm" />
+          <span className="font-semibold">{fmtTokenAmount(amount, priceUsd)}</span>
         </>
       ) : (
-        <span className="font-semibold text-rb-500">{fmt(amount)}</span>
+        <span className="font-semibold text-rb-500">{fmtTokenAmount(amount, priceUsd)}</span>
       )}
       <TokenChipIcon symbol={symbol} size={16} />
       {showTickerLabels && <span className="text-xs">{aaveV4DisplaySymbol(symbol)}</span>}

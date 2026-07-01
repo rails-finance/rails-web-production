@@ -58,6 +58,11 @@ export interface SpineTokenRow {
   direction?: "left" | "right";
   /** Optional flanking value shown beside the arrow */
   value?: number | string;
+  /** Pre-formatted display string for the flanking value. When set, the spine
+   *  renders this verbatim instead of its own compact `fmtSpine(value)` — used
+   *  to keep the spine and the event-card header byte-identical (they render
+   *  the same fact and swap between locations, so they must never disagree). */
+  valueDisplay?: string;
   /** Optional badge overlay on the token icon */
   badge?: "check" | "cross";
   /** When set, the flanking value renders as a click-to-edit input. Used by
@@ -534,6 +539,7 @@ export function SpineColumn({
           >
             <SpineVal
               value={showTimelineValues && row.direction === "left" ? row.value : undefined}
+              displayOverride={showTimelineValues && row.direction === "left" ? row.valueDisplay : undefined}
               side="left"
               onChange={row.direction === "left" ? row.onValueChange : undefined}
               decimals={row.valueDecimals}
@@ -551,6 +557,7 @@ export function SpineColumn({
             {row.direction === "right" ? <ArrowFromDot direction="right" size={scale.arrowSize} /> : <span />}
             <SpineVal
               value={showTimelineValues && row.direction === "right" ? row.value : undefined}
+              displayOverride={showTimelineValues && row.direction === "right" ? row.valueDisplay : undefined}
               side="right"
               onChange={row.direction === "right" ? row.onValueChange : undefined}
               decimals={row.valueDecimals}

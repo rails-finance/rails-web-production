@@ -8,6 +8,7 @@ import { getBatchManagerName } from "@/lib/liquity/batch-managers";
 import { usePreferences } from "@/lib/shared/preferences-context";
 import { formatRatio, ratioLabelShort, useLiquityRatioColorClass } from "@/lib/shared/ratio-format";
 import { useHeaderValueHideClass } from "@/lib/shared/header-values";
+import { fmtTokenAmount } from "@/lib/shared/format-event";
 import { AlertTriangle } from "lucide-react";
 
 type OperationStyle = { label: string; color: string; bg: string; badge: boolean };
@@ -77,12 +78,6 @@ function getOperationStyle(operation: string, ctx?: LiquityContext): OperationSt
   }
 }
 
-function formatNumber(n: number): string {
-  if (Math.abs(n) < 0.01) return "0";
-  if (Math.abs(n) >= 1000) return n.toLocaleString(undefined, { maximumFractionDigits: 0 });
-  return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
-}
-
 /** Small "people" glyph used inside the pink delegate / batch rate pills, and
  *  reused as the event-filter suffix that marks the delegate-set "Interest
  *  rate" row apart from the owner's own. Stroke is currentColor so it inherits
@@ -142,9 +137,13 @@ export interface LiquityEventHeaderProps {
    * Stable regardless of asc/desc display order — event #1 is always the
    * trove's openTrove. */
   eventNumber?: number;
+  /** Live oracle price for this collateral — anchors the collateral amount's
+   * display precision so it matches the timeline spine (see fmtTokenAmount).
+   * BOLD debt anchors to $1. Falls back to magnitude scaling when absent. */
+  currentPrice?: number;
 }
 
-export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEventHeaderProps) {
+export function LiquityEventHeader({ ctx, timestamp, eventNumber, currentPrice }: LiquityEventHeaderProps) {
   const style = getOperationStyle(ctx.operation, ctx);
   const { stateBefore, stateAfter, troveOperation } = ctx;
   const { showTimestamps, showEventNumbers, showCollateralRatio } = useTimelineDisplay();
@@ -199,6 +198,16 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
     ? troveOperation.collChangeFromOperation + troveOperation.collIncreaseFromRedist
     : stateAfter.coll - stateBefore.coll;
 
+  // Headline amount for owner-initiated (active) rows = the operation principal,
+  // matching the timeline spine — what the owner actually borrowed/repaid/added/
+  // withdrew. The upfront fee / redistribution / accrued interest is folded into
+  // `debtChange`/`collChange` above (used by the passive redemption & liquidation
+  // rows and by the detail's before→after + arrow tooltip), but the active
+  // header row shows the principal so header == spine. Falls back to the net
+  // change when there's no troveOperation.
+  const debtOpAmount = troveOperation ? troveOperation.debtChangeFromOperation : debtChange;
+  const collOpAmount = troveOperation ? troveOperation.collChangeFromOperation : collChange;
+
   const hasDebtChange = Math.abs(debtChange) >= 0.01;
   const hasCollChange = Math.abs(collChange) >= 0.01;
   const PASSIVE_OPS = new Set([
@@ -237,14 +246,18 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
               {hasCollChange && (
                 <span className="inline-flex items-center gap-1.5 text-sm">
                   <span className="text-rb-500">Supply</span>
-                  <span className={`font-bold text-foreground ${hideVal}`}>{formatNumber(Math.abs(collChange))}</span>
+                  <span className={`font-bold text-foreground ${hideVal}`}>
+                    {fmtTokenAmount(Math.abs(collOpAmount), currentPrice)}
+                  </span>
                   <TokenChipIcon symbol={ctx.collateralType} size={16} />
                 </span>
               )}
               {hasDebtChange && (
                 <span className="inline-flex items-center gap-1.5 text-sm">
                   <span className="text-rb-500">Borrow</span>
-                  <span className={`font-bold text-foreground ${hideVal}`}>{formatNumber(Math.abs(debtChange))}</span>
+                  <span className={`font-bold text-foreground ${hideVal}`}>
+                    {fmtTokenAmount(Math.abs(debtOpAmount), 1)}
+                  </span>
                   <TokenChipIcon symbol={ctx.assetType ?? "BOLD"} size={16} />
                 </span>
               )}
@@ -269,14 +282,18 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
               {hasCollChange && (
                 <span className="inline-flex items-center gap-1.5 text-sm">
                   <span className="text-caution-600 dark:text-caution-400">Cleared</span>
-                  <span className={`font-bold text-foreground ${hideVal}`}>{formatNumber(Math.abs(collChange))}</span>
+                  <span className={`font-bold text-foreground ${hideVal}`}>
+                    {fmtTokenAmount(Math.abs(collChange), currentPrice)}
+                  </span>
                   <TokenChipIcon symbol={ctx.collateralType} size={16} />
                 </span>
               )}
               {hasDebtChange && (
                 <span className="inline-flex items-center gap-1.5 text-sm">
                   <span className="text-caution-600 dark:text-caution-400">Reduced</span>
-                  <span className={`font-bold text-foreground ${hideVal}`}>{formatNumber(Math.abs(debtChange))}</span>
+                  <span className={`font-bold text-foreground ${hideVal}`}>
+                    {fmtTokenAmount(Math.abs(debtChange), 1)}
+                  </span>
                   <TokenChipIcon symbol={ctx.assetType ?? "BOLD"} size={16} />
                 </span>
               )}
@@ -296,14 +313,18 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
               {hasCollChange && (
                 <span className="inline-flex items-center gap-1.5 text-sm">
                   <span className="text-rb-500">Liquidated</span>
-                  <span className={`font-bold text-foreground ${hideVal}`}>{formatNumber(Math.abs(collChange))}</span>
+                  <span className={`font-bold text-foreground ${hideVal}`}>
+                    {fmtTokenAmount(Math.abs(collChange), currentPrice)}
+                  </span>
                   <TokenChipIcon symbol={ctx.collateralType} size={16} />
                 </span>
               )}
               {hasDebtChange && (
                 <span className="inline-flex items-center gap-1.5 text-sm">
                   <span className="text-rb-500">Cleared</span>
-                  <span className={`font-bold text-foreground ${hideVal}`}>{formatNumber(Math.abs(debtChange))}</span>
+                  <span className={`font-bold text-foreground ${hideVal}`}>
+                    {fmtTokenAmount(Math.abs(debtChange), 1)}
+                  </span>
                   <TokenChipIcon symbol={ctx.assetType ?? "BOLD"} size={16} />
                 </span>
               )}
@@ -324,14 +345,14 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
                     <span className="text-rb-500">{collAction}</span>
                     {hasCollChange && (
                       <span className={`font-bold text-foreground ${hideVal}`}>
-                        {formatNumber(Math.abs(collChange))}
+                        {fmtTokenAmount(Math.abs(collOpAmount), currentPrice)}
                       </span>
                     )}
                     <TokenChipIcon symbol={ctx.collateralType} size={16} />
                     <span className="text-rb-500">{debtAction}</span>
                     {hasDebtChange && (
                       <span className={`font-bold text-foreground ${hideVal}`}>
-                        {formatNumber(Math.abs(debtChange))}
+                        {fmtTokenAmount(Math.abs(debtOpAmount), 1)}
                       </span>
                     )}
                     <TokenChipIcon symbol={ctx.assetType ?? "BOLD"} size={16} />
@@ -352,7 +373,9 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
             ctx.operation !== "liquidate" &&
             ctx.operation !== "setInterestBatchManager" && (
               <span className="inline-flex items-center gap-1.5 text-sm">
-                <span className={`font-bold text-foreground ${hideVal}`}>{formatNumber(Math.abs(debtChange))}</span>
+                <span className={`font-bold text-foreground ${hideVal}`}>
+                  {fmtTokenAmount(Math.abs(debtOpAmount), 1)}
+                </span>
                 <TokenChipIcon symbol={ctx.assetType ?? "BOLD"} size={16} />
               </span>
             )}
@@ -366,7 +389,9 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber }: LiquityEvent
             ctx.operation !== "liquidate" &&
             ctx.operation !== "setInterestBatchManager" && (
               <span className="inline-flex items-center gap-1.5 text-sm">
-                <span className={`font-bold text-foreground ${hideVal}`}>{formatNumber(Math.abs(collChange))}</span>
+                <span className={`font-bold text-foreground ${hideVal}`}>
+                  {fmtTokenAmount(Math.abs(collOpAmount), currentPrice)}
+                </span>
                 <TokenChipIcon symbol={ctx.collateralType} size={16} />
               </span>
             )}

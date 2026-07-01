@@ -1,4 +1,6 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { useState, type ReactNode } from "react";
 
 // Small layout atoms for before→after state displays on event detail cards.
 // Factored out so Liquity V2, LUSD, the simulator, and any future protocols
@@ -14,6 +16,67 @@ export function TransitionArrow({ size = "md" }: { size?: "sm" | "md" } = {}) {
         clipRule="evenodd"
       />
     </svg>
+  );
+}
+
+/** The before→after arrow doubles as a toggle. Clicking it swaps the muted
+ *  `before →` for `+delta =`, so the row reads e.g. `+52,195 = 112,223`;
+ *  clicking again reverts, and the state persists until toggled. This is the
+ *  one place a state row surfaces the change as a single number — which for
+ *  debt is fee-inclusive and thus differs from the principal on the header /
+ *  spine. The `after` value and any trailing token icon / USD chip are rendered
+ *  by the caller, after this control. Pass `delta={null}` to fall back to a
+ *  plain, non-interactive arrow (e.g. when the "after" side has no real value
+ *  to diff against, like a ratio that becomes N/A). */
+export function DeltaToggle({
+  before,
+  delta,
+  size = "md",
+  beforeClass = "text-sm font-semibold text-rb-500",
+  beforeExtra,
+}: {
+  before: ReactNode;
+  delta: string | null | undefined;
+  size?: "sm" | "md";
+  beforeClass?: string;
+  beforeExtra?: ReactNode;
+}) {
+  const [showDelta, setShowDelta] = useState(false);
+
+  if (delta == null) {
+    return (
+      <span className="inline-flex items-center gap-1">
+        <span className={`${beforeClass} tabular-nums`}>{before}</span>
+        {beforeExtra}
+        <TransitionArrow size={size} />
+      </span>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => setShowDelta((v) => !v)}
+      aria-pressed={showDelta}
+      aria-label={showDelta ? "Show before and after values" : "Show total change"}
+      title={showDelta ? "Show before → after" : "Show total change"}
+      className="group inline-flex items-center gap-1 cursor-pointer"
+    >
+      {showDelta ? (
+        <>
+          <span className="text-sm font-semibold text-rb-500 tabular-nums">{delta}</span>
+          <span className="text-sm font-semibold text-rb-500">=</span>
+        </>
+      ) : (
+        <>
+          <span className={`${beforeClass} tabular-nums group-hover:text-rb-700 dark:group-hover:text-rb-300`}>
+            {before}
+          </span>
+          {beforeExtra}
+          <TransitionArrow size={size} />
+        </>
+      )}
+    </button>
   );
 }
 

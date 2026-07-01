@@ -1,7 +1,7 @@
 "use client";
 
 import { TokenChipIcon } from "@/components/shared/token-chip-icon";
-import { formatNum } from "@/lib/shared/format-event";
+import { fmtTokenAmount } from "@/lib/aave-v4/format";
 import { useHeaderValueHideClass } from "@/lib/shared/header-values";
 import { EventTime } from "@/components/shared/event-time";
 import { useTimelineDisplay } from "@/components/shared/timeline-display-context";
@@ -103,7 +103,7 @@ export function AaveV4EventHeader({ ctx, timestamp, txGroup, eventNumber }: Aave
               <span className="inline-flex items-center gap-1.5 text-sm">
                 <span className="text-rb-500">Cleared</span>
                 <span className={`font-bold text-foreground ${hideVal}`}>
-                  {formatNum(ctx.liquidatedCollateralAmount)}
+                  {fmtTokenAmount(ctx.liquidatedCollateralAmount, ctx.collateralPrice?.usd)}
                 </span>
                 <TokenChipIcon symbol={ctx.collateralSymbol} size={16} />
               </span>
@@ -111,7 +111,9 @@ export function AaveV4EventHeader({ ctx, timestamp, txGroup, eventNumber }: Aave
             {ctx.debtToCover && (
               <span className="inline-flex items-center gap-1.5 text-sm">
                 <span className="text-rb-500">Reduced</span>
-                <span className={`font-bold text-foreground ${hideVal}`}>{formatNum(ctx.debtToCover)}</span>
+                <span className={`font-bold text-foreground ${hideVal}`}>
+                  {fmtTokenAmount(ctx.debtToCover, ctx.debtPrice?.usd)}
+                </span>
                 <TokenChipIcon symbol={ctx.reserveSymbol ?? "???"} size={16} />
               </span>
             )}
@@ -120,7 +122,7 @@ export function AaveV4EventHeader({ ctx, timestamp, txGroup, eventNumber }: Aave
           <>
             {amount > 0 && (
               <span className="inline-flex items-center gap-1.5 text-sm">
-                <span className={`font-bold text-foreground ${hideVal}`}>{formatNum(amount)}</span>
+                <span className={`font-bold text-foreground ${hideVal}`}>{fmtTokenAmount(amount, ctx.price?.usd)}</span>
                 <TokenChipIcon symbol={ctx.reserveSymbol ?? "???"} size={16} />
               </span>
             )}

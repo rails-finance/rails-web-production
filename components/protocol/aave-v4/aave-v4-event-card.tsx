@@ -16,6 +16,7 @@ import { AaveV4EventHeader, type AaveV4TxGroup } from "./aave-v4-event-header";
 import { AaveV4EventDetail } from "./aave-v4-event-detail";
 import { AaveV4EventExplainer } from "./aave-v4-event-explainer";
 import { AaveV4BarsSlot } from "./aave-v4-bars-slot";
+import { fmtTokenAmount } from "@/lib/aave-v4/format";
 
 export interface AaveV4EventCardProps {
   event: BaseActivityEvent & { context: { protocol: "aave-v4"; data: AaveV4Context } };
@@ -36,6 +37,10 @@ export function AaveV4EventCard({ event, isFirst, isLast, txGroup, eventNumber }
 
   const amt = ctx.amount ? parseFloat(ctx.amount) : undefined;
   const sym = ctx.reserveSymbol ?? "?";
+  // Canonical amount string — identical to the header's, so the spine value and
+  // the header amount (which swap between locations via `showTimelineValues`)
+  // never disagree. Price-anchored precision lives in one place: fmtTokenAmount.
+  const amtDisplay = amt != null ? fmtTokenAmount(amt, ctx.price?.usd) : undefined;
 
   const iconSlot = isLiquidation ? (
     <SpineColumn
@@ -54,13 +59,13 @@ export function AaveV4EventCard({ event, isFirst, isLast, txGroup, eventNumber }
     />
   ) : alsoToggled ? (
     <SpineColumn
-      tokens={[{ symbol: sym, badge: "check", direction: "right", value: amt }]}
+      tokens={[{ symbol: sym, badge: "check", direction: "right", value: amt, valueDisplay: amtDisplay }]}
       isFirst={isFirst}
       isLast={!!isLast}
     />
   ) : (
     <SpineColumn
-      tokens={[{ symbol: sym, direction: isIncoming ? "left" : "right", value: amt }]}
+      tokens={[{ symbol: sym, direction: isIncoming ? "left" : "right", value: amt, valueDisplay: amtDisplay }]}
       isFirst={isFirst}
       isLast={!!isLast}
     />

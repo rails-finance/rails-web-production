@@ -7,8 +7,15 @@ import { TokenChipIcon } from "@/components/shared/token-chip-icon";
 import { LinkedAddress } from "@/components/shared/linked-address";
 import { usePreferences } from "@/lib/shared/preferences-context";
 import { formatRatio, ratioLabel, useLiquityRatioColorClass } from "@/lib/shared/ratio-format";
-import { TransitionArrow, ClosedLabel, StateMetric, StateTransition } from "@/components/shared/state-transition";
+import {
+  TransitionArrow,
+  DeltaToggle,
+  ClosedLabel,
+  StateMetric,
+  StateTransition,
+} from "@/components/shared/state-transition";
 import { useTimelineDisplay } from "@/components/shared/timeline-display-context";
+import { fmtTokenAmount } from "@/lib/shared/format-event";
 
 // ── Formatters ──────────────────────────────────────────────────────
 
@@ -53,16 +60,18 @@ function DebtMetric({
   const hasChange = isClose ? before !== after : before !== 0 && before !== after;
   const totalAccruedFees = accruedInterest + accruedManagementFees;
 
+  // The arrow doubles as a toggle (see DeltaToggle). The header headline and
+  // timeline spine both show the borrowed/repaid *principal*; the fee-inclusive
+  // total debt change (principal + fee + interest = after − before) is the one
+  // thing they don't surface, so clicking swaps `before →` for `+delta =`.
+  const delta = after - before;
+  const deltaStr = `${delta >= 0 ? "+" : "−"}${fmtTokenAmount(Math.abs(delta), 1)}`;
+
   return (
     <StateMetric label="Debt">
       <div>
         <StateTransition>
-          {hasChange && (
-            <>
-              <span className="text-sm font-semibold text-rb-500">{toLocaleStringHelper(before)}</span>
-              <TransitionArrow />
-            </>
-          )}
+          {hasChange && <DeltaToggle before={toLocaleStringHelper(before)} delta={isClose ? null : deltaStr} />}
           {isClose ? (
             <ClosedLabel />
           ) : (
@@ -108,21 +117,27 @@ function CollateralMetric({
   const { showUsdValues } = useTimelineDisplay();
   const hasChange = isClose ? before !== after : before !== 0 && before !== after;
 
+  // Same arrow-as-toggle as Debt: `before →` ⟷ `+delta =` (delta in collateral
+  // units). Disabled on close, where the "after" is the CLOSED label, not a
+  // number to diff against.
+  const collDelta = after - before;
+  const collDeltaStr = `${collDelta >= 0 ? "+" : "−"}${formatColl(Math.abs(collDelta))}`;
+
   return (
     <StateMetric label="Collateral">
       <StateTransition>
         {hasChange && (
-          <>
-            <div className="flex items-center space-x-1">
-              <span className="text-sm font-semibold text-rb-500">{formatColl(before)}</span>
-              {showUsdValues && isLiquidation && beforeInUsd > 0 && (
-                <span className="text-xs flex font-bold items-center text-rb-500 border-l-2 border-r-2 ml-2 border-rb-500 rounded-sm px-1 py-0">
+          <DeltaToggle
+            before={formatColl(before)}
+            delta={isClose ? null : collDeltaStr}
+            beforeExtra={
+              showUsdValues && isLiquidation && beforeInUsd > 0 ? (
+                <span className="text-xs flex font-bold items-center text-rb-500 border-l-2 border-r-2 border-rb-500 rounded-sm px-1 py-0">
                   {formatUsd(beforeInUsd)}
                 </span>
-              )}
-            </div>
-            <TransitionArrow />
-          </>
+              ) : undefined
+            }
+          />
         )}
         {isClose ? (
           <ClosedLabel />
@@ -212,16 +227,25 @@ function CollateralRatioMetric({
   const crColor = useLiquityRatioColorClass();
   const hasChange = before !== 0 && before !== after;
 
+  // Delta in the displayed mode's own units (percentage points). CR is linear
+  // so the delta is just after − before; LTV is 1/CR, so we diff the converted
+  // values (`10000/cr`) rather than the raw CR. Disabled on close and when the
+  // after side is N/A (debt fully repaid → no meaningful ratio to diff).
+  const beforeDisp = mode === "ltv" ? 10000 / before : before;
+  const afterDisp = mode === "ltv" ? 10000 / after : after;
+  const ratioDelta = afterDisp - beforeDisp;
+  const ratioDeltaStr = `${ratioDelta >= 0 ? "+" : "−"}${Math.abs(ratioDelta).toFixed(2)}%`;
+  const ratioCanToggle = !isClose && afterDebt !== 0 && isFinite(afterDisp);
+
   return (
     <StateMetric label={ratioLabel(mode)}>
       <StateTransition>
         {hasChange && (
-          <>
-            <span className={`text-sm font-semibold ${crColor(before, collateralType)}`}>
-              {formatRatio(before, mode, 2)}
-            </span>
-            <TransitionArrow />
-          </>
+          <DeltaToggle
+            before={formatRatio(before, mode, 2)}
+            delta={ratioCanToggle ? ratioDeltaStr : null}
+            beforeClass={`text-sm font-semibold ${crColor(before, collateralType)}`}
+          />
         )}
         {isClose ? (
           <ClosedLabel />
