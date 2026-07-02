@@ -30,7 +30,7 @@ The frontend is mono-rails: each protocol owns its `/[protocol]/...` URL space. 
 - ENS name resolution.
 - Dark and light themes.
 - Per-protocol wallet history (recent + pinned), stored in local storage.
-- Server-side bearer-authenticated proxy to the `rails-server-mig` API.
+- Server-side bearer-authenticated proxy to the `rails-server-production` API.
 
 ## Status
 
