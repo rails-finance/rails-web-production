@@ -60,6 +60,17 @@ export interface ReserveStats {
   peakDebtTimestamp: number;
   peakSupply: number;
   flowEvents: FlowEvent[];
+  /** Lifetime OUTFLOW value in USD at PRICE-AT-THE-TIME — each event valued at
+   *  its own block price (ctx.price / ctx.debtPrice / ctx.collateralPrice, from
+   *  the MV's at-or-before historic price). The inflow "Deposited/Borrowed (all
+   *  time)" totals are derived downstream as current holding + these outflows, so
+   *  a settled position's flow totals stay fixed while Deposited − Withdrawn = In
+   *  Protocol still reconciles. A reserve with no historic price contributes 0
+   *  (omitted, per the pure-truth omission rule — never a live-price guess). */
+  withdrawnUsd: number;
+  repaidUsd: number;
+  liquidatedDebtUsd: number;
+  liquidatedCollateralUsd: number;
   /** Chain-truth current balance for this reserve, when an on-chain read has
    *  been applied (see `patchReservesWithChain`). When absent, consumers
    *  derive current state from `supplied − withdrawn − liquidatedCollateral`.
@@ -90,14 +101,15 @@ export interface AaveEconomicsResult {
   firstTimestamp: number;
   lastTimestamp: number;
   /** Largest the spoke's combined collateral ever was at a SINGLE moment, in
-   *  USD at current prices — the running token balances across all reserves,
-   *  summed and priced at every event, maxed over the timeline. This is a real
-   *  high-water mark: unlike Σ(per-asset peak) it never exceeds a value the
-   *  portfolio actually held, since per-asset peaks can occur at different times
-   *  (and would sum to a moment that never existed). Event-derived history —
+   *  USD at PRICE-AT-THE-TIME — the running token balances across all reserves,
+   *  summed and each valued at its event-block historic price, maxed over the
+   *  timeline. This is a real high-water mark: unlike Σ(per-asset peak) it never
+   *  exceeds a value the portfolio actually held, since per-asset peaks can occur
+   *  at different times (and would sum to a moment that never existed). Valued at
+   *  the money of its era rather than today's market; event-derived history —
    *  chain truth deliberately doesn't recompute it. */
   peakSupplyUsd: number;
-  /** Peak combined debt at a single moment, in USD at current prices. See
+  /** Peak combined debt at a single moment, in USD at price-at-the-time. See
    *  `peakSupplyUsd`. */
   peakDebtUsd: number;
 }
@@ -377,10 +389,18 @@ export function calculateAaveEconomics(
 
   const runningDebt = new Map<string, number>();
   const runningSupply = new Map<string, number>();
+  // Per-symbol price at that reserve's most-recent event ("price-at-the-time").
+  // Populated from the historic price plumbed on each event's context
+  // (ctx.price / ctx.collateralPrice / ctx.debtPrice, sourced from the MV's
+  // at-or-before lookup). The peaks and lifetime outflows below are valued from
+  // this map so a settled record stays fixed in the money of its era. Keyed by
+  // display symbol (price is a per-asset fact — hub doesn't change it), matching
+  // the peak loop's `resolvePrice(st.symbol, …)` lookup.
+  const reservePrice = new Map<string, number>();
   // Portfolio-wide high-water marks: the largest the SUMMED running balances
-  // (priced at current prices) ever reached at a single moment. Tracked across
-  // the whole timeline rather than per-reserve so two assets that peaked at
-  // different times don't add up to a portfolio value that never existed.
+  // (priced at the time — see reservePrice) ever reached at a single moment.
+  // Tracked across the whole timeline rather than per-reserve so two assets that
+  // peaked at different times don't add up to a portfolio value that never existed.
   let peakSupplyUsd = 0;
   let peakDebtUsd = 0;
   let fallbackSeq = 0;
@@ -393,6 +413,18 @@ export function calculateAaveEconomics(
     const key = reserveKey(symbol, hub);
     fallbackSeq++;
     const eventSeq = eventIndexMap?.get(event.id) ?? fallbackSeq;
+
+    // Capture the moved asset's price at THIS event's block. Non-liquidation
+    // rows carry it on ctx.price; liquidation rows carry ctx.collateralPrice /
+    // ctx.debtPrice and are handled in the liquidation case below.
+    const movedPrice = ctx.price?.usd;
+    if (movedPrice != null && movedPrice > 0) reservePrice.set(symbol, movedPrice);
+    // Price for the moved asset AT THIS event, used to value lifetime outflows at
+    // price-at-the-time. Prefer this event's historic price, else the reserve's
+    // most-recent historic price. NO current-price fallback — per the pure-truth
+    // omission rule a historic figure must not be back-filled with a live-market
+    // guess; an unpriceable event contributes 0 (omitted).
+    const priceNow = movedPrice ?? reservePrice.get(symbol) ?? 0;
 
     if (event.gas) {
       totalGasCostEth += event.gas.gasCostEth || 0;
@@ -417,6 +449,10 @@ export function calculateAaveEconomics(
         peakDebtTimestamp: 0,
         peakSupply: 0,
         flowEvents: [],
+        withdrawnUsd: 0,
+        repaidUsd: 0,
+        liquidatedDebtUsd: 0,
+        liquidatedCollateralUsd: 0,
       };
       reserveMap.set(key, stats);
       runningDebt.set(key, 0);
@@ -443,6 +479,7 @@ export function calculateAaveEconomics(
       }
       case "withdraw": {
         stats.withdrawn += amount;
+        stats.withdrawnUsd += amount * priceNow;
         runningSupply.set(key, Math.max(0, (runningSupply.get(key) ?? 0) - amount));
         if (amount > 0)
           stats.flowEvents.push({
@@ -470,6 +507,7 @@ export function calculateAaveEconomics(
         break;
       case "repay":
         stats.repaid += amount;
+        stats.repaidUsd += amount * priceNow;
         runningDebt.set(key, (runningDebt.get(key) ?? 0) - amount);
         if (amount > 0)
           stats.flowEvents.push({
@@ -490,8 +528,12 @@ export function calculateAaveEconomics(
         const debtCovered = parseFloat(ctx.debtToCover ?? "0");
         const collSeized = parseFloat(ctx.liquidatedCollateralAmount ?? "0");
         const collSym = ctx.collateralSymbol;
+        // Price-at-the-time for the debt leg (ctx.price is null on liquidation rows).
+        if (ctx.debtPrice?.usd != null && ctx.debtPrice.usd > 0) reservePrice.set(symbol, ctx.debtPrice.usd);
 
         stats.liquidatedDebt += debtCovered;
+        stats.liquidatedDebtUsd +=
+          debtCovered * (ctx.debtPrice?.usd != null && ctx.debtPrice.usd > 0 ? ctx.debtPrice.usd : priceNow);
         stats.liquidationCount++;
         runningDebt.set(key, (runningDebt.get(key) ?? 0) - debtCovered);
         if (debtCovered > 0)
@@ -532,6 +574,10 @@ export function calculateAaveEconomics(
                 peakDebtTimestamp: 0,
                 peakSupply: 0,
                 flowEvents: [],
+                withdrawnUsd: 0,
+                repaidUsd: 0,
+                liquidatedDebtUsd: 0,
+                liquidatedCollateralUsd: 0,
               };
               reserveMap.set(reserveKey(collSym, undefined), cs);
               runningDebt.set(reserveKey(collSym, undefined), 0);
@@ -540,7 +586,15 @@ export function calculateAaveEconomics(
             collStats = cs;
           }
           const collKey = reserveKey(collStats.symbol, collStats.hub);
+          // Price-at-the-time for the seized collateral leg.
+          if (ctx.collateralPrice?.usd != null && ctx.collateralPrice.usd > 0)
+            reservePrice.set(collStats.symbol, ctx.collateralPrice.usd);
           collStats.liquidatedCollateral += collSeized;
+          collStats.liquidatedCollateralUsd +=
+            collSeized *
+            (ctx.collateralPrice?.usd != null && ctx.collateralPrice.usd > 0
+              ? ctx.collateralPrice.usd
+              : (reservePrice.get(collStats.symbol) ?? 0));
           runningSupply.set(collKey, Math.max(0, (runningSupply.get(collKey) ?? 0) - collSeized));
           collStats.flowEvents.push({
             timestamp: event.timestamp,
@@ -573,14 +627,18 @@ export function calculateAaveEconomics(
     // reserves after each event (reserve counts are tiny) and keep the max —
     // this is a true single-instant peak, not a sum of per-asset peaks.
     // Iterate reserveMap (not the composite-keyed running maps) so price
-    // resolves by the reserve's symbol, not the "symbol hub" key.
+    // resolves by the reserve's symbol, not the "symbol hub" key. Each reserve is
+    // valued at its price-at-the-time (reservePrice); a reserve with no historic
+    // price contributes 0 (omitted, not valued at a live price) per the pure-truth
+    // omission rule.
+    const priceFor = (sym: string): number => reservePrice.get(sym) ?? 0;
     let supplyUsdNow = 0;
     for (const [k, st] of reserveMap)
-      supplyUsdNow += Math.max(0, runningSupply.get(k) ?? 0) * (resolvePrice(st.symbol, prices) ?? 1);
+      supplyUsdNow += Math.max(0, runningSupply.get(k) ?? 0) * priceFor(st.symbol);
     if (supplyUsdNow > peakSupplyUsd) peakSupplyUsd = supplyUsdNow;
     let debtUsdNow = 0;
     for (const [k, st] of reserveMap)
-      debtUsdNow += Math.max(0, runningDebt.get(k) ?? 0) * (resolvePrice(st.symbol, prices) ?? 1);
+      debtUsdNow += Math.max(0, runningDebt.get(k) ?? 0) * priceFor(st.symbol);
     if (debtUsdNow > peakDebtUsd) peakDebtUsd = debtUsdNow;
   }
 
