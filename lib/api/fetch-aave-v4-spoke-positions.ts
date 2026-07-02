@@ -101,6 +101,14 @@ export interface AaveV4SpokePositionRow {
   openedAt: number | null;
   /** Epoch seconds of the closing event; null while the position is open. */
   closedAt: number | null;
+  /** All-time high-water mark in USD — the largest the portfolio's summed
+   *  supply / debt ever reached at a single moment, each reserve valued at its
+   *  price-at-the-time (the event-block historic price), so a settled record
+   *  stays fixed rather than drifting with today's market. Non-null only on
+   *  closed/liquidated rows — the closed card shows these in place of live
+   *  balances a zeroed position lacks. */
+  peakSupplyUsd: number | null;
+  peakDebtUsd: number | null;
   /** Distinct non-liquidation transaction count for this (wallet, spoke) —
    *  the activity tally shown beside the time-ago. Matches the detail card's
    *  txCount and Liquity's transactionCount. From mv_aave_v4_events (server

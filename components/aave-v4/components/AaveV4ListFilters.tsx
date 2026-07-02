@@ -124,25 +124,16 @@ export function AaveV4ListFilters({ filters, onFiltersChange }: Props) {
     const isAddress = /^0x[a-fA-F0-9]{40}$/.test(trimmed);
     if (!isEns && !isAddress) return;
     const lowered = trimmed.toLowerCase();
-    // Searching an exact wallet must surface ALL of that wallet's positions,
-    // never a subset the current population-browse filters happen to allow. A
-    // wallet's only live position often sits on a single spoke/hub (e.g. after a
-    // cross-spoke migration the destination spoke), so carrying a stale
-    // spoke/hub/asset/status filter would silently hide it. Drop every
-    // population predicate on address/ENS submit — same intent the `show`
-    // auto-relax already applies to visibility — and keep only sort.
+    // Submitting a wallet scopes the listing to it while preserving the active
+    // population predicates (spoke/hub/asset/state/status/dust). The lifecycle
+    // Status axis now defaults to "show everything" in every context, so a
+    // wallet's closed positions surface without needing to clear filters — the
+    // old blanket predicate-clearing (auto-relax for the retired `show=active`
+    // directory default) is no longer required.
     onFiltersChange({
       ...filters,
       wallet: isAddress ? lowered : undefined,
       ownerEns: isEns ? lowered : undefined,
-      spokes: [],
-      hubs: [],
-      supplyAssets: [],
-      borrowAssets: [],
-      debt: "all",
-      health: "all",
-      liquidations: "all",
-      show: undefined,
     });
     // Record this wallet in the Aave V4 recents list so it appears in the
     // dropdown next time. ENS-typed entries aren't recorded here (no resolution
