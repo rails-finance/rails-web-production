@@ -64,17 +64,23 @@ export function computeAaveLifetimeTotals(
     hasDebtHistory: false,
   };
   for (const r of reserves) {
+    // Current holdings at live price; lifetime outflows at price-at-the-time
+    // (accumulated per event upstream in calculateAaveEconomics). Deposited/
+    // Borrowed derive from the two so "Deposited − Withdrawn = In Protocol" still
+    // reconciles.
     const price = resolvePrice(r.symbol, prices) ?? 1;
     const netSupply = r.currentSupplied ?? Math.max(0, r.supplied - r.withdrawn - r.liquidatedCollateral);
     const netDebt = r.currentBorrowed ?? Math.max(0, r.borrowed - r.repaid - r.liquidatedDebt);
-    t.depositedUsd += (netSupply + r.withdrawn + r.liquidatedCollateral) * price;
-    t.withdrawnUsd += r.withdrawn * price;
-    t.liquidatedCollUsd += r.liquidatedCollateral * price;
-    t.inProtocolUsd += netSupply * price;
-    t.borrowedUsd += (netDebt + r.repaid + r.liquidatedDebt) * price;
-    t.repaidUsd += r.repaid * price;
-    t.liquidatedDebtUsd += r.liquidatedDebt * price;
-    t.outstandingUsd += netDebt * price;
+    const inProtocolUsd = netSupply * price;
+    const outstandingUsd = netDebt * price;
+    t.inProtocolUsd += inProtocolUsd;
+    t.withdrawnUsd += r.withdrawnUsd;
+    t.liquidatedCollUsd += r.liquidatedCollateralUsd;
+    t.depositedUsd += inProtocolUsd + r.withdrawnUsd + r.liquidatedCollateralUsd;
+    t.outstandingUsd += outstandingUsd;
+    t.repaidUsd += r.repaidUsd;
+    t.liquidatedDebtUsd += r.liquidatedDebtUsd;
+    t.borrowedUsd += outstandingUsd + r.repaidUsd + r.liquidatedDebtUsd;
     if (r.borrowed > 0 || r.repaid > 0 || r.liquidatedDebt > 0) t.hasDebtHistory = true;
   }
   return t;
@@ -101,6 +107,14 @@ interface AssetRow {
   repaid: number;
   liquidatedDebt: number;
   liquidatedCollateral: number;
+  // Lifetime OUTFLOW value in USD at price-at-the-time (each event valued at its
+  // own block price). Drives every historical USD figure so a settled position's
+  // flows stay fixed instead of drifting with today's market. Current holdings
+  // (netSupplyUsd / netDebtUsd) stay on live prices — see below.
+  withdrawnUsd: number;
+  repaidUsd: number;
+  liquidatedDebtUsd: number;
+  liquidatedCollateralUsd: number;
   // Current state — drives the solid tower segments and the "In Protocol" /
   // "Current Debt" totals. Sourced from chain-truth when present, otherwise
   // derived from lifetime fields.
@@ -232,6 +246,10 @@ export function AaveV4TowerChart({
         repaid: r.repaid,
         liquidatedDebt: r.liquidatedDebt,
         liquidatedCollateral: r.liquidatedCollateral,
+        withdrawnUsd: r.withdrawnUsd,
+        repaidUsd: r.repaidUsd,
+        liquidatedDebtUsd: r.liquidatedDebtUsd,
+        liquidatedCollateralUsd: r.liquidatedCollateralUsd,
         netSupply,
         netDebt,
         price,
@@ -256,10 +274,14 @@ export function AaveV4TowerChart({
 
   const totalSupplyUsd = supplyAssets.reduce((s, r) => s + r.netSupplyUsd, 0);
   const totalDebtUsd = debtAssets.reduce((s, r) => s + r.netDebtUsd, 0);
-  const totalWithdrawnUsd = allRows.reduce((s, r) => s + r.withdrawn * r.price, 0);
-  const totalRepaidUsd = allRows.reduce((s, r) => s + r.repaid * r.price, 0);
-  const totalLiquidatedCollUsd = allRows.reduce((s, r) => s + r.liquidatedCollateral * r.price, 0);
-  const totalLiquidatedDebtUsd = allRows.reduce((s, r) => s + r.liquidatedDebt * r.price, 0);
+  // Outflows are valued at price-at-the-time (accumulated per event upstream in
+  // calculateAaveEconomics), not the current price — so a closed position's flow
+  // history stays fixed. Current holdings (netSupplyUsd / netDebtUsd) keep live
+  // prices, since "what's it worth now" is a current-price question.
+  const totalWithdrawnUsd = allRows.reduce((s, r) => s + r.withdrawnUsd, 0);
+  const totalRepaidUsd = allRows.reduce((s, r) => s + r.repaidUsd, 0);
+  const totalLiquidatedCollUsd = allRows.reduce((s, r) => s + r.liquidatedCollateralUsd, 0);
+  const totalLiquidatedDebtUsd = allRows.reduce((s, r) => s + r.liquidatedDebtUsd, 0);
   // Lifetime side-bar totals = current balance + everything that has left the
   // position (withdrawn / repaid / liquidated). Anchor to the chain-truth
   // `netSupply` / `netDebt` rather than the event-derived gross `r.supplied` /
@@ -270,18 +292,24 @@ export function AaveV4TowerChart({
   // breakdown math. Reconstructing from net + flows keeps the bar honest, so
   // "Deposited − Withdrawn = In Protocol" reconciles and the bar can't exceed
   // the tower's own segment sum.
+  // Deposited/Borrowed = current holding (live price) + outflows (price-at-the-
+  // time). Deriving it this way keeps the reconciliation invariant intact
+  // (Deposited − Withdrawn − Liquidated = In Protocol) while the departed capital
+  // is valued at what it was worth when it left, not today.
   const totalDepositedUsd = allRows.reduce(
-    (s, r) => s + (r.netSupply + r.withdrawn + r.liquidatedCollateral) * r.price,
+    (s, r) => s + r.netSupplyUsd + r.withdrawnUsd + r.liquidatedCollateralUsd,
     0,
   );
-  const totalBorrowedUsd = allRows.reduce((s, r) => s + (r.netDebt + r.repaid + r.liquidatedDebt) * r.price, 0);
+  const totalBorrowedUsd = allRows.reduce((s, r) => s + r.netDebtUsd + r.repaidUsd + r.liquidatedDebtUsd, 0);
 
+  // Per-asset flow arrays feed the hatched segments, the breakdown rows, and the
+  // side-bar totals from a single `usd` — valued at price-at-the-time.
   const withdrawnAssets = allRows
-    .map((r) => ({ symbol: r.symbol, hub: r.hub, amount: r.withdrawn, usd: r.withdrawn * r.price }))
+    .map((r) => ({ symbol: r.symbol, hub: r.hub, amount: r.withdrawn, usd: r.withdrawnUsd }))
     .filter((r) => r.usd > LIFETIME_DUST_USD)
     .sort((a, b) => b.usd - a.usd);
   const repaidAssets = allRows
-    .map((r) => ({ symbol: r.symbol, hub: r.hub, amount: r.repaid, usd: r.repaid * r.price }))
+    .map((r) => ({ symbol: r.symbol, hub: r.hub, amount: r.repaid, usd: r.repaidUsd }))
     .filter((r) => r.usd > LIFETIME_DUST_USD)
     .sort((a, b) => b.usd - a.usd);
   const liquidatedCollAssets = allRows
@@ -289,12 +317,12 @@ export function AaveV4TowerChart({
       symbol: r.symbol,
       hub: r.hub,
       amount: r.liquidatedCollateral,
-      usd: r.liquidatedCollateral * r.price,
+      usd: r.liquidatedCollateralUsd,
     }))
     .filter((r) => r.usd > LIFETIME_DUST_USD)
     .sort((a, b) => b.usd - a.usd);
   const liquidatedDebtAssets = allRows
-    .map((r) => ({ symbol: r.symbol, hub: r.hub, amount: r.liquidatedDebt, usd: r.liquidatedDebt * r.price }))
+    .map((r) => ({ symbol: r.symbol, hub: r.hub, amount: r.liquidatedDebt, usd: r.liquidatedDebtUsd }))
     .filter((r) => r.usd > LIFETIME_DUST_USD)
     .sort((a, b) => b.usd - a.usd);
 
