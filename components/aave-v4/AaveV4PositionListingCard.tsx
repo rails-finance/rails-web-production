@@ -105,15 +105,24 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
   const hfStale = hasDebt && row.chainHfStale;
   const hubTier = SPOKE_HUB[row.spokeName] ?? "Core";
 
-  // Lifecycle (server migration 034). A closed / liquidated position has no
-  // live balances — it only surfaces in the wallet view, where a wallet's full
-  // history matters. We render it muted with a CLOSED / LIQUIDATED pill (Liquity
-  // trove-card parity) and a lifespan readout in place of the live stat grid.
-  // Null-safe against a pre-034 API that omits `status`: that API only ever
-  // returned open positions (closed ones were pruned), so absent ⇒ open.
+  // Lifecycle (server migration 034). A closed position has no live balances; we
+  // render it muted with a CLOSED pill (Liquity trove-card parity) and a lifespan
+  // readout in place of the live stat grid. The wire status still carries the
+  // terminal CAUSE — 'liquidated' means the *final* event was a liquidation —
+  // which we surface as a muted "by liquidation" qualifier beside CLOSED,
+  // distinguishing it from an owner-driven wind-down (closedByLiquidation). This
+  // is the STRUCTURAL axis; liquidation *history* (any liquidation over the
+  // position's life, open or closed) stays on the orthogonal LiquidatedBadge, not
+  // this pill. Null-safe against a pre-034 API that omits `status`: that API only
+  // ever returned open positions (closed ones were pruned), so absent ⇒ open.
   const isOpen = row.status == null || row.status === "open";
-  const lifetimeValue =
-    row.openedAt != null && row.closedAt != null ? formatDuration(row.openedAt, row.closedAt) : null;
+  const closedByLiquidation = row.status === "liquidated";
+  // Peak-based supply-only test for the closed card: a position that never
+  // carried real debt (peak debt < $1) drops the Peak Debt column, mirroring the
+  // detail card's `spoke.peakDebtUsd < 1` rule. Distinct from the live
+  // `supplyOnly` (which reads the now-zero current balances and is always true
+  // once closed).
+  const peakSupplyOnly = (row.peakDebtUsd ?? 0) < 1;
 
   const collateralValue = (() => {
     // "Collateral" is the full (un-LT-weighted) value of the supplies enabled as
@@ -162,13 +171,19 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
       statusPill={
         isOpen ? (
           <span className={`font-bold px-2 py-0.5 rounded-sm text-xs ${bucket.pillClass}`}>{bucket.pillLabel}</span>
-        ) : row.status === "liquidated" ? (
-          <span className="font-bold tracking-wider px-2 py-0.5 bg-red-700 text-white rounded-xs text-xs">
-            LIQUIDATED
-          </span>
         ) : (
-          <span className="font-bold tracking-wider px-2 py-0.5 bg-rb-500 dark:bg-rb-800 text-rb-50 dark:text-rb-400 rounded-xs text-xs">
-            CLOSED
+          <span className="inline-flex items-center gap-1.5">
+            <span className="font-bold tracking-wider px-2 py-0.5 bg-rb-500 dark:bg-rb-800 text-rb-50 dark:text-rb-400 rounded-xs text-xs">
+              CLOSED
+            </span>
+            {closedByLiquidation && (
+              <span
+                className="text-xs text-rb-500"
+                title="The final event on this position was a liquidation — closed by liquidation, not wound down by the owner."
+              >
+                by liquidation
+              </span>
+            )}
           </span>
         )
       }
@@ -208,14 +223,35 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
       columns={
         !isOpen
           ? [
-              // Closed / liquidated: no live balances to show. Surface the
-              // lifespan instead (opened → closed), muted. The "X ago" in the
+              // Closed / liquidated: no live balances to show, so surface the
+              // all-time high-water mark (Peak Supplied / Peak Debt) the same way
+              // the detail card does — muted (text-rb-500), no debt column when
+              // the position never carried real debt. The "X ago" in the
               // identity slot already reports when it closed.
               {
-                label: "Lifetime",
-                value: <StatValue color="text-rb-500">{lifetimeValue ?? <StatDash>{"—"}</StatDash>}</StatValue>,
+                label: peakSupplyOnly ? "Highest recorded supply" : "Highest recorded collateral",
+                value: (() => {
+                  const v = fmtUsd(row.peakSupplyUsd ?? 0);
+                  return (
+                    <StatValue color="text-rb-500" title={v.title}>
+                      {v.display}
+                    </StatValue>
+                  );
+                })(),
               },
-              null,
+              peakSupplyOnly
+                ? null
+                : {
+                    label: "Highest recorded debt",
+                    value: (() => {
+                      const v = fmtUsd(row.peakDebtUsd ?? 0);
+                      return (
+                        <StatValue color="text-rb-500" title={v.title}>
+                          {v.display}
+                        </StatValue>
+                      );
+                    })(),
+                  },
               null,
             ]
           : [

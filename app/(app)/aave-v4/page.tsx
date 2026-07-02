@@ -16,11 +16,16 @@ import {
   type AaveV4Debt,
   type AaveV4Health,
   type AaveV4Liquidations,
-  type AaveV4Show,
   AAVE_V4_DUST_USD,
-  aaveV4ShowDefault,
   effectiveAaveV4Show,
 } from "@/components/aave-v4/components/AaveV4ListFilters";
+import {
+  bucketsToWireStatuses,
+  canonicalStatuses,
+  defaultStatuses,
+  effectiveStatuses,
+  sameStatusSet,
+} from "@/lib/aave-v4/listing-visibility";
 import { AaveV4PaginationControls } from "@/components/aave-v4/components/AaveV4PaginationControls";
 import { AaveV4ListLoadingSkeleton } from "@/components/aave-v4/components/AaveV4ListLoadingSkeleton";
 import { AaveV4ListError } from "@/components/aave-v4/components/AaveV4ListError";
@@ -70,11 +75,20 @@ function AaveV4ListPageContent() {
     debt: (searchParams.get("debt") as AaveV4Debt | null) ?? "all",
     health: (searchParams.get("health") as AaveV4Health | null) ?? "all",
     liquidations: (searchParams.get("liquidations") as AaveV4Liquidations | null) ?? "all",
-    // Raw visibility intent — undefined = contextual default (active on the
-    // bare directory, all on a wallet-scoped query). Keeping it undefined when
-    // absent is what makes auto-relax work: searching a wallet doesn't carry a
-    // stale "active" and re-hide that wallet's closed positions.
-    show: (searchParams.get("show") as AaveV4Show | null) ?? undefined,
+    // Lifecycle status buckets. Absent → undefined → the full-set default
+    // (everything, resolved at read time); a comma-separated subset is an
+    // explicit narrowing. Garbage tokens or the full set reduce to undefined so
+    // the default is never baked into the filter object.
+    statuses: (() => {
+      const raw = searchParams.get("status");
+      if (!raw) return undefined;
+      const sel = canonicalStatuses(raw.split(","));
+      return sel.length === 0 || sameStatusSet(sel, defaultStatuses()) ? undefined : sel;
+    })(),
+    // Dust visibility — undefined = default ("all"); only "nodust" is carried, so
+    // a stale `show=active` bookmark (pre-taxonomy) degrades to the default
+    // rather than being cast to an invalid tier.
+    show: searchParams.get("show") === "nodust" ? "nodust" : undefined,
     sortBy: searchParams.get("sortBy") ?? "lastActivity",
     sortOrder: (searchParams.get("sortOrder") as "asc" | "desc" | null) ?? "desc",
   };
@@ -128,10 +142,16 @@ function AaveV4ListPageContent() {
     if (next.hubs.length > 0) p.set("hubs", next.hubs.join(","));
     if (next.supplyAssets.length > 0) p.set("supplyAssets", next.supplyAssets.join(","));
     if (next.borrowAssets.length > 0) p.set("borrowAssets", next.borrowAssets.join(","));
-    // Visibility: write only when it differs from the contextual default, so
-    // directory + wallet-view URLs stay clean and the param's absence is what
-    // drives auto-relax on the next read.
-    if (next.show !== undefined && next.show !== aaveV4ShowDefault(next)) p.set("show", next.show);
+    // Lifecycle status: write only a genuine subset. The full set (or an absent
+    // selection) is the default "show everything" — emit no `status=` param so
+    // directory + wallet-view URLs stay clean and clearing resolves back to all.
+    {
+      const sel = canonicalStatuses(next.statuses ?? []);
+      if (sel.length > 0 && !sameStatusSet(sel, defaultStatuses())) p.set("status", sel.join(","));
+    }
+    // Dust: only "nodust" is a non-default state; "all" is the default so it's
+    // never written, keeping directory + wallet-view URLs clean.
+    if (next.show === "nodust") p.set("show", next.show);
     if (next.debt !== "all") p.set("debt", next.debt);
     if (next.health !== "all") p.set("health", next.health);
     if (next.liquidations !== "all") p.set("liquidations", next.liquidations);
@@ -175,18 +195,14 @@ function AaveV4ListPageContent() {
       noDebt: filters.debt === "noDebt",
       hasLiquidations: filters.liquidations === "with" ? true : filters.liquidations === "without" ? false : undefined,
       healthBelow: filters.health === "underwater" ? 1.0 : undefined,
-      // Visibility → server filters. "active" hides closed/near-zero (<$1
-      // server-side); "nodust" raises the floor to the dust line.
-      excludeClosed: effectiveAaveV4Show(filters) === "active",
+      // Dust → server floor. "nodust" hides positions under the dust line; the
+      // open/closed axis is the `status` filter below, not a USD cut.
       minTotalUsd: effectiveAaveV4Show(filters) === "nodust" ? AAVE_V4_DUST_USD : undefined,
-      // Lifecycle status (server migration 034). A wallet-scoped view is a
-      // history view — surface closed/liquidated positions alongside open ones
-      // so a wallet's full lifecycle is visible (matches the "all" show tier
-      // that wallet scope already defaults to). The bare directory omits this
-      // and takes the server's 'open' default: showing every closed position
-      // ever would balloon the list. `show`'s USD-dust gate still applies to
-      // the open positions within either scope.
-      status: filters.wallet || filters.ownerEns ? ["open", "closed", "liquidated"] : undefined,
+      // Lifecycle status (server migration 034) — map the structural buckets
+      // (open / closed) onto the wire statuses. "closed" expands to closed +
+      // liquidated; the default is the full set, which the server returns in full
+      // (bucketsToWireStatuses of ["open","closed"] → all three wire statuses).
+      status: bucketsToWireStatuses(effectiveStatuses(filters)),
       sortBy: filters.sortBy as AaveV4SpokePositionSort,
       sortOrder: filters.sortOrder,
       limit: ITEMS_PER_PAGE,

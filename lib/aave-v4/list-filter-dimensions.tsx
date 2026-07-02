@@ -2,12 +2,8 @@ import Link from "next/link";
 import type { FilterDimension, FilterOptionDef } from "@/components/shared/filter-bar/types";
 import { joinOptionLabels } from "@/components/shared/filter-bar/types";
 import { PAGE_LINK } from "@/lib/shared/ui-grammar";
-import {
-  type AaveV4ListFilterParams,
-  type AaveV4Show,
-  aaveV4ShowDefault,
-  effectiveAaveV4Show,
-} from "@/lib/aave-v4/list-filter-types";
+import { type AaveV4ListFilterParams, effectiveAaveV4Show } from "@/lib/aave-v4/list-filter-types";
+import { canonicalStatuses, defaultStatuses, effectiveStatuses, sameStatusSet } from "@/lib/aave-v4/listing-visibility";
 
 type Dim = FilterDimension<AaveV4ListFilterParams>;
 
@@ -87,8 +83,40 @@ export function aaveV4FilterDimensions({
   borrowOptions: FilterOptionDef[];
   spokeOptions: FilterOptionDef[];
 }): Dim[] {
+  // Lifecycle status — the STRUCTURAL axis: open | closed (does the position hold
+  // a live balance). Two buckets only. Liquidation is NOT a status here — Aave
+  // liquidations are partial and survivable, so "liquidated" lives on the
+  // orthogonal History toggle below (a liquidated position can be open or closed).
+  // See rails-ops/reference/events-and-liquidations-across-protocols.md. "Closed"
+  // admits closed-by-owner and closed-by-liquidation alike (the card draws that
+  // distinction). Default is the full set (everything, in every context — see
+  // listing-visibility.ts), so `set` writes `undefined` whenever the selection is
+  // empty or the full set, keeping the default out of the URL and clearing →
+  // "show everything". The dust toggle below is orthogonal (it thins the open
+  // positions Status admits, it doesn't decide open vs closed).
+  const status: Dim = {
+    id: "status",
+    label: "Status",
+    group: "Status",
+    cardinality: "multi",
+    options: [
+      { value: "open", label: "Open" },
+      { value: "closed", label: "Closed" },
+    ],
+    get: (f) => effectiveStatuses(f),
+    defaultValues: () => defaultStatuses(),
+    set: (f, values) => {
+      const sel = canonicalStatuses(values);
+      return {
+        ...f,
+        statuses: sel.length === 0 || sameStatusSet(sel, defaultStatuses()) ? undefined : sel,
+      };
+    },
+    chipLabel: (vals, opts) => `Status: ${joinOptionLabels(canonicalStatuses(vals), opts)}`,
+  };
+
   // Position state — one mutually-exclusive axis read off the health factor,
-  // the filter twin of the card's status pill (lib/aave-v4/health-bucket). A
+  // the filter twin of the card's health pill (lib/aave-v4/health-bucket). A
   // position is exactly one of: Supply only (no borrow), Borrowing (has a
   // loan), Liquidatable (HF < 1). Stored across the existing `debt` + `health`
   // params so the page→backend mapping (noDebt / hasDebt / healthBelow) and the
@@ -201,31 +229,25 @@ export function aaveV4FilterDimensions({
     chipLabel: (vals, opts) => `Borrowing: ${joinOptionLabels(vals, opts)}`,
   };
 
-  // Visibility carries a contextual default (active on the bare directory, all
-  // on a wallet-scoped query). `defaultValues` maps that default to "no chip",
-  // so the quiet wallet-view resting state stays quiet — only an explicit
-  // override surfaces a chip. `get` always reports the effective state so the
-  // picker's radio reflects the current view even at default.
-  const visibility: Dim = {
+  // Dust — a lone toggle (mirrors the History toggle), orthogonal to Status.
+  // On: hides positions under the dust line (minTotalUsd). Off (absent) is the
+  // silent majority. The old three-tier Visibility ladder collapsed to this once
+  // Status took over the open/closed axis — a "$0 active" cut would contradict a
+  // Status=Closed selection (it would strip the very rows asked for). `get`
+  // reports the effective state.
+  const dust: Dim = {
     id: "show",
-    label: "Visibility",
+    label: "Dust",
     group: "View",
     cardinality: "single",
-    // One monotonic strictness ladder, not three independent toggles:
-    // all ⊃ active ⊃ nodust (nodust already hides closed). Labels read as
-    // escalating levels so the single-select radio makes sense.
-    options: [
-      { value: "all", label: "Show all" },
-      { value: "active", label: "Active only" },
-      { value: "nodust", label: "Active, no dust" },
-    ],
-    get: (f) => [effectiveAaveV4Show(f)],
-    set: (f, values) => ({ ...f, show: (values[0] as AaveV4Show) ?? undefined }),
-    defaultValues: (f) => [aaveV4ShowDefault(f)],
+    options: [{ value: "nodust", label: "Hide dust" }],
+    get: (f) => (effectiveAaveV4Show(f) === "nodust" ? ["nodust"] : []),
+    set: (f, values) => ({ ...f, show: values[0] === "nodust" ? "nodust" : undefined }),
     chipLabel: bareLabel,
   };
 
-  // Status holds both Status dims (the state ladder, then the History toggle as
-  // a sub-section); then Market / Supply / Borrow / View.
-  return [state, liquidated, hubs, spokes, supplying, borrowing, visibility];
+  // Status group leads (lifecycle Status, then the position-state ladder, then
+  // the History toggle); then Market / Supply / Borrow, and the Dust toggle under
+  // View.
+  return [status, state, liquidated, hubs, spokes, supplying, borrowing, dust];
 }
