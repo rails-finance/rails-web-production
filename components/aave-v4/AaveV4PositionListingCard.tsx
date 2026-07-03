@@ -30,7 +30,7 @@ import { useMemo } from "react";
 import type { AaveV4SpokePositionRow } from "@/lib/api/fetch-aave-v4-spoke-positions";
 import { scaleChainBalance } from "@/lib/api/fetch-aave-v4-spoke-position";
 import { bucketForHealth } from "@/lib/aave-v4/health-bucket";
-import { SPOKE_HUB } from "@/components/protocol/aave-v4/aave-v4-spoke-constants";
+import { SPOKE_HUB, HUB_TIER_LABEL } from "@/components/protocol/aave-v4/aave-v4-spoke-constants";
 import { LiquidatedBadge } from "@/components/aave-v4/LiquidatedBadge";
 import { WalletPill } from "@/components/aave-v4/wallet-pill";
 import { fmtUsd, hfLabel } from "@/lib/aave-v4/format";
@@ -191,7 +191,7 @@ export function AaveV4PositionListingCard({ row }: { row: AaveV4SpokePositionRow
         <>
           <span className="flex items-center gap-1.5 leading-none text-foreground">
             <span className="text-xs font-semibold">{row.spokeName}</span>
-            <span className="text-xs font-bold uppercase tracking-wide">{hubTier}</span>
+            <span className="text-xs font-bold uppercase tracking-wide">{HUB_TIER_LABEL[hubTier]}</span>
           </span>
           <WalletPill
             wallet={row.wallet}

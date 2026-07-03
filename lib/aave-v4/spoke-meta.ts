@@ -45,7 +45,10 @@ const SPOKE_SLUG_TO_NAME: Record<string, string> = {
   lido: "Lido",
   lombard: "Lombard BTC",
   treasury: "Treasury",
-  "global-dollar": "Global Dollar",
+  "stablecoin-correlated": "Stablecoin Correlated",
+  // Legacy slug: /aave-v4/spoke/global-dollar/… links predate the display rename
+  // (hub "Global Dollar" / spoke "Stablecoin Correlated"). Kept so they resolve.
+  "global-dollar": "Stablecoin Correlated",
 };
 
 const SPOKE_NAME_TO_SLUG: Record<string, string> = {
@@ -53,6 +56,9 @@ const SPOKE_NAME_TO_SLUG: Record<string, string> = {
   // Alias: the older "Lombard" label maps to the same slug as the API's
   // "Lombard BTC".
   Lombard: "lombard",
+  // Two slugs resolve to "Stablecoin Correlated" (canonical + legacy); pin the
+  // canonical one so generated links use it rather than the legacy alias.
+  "Stablecoin Correlated": "stablecoin-correlated",
 };
 
 /** Convert a spoke display name to its URL slug. Returns null for unknown
@@ -218,15 +224,15 @@ export const SPOKE_META: Record<string, SpokeMeta> = {
       "Built around LBTC / Lombard wrapped-BTC collateral; parameters reflect BTC-variant risk.",
     ],
   },
-  "Global Dollar": {
-    name: "Global Dollar",
+  "Stablecoin Correlated": {
+    name: "Stablecoin Correlated",
     archetype: "ecosystem",
     collateralHub: "Paxos",
     borrowHub: "Paxos",
-    // TODO copy: confirm Global Dollar / Paxos hub parameters against current docs.
+    // TODO copy: confirm Stablecoin Correlated / Global Dollar hub parameters against current docs.
     narrative: [
-      "The Global Dollar Spoke on the new Paxos Hub — Aave V4's first liquidity hub built for the Global Dollar (USDG) ecosystem.",
-      "Collateral is PT-USDG-24SEP2026, a Pendle principal token maturing 24 Sep 2026; against it you can borrow USDC and USDT from the Paxos Hub, plus USDG drawn from the Core Hub over a cross-hub credit line.",
+      "The Stablecoin Correlated Spoke on the Global Dollar Hub — Aave V4's liquidity hub built for the Global Dollar (USDG) ecosystem.",
+      "Collateral is PT-USDG-24SEP2026, a Pendle principal token maturing 24 Sep 2026; against it you can borrow USDC and USDT from the Global Dollar Hub, plus USDG drawn from the Core Hub over a cross-hub credit line.",
       "Risk parameters are Spoke-specific — the PT's fixed-maturity discount and the Hub's caps shape the available leverage.",
     ],
   },

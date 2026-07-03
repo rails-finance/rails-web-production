@@ -55,7 +55,7 @@ const HUB_LABEL: Record<"core" | "plus" | "prime" | "paxos", string> = {
   core: "Core",
   plus: "Plus",
   prime: "Prime",
-  paxos: "Paxos",
+  paxos: "Global Dollar",
 };
 
 function BorrowRateRow({

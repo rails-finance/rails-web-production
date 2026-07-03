@@ -47,6 +47,9 @@ const SPOKE_NAME_TO_KEY: Record<string, string> = {
   "Lombard BTC": "lombard",
   Lombard: "lombard",
   Treasury: "treasury",
+  "Stablecoin Correlated": "usdg_pendle",
+  // Legacy alias: pre-rename URLs/bookmarks resolved this spoke as "Global
+  // Dollar". Kept so the chain-truth fetch still resolves for those.
   "Global Dollar": "usdg_pendle",
 };
 import type { BaseActivityEvent } from "@/lib/shared/types/event-shape";

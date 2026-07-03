@@ -73,7 +73,7 @@ export const HUB_LABEL: Record<HubTierKey, string> = {
   core: "Core",
   plus: "Plus",
   prime: "Prime",
-  paxos: "Paxos",
+  paxos: "Global Dollar",
 };
 
 // Neutral, descriptive one-liners — what the hub is for, not how good it is.

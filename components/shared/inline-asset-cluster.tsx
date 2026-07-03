@@ -29,7 +29,7 @@ const HUB_BADGE: Record<HubTierKey, { char: string; label: string }> = {
   core: { char: "C", label: "Core Hub" },
   plus: { char: "+", label: "Plus Hub" },
   prime: { char: "P", label: "Prime Hub" },
-  paxos: { char: "G", label: "Paxos Hub" },
+  paxos: { char: "G", label: "Global Dollar Hub" },
 };
 
 function toItem(s: string | AssetClusterItem): AssetClusterItem {

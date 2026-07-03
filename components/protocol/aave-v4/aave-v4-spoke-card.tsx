@@ -12,7 +12,7 @@ import { OpenPositionStats } from "@/components/shared/open-position-stats";
 import { Icon } from "@/components/icons/icon";
 import { InlineAssetCluster } from "@/components/shared/inline-asset-cluster";
 import { StatValue, StatDash } from "@/components/shared/stat-value";
-import { type HubTier } from "@/components/protocol/aave-v4/aave-v4-spoke-constants";
+import { type HubTier, HUB_TIER_LABEL } from "@/components/protocol/aave-v4/aave-v4-spoke-constants";
 import { type AaveSpokeCardInfo, liquidationBuffer } from "@/lib/aave-v4/spoke-cards";
 import { AaveV4LiquidationFootnote } from "@/components/protocol/aave-v4/aave-v4-liquidation-footnote";
 import { bucketForHealth } from "@/lib/aave-v4/health-bucket";
@@ -28,7 +28,7 @@ function SpokeIdentity({ name, hub }: { name: string; hub: HubTier }) {
   return (
     <span className="flex items-center gap-1.5 leading-none text-foreground">
       <span className="text-xs font-semibold">{name}</span>
-      <span className="text-xs font-bold uppercase tracking-wide">{hub}</span>
+      <span className="text-xs font-bold uppercase tracking-wide">{HUB_TIER_LABEL[hub]}</span>
     </span>
   );
 }
