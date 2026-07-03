@@ -21,6 +21,8 @@
  */
 
 import type { HubTier } from "@/components/protocol/aave-v4/aave-v4-spoke-constants";
+import { SPOKE_HOME_HUB } from "@/lib/aave-v4/spoke-hub";
+import { slugifyHub } from "@/lib/aave-v4/hub-slug";
 
 // ── URL slugs ────────────────────────────────────────────────────────────────
 // Canonical slug ↔ display-name map for `/aave-v4/spoke/[slug]/[wallet]`.
@@ -79,6 +81,66 @@ export function spokeFromSlug(slug: string): string | null {
 /** All known spoke slugs. Used to drive route-level redirects from the
  *  encoded-display-name form. */
 export const SPOKE_SLUGS: ReadonlyArray<string> = Object.keys(SPOKE_SLUG_TO_NAME);
+
+// Spoke display name → the listing's `?spokes=` value / API key (the backend's
+// `l.spoke`). Distinct from the URL slug: the listing filters on this value,
+// URLs read the slug. Legacy aliases resolve pre-rename names to the same key.
+export const SPOKE_NAME_TO_KEY: Record<string, string> = {
+  Main: "main",
+  Bluechip: "bluechip",
+  Forex: "forex",
+  Gold: "gold",
+  "Ethena Correlated": "ethena_corr",
+  "Ethena Ecosystem": "ethena_eco",
+  EtherFi: "etherfi",
+  Kelp: "kelp",
+  Lido: "lido",
+  "Lombard BTC": "lombard",
+  Lombard: "lombard",
+  Treasury: "treasury",
+  "Stablecoin Correlated": "usdg_pendle",
+  // Legacy alias: pre-rename URLs/bookmarks resolved this spoke as "Global
+  // Dollar". Kept so the chain-truth fetch still resolves for those.
+  "Global Dollar": "usdg_pendle",
+};
+
+// Listing value → canonical URL slug. First-wins over SPOKE_SLUG_TO_NAME's
+// declaration order, so a value with both a canonical and a legacy slug (e.g.
+// usdg_pendle → stablecoin-correlated, not the legacy global-dollar) picks the
+// canonical one listed first.
+const VALUE_TO_SLUG: Record<string, string> = (() => {
+  const out: Record<string, string> = {};
+  for (const [slug, name] of Object.entries(SPOKE_SLUG_TO_NAME)) {
+    const value = SPOKE_NAME_TO_KEY[name];
+    if (value && !(value in out)) out[value] = slug;
+  }
+  return out;
+})();
+
+/** URL slug → listing `?spokes=` value. Null when the slug isn't a known
+ *  spoke. Bridges the pretty URL to the value the listing filter/API expect. */
+export function spokeValueFromSlug(slug: string): string | null {
+  const name = SPOKE_SLUG_TO_NAME[slug];
+  return name ? (SPOKE_NAME_TO_KEY[name] ?? null) : null;
+}
+
+/** Listing `?spokes=` value → canonical URL slug. Null for unknown values.
+ *  Used to build pretty hub+spoke links from the value-keyed hub data. */
+export function slugFromSpokeValue(value: string): string | null {
+  return VALUE_TO_SLUG[value] ?? null;
+}
+
+/** Canonical hub+spoke landing path for a listing spoke value —
+ *  `/aave-v4/hubs/<homeHubSlug>/<spokeSlug>`. Always the spoke's HOME hub, so it
+ *  resolves even when the value comes from a hub the spoke merely borrows from
+ *  (a cross-hub spoke appears on its lender hub's card too). Null when the value
+ *  or its home hub is unknown, so callers can fall back to the query listing. */
+export function spokeHref(value: string): string | null {
+  const hub = SPOKE_HOME_HUB[value];
+  const slug = slugFromSpokeValue(value);
+  if (!hub || !slug) return null;
+  return `/aave-v4/hubs/${slugifyHub(hub)}/${slug}`;
+}
 
 export type SpokeArchetype =
   /** General-purpose single-hub spoke. Collateral and borrows live in the

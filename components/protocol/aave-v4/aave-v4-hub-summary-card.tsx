@@ -21,6 +21,7 @@ import Link from "next/link";
 import { fmtUsd } from "@/lib/aave-v4/format";
 import { hubSummaryText, type HubView } from "@/lib/aave-v4/hub-view";
 import { hubHref } from "@/lib/aave-v4/hub-slug";
+import { spokeHref } from "@/lib/aave-v4/spoke-meta";
 import { ASSET_CLASS_COLOR } from "@/lib/aave-v4/asset-class";
 
 const LINK = "text-blue-500 hover:underline";
@@ -140,10 +141,12 @@ export function AaveV4HubSummaryCard({ hub }: { hub: HubView }) {
           how long the sentence ran above. */}
       <div>{summary && <p className="text-[12px] leading-relaxed text-rb-500">{summary}</p>}</div>
 
-      {/* 5 — Spokes. Each links into the listing filtered to that spoke
-          (?spokes=<slug>); no hub param (a cross-hub spoke would otherwise be
-          ANDed out). Full set, wrapping — never truncated. The "Spoke(s)" label
-          leads the row inline. */}
+      {/* 5 — Spokes. Each links to the spoke's canonical landing page under its
+          HOME hub (spokeHref) — which resolves even for a cross-hub spoke shown
+          on the hub it merely borrows from; falls back to the spoke-filtered
+          listing if unmapped. That page seeds `spokes=` only (no hub param — a
+          cross-hub spoke would otherwise be ANDed out). Full set, wrapping —
+          never truncated. The "Spoke(s)" label leads the row inline. */}
       <div className="self-end">
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="mr-0.5 text-[11px] uppercase tracking-wider text-rb-500">
@@ -152,7 +155,7 @@ export function AaveV4HubSummaryCard({ hub }: { hub: HubView }) {
           {hub.spokes.map((s) => (
             <Link
               key={s.slug}
-              href={`/aave-v4?spokes=${s.slug}`}
+              href={spokeHref(s.slug) ?? `/aave-v4?spokes=${s.slug}`}
               className={SPOKE_PILL}
               title={`View ${s.name} positions`}
             >

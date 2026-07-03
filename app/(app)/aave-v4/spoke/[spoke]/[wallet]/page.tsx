@@ -28,30 +28,11 @@ import {
 } from "@/lib/api/fetch-aave-v4-spoke-position";
 import { patchReservesWithChain, patchSpokeCardWithChain } from "@/lib/aave-v4/apply-chain-truth";
 
-import { spokeFromSlug } from "@/lib/aave-v4/spoke-meta";
+import { spokeFromSlug, SPOKE_NAME_TO_KEY } from "@/lib/aave-v4/spoke-meta";
 
-// Display-name → server spoke-key map. Mirrors SPOKE_BY_KEY in
-// rails-server-mig/api/src/config/aave-v4-spokes.ts. Used to translate the
-// resolved display name into the lowercase chain key the
-// `/api/aave-v4/spoke-position` endpoint expects.
-const SPOKE_NAME_TO_KEY: Record<string, string> = {
-  Main: "main",
-  Bluechip: "bluechip",
-  Forex: "forex",
-  Gold: "gold",
-  "Ethena Correlated": "ethena_corr",
-  "Ethena Ecosystem": "ethena_eco",
-  EtherFi: "etherfi",
-  Kelp: "kelp",
-  Lido: "lido",
-  "Lombard BTC": "lombard",
-  Lombard: "lombard",
-  Treasury: "treasury",
-  "Stablecoin Correlated": "usdg_pendle",
-  // Legacy alias: pre-rename URLs/bookmarks resolved this spoke as "Global
-  // Dollar". Kept so the chain-truth fetch still resolves for those.
-  "Global Dollar": "usdg_pendle",
-};
+// SPOKE_NAME_TO_KEY (display name → server spoke-key, mirrors SPOKE_BY_KEY in
+// rails-server-mig/api/src/config/aave-v4-spokes.ts) is centralized in
+// spoke-meta alongside the other spoke-identifier maps; imported above.
 import type { BaseActivityEvent } from "@/lib/shared/types/event-shape";
 import { isAaveV4Event } from "@/lib/shared/types/event-shape";
 import { AaveV4EventCard } from "@/components/protocol/aave-v4/aave-v4-event-card";
