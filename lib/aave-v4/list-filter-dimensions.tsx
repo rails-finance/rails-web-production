@@ -11,6 +11,7 @@ const HUB_OPTIONS: FilterOptionDef[] = [
   { value: "core", label: "Core" },
   { value: "plus", label: "Plus" },
   { value: "prime", label: "Prime" },
+  { value: "paxos", label: "Paxos" },
 ];
 
 const SPOKE_OPTIONS: FilterOptionDef[] = [
@@ -24,6 +25,7 @@ const SPOKE_OPTIONS: FilterOptionDef[] = [
   { value: "kelp", label: "Kelp" },
   { value: "lido", label: "Lido" },
   { value: "lombard", label: "Lombard BTC" },
+  { value: "usdg_pendle", label: "Global Dollar" },
 ];
 
 /** Each spoke belongs to exactly one hub — Aave V4 market topology, fixed at
@@ -41,6 +43,7 @@ const SPOKE_HUB: Record<string, string> = {
   kelp: "core",
   lido: "core",
   lombard: "core",
+  usdg_pendle: "paxos",
 };
 
 /** Spoke options scoped to the selected hubs — all spokes when no hub is
