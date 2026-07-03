@@ -20,6 +20,7 @@
 import Link from "next/link";
 import { fmtUsd } from "@/lib/aave-v4/format";
 import { hubSummaryText, type HubView } from "@/lib/aave-v4/hub-view";
+import { hubHref } from "@/lib/aave-v4/hub-slug";
 import { ASSET_CLASS_COLOR } from "@/lib/aave-v4/asset-class";
 
 const LINK = "text-blue-500 hover:underline";
@@ -29,12 +30,6 @@ const LINK = "text-blue-500 hover:underline";
 const SPOKE_PILL =
   "inline-flex items-center gap-1 rounded-full border border-background bg-background px-2 py-0.5 text-[12px] " +
   "text-foreground/80 transition-colors hover:border-blue-500/50 hover:text-blue-500";
-
-/** Listing URL filtered to one hub (`/aave-v4?hubs=core`). `hub` is already the
- *  lowercase hub slug. */
-function listingHref(hub: string): string {
-  return `/aave-v4?hubs=${hub}`;
-}
 
 // Composition: one row per asset class — label · proportional bar · share. Bar
 // fill is the class grouping color; a row chart keeps the small classes (2–3%)
@@ -69,7 +64,7 @@ export function AaveV4HubSummaryCard({ hub }: { hub: HubView }) {
       {/* 1 — Identity. The hub name drills into this hub's positions. */}
       <div>
         <Link
-          href={listingHref(hub.hub)}
+          href={hubHref(hub.hub)}
           className="text-base font-semibold text-foreground transition-colors hover:text-blue-500"
           title={`View positions in ${hub.label}`}
         >
@@ -97,7 +92,7 @@ export function AaveV4HubSummaryCard({ hub }: { hub: HubView }) {
             <dt className="text-[11px] uppercase tracking-wider text-rb-500">Positions</dt>
             <dd className="tabular-nums text-base font-semibold text-foreground">
               {hub.positionCount > 0 ? (
-                <Link href={listingHref(hub.hub)} className={LINK} title={`View positions in ${hub.label}`}>
+                <Link href={hubHref(hub.hub)} className={LINK} title={`View positions in ${hub.label}`}>
                   {hub.positionCount.toLocaleString()}
                 </Link>
               ) : (
@@ -169,7 +164,7 @@ export function AaveV4HubSummaryCard({ hub }: { hub: HubView }) {
 
         {hub.positionCount > 0 && (
           <Link
-            href={listingHref(hub.hub)}
+            href={hubHref(hub.hub)}
             className={`mt-3 inline-flex items-center gap-1 text-[13px] font-medium ${LINK}`}
           >
             View all {hub.positionCount.toLocaleString()} {hub.label} positions

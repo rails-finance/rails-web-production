@@ -26,6 +26,7 @@ import { AaveV4HubSummaryCard } from "@/components/protocol/aave-v4/aave-v4-hub-
 import { flattenHubAssets, type HubAssetRow } from "@/lib/aave-v4/hub-table";
 import { type AssetClass, ASSET_CLASS_TITLE, ASSET_CLASS_COLOR } from "@/lib/aave-v4/asset-class";
 import { type HubTierKey, HUB_ORDER } from "@/lib/api/fetch-aave-v4-hubs";
+import { hubHref } from "@/lib/aave-v4/hub-slug";
 
 const LINK = "text-blue-500 hover:underline";
 
@@ -49,13 +50,12 @@ function ltDisplay(a: HubAssetAgg): string {
   return `${a.ltMin.toFixed(2)}–${a.ltMax.toFixed(2)}`;
 }
 
-/** Listing URL filtered to one hub, optionally one asset on a given side —
- *  same param space the listing and the summary cards use. */
-function listingHref(hub: string, asset?: { symbol: string; side: "supply" | "borrow" }): string {
-  const base = `/aave-v4?hubs=${hub}`;
-  if (!asset) return base;
+/** Listing URL filtered to one hub AND one asset on a given side — the workbench
+ *  drill for a specific (hub, asset) credit line. The bare hub-identity link
+ *  uses `hubHref` (the /aave-v4/hubs/<slug> landing page) instead. */
+function assetListingHref(hub: string, asset: { symbol: string; side: "supply" | "borrow" }): string {
   const key = asset.side === "supply" ? "supplyAssets" : "borrowAssets";
-  return `${base}&${key}=${encodeURIComponent(asset.symbol)}`;
+  return `/aave-v4?hubs=${hub}&${key}=${encodeURIComponent(asset.symbol)}`;
 }
 
 // Filter chip — quiet at rest, interaction-blue when engaged (minimal filter UX).
@@ -307,14 +307,14 @@ export function AaveV4HubViews({ views }: { views: HubView[] }) {
                       </div>
                     </td>
                     <td className="px-3 py-2.5 text-[13px]">
-                      <Link href={listingHref(hub)} className={LINK}>
+                      <Link href={hubHref(hub)} className={LINK}>
                         {hubLabel}
                       </Link>
                     </td>
                     <td className="px-3 py-2.5 tabular-nums text-[13px] text-foreground/80">{ltDisplay(a)}</td>
                     <td className="px-3 py-2.5 text-right tabular-nums text-[13px]" title={`Supplied ${sUsd.title}`}>
                       {a.suppliedUsd > 0 ? (
-                        <Link href={listingHref(hub, { symbol: a.symbol, side: "supply" })} className={LINK}>
+                        <Link href={assetListingHref(hub, { symbol: a.symbol, side: "supply" })} className={LINK}>
                           {sUsd.display}
                         </Link>
                       ) : (
@@ -323,7 +323,7 @@ export function AaveV4HubViews({ views }: { views: HubView[] }) {
                     </td>
                     <td className="px-3 py-2.5 text-right tabular-nums text-[13px]" title={`Borrowed ${bUsd.title}`}>
                       {hasBorrow ? (
-                        <Link href={listingHref(hub, { symbol: a.symbol, side: "borrow" })} className={LINK}>
+                        <Link href={assetListingHref(hub, { symbol: a.symbol, side: "borrow" })} className={LINK}>
                           {bUsd.display}
                         </Link>
                       ) : a.canBorrow === false ? (

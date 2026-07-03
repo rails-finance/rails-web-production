@@ -26,3 +26,10 @@ export function hubFromSlug(slug: string): HubTierKey | null {
 export function slugifyHub(hub: HubTierKey): string {
   return HUB_SLUG[hub];
 }
+
+/** Canonical hub landing-page path — `/aave-v4/hubs/<slug>` (e.g.
+ *  /aave-v4/hubs/global-dollar). The page renders the listing seeded to this
+ *  hub; use it for hub-identity links in place of `?hubs=<key>`. */
+export function hubHref(hub: HubTierKey): string {
+  return `/aave-v4/hubs/${HUB_SLUG[hub]}`;
+}
