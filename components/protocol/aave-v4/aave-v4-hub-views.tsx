@@ -200,12 +200,16 @@ export function AaveV4HubViews({ views }: { views: HubView[] }) {
 
   return (
     <div>
-      {/* Section 1 — hub summary band. Static (every hub, always). The cards are
-          subgrids sharing four parent row tracks, so identity / size / supply
-          mix / spokes line up across all three columns. */}
+      {/* Section 1 — hub summary band. Static (every hub, always). Two columns on
+          desktop (was three; a fourth hub — Global Dollar — now orphaned a lone
+          card onto a second row). Each card is a subgrid spanning 5 parent row
+          tracks, so identity / size / supply mix / summary / spokes line up
+          across the pair in each row. 10 row tracks = 5 per card-row × 2 rows
+          (bump when hub count crosses a multiple of 2). Grid stretches paired
+          cards to equal height. */}
       {views.length > 0 && (
         <motion.div
-          className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:grid-rows-[auto_auto_auto_auto_auto] lg:gap-y-4"
+          className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2 lg:grid-rows-[repeat(10,auto)] lg:gap-y-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3, ease: "easeOut" }}

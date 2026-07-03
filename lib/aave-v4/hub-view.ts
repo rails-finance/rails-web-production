@@ -76,6 +76,17 @@ export const HUB_LABEL: Record<HubTierKey, string> = {
   paxos: "Global Dollar",
 };
 
+// Canonical spoke display names, keyed by the spoke slug (l.spoke). Applied to
+// the summary-card pills so /aave-v4/hubs shows the Aave-official name even
+// before the server naming deploy lands — the server still emits the old
+// `spokeName` until then, and this surface owns its labels (same as the listing
+// filter dropdown). Only spokes whose display name we've deliberately renamed
+// need an entry; everything else falls through to the server's spokeName.
+const SPOKE_NAME_OVERRIDE: Partial<Record<string, string>> = {
+  // Spoke "Global Dollar" → "Stablecoin Correlated" (the hub is "Global Dollar").
+  usdg_pendle: "Stablecoin Correlated",
+};
+
 // Neutral, descriptive one-liners — what the hub is for, not how good it is.
 export const HUB_PURPOSE: Record<HubTierKey, string> = {
   core: "The broadest market, and the shared liquidity backbone other spokes draw stablecoins from.",
@@ -216,7 +227,7 @@ function buildHubView(
   for (const l of lines) {
     const prev = spokeMap.get(l.spoke);
     if (prev) prev.halted = prev.halted || l.halted;
-    else spokeMap.set(l.spoke, { slug: l.spoke, name: l.spokeName, halted: l.halted });
+    else spokeMap.set(l.spoke, { slug: l.spoke, name: SPOKE_NAME_OVERRIDE[l.spoke] ?? l.spokeName, halted: l.halted });
   }
   const spokes = [...spokeMap.values()].sort((a, b) => a.name.localeCompare(b.name));
 
