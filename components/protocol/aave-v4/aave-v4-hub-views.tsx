@@ -50,12 +50,13 @@ function ltDisplay(a: HubAssetAgg): string {
   return `${a.ltMin.toFixed(2)}–${a.ltMax.toFixed(2)}`;
 }
 
-/** Listing URL filtered to one hub AND one asset on a given side — the workbench
- *  drill for a specific (hub, asset) credit line. The bare hub-identity link
- *  uses `hubHref` (the /aave-v4/hubs/<slug> landing page) instead. */
-function assetListingHref(hub: string, asset: { symbol: string; side: "supply" | "borrow" }): string {
+/** The hub landing page scoped to one asset on a given side — the workbench
+ *  drill for a specific (hub, asset) credit line. Routes through the canonical
+ *  hub page (`hubHref` seeds the hub); the asset rides as a query refinement the
+ *  listing reads on top of the seed. The bare hub-identity link omits the asset. */
+function assetListingHref(hub: HubTierKey, asset: { symbol: string; side: "supply" | "borrow" }): string {
   const key = asset.side === "supply" ? "supplyAssets" : "borrowAssets";
-  return `/aave-v4?hubs=${hub}&${key}=${encodeURIComponent(asset.symbol)}`;
+  return `${hubHref(hub)}?${key}=${encodeURIComponent(asset.symbol)}`;
 }
 
 // Filter chip — quiet at rest, interaction-blue when engaged (minimal filter UX).
