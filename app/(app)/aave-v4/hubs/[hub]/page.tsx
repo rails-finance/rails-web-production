@@ -53,13 +53,6 @@ export default async function AaveV4HubLandingPage({ params }: { params: Promise
           </Link>{" "}
           / {label}
         </div>
-        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <h1 className="text-2xl font-semibold text-foreground">{label} Hub</h1>
-          <Link href="/aave-v4/hubs" className="text-[13px] text-blue-500 hover:underline">
-            Compare all hubs
-          </Link>
-        </div>
-        <p className="mt-2 max-w-3xl text-[14px] leading-relaxed text-rb-500">{HUB_PURPOSE[key]}</p>
       </div>
 
       <AaveV4Listing seed={{ hubs: [key] }} />

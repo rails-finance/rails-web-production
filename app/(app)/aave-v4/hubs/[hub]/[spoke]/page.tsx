@@ -14,7 +14,7 @@ import { notFound } from "next/navigation";
 import { AaveV4Listing } from "@/components/aave-v4/AaveV4Listing";
 import { HUB_LABEL } from "@/lib/aave-v4/hub-view";
 import { hubFromSlug, slugifyHub } from "@/lib/aave-v4/hub-slug";
-import { spokeFromSlug, spokeValueFromSlug, slugFromSpokeValue, getSpokeMeta } from "@/lib/aave-v4/spoke-meta";
+import { spokeFromSlug, spokeValueFromSlug, slugFromSpokeValue } from "@/lib/aave-v4/spoke-meta";
 import { SPOKE_HOME_HUB } from "@/lib/aave-v4/spoke-hub";
 import type { HubTierKey } from "@/lib/api/fetch-aave-v4-hubs";
 
@@ -57,7 +57,6 @@ export default async function AaveV4HubSpokeLandingPage({ params }: { params: Pr
   if (!r) notFound();
 
   const hubLabel = HUB_LABEL[r.hubKey as HubTierKey];
-  const narrative = getSpokeMeta(r.spokeName)?.narrative?.[0];
 
   return (
     <>
@@ -76,11 +75,6 @@ export default async function AaveV4HubSpokeLandingPage({ params }: { params: Pr
           </Link>{" "}
           / {r.spokeName}
         </div>
-        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <h1 className="text-2xl font-semibold text-foreground">{r.spokeName}</h1>
-          <span className="text-[13px] text-rb-500">in the {hubLabel} hub</span>
-        </div>
-        {narrative && <p className="mt-2 max-w-3xl text-[14px] leading-relaxed text-rb-500">{narrative}</p>}
       </div>
 
       <AaveV4Listing seed={{ spokes: [r.spokeValue] }} />
