@@ -10,13 +10,14 @@ export const metadata: Metadata = {
       "Explore Aave V4 wallet activity across all 11 spokes — supply, borrow, liquidations, and collateral toggles per market.",
     url: "https://rails.finance/aave-v4",
     type: "website",
-    images: ["/og/explore-aave-v4.png"],
+    // og:image comes from the dynamic `opengraph-image` route (this segment +
+    // spoke/[…]/ + hubs/[hub]/). Leaving `images` unset keeps the file
+    // convention as the single, unambiguous source of the og:image tag.
   },
   twitter: {
     card: "summary_large_image",
     title: "Rails | Explore Aave V4",
     description: "Explore Aave V4 wallet activity across all 11 spokes.",
-    images: ["/og/explore-aave-v4.png"],
   },
 };
 
