@@ -26,15 +26,19 @@ import { slugifyHub } from "@/lib/aave-v4/hub-slug";
 
 // ── URL slugs ────────────────────────────────────────────────────────────────
 // Canonical slug ↔ display-name map for `/aave-v4/spoke/[slug]/[wallet]`.
-// The display name is what the API returns as `spokeName` (and what every
-// other table in this file is keyed by); the slug is the lowercase kebab-cased
-// form used in URLs so we don't ship `%20` in production paths.
+// The **slug** is the canonical key for editorial metadata — SPOKE_META below
+// is keyed by it too. The display name is what the API returns as `spokeName`;
+// the slug is its lowercase kebab-cased form, used in URLs so we don't ship
+// `%20` in production paths and as the stable internal key so a spoke's display
+// name can change (or gain an alias) without re-keying anything.
+// (SPOKE_NAME_TO_KEY below is a separate concern — the listing `?spokes=` value.)
 //
 // When a new spoke ships:
-//   1. Add the row here.
+//   1. Add the row here (slug → display name).
 //   2. Add a 308 redirect in next.config.ts from the encoded display name
 //      shape, in case the spoke's name contains a space.
-//   3. Mirror in SPOKE_META below if it needs editorial copy.
+//   3. Mirror in SPOKE_META below (keyed by the same slug) if it needs
+//      editorial copy.
 const SPOKE_SLUG_TO_NAME: Record<string, string> = {
   main: "Main",
   bluechip: "Bluechip",
@@ -177,8 +181,11 @@ export interface SpokeMeta {
 const RATE_NOTE_CROSS_HUB =
   "Borrow rate combines Core Hub's utilization-driven base rate with this Spoke's risk premium. Higher-quality collateral earns a lower premium; the displayed total is the sum.";
 
+// Keyed by the canonical spoke slug (see SPOKE_SLUG_TO_NAME). Look up via
+// getSpokeMeta(), which normalizes an API display name to its slug first —
+// don't index this map with a raw display name.
 export const SPOKE_META: Record<string, SpokeMeta> = {
-  Main: {
+  main: {
     name: "Main",
     archetype: "standard",
     collateralHub: "Core",
@@ -188,7 +195,7 @@ export const SPOKE_META: Record<string, SpokeMeta> = {
       "Collateral and borrows share the same Hub; rates respond to Core Hub utilization.",
     ],
   },
-  Bluechip: {
+  bluechip: {
     name: "Bluechip",
     archetype: "cross-hub-credit",
     collateralHub: "Prime",
@@ -201,7 +208,7 @@ export const SPOKE_META: Record<string, SpokeMeta> = {
     ],
     rateNote: RATE_NOTE_CROSS_HUB,
   },
-  Forex: {
+  forex: {
     name: "Forex",
     archetype: "isolation",
     collateralHub: "Core",
@@ -212,7 +219,7 @@ export const SPOKE_META: Record<string, SpokeMeta> = {
       "Designed around FX-pegged collateral and stable borrow assets; risk parameters reflect a narrower volatility profile than the general Spoke.",
     ],
   },
-  Gold: {
+  gold: {
     name: "Gold",
     archetype: "isolation",
     collateralHub: "Core",
@@ -223,7 +230,7 @@ export const SPOKE_META: Record<string, SpokeMeta> = {
       "Risk parameters are tuned to tokenized-gold collateral paired with stable borrow assets.",
     ],
   },
-  "Ethena Correlated": {
+  "ethena-correlated": {
     name: "Ethena Correlated",
     archetype: "correlated",
     collateralHub: "Plus",
@@ -234,7 +241,7 @@ export const SPOKE_META: Record<string, SpokeMeta> = {
       "Higher LTV is available between correlated Ethena assets (USDe-related basket), reflecting their tight peg behavior — modeled along the same lines as V3's E-Mode.",
     ],
   },
-  "Ethena Ecosystem": {
+  "ethena-ecosystem": {
     name: "Ethena Ecosystem",
     archetype: "ecosystem",
     collateralHub: "Plus",
@@ -245,7 +252,7 @@ export const SPOKE_META: Record<string, SpokeMeta> = {
       "Bundles Ethena assets (USDe, sUSDe, related) with parameters tuned to that ecosystem's risk profile.",
     ],
   },
-  EtherFi: {
+  etherfi: {
     name: "EtherFi",
     archetype: "ecosystem",
     collateralHub: "Core",
@@ -256,7 +263,7 @@ export const SPOKE_META: Record<string, SpokeMeta> = {
       "Built around weETH / EtherFi liquid-restaking collateral; parameters reflect LRT-specific risk.",
     ],
   },
-  Kelp: {
+  kelp: {
     name: "Kelp",
     archetype: "ecosystem",
     collateralHub: "Core",
@@ -267,7 +274,7 @@ export const SPOKE_META: Record<string, SpokeMeta> = {
       "Built around rsETH / Kelp liquid-restaking collateral; parameters reflect LRT-specific risk.",
     ],
   },
-  Lido: {
+  lido: {
     name: "Lido",
     archetype: "ecosystem",
     collateralHub: "Core",
@@ -275,7 +282,7 @@ export const SPOKE_META: Record<string, SpokeMeta> = {
     // TODO copy: confirm lido LST scope.
     narrative: ["Lido Spoke on the Core Hub.", "Built around stETH / wstETH liquid-staking collateral."],
   },
-  "Lombard BTC": {
+  lombard: {
     name: "Lombard BTC",
     archetype: "ecosystem",
     collateralHub: "Core",
@@ -286,7 +293,7 @@ export const SPOKE_META: Record<string, SpokeMeta> = {
       "Built around LBTC / Lombard wrapped-BTC collateral; parameters reflect BTC-variant risk.",
     ],
   },
-  "Stablecoin Correlated": {
+  "stablecoin-correlated": {
     name: "Stablecoin Correlated",
     archetype: "ecosystem",
     collateralHub: "Paxos",
@@ -300,9 +307,16 @@ export const SPOKE_META: Record<string, SpokeMeta> = {
   },
 };
 
+/** Look up a spoke's editorial metadata by API display name ("Lombard BTC"),
+ *  legacy alias ("Lombard"), or raw slug ("lombard"). All three normalize to
+ *  the canonical slug that keys SPOKE_META, so callers never have to match the
+ *  API's display name against the internal key exactly. Returns null for an
+ *  unknown spoke so callers can omit the "?" affordance. */
 export function getSpokeMeta(name: string): SpokeMeta | null {
-  const canonicalName = name === "Lombard" ? "Lombard BTC" : name;
-  return SPOKE_META[canonicalName] ?? null;
+  // slugifySpoke resolves a display name (or alias) to its slug; if `name` is
+  // already a slug it isn't in that map, so fall back to `name` unchanged.
+  const slug = slugifySpoke(name) ?? name;
+  return SPOKE_META[slug] ?? null;
 }
 
 export const ARCHETYPE_LABEL: Record<SpokeArchetype, string> = {
