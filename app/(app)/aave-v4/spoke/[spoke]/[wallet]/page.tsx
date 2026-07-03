@@ -47,6 +47,7 @@ const SPOKE_NAME_TO_KEY: Record<string, string> = {
   "Lombard BTC": "lombard",
   Lombard: "lombard",
   Treasury: "treasury",
+  "Global Dollar": "usdg_pendle",
 };
 import type { BaseActivityEvent } from "@/lib/shared/types/event-shape";
 import { isAaveV4Event } from "@/lib/shared/types/event-shape";

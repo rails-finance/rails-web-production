@@ -47,6 +47,7 @@ const SPOKE_SLUG_TO_NAME: Record<string, string> = {
   // "Lombard" (older copy). Both aliases resolve to the same slug below.
   lombard: "Lombard BTC",
   treasury: "Treasury",
+  "global-dollar": "Global Dollar",
 };
 
 const SPOKE_NAME_TO_SLUG: Record<string, string> = {
@@ -217,6 +218,18 @@ export const SPOKE_META: Record<string, SpokeMeta> = {
     narrative: [
       "Lombard BTC Spoke on the Core Hub.",
       "Built around LBTC / Lombard wrapped-BTC collateral; parameters reflect BTC-variant risk.",
+    ],
+  },
+  "Global Dollar": {
+    name: "Global Dollar",
+    archetype: "ecosystem",
+    collateralHub: "Paxos",
+    borrowHub: "Paxos",
+    // TODO copy: confirm Global Dollar / Paxos hub parameters against current docs.
+    narrative: [
+      "The Global Dollar Spoke on the new Paxos Hub — Aave V4's first liquidity hub built for the Global Dollar (USDG) ecosystem.",
+      "Collateral is PT-USDG-24SEP2026, a Pendle principal token maturing 24 Sep 2026; against it you can borrow USDC and USDT from the Paxos Hub, plus USDG drawn from the Core Hub over a cross-hub credit line.",
+      "Risk parameters are Spoke-specific — the PT's fixed-maturity discount and the Hub's caps shape the available leverage.",
     ],
   },
 };

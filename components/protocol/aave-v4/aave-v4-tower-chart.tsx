@@ -97,9 +97,9 @@ const LIFETIME_DUST_USD = 0.01;
 
 interface AssetRow {
   symbol: string;
-  /** Hub (Core/Plus/Prime). Same asset can appear under two hubs as two
+  /** Hub (Core/Plus/Prime/Paxos). Same asset can appear under two hubs as two
    *  distinct reserves; carried so segments/legends key and label them apart. */
-  hub?: "core" | "plus" | "prime";
+  hub?: "core" | "plus" | "prime" | "paxos";
   // Lifetime totals — drive the historical-view side bars and breakdown rows.
   supplied: number;
   withdrawn: number;
@@ -129,7 +129,7 @@ interface AssetRow {
 
 /** " · Core" etc. — appended to a reserve's label so two same-symbol reserves
  *  drawn from different hubs read as distinct rows. Empty when hub is unknown. */
-function hubSuffix(hub?: "core" | "plus" | "prime" | null): string {
+function hubSuffix(hub?: "core" | "plus" | "prime" | "paxos" | null): string {
   return hub ? ` · ${hub.charAt(0).toUpperCase()}${hub.slice(1)}` : "";
 }
 
@@ -391,7 +391,7 @@ export function AaveV4TowerChart({
   // Tooltip for a merged block: the category total, then the per-asset
   // constituents that were folded in (capped, with an "+N more" overflow).
   const mergedTip = (
-    items: { symbol: string; hub?: "core" | "plus" | "prime"; usd: number }[],
+    items: { symbol: string; hub?: "core" | "plus" | "prime" | "paxos"; usd: number }[],
     total: number,
     dir: "in" | "out",
   ) => (
@@ -452,7 +452,7 @@ export function AaveV4TowerChart({
   // block when grouped & ≥2, else one hatched segment per asset (reversed so the
   // largest sits nearest the active segments, as before).
   const flowSegs = (
-    items: { symbol: string; hub?: "core" | "plus" | "prime"; amount: number; usd: number }[],
+    items: { symbol: string; hub?: "core" | "plus" | "prime" | "paxos"; amount: number; usd: number }[],
     pattern: CSSProperties,
     keyPrefix: string,
     mergedLabel: string,
@@ -527,7 +527,7 @@ export function AaveV4TowerChart({
   // single USD row when grouped & ≥2 (no icon — the row is a sum across assets),
   // else per-asset rows with the native amount + icon as before.
   const flowRows = (
-    items: { symbol: string; hub?: "core" | "plus" | "prime"; amount: number; usd: number }[],
+    items: { symbol: string; hub?: "core" | "plus" | "prime" | "paxos"; amount: number; usd: number }[],
     pattern: CSSProperties,
     mergedLabel: string,
   ): BreakdownRow[] => {

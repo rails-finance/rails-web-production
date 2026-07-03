@@ -3,7 +3,7 @@
 // keeps the wallet-page chunk from pulling in `aave-spoke-card.tsx` and its
 // transitive deps just to render a hub label.
 
-export type HubTier = "Core" | "Plus" | "Prime";
+export type HubTier = "Core" | "Plus" | "Prime" | "Paxos";
 
 // Hub tiers render as neutral text badges (see SpokeIdentity / position card) —
 // the tier is identity, not a status, so it carries no color. A former
@@ -21,4 +21,5 @@ export const SPOKE_HUB: Record<string, HubTier> = {
   Lido: "Core",
   Lombard: "Core",
   Bluechip: "Prime",
+  "Global Dollar": "Paxos",
 };

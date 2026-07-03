@@ -36,6 +36,7 @@ export const STABLE_SYMBOLS = new Set<string>([
   "sUSDe",
   "PT-sUSDE",
   "PT-USDe-7MAY2026",
+  "PT-USDG-24SEP2026",
   "LUSD",
   "BOLD",
 ]);

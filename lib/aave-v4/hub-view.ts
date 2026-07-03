@@ -73,6 +73,7 @@ export const HUB_LABEL: Record<HubTierKey, string> = {
   core: "Core",
   plus: "Plus",
   prime: "Prime",
+  paxos: "Paxos",
 };
 
 // Neutral, descriptive one-liners — what the hub is for, not how good it is.
@@ -80,6 +81,7 @@ export const HUB_PURPOSE: Record<HubTierKey, string> = {
   core: "The broadest market, and the shared liquidity backbone other spokes draw stablecoins from.",
   plus: "Stablecoin-strategy markets — Ethena dollars and correlated yield collateral.",
   prime: "A tightly-scoped market for bluechip collateral.",
+  paxos: "The Global Dollar (USDG) market — PT-USDG collateral against USDC, USDT, and USDG borrows.",
 };
 
 function toTokens(raw: string, decimals: number): number {

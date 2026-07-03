@@ -51,7 +51,12 @@ function PricePill({ symbol, usd, source }: { symbol: string; usd: number; sourc
 /** A single held-debt asset's borrow rate — `4.35% [icon] USDC`. Mirrors the
  *  Debt card's `PositionRow` grammar so a multi-debt position reads its rates
  *  the same way it reads its balances: one labelled row per asset. */
-const HUB_LABEL: Record<"core" | "plus" | "prime", string> = { core: "Core", plus: "Plus", prime: "Prime" };
+const HUB_LABEL: Record<"core" | "plus" | "prime" | "paxos", string> = {
+  core: "Core",
+  plus: "Plus",
+  prime: "Prime",
+  paxos: "Paxos",
+};
 
 function BorrowRateRow({
   symbol,
@@ -62,7 +67,7 @@ function BorrowRateRow({
   apr: string;
   /** When set, the reserve's hub — rendered as a suffix to tell two same-symbol
    *  rates apart. Omitted for a lone (non-repeated) asset. */
-  hub?: "core" | "plus" | "prime";
+  hub?: "core" | "plus" | "prime" | "paxos";
 }) {
   const { showTickerLabels } = useTimelineDisplay();
   return (

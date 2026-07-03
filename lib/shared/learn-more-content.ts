@@ -1011,7 +1011,7 @@ export function aaveV4HubsContent(): LearnMoreContent {
     details: [
       {
         bold: "Liquidity Hub",
-        text: "the pool that custodies supplied assets and backs borrowing. Core, Plus and Prime are separate hubs that don't co-mingle liquidity.",
+        text: "the pool that custodies supplied assets and backs borrowing. Separate hubs (Core, Plus, Prime, Paxos) don't co-mingle liquidity.",
       },
       {
         bold: "Spoke",

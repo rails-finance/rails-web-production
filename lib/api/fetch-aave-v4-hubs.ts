@@ -13,10 +13,11 @@
 // utilisation and USD/composition are computed at render time from these plus
 // prices + asset-class buckets, same as the rest of the Aave V4 path.
 
-export type HubTierKey = "core" | "plus" | "prime";
+export type HubTierKey = "core" | "plus" | "prime" | "paxos";
 
-/** Canonical presentation order for the hub columns — never sorted by a metric. */
-export const HUB_ORDER: HubTierKey[] = ["core", "plus", "prime"];
+/** Canonical presentation order for the hub columns — never sorted by a metric.
+ *  Paxos (Global Dollar / USDG) is the 4th hub, appended last as the newest. */
+export const HUB_ORDER: HubTierKey[] = ["core", "plus", "prime", "paxos"];
 
 export interface HubCreditLine {
   hub: HubTierKey;

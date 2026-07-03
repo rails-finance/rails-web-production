@@ -13,11 +13,11 @@ export type AaveV4EventType = "supply" | "withdraw" | "borrow" | "repay" | "liqu
 export interface AaveV4SnapshotItem {
   symbol: string;
   amount: string;
-  /** Hub this reserve draws from (Core/Plus/Prime). The same asset can be held
-   *  under two hubs as two distinct reserves with independent balances AND
+  /** Hub this reserve draws from (Core/Plus/Prime/Paxos). The same asset can be
+   *  held under two hubs as two distinct reserves with independent balances AND
    *  independent borrow rates, so `symbol` alone doesn't identify the row.
    *  Undefined when the reserve's hub isn't indexed. */
-  hub?: "core" | "plus" | "prime";
+  hub?: "core" | "plus" | "prime" | "paxos";
   price?: { usd: number; source: AaveV4PriceSource };
   /** Variable borrow rate for this asset at the event's block, as a decimal
    *  string (e.g. "0.0371" = 3.71% APR). Present on debt items only — it lets a
@@ -33,9 +33,9 @@ export interface AaveV4Context {
   reserveSymbol?: string;
   spokeName?: string;
   spokeAddress?: string;
-  /** Hub this event's reserve draws from (Core / Plus / Prime); disambiguates
+  /** Hub this event's reserve draws from (Core / Plus / Prime / Paxos); disambiguates
    *  two same-symbol reserves drawn from different hubs. */
-  hub?: "core" | "plus" | "prime";
+  hub?: "core" | "plus" | "prime" | "paxos";
   enabled?: boolean;
   collateralSymbol?: string;
   debtToCover?: string;

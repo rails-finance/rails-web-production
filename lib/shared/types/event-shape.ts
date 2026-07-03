@@ -208,11 +208,11 @@ export type AaveV4EventType =
 export interface AaveV4SnapshotItem {
   symbol: string;
   amount: string;
-  /** Hub this reserve draws from (Core/Plus/Prime). The same asset can be held
-   *  under two hubs as two distinct reserves with independent balances AND
+  /** Hub this reserve draws from (Core/Plus/Prime/Paxos). The same asset can be
+   *  held under two hubs as two distinct reserves with independent balances AND
    *  independent borrow rates, so `symbol` alone doesn't identify the row.
    *  Undefined when the reserve's hub isn't indexed. */
-  hub?: "core" | "plus" | "prime";
+  hub?: "core" | "plus" | "prime" | "paxos";
   price?: { usd: number; source: AaveV4PriceSource };
   /** Variable borrow rate for this asset at the event's block, as a decimal
    *  string (e.g. "0.0371" = 3.71% APR). Present on debt items only — it lets a
@@ -234,12 +234,12 @@ export interface AaveV4Context {
   spokeName?: string;
   /** Spoke contract address (lowercase). */
   spokeAddress?: string;
-  /** Hub this event's reserve draws from (Core / Plus / Prime). A spoke can
-   *  list the same asset under multiple reserve_ids — one per hub — so the same
-   *  symbol can appear as two distinct reserves; `hub` disambiguates them.
+  /** Hub this event's reserve draws from (Core / Plus / Prime / Paxos). A spoke
+   *  can list the same asset under multiple reserve_ids — one per hub — so the
+   *  same symbol can appear as two distinct reserves; `hub` disambiguates them.
    *  Resolved from (spoke, reserve_id) → aave_v4_hub_spoke_credit. Absent when
    *  the credit mapping hasn't been indexed for the reserve yet. */
-  hub?: "core" | "plus" | "prime";
+  hub?: "core" | "plus" | "prime" | "paxos";
   /** collateral_toggle: whether collateral was enabled. */
   enabled?: boolean;
   /** liquidation: collateral reserve symbol. */

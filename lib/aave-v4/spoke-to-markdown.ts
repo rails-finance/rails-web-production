@@ -81,7 +81,7 @@ function toNum(v: string | number | undefined): number {
  *  from lifetime flows (mirrors the economics band's fallback). */
 /** "USDT (Core)" when the reserve's hub is known, else "USDT". Disambiguates
  *  two same-symbol reserves drawn from different hubs in the export. */
-function fmtAssetWithHub(a: { symbol: string; hub?: "core" | "plus" | "prime" | null }): string {
+function fmtAssetWithHub(a: { symbol: string; hub?: "core" | "plus" | "prime" | "paxos" | null }): string {
   if (!a.hub) return a.symbol;
   return `${a.symbol} (${a.hub.charAt(0).toUpperCase()}${a.hub.slice(1)})`;
 }

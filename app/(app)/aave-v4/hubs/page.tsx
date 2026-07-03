@@ -65,7 +65,7 @@ function HubsContent() {
             <LearnMore content={aaveV4HubsContent()} inline />
           </div>
           <p className="mt-2 text-[14px] leading-relaxed text-rb-500">
-            Aave V4 lends through three hubs. Spokes hold collateral and draw liquidity from a hub; a single spoke can
+            Aave V4 lends through several hubs. Spokes hold collateral and draw liquidity from a hub; a single spoke can
             draw from more than one.
           </p>
           {data?.updatedAt && (
