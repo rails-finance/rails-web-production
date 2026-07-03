@@ -266,7 +266,7 @@ export function AaveV4HubViews({ views }: { views: HubView[] }) {
         </div>
       ) : (
         <div className="overflow-x-auto rounded-lg border border-rb-200 dark:border-rb-800">
-          <table className="w-full min-w-[760px] border-collapse">
+          <table className="w-full min-w-[900px] border-collapse">
             <thead>
               <tr className="bg-foreground/[0.03]">
                 {th("Asset", "asset")}
@@ -277,6 +277,11 @@ export function AaveV4HubViews({ views }: { views: HubView[] }) {
                 {th("Borrow rate", "rate", "right")}
                 {th("Supply APY", "supplyApy", "right")}
                 {th("Utilisation", "util")}
+                {/* Not sortable — a set, not a scalar. The tell of a cross-hub
+                    draw: a spoke whose home hub differs from this row's Hub. */}
+                <th className="px-3 py-2 text-left">
+                  <span className="text-[11px] uppercase tracking-wider text-rb-500">Spokes</span>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -349,6 +354,20 @@ export function AaveV4HubViews({ views }: { views: HubView[] }) {
                     </td>
                     <td className="px-3 py-2.5">
                       <UtilMini a={a} />
+                    </td>
+                    <td className="px-3 py-2.5 align-top">
+                      <div className="flex max-w-[280px] flex-wrap gap-x-1 text-[12px] leading-relaxed text-rb-500">
+                        {a.spokeNames.length > 0 ? (
+                          a.spokeNames.map((n, i) => (
+                            <span key={n}>
+                              {n}
+                              {i < a.spokeNames.length - 1 && <span className="text-rb-500/40"> ·</span>}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-rb-500/70">—</span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );

@@ -14,6 +14,7 @@
 
 import type { AaveV4HubsResponse, HubCreditLine, HubTierKey } from "@/lib/api/fetch-aave-v4-hubs";
 import { assetClass, ASSET_CLASS_TITLE, type AssetClass } from "@/lib/aave-v4/asset-class";
+import { SPOKE_HOME_HUB } from "@/lib/aave-v4/spoke-hub";
 
 /** uint40 max — the protocol's "uncapped" sentinel (MAX_ALLOWED_SPOKE_CAP). */
 const MAX_CAP = 1_099_511_627_775;
@@ -51,6 +52,22 @@ export interface HubAssetAgg {
   supplyApr: number | null;
   /** Liquidity fee (V4 reserve factor) as a decimal fraction (0.10 = 10%). */
   liquidityFee: number;
+  /** Display names of the spokes that draw this (hub, asset) credit line,
+   *  sorted. Canonical names (SPOKE_NAME_OVERRIDE applied). Rendered in the
+   *  cross-hub table's Spokes column — a Global Dollar spoke appearing on a
+   *  Core row is the visible tell of a cross-hub borrow. */
+  spokeNames: string[];
+}
+
+/** One hub's borrows that are actually drawn from ANOTHER hub's liquidity —
+ *  i.e. this hub's spokes reaching over a cross-hub credit line. Summed in USD
+ *  and grouped by the source hub. Empty for hubs whose spokes borrow only their
+ *  own liquidity. */
+export interface CrossHubBorrow {
+  /** The source hub the liquidity came from. */
+  hub: HubTierKey;
+  label: string;
+  usd: number;
 }
 
 export interface HubView {
@@ -67,6 +84,12 @@ export interface HubView {
    *  param value (e.g. `ethena_corr`), so each pill can link straight into the
    *  filtered listing. */
   spokes: { slug: string; name: string; halted: boolean }[];
+  /** Borrows by this hub's spokes drawn from OTHER hubs' liquidity (cross-hub
+   *  credit lines), grouped by source hub, USD-descending. Empty when none.
+   *  Surfaced as the card's "Borrowed via <hub>" line, which reconciles a hub
+   *  whose own `borrowedUsd` reads ~0 (e.g. Global Dollar) with the real debt
+   *  its spokes carry against another hub. */
+  crossHubBorrows: CrossHubBorrow[];
 }
 
 export const HUB_LABEL: Record<HubTierKey, string> = {
@@ -145,9 +168,11 @@ function buildHubView(
     let borrowRateRay: string | null = null;
     let liquidityFeeBps = 0;
     const spokes = new Set<string>();
+    const spokeNames = new Set<string>();
 
     for (const l of group) {
       spokes.add(l.spoke);
+      spokeNames.add(SPOKE_NAME_OVERRIDE[l.spoke] ?? l.spokeName);
       supplied += toTokens(l.addedAssets, decimals);
       borrowed += toTokens(l.totalOwed, decimals);
       const ac = capValue(l.addCap);
@@ -202,6 +227,7 @@ function buildHubView(
       borrowApr,
       supplyApr,
       liquidityFee,
+      spokeNames: [...spokeNames].sort((a, b) => a.localeCompare(b)),
     });
   }
 
@@ -241,7 +267,32 @@ function buildHubView(
     composition,
     assets,
     spokes,
+    // Filled by buildHubViews, which sees every hub's lines (a hub's cross-hub
+    // borrows live on OTHER hubs' lines, not in this hub's `lines` slice).
+    crossHubBorrows: [],
   };
+}
+
+/** Borrows by `home` hub's spokes that are drawn from a DIFFERENT hub's
+ *  liquidity, summed in USD and grouped by source hub. Needs the full line set
+ *  because those borrow lines carry the source hub's key, not `home`. */
+function crossHubBorrowsFor(
+  home: HubTierKey,
+  lines: HubCreditLine[],
+  prices: Record<string, number>,
+): CrossHubBorrow[] {
+  const byHub = new Map<HubTierKey, number>();
+  for (const l of lines) {
+    if (SPOKE_HOME_HUB[l.spoke] !== home) continue; // only this hub's spokes
+    if (l.hub === home) continue; // only draws from a different hub
+    const tokens = toTokens(l.totalOwed, l.decimals);
+    if (tokens <= 0) continue;
+    const price = prices[l.underlying.toLowerCase()] ?? 0;
+    const usd = tokens * price;
+    if (usd <= 0) continue;
+    byHub.set(l.hub, (byHub.get(l.hub) ?? 0) + usd);
+  }
+  return [...byHub.entries()].map(([hub, usd]) => ({ hub, label: HUB_LABEL[hub], usd })).sort((a, b) => b.usd - a.usd);
 }
 
 /** Build all hub views in canonical order from the API payload + a price map
@@ -253,7 +304,11 @@ export function buildHubViews(data: AaveV4HubsResponse, prices: Record<string, n
     if (arr) arr.push(l);
     else byHub.set(l.hub, [l]);
   }
-  return data.hubs.map((hub) => buildHubView(hub, byHub.get(hub) ?? [], prices, data.positionCounts?.[hub] ?? 0));
+  return data.hubs.map((hub) => {
+    const view = buildHubView(hub, byHub.get(hub) ?? [], prices, data.positionCounts?.[hub] ?? 0);
+    view.crossHubBorrows = crossHubBorrowsFor(hub, data.lines, prices);
+    return view;
+  });
 }
 
 /** All distinct underlying addresses in the payload — for useRequestPrices. */

@@ -4,6 +4,7 @@ import { joinOptionLabels } from "@/components/shared/filter-bar/types";
 import { PAGE_LINK } from "@/lib/shared/ui-grammar";
 import { type AaveV4ListFilterParams, effectiveAaveV4Show } from "@/lib/aave-v4/list-filter-types";
 import { canonicalStatuses, defaultStatuses, effectiveStatuses, sameStatusSet } from "@/lib/aave-v4/listing-visibility";
+import { SPOKE_HOME_HUB } from "@/lib/aave-v4/spoke-hub";
 
 type Dim = FilterDimension<AaveV4ListFilterParams>;
 
@@ -28,23 +29,10 @@ const SPOKE_OPTIONS: FilterOptionDef[] = [
   { value: "usdg_pendle", label: "Stablecoin Correlated" },
 ];
 
-/** Each spoke belongs to exactly one hub — Aave V4 market topology, fixed at
- *  deployment (mirrors the backend's SPOKE_BY_KEY `hub` field). This is the
- *  hub→spoke layer of the same parent-scopes-child logic the asset pills use;
- *  unlike asset availability it's static structure, not chain config. */
-const SPOKE_HUB: Record<string, string> = {
-  main: "core",
-  forex: "core",
-  gold: "core",
-  bluechip: "prime",
-  ethena_corr: "plus",
-  ethena_eco: "plus",
-  etherfi: "core",
-  kelp: "core",
-  lido: "core",
-  lombard: "core",
-  usdg_pendle: "paxos",
-};
+// Each spoke belongs to exactly one (home) hub — Aave V4 market topology, the
+// hub→spoke layer of the same parent-scopes-child logic the asset pills use.
+// Canonical map lives in spoke-hub.ts (shared with the /hubs cross-hub view).
+const SPOKE_HUB = SPOKE_HOME_HUB;
 
 /** Spoke options scoped to the selected hubs — all spokes when no hub is
  *  selected, else only the members of those hubs. */

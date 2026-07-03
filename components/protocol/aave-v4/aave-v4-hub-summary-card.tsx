@@ -78,33 +78,56 @@ export function AaveV4HubSummaryCard({ hub }: { hub: HubView }) {
         <p className="mt-2 text-[13px] leading-relaxed text-rb-500">{hub.purpose}</p>
       </div>
 
-      {/* 2 — Size */}
-      <dl className="grid grid-cols-3 gap-2">
-        <div>
-          <dt className="text-[11px] uppercase tracking-wider text-rb-500">Supplied</dt>
-          <dd className="tabular-nums text-base font-semibold text-foreground" title={supplied.title}>
-            {supplied.display}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-[11px] uppercase tracking-wider text-rb-500">Borrowed</dt>
-          <dd className="tabular-nums text-base font-semibold text-foreground" title={borrowed.title}>
-            {borrowed.display}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-[11px] uppercase tracking-wider text-rb-500">Positions</dt>
-          <dd className="tabular-nums text-base font-semibold text-foreground">
-            {hub.positionCount > 0 ? (
-              <Link href={listingHref(hub.hub)} className={LINK} title={`View positions in ${hub.label}`}>
-                {hub.positionCount.toLocaleString()}
-              </Link>
-            ) : (
-              hub.positionCount.toLocaleString()
-            )}
-          </dd>
-        </div>
-      </dl>
+      {/* 2 — Size, plus any borrows this hub's spokes draw from another hub. */}
+      <div>
+        <dl className="grid grid-cols-3 gap-2">
+          <div>
+            <dt className="text-[11px] uppercase tracking-wider text-rb-500">Supplied</dt>
+            <dd className="tabular-nums text-base font-semibold text-foreground" title={supplied.title}>
+              {supplied.display}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-[11px] uppercase tracking-wider text-rb-500">Borrowed</dt>
+            <dd className="tabular-nums text-base font-semibold text-foreground" title={borrowed.title}>
+              {borrowed.display}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-[11px] uppercase tracking-wider text-rb-500">Positions</dt>
+            <dd className="tabular-nums text-base font-semibold text-foreground">
+              {hub.positionCount > 0 ? (
+                <Link href={listingHref(hub.hub)} className={LINK} title={`View positions in ${hub.label}`}>
+                  {hub.positionCount.toLocaleString()}
+                </Link>
+              ) : (
+                hub.positionCount.toLocaleString()
+              )}
+            </dd>
+          </div>
+        </dl>
+        {/* Cross-hub borrows — reconciles a hub whose own Borrowed reads ~0
+            (its liquidity is unborrowed) with the real debt its spokes carry
+            against another hub's liquidity over a credit line. */}
+        {hub.crossHubBorrows.length > 0 && (
+          <p className="mt-2.5 text-[12px] leading-relaxed text-rb-500">
+            Borrowed via{" "}
+            {hub.crossHubBorrows.map((c, i) => {
+              const usd = fmtUsd(c.usd);
+              return (
+                <span key={c.hub}>
+                  {i > 0 && ", "}
+                  <span className="text-foreground/80">{c.label}</span>{" "}
+                  <span className="tabular-nums text-foreground/80" title={usd.title}>
+                    {usd.display}
+                  </span>
+                </span>
+              );
+            })}{" "}
+            <span className="text-rb-500/70">· cross-hub credit line</span>
+          </p>
+        )}
+      </div>
 
       {/* 3 — Supply-mix bars (own grid row so the band aligns even when a hub
           has fewer classes). */}
