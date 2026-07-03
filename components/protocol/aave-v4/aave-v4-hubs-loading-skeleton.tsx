@@ -1,27 +1,18 @@
 // Loading placeholder for /aave-v4/hubs, mirroring AaveV4HubViews: the
-// three-column hub summary band on top, then the credit-lines heading, the
+// two-column hub summary band on top, then the credit-lines heading, the
 // filter chip row, and the cross-hub asset table. The header (breadcrumb,
 // title, intro) is rendered live by the page, so the skeleton only stands in
-// for the data region below it. Uses the shared bg-skeleton token and the same
-// gaps / radii / column count as the filled view so nothing shifts on load.
+// for the data region below it. The summary band is two plain filled boxes —
+// same gaps / radii / column count as the filled view so nothing shifts on
+// load — rather than a detailed mock of the card interior.
 
 export function AaveV4HubsLoadingSkeleton() {
   return (
     <div className="animate-pulse">
-      {/* Hub summary band — three columns, matching the lg:grid-cols-3 / gap-6 band. */}
-      <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="rounded-lg border border-rb-200 p-4 dark:border-rb-800">
-            <div className="mb-4 h-5 w-28 rounded bg-skeleton" />
-            <div className="mb-2 h-8 w-36 rounded bg-skeleton" />
-            <div className="mb-6 h-3 w-20 rounded bg-skeleton" />
-            <div className="mb-3 h-3 w-full rounded-full bg-skeleton" />
-            <div className="space-y-2">
-              <div className="h-3 w-3/4 rounded bg-skeleton" />
-              <div className="h-3 w-2/3 rounded bg-skeleton" />
-              <div className="h-3 w-1/2 rounded bg-skeleton" />
-            </div>
-          </div>
+      {/* Hub summary band — two plain filled boxes, matching the lg:grid-cols-2 / gap-6 band. */}
+      <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {[0, 1].map((i) => (
+          <div key={i} className="h-80 rounded-lg bg-skeleton" />
         ))}
       </div>
 
