@@ -102,3 +102,18 @@ export const TOKEN_ADDRESSES: Record<string, string> = {
 export function getTokenAddress(symbol: string): string | null {
   return TOKEN_ADDRESSES[symbol] ?? null;
 }
+
+// Case-insensitive variant. PT-icon normalization recovers an underlying symbol
+// from an on-chain PT symbol whose casing may not match our map key (e.g.
+// "sUSDE" derived from "PT-sUSDE" vs the "sUSDe" key). Exact match wins; the
+// lowercase index is built lazily on first miss.
+let LOWERCASE_INDEX: Record<string, string> | null = null;
+export function getTokenAddressInsensitive(symbol: string): string | null {
+  const exact = TOKEN_ADDRESSES[symbol];
+  if (exact) return exact;
+  if (!LOWERCASE_INDEX) {
+    LOWERCASE_INDEX = {};
+    for (const [key, addr] of Object.entries(TOKEN_ADDRESSES)) LOWERCASE_INDEX[key.toLowerCase()] = addr;
+  }
+  return LOWERCASE_INDEX[symbol.toLowerCase()] ?? null;
+}

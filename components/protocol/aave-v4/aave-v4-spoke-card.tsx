@@ -131,12 +131,19 @@ function AaveV4SpokeCard({
   // stablecoin debt prices in instantly via the categorical-price fallback, but
   // WETH / LST collateral comes from the async price provider. Rather than flash
   // a misleading "< $0.01" and then jolt to the real number, hold a skeleton
-  // until the price lands. A real collateralized position is never worth
-  // sub-cent, and core/plus collateral is always priceable, so
-  // sub-cent-with-supplies reliably means "price still loading". The skeleton
-  // sits inside a StatValue so its line-box matches the real value exactly —
-  // the swap is a fade, not a reflow.
-  const supplyUsdPending = spoke.supplyingSymbols.length > 0 && spoke.totalSupplyUsd < 0.01;
+  // until the price lands. The "still loading" signal is a total of exactly $0:
+  // an unresolved price scores as 0 (resolvePrice(...) ?? 0), so a supplied
+  // position that sums to nothing means no price has arrived yet. A *positive*
+  // sub-cent total is the opposite case — a genuine dust remnant (e.g. a
+  // near-fully-repaid position left holding a fraction of a cent of collateral):
+  // its price HAS resolved, the value is just tiny, and it must render "< $0.01"
+  // rather than pulse forever. Guarding on `<= 0` (not `< 0.01`) keeps the
+  // anti-flash behaviour for real positions while letting dust show its value —
+  // which is also the number that explains an otherwise-baffling HF ~1.0 on a
+  // "< $0.01" debt (both sides are equally dust). The skeleton sits inside a
+  // StatValue so its line-box matches the real value exactly — a fade, not a
+  // reflow.
+  const supplyUsdPending = spoke.supplyingSymbols.length > 0 && spoke.totalSupplyUsd <= 0;
   const supplyValueSkeleton = (
     <StatValue color="text-foreground/80">
       <span
