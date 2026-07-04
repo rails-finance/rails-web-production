@@ -8,6 +8,7 @@ import type { TroveEconomics as TroveEconomicsType } from "@/types/api/trove";
 import { calculateAccruedInterest } from "@/lib/liquity/utils/interest-calculator";
 import { FORK_ALL_IDS } from "@/lib/shared/fork-config";
 import { getBatchManagerName } from "@/lib/liquity/batch-managers";
+import { boldToUsd } from "@/lib/liquity/bold-peg";
 import {
   type TowerSegment,
   type BreakdownRow,
@@ -319,7 +320,8 @@ function calculateRedeemerStats(events: MinimalEvent[]): RedeemerStats | null {
 function RedeemerSummary({ stats, currentPrice }: { stats: RedeemerStats; currentPrice?: number }) {
   const dateRange = `${new Date(stats.firstTimestamp * 1000).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })} – ${new Date(stats.lastTimestamp * 1000).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`;
   const collValue = currentPrice ? stats.totalCollateralReceived * currentPrice : null;
-  const netPL = collValue !== null ? collValue - stats.totalDebtRedeemed : null;
+  // Debt redeemed is a BOLD amount; value it in USD via the peg before netting.
+  const netPL = collValue !== null ? collValue - boldToUsd(stats.totalDebtRedeemed) : null;
   // Effective rate: BOLD per unit of collateral received
   const effectiveRate =
     stats.totalCollateralReceived > 0 ? stats.totalDebtRedeemed / stats.totalCollateralReceived : null;

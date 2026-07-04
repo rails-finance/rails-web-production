@@ -12,6 +12,7 @@ import { liquityPositionContent } from "@/lib/shared/learn-more-content";
 import { TroveEconomicsSummary } from "@/components/protocol/liquity/trove-economics";
 import { PriceRunway } from "@/components/shared/price-runway";
 import { getLiquidationThreshold } from "@/lib/utils/liquidation-utils";
+import { BOLD_USD_PEG } from "@/lib/liquity/bold-peg";
 import { formatDate, formatDuration } from "@/lib/date";
 import { Icon } from "@/components/icons/icon";
 import { TroveStateData, TroveStateResponse } from "@/types/api/troveState";
@@ -464,7 +465,7 @@ export default function TrovePage() {
   const collateralPrice = prices?.[troveData.collateralType.toLowerCase() as keyof OraclePricesData];
   const stripAssets: PriceStripAsset[] = [
     ...(collateralPrice ? [{ symbol: troveData.collateralType, price: collateralPrice }] : []),
-    { symbol: "BOLD", price: 1 },
+    { symbol: "BOLD", price: BOLD_USD_PEG },
   ];
 
   return (

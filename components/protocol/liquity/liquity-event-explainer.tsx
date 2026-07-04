@@ -8,6 +8,7 @@ import { LearnMore } from "@/components/shared/learn-more-modal";
 import { LinkedAddress } from "@/components/shared/linked-address";
 import { WalletLink } from "@/components/wallet/wallet-dropdown";
 import { getBatchManagerByAddress } from "@/lib/liquity/batch-managers";
+import { boldToUsd } from "@/lib/liquity/bold-peg";
 import {
   liquityRedemptionContent,
   liquityLiquidationContent,
@@ -864,14 +865,17 @@ function generateRedeemItems(ctx: LiquityContext, currentPrice?: number): Explai
   // Shown at the redemption-time price and, when a live price is available,
   // at today's price (the same dual figure used on the production card).
   if (collateralPrice > 0) {
-    const netHistoric = debtRedeemed - collValueMarketPrice;
-    const netToday = currentPrice ? debtRedeemed - collRedeemed * currentPrice : null;
+    // Debt cleared is a BOLD amount; value it in USD via the peg before netting
+    // it against the collateral's USD value.
+    const debtRedeemedUsd = boldToUsd(debtRedeemed);
+    const netHistoric = debtRedeemedUsd - collValueMarketPrice;
+    const netToday = currentPrice ? debtRedeemedUsd - collRedeemed * currentPrice : null;
     const sign = (n: number) => (n >= 0 ? "+" : "\u2212");
     items.push({
       content: (
         <span>
           P/L (net outcome) is the debt cleared minus the value of the collateral given up:{" "}
-          <V>{fmtUsd(debtRedeemed)}</V> &minus;{" "}
+          <V>{fmtUsd(debtRedeemedUsd)}</V> &minus;{" "}
           <V>
             {fmtColl(collRedeemed)} {collateralType}
           </V>{" "}
