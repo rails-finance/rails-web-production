@@ -20,7 +20,7 @@ export function HeaderThemeToggle() {
   if (!mounted) {
     return (
       <div className="p-2.5" aria-hidden="true">
-        <div className="h-5 w-5" />
+        <div className="h-4 w-4" />
       </div>
     );
   }
@@ -35,12 +35,12 @@ export function HeaderThemeToggle() {
     >
       {isDark ? (
         <Moon
-          className="h-5 w-5 text-rb-700 transition-colors group-hover:text-teal-500 dark:text-rb-300"
+          className="h-4 w-4 text-rb-700 transition-colors group-hover:text-teal-500 dark:text-rb-300"
           aria-hidden="true"
         />
       ) : (
         <Sun
-          className="h-5 w-5 text-rb-700 transition-colors group-hover:text-teal-500 dark:text-rb-300"
+          className="h-4 w-4 text-rb-700 transition-colors group-hover:text-teal-500 dark:text-rb-300"
           aria-hidden="true"
         />
       )}
