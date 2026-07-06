@@ -364,13 +364,17 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber, currentPrice }
             <span className="text-sm text-rb-500">{style.label}</span>
           )}
 
-          {/* Debt change (skip for open trove, redemption, liquidation, delegate, and combined — shown inline or n/a) */}
+          {/* Debt change (skip for open trove, redemption, liquidation, delegate, and combined — shown inline or n/a).
+              Also skip rate changes: a rate adjustment moves no principal, so `debtOpAmount` is 0 and this block
+              would print a bare "0". The upfront fee that makes `hasDebtChange` true (fee-inclusive) rides the
+              detail's "incl. … fee" line instead — the header keeps the rate pill only. */}
           {hasDebtChange &&
             !style.label.includes(" + ") &&
             ctx.operation !== "openTrove" &&
             ctx.operation !== "openTroveAndJoinBatch" &&
             ctx.operation !== "redeemCollateral" &&
             ctx.operation !== "liquidate" &&
+            ctx.operation !== "adjustTroveInterestRate" &&
             ctx.operation !== "setInterestBatchManager" && (
               <span className="inline-flex items-center gap-1.5 text-sm">
                 <span className={`font-bold text-foreground ${hideVal}`}>
@@ -380,13 +384,14 @@ export function LiquityEventHeader({ ctx, timestamp, eventNumber, currentPrice }
               </span>
             )}
 
-          {/* Collateral change (skip for open trove, redemption, liquidation, delegate, and combined) */}
+          {/* Collateral change (skip for open trove, redemption, liquidation, delegate, combined, and rate change) */}
           {hasCollChange &&
             !style.label.includes(" + ") &&
             ctx.operation !== "openTrove" &&
             ctx.operation !== "openTroveAndJoinBatch" &&
             ctx.operation !== "redeemCollateral" &&
             ctx.operation !== "liquidate" &&
+            ctx.operation !== "adjustTroveInterestRate" &&
             ctx.operation !== "setInterestBatchManager" && (
               <span className="inline-flex items-center gap-1.5 text-sm">
                 <span className={`font-bold text-foreground ${hideVal}`}>
