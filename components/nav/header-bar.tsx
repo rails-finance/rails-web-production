@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 import type { SessionProtocol } from "@/lib/shared/sessions";
 import { NavMenu } from "@/components/nav/nav-menu";
+import { HeaderThemeToggle } from "@/components/nav/header-theme-toggle";
 
 /** Routes that count as "inside the protocol" — keyed by the active protocol
  *  so the header can render the protocol label. Marketing routes (home,
@@ -49,13 +50,7 @@ function RailsLogo() {
       href="/"
       className="group flex items-center gap-1.5 text-foreground hover:text-blue-500 transition-colors shrink-0"
     >
-      <svg
-        width={30}
-        height={30}
-        viewBox="0 0 200 200"
-        fill="none"
-        aria-hidden="true"
-      >
+      <svg width={30} height={30} viewBox="0 0 200 200" fill="none" aria-hidden="true">
         <path
           fill="currentColor"
           style={{ opacity: 0.85 }}
@@ -108,7 +103,8 @@ export function HeaderBar() {
       <div className="max-w-7xl mx-auto py-4 px-4 md:px-6 flex items-center">
         <RailsLogo />
         {active && <ProtocolLabel protocol={active} />}
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-1">
+          <HeaderThemeToggle />
           <NavMenu />
         </div>
       </div>

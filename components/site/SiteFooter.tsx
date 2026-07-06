@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { FooterThemeToggle } from "@/components/shared/FooterThemeToggle";
 import { DonateModal } from "@/components/site/DonateModal";
 
 export function SiteFooter() {
@@ -194,7 +193,6 @@ export function SiteFooter() {
                   Liquity
                 </a>
               </span>
-              <FooterThemeToggle />
             </div>
           </div>
         </div>

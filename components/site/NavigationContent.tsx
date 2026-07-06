@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Users, FileText, Activity } from "lucide-react";
-import { ThemeToggle } from "../ThemeToggle";
 
 // Nav state grammar:
 //   rest    → text-foreground; icons stay neutral rb-500 throughout
@@ -114,15 +113,7 @@ export function NavigationContent({ onLinkClick }: NavigationContentProps) {
         })}
       </div>
 
-      <div className="my-4 border-t border-rb-200 dark:border-rb-700"></div>
-
-      {/* Theme Toggle */}
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-sm font-medium text-foreground">Theme</span>
-        <ThemeToggle />
-      </div>
-
-      <div className="border-t border-rb-200 dark:border-rb-700 pt-4"></div>
+      <div className="my-4 border-t border-rb-200 dark:border-rb-700 pt-4"></div>
 
       <div className="space-y-3">
         <div className="text-xs text-rb-500 uppercase tracking-wide mb-3">Connect With Us</div>

@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { FooterThemeToggle } from "@/components/shared/FooterThemeToggle";
 import { usePriceStripActive } from "@/components/shared/price-strip";
 
 /** Slim app footer used on protocol pages (/liquity-v2, /trove/*).
@@ -22,23 +21,16 @@ export function AppFooter() {
           <div className="flex flex-col md:flex-row items-center gap-4">
             <p className="text-xs text-rb-500">© {new Date().getFullYear()} Rails</p>
             <div className="flex gap-4">
-              <Link
-                href="/privacy"
-                className="text-rb-500 hover:text-foreground text-xs transition-colors"
-              >
+              <Link href="/privacy" className="text-rb-500 hover:text-foreground text-xs transition-colors">
                 Privacy Policy
               </Link>
-              <Link
-                href="/terms"
-                className="text-rb-500 hover:text-foreground text-xs transition-colors"
-              >
+              <Link href="/terms" className="text-rb-500 hover:text-foreground text-xs transition-colors">
                 Terms of Service
               </Link>
             </div>
           </div>
           <div className="flex items-center gap-4">
             <ProtocolSwitcher />
-            <FooterThemeToggle />
           </div>
         </div>
       </div>
