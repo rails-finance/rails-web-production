@@ -4,6 +4,7 @@ import { GraduationCap, Wallet, Code2, ShieldAlert } from "lucide-react";
 import { HomeHero } from "@/components/home/home-hero";
 import { FeatureSpotlight } from "@/components/home/feature-spotlight";
 import { MonoRailSection } from "@/components/home/mono-rail-section";
+import { TeamSection } from "@/components/shared/team-section";
 
 export default function Home() {
   return (
@@ -16,14 +17,14 @@ export default function Home() {
       <MonoRailSection />
 
       {/* ═══ FEATURE SPOTLIGHT — Position card + Economics + Timeline ═══ */}
-      <div className="bg-raised overflow-hidden">
+      <div className="bg-background overflow-hidden">
         <section className="max-w-7xl mx-auto px-4 py-4">
           <FeatureSpotlight />
         </section>
       </div>
 
       {/* ═══ WHO IS RAILS FOR ═══ */}
-      <div className="bg-background">
+      <div className="bg-raised">
         <div className="max-w-7xl mx-auto px-4 py-16">
           <div className="mb-6">
             <h2 className="font-sans font-semibold tracking-tight leading-tight mb-10 text-[clamp(24px,3.5vw,38px)]">
@@ -77,6 +78,13 @@ export default function Home() {
               </p>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* ═══ TEAM — shared with the About page (single source of truth) ═══ */}
+      <div className="bg-background">
+        <div className="max-w-7xl mx-auto px-4 py-16">
+          <TeamSection />
         </div>
       </div>
 

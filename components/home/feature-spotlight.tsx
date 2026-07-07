@@ -12,8 +12,17 @@
  *
  * Copy is ownership-neutral ("a position", never "your") — Rails is an explorer;
  * most views are of someone else's wallet, not the reader's own.
+ *
+ * Presentation: the three views are a slider — one slide at a time, navigated
+ * by the indicator pills below — so the tour reads as three framed moments
+ * rather than a long vertical stack. The pills are teal (color-grammar §4c:
+ * teal = utility / in-place interaction — they switch the slide in place, they
+ * don't navigate).
  */
 
+"use client";
+
+import { useState } from "react";
 import { FeatureSkeleton } from "./feature-skeletons";
 
 const FEATURES = [
@@ -40,11 +49,42 @@ const FEATURES = [
 ] as const;
 
 export function FeatureSpotlight() {
+  const [active, setActive] = useState(0);
+
   return (
-    <div className="flex flex-col gap-6 md:gap-12">
-      {FEATURES.map((f) => (
-        <FeatureCard key={f.name} {...f} />
-      ))}
+    <div>
+      {/* Slider viewport: one slide wide, the track slides by whole slides. */}
+      <div className="overflow-hidden">
+        <div
+          className="flex transition-transform duration-500 ease-out"
+          style={{ transform: `translateX(-${active * 100}%)` }}
+        >
+          {FEATURES.map((f) => (
+            <div key={f.name} className="w-full shrink-0">
+              <FeatureCard {...f} />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Indicator pills — also the control; the active pill stretches out and
+          fills teal (color-grammar §4c). Wide hit targets, not hairline dots. */}
+      <div className="flex justify-center gap-2.5 pt-2 pb-4">
+        {FEATURES.map((f, i) => (
+          <button
+            key={f.name}
+            type="button"
+            onClick={() => setActive(i)}
+            aria-label={`Show ${f.name}`}
+            aria-current={i === active}
+            className={`h-2.5 rounded-full transition-all duration-300 ${
+              i === active
+                ? "w-10 bg-teal-500 dark:bg-teal-400"
+                : "w-5 bg-teal-500/25 hover:bg-teal-500/50 dark:bg-teal-400/25 dark:hover:bg-teal-400/50"
+            }`}
+          />
+        ))}
+      </div>
     </div>
   );
 }

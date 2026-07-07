@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LiquityLogo } from "@/components/LiquityLogo";
+import { TeamSection } from "@/components/shared/team-section";
 import { Check } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -21,12 +22,10 @@ export const metadata: Metadata = {
  *   H2   — section heading
  *   H3   — sub-heading / card title
  *   LEAD — intro / framing paragraph (one notch up from body)
- *   LINK — inline text link
  * Body copy uses the global `.body-text` utility (see globals.css). */
 const H2 = "text-3xl font-semibold tracking-tight text-foreground";
 const H3 = "text-lg font-semibold text-foreground";
 const LEAD = "text-base md:text-lg font-normal leading-relaxed text-rb-500";
-const LINK = "text-pink-500 hover:text-pink-600 transition-colors";
 
 /* Key Features — the at-a-glance capability list shown in its own section. */
 const KEY_FEATURES = [
@@ -166,50 +165,9 @@ export default function AboutPage() {
       </div>
 
       <div className="max-w-3xl mx-auto px-4 md:px-6 py-16">
-        {/* Team Section */}
+        {/* Team Section — shared with the home page (single source of truth). */}
         <div className="mb-12">
-          <h2 className={`${H2} mb-6`}>Team</h2>
-
-          <div className="grid md:grid-cols-2 gap-8 mb-8">
-            {/* Miles */}
-            <div className="bg-raised rounded-lg p-6">
-              <div className="flex items-center mb-4">
-                <img
-                  src="/about-team-milesessex.jpg"
-                  alt="Miles"
-                  className="w-16 h-16 rounded-full mr-4 object-cover"
-                />
-                <div>
-                  <h3 className={H3}>Miles</h3>
-                  <p className="body-text">Designer</p>
-                  <a href="https://x.com/milesessex" target="_blank" rel="noopener noreferrer" className={LINK}>
-                    @milesessex
-                  </a>
-                </div>
-              </div>
-              <p className="body-text">
-                Graphic UX designer with 20+ years experience. Focused on creating intuitive interfaces for complex
-                financial data.
-              </p>
-            </div>
-            {/* Slava */}
-            <div className="bg-raised rounded-lg p-6">
-              <div className="flex items-center mb-4">
-                <img src="/about-team-slvdev.jpg" alt="Slava" className="w-16 h-16 rounded-full mr-4 object-cover" />
-                <div>
-                  <h3 className={H3}>Slava</h3>
-                  <p className="body-text">Developer</p>
-                  <a href="https://x.com/slvdev" target="_blank" rel="noopener noreferrer" className={LINK}>
-                    @slvdev
-                  </a>
-                </div>
-              </div>
-              <p className="body-text">
-                Web3 developer with expertise in Rust and Solidity. Focused on building infrastructure that makes DeFi
-                protocols accessible and understandable.
-              </p>
-            </div>
-          </div>
+          <TeamSection />
         </div>
 
         {/* Supporters Section */}
