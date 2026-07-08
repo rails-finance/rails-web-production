@@ -9,6 +9,7 @@ import { usePreferences } from "@/lib/shared/preferences-context";
 import { formatRatio, ratioLabelShort, useLiquityRatioColorClass } from "@/lib/shared/ratio-format";
 import { useHeaderValueHideClass } from "@/lib/shared/header-values";
 import { fmtTokenAmount } from "@/lib/shared/format-event";
+import { TROVE_DELTA_EPSILON } from "@/lib/liquity/trove-ops";
 import { AlertTriangle } from "lucide-react";
 
 type OperationStyle = { label: string; color: string; bg: string; badge: boolean };
@@ -29,8 +30,13 @@ function getOperationStyle(operation: string, ctx?: LiquityContext): OperationSt
       if (ctx?.troveOperation) {
         const debtOp = ctx.troveOperation.debtChangeFromOperation;
         const collOp = ctx.troveOperation.collChangeFromOperation;
-        const hasDebt = Math.abs(debtOp) >= 0.01;
-        const hasColl = Math.abs(collOp) >= 0.01;
+        const hasDebt = Math.abs(debtOp) >= TROVE_DELTA_EPSILON;
+        const hasColl = Math.abs(collOp) >= TROVE_DELTA_EPSILON;
+        // Zero-delta touch (bot keep-alive / clamped repay): calling it
+        // "Adjust" would claim a change that never happened.
+        if (!hasDebt && !hasColl) {
+          return { label: "No change", color: "", bg: "", badge: false };
+        }
         if (hasDebt && !hasColl) {
           return debtOp > 0
             ? { label: "Borrow", color: "", bg: "", badge: false }

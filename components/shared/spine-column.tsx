@@ -14,7 +14,8 @@ export type SpineIcon =
   | "delegate" // Delegation change (users icon with +/- badge)
   | "reward" // Reward claim / airdrop (sparkle)
   | "shield" // Approval / security event
-  | "unlock"; // Token unlock (token icon + lock-open badge)
+  | "unlock" // Token unlock (token icon + lock-open badge)
+  | "no-change"; // Operation that moved nothing (zero-delta adjust) — equals-in-circle
 
 /** Spine line style encoding agency */
 export type SpineVariant = "solid" | "dotted";
@@ -141,6 +142,26 @@ function RateIcon({ size, color = "var(--color-rb-500)" }: { size: number; color
       <line x1="19" y1="5" x2="5" y2="19" />
       <circle cx="6.5" cy="6.5" r="2.5" />
       <circle cx="17.5" cy="17.5" r="2.5" />
+    </svg>
+  );
+}
+
+/** Equals-in-circle for zero-delta operations — muted, states "nothing moved". */
+function NoChangeIcon({ size, color = "var(--color-rb-500)" }: { size: number; color?: string }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <line x1="8.5" y1="10" x2="15.5" y2="10" />
+      <line x1="8.5" y1="14" x2="15.5" y2="14" />
     </svg>
   );
 }
@@ -470,6 +491,19 @@ export function SpineColumn({
               <span />
               <span />
               <ShieldIcon size={scale.tokenSize} />
+              <span />
+              <span />
+            </div>
+          );
+        case "no-change":
+          return (
+            <div
+              className="grid grid-rows-1 items-center justify-items-center"
+              style={{ gridTemplateColumns: scale.gridCols }}
+            >
+              <span />
+              <span />
+              <NoChangeIcon size={scale.tokenSize} />
               <span />
               <span />
             </div>

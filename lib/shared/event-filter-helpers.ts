@@ -10,10 +10,14 @@
 
 import type { BaseActivityEvent } from "@/lib/shared/types/event-shape";
 import { isLiquityEvent, isAaveV4Event } from "@/lib/shared/types/event-shape";
+import { isNoChangeAdjust } from "@/lib/liquity/trove-ops";
 
 /** Get the canonical action key for an event (used for type-level filtering) */
 export function getEventActionKey(e: BaseActivityEvent): string {
   if (isLiquityEvent(e)) {
+    // Zero-delta adjusts (bot keep-alive touches) get their own bucket so a
+    // reader can hide the spam without hiding real adjustments.
+    if (isNoChangeAdjust(e.context.data)) return "adjustTrove_noChange";
     return e.context.data.operation ?? e.actionType ?? "unknown";
   }
   if (isAaveV4Event(e)) {
@@ -34,6 +38,7 @@ const LIQUITY_OP_LABELS: Record<string, string> = {
   closeTrove: "Close",
   liquidate: "Liquidated",
   adjustTrove: "Adjust",
+  adjustTrove_noChange: "No change",
   adjustTroveInterestRate: "Interest rate",
   applyPendingDebt: "Apply debt",
   redeemCollateral: "Redemption",
@@ -69,7 +74,7 @@ export function actionLabel(actionKey: string): string {
 
 /** Actions that are demoted (shown last in the filter list, often noisy). */
 export const DEMOTED_ACTIONS: Record<string, string[]> = {
-  "liquity-v2-troves": ["setBatchManagerAnnualInterestRate", "applyPendingDebt"],
+  "liquity-v2-troves": ["setBatchManagerAnnualInterestRate", "applyPendingDebt", "adjustTrove_noChange"],
   // Standalone collateral toggles (not merged into a supply) are rare and
   // mostly noise — surface but demoted. The merged "supply + collateral"
   // variant stays prominent because it represents a real state change.

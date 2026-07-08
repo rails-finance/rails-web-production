@@ -4,6 +4,7 @@ import type { LiquityContext } from "@/lib/shared/types/protocols/liquity";
 import type { BaseActivityEvent, GasCost } from "@/lib/shared/types/activity";
 import { formatGasCost } from "@/lib/shared/format-event";
 import { calculateInterestBetweenTransactions } from "@/lib/liquity/utils/interest-calculator";
+import { isNoChangeAdjust, LIQUITY_MIN_DEBT, TROVE_DELTA_EPSILON } from "@/lib/liquity/trove-ops";
 import { LearnMore } from "@/components/shared/learn-more-modal";
 import { LinkedAddress } from "@/components/shared/linked-address";
 import { WalletLink } from "@/components/wallet/wallet-dropdown";
@@ -259,7 +260,51 @@ function generateAdjustTroveItems(
   const { troveOperation, stateBefore, stateAfter, collateralType, collateralPrice } = ctx;
   const totalAccruedFees = accruedInterest + accruedManagementFees;
 
-  if (troveOperation) {
+  // No-change adjust: the operation moved nothing the reader would notice, so
+  // the generic delta bullets would either vanish or claim a "Paid down 0.001
+  // BOLD" that misreads the event. Narrate what actually happened instead:
+  // usually an automated repay clamped to accrued-interest dust by the
+  // minimum-debt floor. Sub-epsilon dust amounts are never on the card chrome,
+  // so per the highlight rule they stay muted (no <V>).
+  if (isNoChangeAdjust(ctx) && troveOperation) {
+    const dust = troveOperation.debtChangeFromOperation;
+    const atMinDebt = Math.abs(stateAfter.debt - LIQUITY_MIN_DEBT) < TROVE_DELTA_EPSILON;
+
+    items.push({
+      content:
+        dust < 0 ? (
+          <span>
+            This adjustment moved no collateral and repaid only {fmt(Math.abs(dust))} {ctx.assetType ?? "BOLD"} — the
+            interest accrued since the trove was last touched — leaving the position effectively unchanged
+          </span>
+        ) : (
+          <span>This adjustment moved no collateral and no debt — the position is unchanged</span>
+        ),
+    });
+
+    if (atMinDebt) {
+      items.push({
+        content: (
+          <span>
+            The debt sits at Liquity V2&apos;s 2,000 {ctx.assetType ?? "BOLD"} minimum. A repayment cannot take it lower
+            without closing the trove entirely, so any larger repay attempt is capped at the interest accrued since the
+            last touch — here, that cap left {dust < 0 ? "almost nothing" : "nothing"} to repay
+          </span>
+        ),
+        type: "info",
+      });
+    }
+
+    items.push({
+      content: (
+        <span>
+          Repeated no-change adjustments like this are typically sent by an automated manager (a bot or vault contract)
+          re-trying an operation the protocol clamps to nothing; each attempt costs the sender only gas
+        </span>
+      ),
+      type: "info",
+    });
+  } else if (troveOperation) {
     const collChange = troveOperation.collChangeFromOperation;
     const debtChange = troveOperation.debtChangeFromOperation;
     const adjustFee = troveOperation.debtIncreaseFromUpfrontFee;

@@ -11,6 +11,7 @@ import { LiquityEventHeader } from "./liquity-event-header";
 import { LiquityEventDetail } from "./liquity-event-detail";
 import { LiquityEventExplainer, getLiquityExplainerTeaser } from "./liquity-event-explainer";
 import { TroveBarsSlot } from "./trove-bar";
+import { isNoChangeAdjust } from "@/lib/liquity/trove-ops";
 
 function shortenAddress(addr: string): string {
   return `${addr.slice(0, 6)}\u2026${addr.slice(-4)}`;
@@ -127,6 +128,10 @@ export function LiquityEventCard({
       isFirst={isFirst}
       isLast={!!isLast}
     />
+  ) : isNoChangeAdjust(ctx) ? (
+    // Zero-delta touch: no flows to draw, but an empty spine slot reads as a
+    // rendering hole — mark the event with the neutral "nothing moved" glyph.
+    <SpineColumn icon="no-change" isFirst={isFirst} isLast={!!isLast} />
   ) : (
     (() => {
       const debtOp = ctx.troveOperation?.debtChangeFromOperation ?? 0;
