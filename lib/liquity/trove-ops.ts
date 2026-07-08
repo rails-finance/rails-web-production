@@ -20,6 +20,9 @@ export const LIQUITY_MIN_DEBT = 2000;
  *  and explainer all route through this one predicate. */
 export function isNoChangeAdjust(ctx: LiquityContext): boolean {
   if (ctx.operation !== "adjustTrove" || !ctx.troveOperation) return false;
+  // A server-collapsed run IS a no-change event regardless of its summed
+  // deltas — 1,400 dust repays can total more than the display epsilon.
+  if (ctx.noChangeRun) return true;
   return (
     Math.abs(ctx.troveOperation.debtChangeFromOperation) < TROVE_DELTA_EPSILON &&
     Math.abs(ctx.troveOperation.collChangeFromOperation) < TROVE_DELTA_EPSILON

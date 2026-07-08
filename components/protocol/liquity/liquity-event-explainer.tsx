@@ -50,6 +50,17 @@ function fmtCurrency(n: number, asset: string): string {
   return `${fmt(n)} ${asset}`;
 }
 
+/** Short day label for run spans ("Jun 6" / "Jul 8 '26"). */
+function fmtDay(tsSeconds: number): string {
+  const d = new Date(tsSeconds * 1000);
+  const sameYear = d.getFullYear() === new Date().getFullYear();
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    ...(sameYear ? {} : { year: "2-digit" }),
+  });
+}
+
 function shortenAddress(addr: string): string {
   return `${addr.slice(0, 6)}\u2026${addr.slice(-4)}`;
 }
@@ -267,20 +278,43 @@ function generateAdjustTroveItems(
   // minimum-debt floor. Sub-epsilon dust amounts are never on the card chrome,
   // so per the highlight rule they stay muted (no <V>).
   if (isNoChangeAdjust(ctx) && troveOperation) {
+    const run = ctx.noChangeRun;
     const dust = troveOperation.debtChangeFromOperation;
     const atMinDebt = Math.abs(stateAfter.debt - LIQUITY_MIN_DEBT) < TROVE_DELTA_EPSILON;
 
-    items.push({
-      content:
-        dust < 0 ? (
+    if (run) {
+      // One row stands in for a whole server-collapsed run of touches.
+      items.push({
+        content: (
           <span>
-            This adjustment moved no collateral and repaid only {fmt(Math.abs(dust))} {ctx.assetType ?? "BOLD"} — the
-            interest accrued since the trove was last touched — leaving the position effectively unchanged
+            This row stands in for {run.count.toLocaleString()} adjustments between {fmtDay(run.firstTimestamp)} and{" "}
+            {fmtDay(run.lastTimestamp)} — every one of them left the position unchanged
           </span>
-        ) : (
-          <span>This adjustment moved no collateral and no debt — the position is unchanged</span>
         ),
-    });
+      });
+      if (dust < 0) {
+        items.push({
+          content: (
+            <span>
+              Together they repaid {fmt(Math.abs(dust))} {ctx.assetType ?? "BOLD"} — the interest that accrued between
+              touches
+            </span>
+          ),
+        });
+      }
+    } else {
+      items.push({
+        content:
+          dust < 0 ? (
+            <span>
+              This adjustment moved no collateral and repaid only {fmt(Math.abs(dust))} {ctx.assetType ?? "BOLD"} — the
+              interest accrued since the trove was last touched — leaving the position effectively unchanged
+            </span>
+          ) : (
+            <span>This adjustment moved no collateral and no debt — the position is unchanged</span>
+          ),
+      });
+    }
 
     if (atMinDebt) {
       items.push({
@@ -288,7 +322,10 @@ function generateAdjustTroveItems(
           <span>
             The debt sits at Liquity V2&apos;s 2,000 {ctx.assetType ?? "BOLD"} minimum. A repayment cannot take it lower
             without closing the trove entirely, so any larger repay attempt is capped at the interest accrued since the
-            last touch — here, that cap left {dust < 0 ? "almost nothing" : "nothing"} to repay
+            last touch —{" "}
+            {run
+              ? "every attempt in this stretch was capped that way"
+              : `here, that cap left ${dust < 0 ? "almost nothing" : "nothing"} to repay`}
           </span>
         ),
         type: "info",
@@ -1485,9 +1522,21 @@ export function LiquityEventExplainer({
   // Per-transaction gas as the closing bullet (muted — not a header/grid value,
   // so no <V> emphasis per the highlight rule). Appended here, not in
   // generateItems, so it stays last regardless of skipFirst/teaser handling.
+  // For a collapsed run the gas figure is the SUM across the run's txs.
   const items: ExplainerItem[] =
     gas && gas.gasCostEth > 0
-      ? [...baseItems, { content: <span>Gas for this transaction: {formatGasCost(gas)}.</span> }]
+      ? [
+          ...baseItems,
+          {
+            content: ctx.noChangeRun ? (
+              <span>
+                Gas across these {ctx.noChangeRun.count.toLocaleString()} transactions: {formatGasCost(gas)}.
+              </span>
+            ) : (
+              <span>Gas for this transaction: {formatGasCost(gas)}.</span>
+            ),
+          },
+        ]
       : baseItems;
   const learnMore = getLearnMoreContent(ctx);
 

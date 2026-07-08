@@ -186,7 +186,27 @@ export interface LiquityContext {
   actorRole?: "owner" | "redeemer" | "liquidator" | "batch_manager";
   actorAddress?: string;
 
+  /** Present only on the synthetic event that stands in for a run of
+   *  consecutive zero-delta adjustTrove touches (bot keep-alive / clamped
+   *  repays), collapsed server-side so real events keep their place in the
+   *  paged window. State fields carry the run's newest event; troveOperation
+   *  carries the summed (dust-scale) deltas. */
+  noChangeRun?: NoChangeRunSummary;
+
   blockGrouping: BlockGrouping;
+}
+
+/** Aggregate of one run of consecutive zero-delta adjustTrove events. */
+export interface NoChangeRunSummary {
+  count: number;
+  firstTimestamp: number;
+  lastTimestamp: number;
+  firstBlock: number;
+  lastBlock: number;
+  /** Summed debtChangeFromOperation across the run (BOLD, usually tiny negative dust). */
+  totalDebtChange: number;
+  totalGasEth: number;
+  totalGasUsd: number;
 }
 
 // ───────────────────────── Aave V4 detail types ─────────────────────────

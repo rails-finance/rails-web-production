@@ -27,6 +27,17 @@ function getOperationStyle(operation: string, ctx?: LiquityContext): OperationSt
     case "liquidate":
       return { label: "Liquidated", color: "text-foreground", bg: "bg-rb-200 dark:bg-rb-800", badge: true };
     case "adjustTrove": {
+      // Server-collapsed run of zero-delta touches — one row stands in for
+      // the whole stretch, so the label carries the count. Checked before the
+      // delta splits: a run's SUMMED dust can exceed the display epsilon.
+      if (ctx?.noChangeRun) {
+        return {
+          label: `No change ×${ctx.noChangeRun.count.toLocaleString()}`,
+          color: "",
+          bg: "",
+          badge: false,
+        };
+      }
       if (ctx?.troveOperation) {
         const debtOp = ctx.troveOperation.debtChangeFromOperation;
         const collOp = ctx.troveOperation.collChangeFromOperation;
