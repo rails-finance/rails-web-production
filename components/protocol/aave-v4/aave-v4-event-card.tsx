@@ -5,8 +5,8 @@
 // via EventCard's `headerBars` so the change-bar / balance-bar pair sits
 // inside the header panel directly under the action row.
 //
-// SpineColumn in rails-web-mig matches rails-explorer's API exactly so the
-// icon-column logic is identical.
+// SpineColumn shares the universal event-card API, so the icon-column logic is
+// identical across protocols.
 
 import type { BaseActivityEvent } from "@/lib/shared/types/event-shape";
 import type { AaveV4Context } from "@/lib/shared/types/protocols/aave-v4";
@@ -94,7 +94,6 @@ export function AaveV4EventCard({ event, isFirst, isLast, txGroup, eventNumber, 
       explainer={<AaveV4EventExplainer ctx={ctx} gas={event.gas} />}
       explainerLabel="Plain English"
       txHash={event.txHash}
-      wallet={event.wallet}
       persistKey={`aave-v4:${event.id}`}
     />
   );

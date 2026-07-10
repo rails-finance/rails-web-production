@@ -2,8 +2,8 @@
 // EVENT FILTER HELPERS
 // ============================================================================
 //
-// Port of rails-explorer's event-filter-helpers, kept name-compatible so the
-// FilterDropdown wiring is symmetric across protocols. Each protocol adds its
+// Event-filter helpers, kept name-compatible so the FilterDropdown wiring is
+// symmetric across protocols. Each protocol adds its
 // own action-key extraction in `getEventActionKey` and label map in
 // `actionLabel`. New protocol → add an arm to both, plus optional demoted /
 // default-hidden entries below.

@@ -3,8 +3,8 @@
 // common symbols to mainnet addresses so we can find them in the
 // address-keyed prices map threaded through from the DefiLlama proxy.
 //
-// Lifted from rails-explorer's lib/aave/prices.ts. Stablecoins fall back to
-// $1 when the API doesn't return a price — DefiLlama does carry stables, but
+// Stablecoins fall back to $1 when the API doesn't return a price — DefiLlama
+// does carry stables, but
 // the fallback keeps the ratio panel useful even when the API is rate-limited
 // or temporarily down.
 
@@ -45,8 +45,20 @@ export const TOKEN_ADDR: Record<string, string> = {
 };
 
 const STABLES = new Set([
-  "USDC", "USDT", "DAI", "LUSD", "BOLD", "GHO", "crvUSD", "USDe",
-  "fxUSD", "sDAI", "EURC", "USDG", "frxUSD", "RLUSD",
+  "USDC",
+  "USDT",
+  "DAI",
+  "LUSD",
+  "BOLD",
+  "GHO",
+  "crvUSD",
+  "USDe",
+  "fxUSD",
+  "sDAI",
+  "EURC",
+  "USDG",
+  "frxUSD",
+  "RLUSD",
 ]);
 
 export function resolvePrice(symbol: string, prices?: Record<string, PriceEntry | number>): number | null {

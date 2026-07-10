@@ -4,7 +4,7 @@ import { createAuthFetchOptions } from "@/lib/api/fetch-with-auth";
 const RAILS_API_URL = process.env.RAILS_API_URL;
 
 /**
- * Proxy to rails-server-mig's `/api/liquity-v2/debt-in-front`. Returns the
+ * Proxy to rails-server-production's `/api/liquity-v2/debt-in-front`. Returns the
  * on-chain Liquity V2 redemption buffer for a single trove: total
  * accrued-inclusive BOLD debt at rates <= this trove's (in its own branch,
  * excluding itself) plus the count of troves at or below that rate. Backed by
@@ -23,10 +23,7 @@ export async function GET(request: NextRequest) {
 
     if (!response.ok) {
       console.error(`Backend API error: ${response.status} ${response.statusText}`);
-      return NextResponse.json(
-        { error: `Backend error: ${response.statusText}` },
-        { status: response.status },
-      );
+      return NextResponse.json({ error: `Backend error: ${response.statusText}` }, { status: response.status });
     }
 
     const data = await response.json();

@@ -4,15 +4,15 @@
 //
 // Discovery list for the /aave-v4 page — the analog of Liquity's /api/troves.
 // One row per (wallet, spoke), backed by mv_aave_v4_spoke_positions in
-// rails-server-mig.
+// rails-server-production.
 //
-// As of rails-server-mig migration 022 the MV holds only structural data
+// As of rails-server-production migration 022 the MV holds only structural data
 // (per-reserve balances + LTs). USD totals and the health factor are
 // computed at read time in the Express handler against live DefiLlama
 // prices — this matches the Liquity V2 pattern where price freshness is a
 // read-time concern, not an MV-refresh concern.
 //
-// Wire shape mirrors rails-server-mig/api/src/routes/aaveV4.ts. Keep this
+// Wire shape mirrors rails-server-production/api/src/routes/aaveV4.ts. Keep this
 // file in sync with the SpokePositionRow / SpokePositionsResponse types
 // there — both halves change together when filters or columns shift.
 

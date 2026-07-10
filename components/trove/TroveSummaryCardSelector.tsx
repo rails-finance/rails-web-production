@@ -71,7 +71,7 @@ export function TroveSummaryCardSelector({
           // Active card — at rest just hover-tints (the chevron signals a
           // chooser is available). When the chooser is expanded we add the
           // blue border + bg so it visually stands apart from the alternates
-          // below. Mirrors rails-explorer Aave V4 selector behavior. When
+          // below, matching the Aave V4 selector behavior. When
           // there's no chooser to open (single trove), the click handler is
           // a noop and the static-card branch keeps the styling neutral.
           <div

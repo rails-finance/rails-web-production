@@ -1,19 +1,11 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useEffect,
-  type ReactNode,
-} from "react";
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 
 /** Namespaced per deployment so a future sibling mono-rail (e.g. aave-v4)
  *  doesn't inherit the Liquity wallet pill on first load. Mirrors the scope
  *  convention in `lib/shared/sessions.ts`. */
-const SESSION_SCOPE =
-  process.env.NEXT_PUBLIC_SESSION_SCOPE ?? "liquity-v2";
+const SESSION_SCOPE = process.env.NEXT_PUBLIC_SESSION_SCOPE ?? "liquity-v2";
 const SESSION_KEY = `${SESSION_SCOPE}-current-wallet`;
 
 interface WalletContextValue {
@@ -86,34 +78,25 @@ export function WalletContextProvider({ children }: { children: ReactNode }) {
         return [urlAddr];
       });
       if (alreadyHydrated) return;
-      // No ENS endpoint in rails-web-mig yet; the page itself can hydrate
+      // No ENS endpoint in this app yet; the page itself can hydrate
       // ensNames via setWallets() once it has resolved them.
       return;
     }
     const session = loadSession();
     if (session) {
       setAddresses((curr) => (curr.length > 0 ? curr : session.addresses));
-      setEnsNames((curr) =>
-        Object.keys(curr).length > 0 ? curr : session.ensNames,
-      );
+      setEnsNames((curr) => (Object.keys(curr).length > 0 ? curr : session.ensNames));
     }
   }, []);
 
-  const setWallets = useCallback(
-    (addrs: string[], ens: Record<string, string | null>) => {
-      const trimmed = addrs.slice(0, 1);
-      setAddresses(trimmed);
-      setEnsNames(ens);
-      saveSession(trimmed, ens);
-    },
-    [],
-  );
+  const setWallets = useCallback((addrs: string[], ens: Record<string, string | null>) => {
+    const trimmed = addrs.slice(0, 1);
+    setAddresses(trimmed);
+    setEnsNames(ens);
+    saveSession(trimmed, ens);
+  }, []);
 
-  return (
-    <WalletCtx.Provider value={{ addresses, ensNames, setWallets }}>
-      {children}
-    </WalletCtx.Provider>
-  );
+  return <WalletCtx.Provider value={{ addresses, ensNames, setWallets }}>{children}</WalletCtx.Provider>;
 }
 
 export function useWalletContext() {

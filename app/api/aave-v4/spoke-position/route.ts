@@ -5,7 +5,7 @@ import type { AaveV4SpokePositionChainResponse } from "@/lib/api/fetch-aave-v4-s
 const RAILS_API_URL = process.env.RAILS_API_URL;
 
 /**
- * Proxy to rails-server-mig's `/api/aave-v4/spoke-position` (singular)
+ * Proxy to rails-server-production's `/api/aave-v4/spoke-position` (singular)
  * endpoint. Returns gospel-truth on-chain state for a single (wallet, spoke):
  * HF + CF + per-reserve supply/debt balances + collateral toggle status.
  * Backed by Multicall3 against the spoke contract, cached per-block server-side.
@@ -23,10 +23,7 @@ export async function GET(request: NextRequest) {
 
     if (!response.ok) {
       console.error(`Backend API error: ${response.status} ${response.statusText}`);
-      return NextResponse.json(
-        { error: `Backend error: ${response.statusText}` },
-        { status: response.status },
-      );
+      return NextResponse.json({ error: `Backend error: ${response.statusText}` }, { status: response.status });
     }
 
     const data: AaveV4SpokePositionChainResponse = await response.json();

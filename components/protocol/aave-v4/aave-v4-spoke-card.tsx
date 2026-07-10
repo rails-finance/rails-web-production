@@ -1,9 +1,8 @@
 "use client";
 
-// Aave V4 spoke selector card. Adapted from rails-explorer's
-// components/protocol/aave/aave-spoke-card.tsx — the web-mig surface only ships
-// aave-v4 (no shared aave-v3 / spark code path), so the import paths point at
-// the v4-namespaced versions of constants / spoke-meta.
+// Aave V4 spoke selector card. This app only ships aave-v4 (no shared aave-v3 /
+// spark code path), so the import paths point at the v4-namespaced versions of
+// constants / spoke-meta.
 
 import { useState } from "react";
 import { CardSelectorShell, positionCardSurface } from "@/components/shared/card-selector-shell";

@@ -11,9 +11,9 @@ import { NavigationContent } from "@/components/site/NavigationContent";
  * it's a right-hand sidebar sheet. Lives in the global HeaderBar so the same
  * menu rides every route — marketing and app alike.
  *
- * Click-to-toggle on every breakpoint (ported from rails-explorer — no more
- * hover-to-open): the button toggles, an outside click or Escape closes, and
- * the desktop dropdown springs in with a small bounce on arrival.
+ * Click-to-toggle on every breakpoint (no hover-to-open): the button toggles,
+ * an outside click or Escape closes, and the desktop dropdown springs in with
+ * a small bounce on arrival.
  */
 export function NavMenu() {
   const [isOpen, setIsOpen] = useState(false);

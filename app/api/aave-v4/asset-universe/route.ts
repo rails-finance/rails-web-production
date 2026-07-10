@@ -5,7 +5,7 @@ import type { AaveV4AssetUniverseResponse } from "@/lib/api/fetch-aave-v4-asset-
 const RAILS_API_URL = process.env.RAILS_API_URL;
 
 /**
- * Proxy to rails-server-mig's `/api/aave-v4/asset-universe`. Powers the
+ * Proxy to rails-server-production's `/api/aave-v4/asset-universe`. Powers the
  * Supplying / Borrowing multi-select pills on /aave-v4.
  *
  * Forwards the optional `spokes` / `spoke` / `hubs` query params: with a market

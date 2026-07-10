@@ -6,7 +6,7 @@ import type { AaveV4SpokePositionsResponse } from "@/lib/api/fetch-aave-v4-spoke
 const RAILS_API_URL = process.env.RAILS_API_URL;
 
 /**
- * Proxy to rails-server-mig's `/api/aave-v4/spoke-positions` list endpoint.
+ * Proxy to rails-server-production's `/api/aave-v4/spoke-positions` list endpoint.
  * Pass-through of all query params (spoke, wallet, ownerEns, hasDebt, noDebt,
  * healthBelow, activeWithin, sortBy, sortOrder, limit, offset). The Express
  * route handles validation and a 5s statement timeout.
@@ -38,10 +38,7 @@ export async function GET(request: NextRequest) {
 
     if (!response.ok) {
       console.error(`Backend API error: ${response.status} ${response.statusText}`);
-      return NextResponse.json(
-        { error: `Backend error: ${response.statusText}` },
-        { status: response.status },
-      );
+      return NextResponse.json({ error: `Backend error: ${response.statusText}` }, { status: response.status });
     }
 
     const data: AaveV4SpokePositionsResponse = await response.json();

@@ -2,10 +2,9 @@
 
 // Minimal placeholder for tokens with no resolvable icon.
 //
-// rails-explorer ships a more detailed SVG that mirrors Etherscan's empty
-// token glyph. We keep just enough here for the universal event-card flow:
-// a neutral circle with the symbol's first character. Token coverage in
-// rails-web-mig (Liquity V2 only) means this is rarely if ever rendered.
+// A neutral circle with the symbol's first character — just enough for the
+// universal event-card flow. Token coverage here (Liquity V2 only) means this
+// is rarely if ever rendered.
 
 import type { MouseEvent } from "react";
 

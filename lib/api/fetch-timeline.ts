@@ -2,12 +2,12 @@
 // FETCH TROVE TIMELINE
 // ============================================================================
 //
-// Thin typed client over /api/trove/:c/:t/timeline (the rails-web-mig proxy
-// route, which forwards to rails-server-mig's Express endpoint with the bearer
+// Thin typed client over /api/trove/:c/:t/timeline (this app's proxy route,
+// which forwards to rails-server-production's Express endpoint with the bearer
 // token).
 //
 // Returns events in the unified BaseActivityEvent shape so they drop straight
-// into rails-explorer's universal event-card components without an adapter.
+// into the universal event-card components without an adapter.
 
 import type { BaseActivityEvent } from "@/lib/shared/types/event-shape";
 
@@ -30,9 +30,7 @@ export interface FetchTroveTimelineParams {
   baseUrl?: string;
 }
 
-export async function fetchTroveTimeline(
-  params: FetchTroveTimelineParams,
-): Promise<FetchTroveTimelineResult> {
+export async function fetchTroveTimeline(params: FetchTroveTimelineParams): Promise<FetchTroveTimelineResult> {
   const { collateralType, troveId, limit, offset, baseUrl = "" } = params;
   const search = new URLSearchParams();
   if (limit != null) search.set("limit", String(limit));
@@ -45,9 +43,7 @@ export async function fetchTroveTimeline(
 
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) {
-    throw new Error(
-      `fetchTroveTimeline failed: ${res.status} ${res.statusText}`,
-    );
+    throw new Error(`fetchTroveTimeline failed: ${res.status} ${res.statusText}`);
   }
   return (await res.json()) as FetchTroveTimelineResult;
 }

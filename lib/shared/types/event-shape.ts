@@ -2,12 +2,12 @@
 // EVENT SHAPE — frontend consumer copy.
 // ============================================================================
 //
-// ⚠️ DUPLICATED FILE. The canonical declaration lives in rails-server-mig at
+// ⚠️ DUPLICATED FILE. The canonical declaration lives in rails-server-production at
 // api/src/types/event-shape.ts. This copy must stay byte-for-byte in sync
 // (modulo this header comment). When the API adds a new ProtocolId / arm to
 // ProtocolContext, mirror it here.
 //
-// Why duplicated and not a shared package: rails-server-mig and rails-web-mig
+// Why duplicated and not a shared package: rails-server-production and rails-web-production
 // are separate top-level git repos. A real workspace package would require
 // either a monorepo consolidation or a published private npm dependency —
 // both bigger commitments than phase 1 should make. Type drift is caught the
@@ -242,7 +242,8 @@ export interface AaveV4SnapshotItem {
   borrowAPR?: string;
 }
 
-/** Mirror of rails-explorer's lib/shared/types/protocols/aave-v4.ts.
+/** Aave V4 protocol context (also re-declared in
+ *  lib/shared/types/protocols/aave-v4.ts).
  *  Numeric fields ship as strings to preserve precision across the wire. */
 export interface AaveV4Context {
   eventType: AaveV4EventType;

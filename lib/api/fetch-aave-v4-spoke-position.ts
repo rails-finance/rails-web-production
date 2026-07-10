@@ -8,7 +8,7 @@
 // truth for "what does this position look like right now", instead of the
 // event-derived running balances which drift due to indexer gaps.
 //
-// Wire shape mirrors rails-server-mig/api/src/routes/aaveV4.ts —
+// Wire shape mirrors rails-server-production/api/src/routes/aaveV4.ts —
 // `SpokePositionChainResponse`. Balances are TEXT to preserve numeric(78,0)
 // precision; scale by `decimals` at render time.
 

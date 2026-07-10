@@ -16,7 +16,17 @@ interface ExplanationPanelProps {
   noBullets?: boolean;
 }
 
-export function ExplanationPanel({ items, leftColumn, rightColumn, footer, onToggle, defaultOpen = true, transactionHash, troveId, noBullets = false }: ExplanationPanelProps) {
+export function ExplanationPanel({
+  items,
+  leftColumn,
+  rightColumn,
+  footer,
+  onToggle,
+  defaultOpen = true,
+  transactionHash,
+  troveId,
+  noBullets = false,
+}: ExplanationPanelProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [copiedTxHash, setCopiedTxHash] = useState(false);
 
@@ -98,43 +108,35 @@ export function ExplanationPanel({ items, leftColumn, rightColumn, footer, onTog
           <div className="p-4 pb-2">
             {leftColumn || rightColumn ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  {leftColumn}
-                </div>
-                <div className="space-y-4">
-                  {rightColumn}
-                </div>
+                <div className="space-y-4">{leftColumn}</div>
+                <div className="space-y-4">{rightColumn}</div>
               </div>
             ) : rightColumn ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="text-foreground dark:text-white space-y-2 text-sm">
-                  {items && items.map((item, index) => (
+                  {items &&
+                    items.map((item, index) => (
+                      <div key={index} className={noBullets ? "" : "flex items-start gap-2"}>
+                        {!noBullets && <span className="text-rb-500">•</span>}
+                        {item}
+                      </div>
+                    ))}
+                </div>
+                <div>{rightColumn}</div>
+              </div>
+            ) : (
+              <div className="text-foreground dark:text-white space-y-2 text-sm">
+                {items &&
+                  items.map((item, index) => (
                     <div key={index} className={noBullets ? "" : "flex items-start gap-2"}>
                       {!noBullets && <span className="text-rb-500">•</span>}
                       {item}
                     </div>
                   ))}
-                </div>
-                <div>
-                  {rightColumn}
-                </div>
-              </div>
-            ) : (
-              <div className="text-foreground dark:text-white space-y-2 text-sm">
-                {items && items.map((item, index) => (
-                  <div key={index} className={noBullets ? "" : "flex items-start gap-2"}>
-                    {!noBullets && <span className="text-rb-500">•</span>}
-                    {item}
-                  </div>
-                ))}
               </div>
             )}
           </div>
-          {footer && (
-            <div className="px-4 pb-2 pt-2">
-              {footer}
-            </div>
-          )}
+          {footer && <div className="px-4 pb-2 pt-2">{footer}</div>}
           {transactionHash && (
             <div className="">
               <div className="pt-2 px-4 flex flex-wrap justify-between items-center gap-2">
@@ -142,7 +144,7 @@ export function ExplanationPanel({ items, leftColumn, rightColumn, footer, onTog
                   <div className="flex items-center gap-1 text-xs  text-rb-500">
                     <span>View on</span>
                     <a
-                      href={`https://etherscan.io/tx/${transactionHash}`}
+                      href={`https://etherscan.io/tx/${transactionHash}#eventlog`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 px-1 py-1 hover:text-green-500 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 rounded"
@@ -176,7 +178,13 @@ export function ExplanationPanel({ items, leftColumn, rightColumn, footer, onTog
                       aria-label="View on DeFiExplore"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <svg width="16" height="16" viewBox="0 0 1066.6667 917.33331" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 1066.6667 917.33331"
+                        preserveAspectRatio="xMidYMid meet"
+                        aria-hidden="true"
+                      >
                         <path
                           d="M 399.6214,688 C 311.5866,687.9999 223.8945,654.4271 156.7268,587.2585 60.77705,491.3088 33.89066,352.9201 75.01861,232.6323 L 0,166.6924 8.999047,153.7114 104.8031,168.2851 c 14.2548,-24.018 31.2713,-46.8803 51.9237,-67.5327 134.3366,-134.33664 352.1691,-134.33645 486.506,0 95.5608,95.5609 122.5913,233.2443 82.186,353.1927 l 74.3815,64.7454 -7.4063,15.609 -96.9986,-14.1755 c -14.2792,23.9208 -31.558,46.5301 -52.1626,67.1345 C 576.0644,654.4268 487.6567,688 399.6214,688 Z m 0,-118.5804 c 52.8037,1e-4 105.5001,-19.0284 147.8074,-55.9852 l 73.5851,-4.2208 -277.6166,-40.6152 -242.1779,-212.9509 73.5055,95.9633 c 1.9356,54.9705 23.6565,109.4266 65.6213,151.3911 43.9945,43.994 101.6147,66.4176 159.2752,66.4177 z M 705.6687,436.7434 624.5976,337.2761 C 623.0341,281.7638 601.2671,226.7422 558.8966,184.3719 481.4929,106.9689 361.8502,97.71934 274.2718,156.4987 l -147.4091,15.1312 332.248,50.4902 z M 399.94,425.5145 c 20.8635,0 41.7395,-7.9731 57.6576,-23.8913 31.8364,-31.8364 31.8357,-83.3991 0,-115.2356 -31.8364,-31.8364 -83.4785,-31.8364 -115.3153,0 -31.8364,31.8365 -31.8368,83.3993 0,115.2356 15.9183,15.9182 36.7936,23.8914 57.6577,23.8913 z"
                           fill="currentColor"

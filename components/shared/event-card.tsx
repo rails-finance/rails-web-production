@@ -33,8 +33,6 @@ export interface EventCardProps {
   explainerTeaser?: React.ReactNode;
   /** Transaction hash — enables shared footer with Etherscan + TxHashBadge */
   txHash?: string;
-  /** Wallet address — enables TransferLoungeLink in footer */
-  wallet?: string;
   /** Extra content in the footer row (e.g., Liquity collateral price) */
   footerExtra?: React.ReactNode;
   /** Suppress the expand/collapse chevron and the header's click-to-toggle
@@ -66,7 +64,6 @@ export function EventCard({
   priceBadge,
   explainerTeaser,
   txHash,
-  wallet,
   footerExtra,
   hideDetailChevron,
   persistKey,
@@ -203,9 +200,7 @@ export function EventCard({
                   <InfoDisclosure
                     open={isExplainerOpen}
                     onToggle={toggleExplainer}
-                    footer={
-                      txHash ? <EventCardFooter txHash={txHash} wallet={wallet} extra={footerExtra} /> : undefined
-                    }
+                    footer={txHash ? <EventCardFooter txHash={txHash} extra={footerExtra} /> : undefined}
                   >
                     {hasExplainer ? (
                       <div className="text-sm">

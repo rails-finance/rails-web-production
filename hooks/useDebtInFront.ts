@@ -17,7 +17,7 @@ interface DebtInFrontResult {
  *
  * Computed on-chain server-side (MultiTroveGetter walk over live `entireDebt`),
  * so it reflects current accrued interest and exact sorted order — no indexer
- * lag and no client-side pagination race. See rails-server-mig
+ * lag and no client-side pagination race. See rails-server-production
  * `/api/liquity-v2/debt-in-front`.
  *
  * `interestRate` is no longer used in the calculation (the backend reads the

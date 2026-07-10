@@ -3,23 +3,14 @@
 // Page-level price cache. Any descendant calls `useRequestPrices([addr…])` to
 // enrol a token, then reads USD values via `usePrices()`. The provider
 // batches concurrent requests into a single `/api/prices` call (which itself
-// proxies to rails-server-mig and DefiLlama), deduplicates in-flight fetches,
+// proxies to rails-server-production and DefiLlama), deduplicates in-flight fetches,
 // and refreshes entries older than the TTL. Each component asks for what it
 // needs — no hardcoded allowlist.
 //
-// Lifted verbatim from rails-explorer's lib/shared/prices-context.tsx so the
-// API surface (PricesProvider, usePrices, useRequestPrices, usePrice) lines up
-// 1:1; the components ported alongside it expect this exact contract.
+// The API surface (PricesProvider, usePrices, useRequestPrices, usePrice) is
+// stable; the components that use it expect this exact contract.
 
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 
 export type PriceMap = Record<string, number>;
 

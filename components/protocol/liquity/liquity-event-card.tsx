@@ -212,7 +212,6 @@ export function LiquityEventCard({
       }
       explainerTeaser={liquityTeaser}
       txHash={event.txHash}
-      wallet={wallet}
       persistKey={`liquity-v2:${event.id}`}
     />
   );

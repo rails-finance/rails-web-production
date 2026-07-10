@@ -7,7 +7,6 @@ import { calculateInterestBetweenTransactions } from "@/lib/liquity/utils/intere
 import { isNoChangeAdjust, LIQUITY_MIN_DEBT, TROVE_DELTA_EPSILON } from "@/lib/liquity/trove-ops";
 import { LearnMore } from "@/components/shared/learn-more-modal";
 import { LinkedAddress } from "@/components/shared/linked-address";
-import { WalletLink } from "@/components/wallet/wallet-dropdown";
 import { getBatchManagerByAddress } from "@/lib/liquity/batch-managers";
 import { boldToUsd } from "@/lib/liquity/bold-peg";
 import {
@@ -1081,9 +1080,15 @@ function generateSetBatchManagerItems(ctx: LiquityContext, accruedInterest: numb
           <>
             {" "}
             with{" "}
-            <WalletLink address={managerAddr} className="text-pink-500 hover:text-pink-600 transition-colors">
+            <a
+              href={`https://etherscan.io/address/${managerAddr}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="text-pink-500 hover:text-pink-600 transition-colors"
+            >
               {knownName ? `${knownName} (${shortAddr})` : shortAddr}
-            </WalletLink>
+            </a>
           </>
         )}
       </span>

@@ -25,8 +25,7 @@ const VIEWPORT_PAD = 12;
 
 /**
  * Floating panel anchored to a trigger element. Portals to document.body,
- * dismisses on ESC / outside click / (optionally) scroll. Ported from
- * rails-explorer.
+ * dismisses on ESC / outside click / (optionally) scroll.
  */
 export function FloatingPanel({
   anchor,
@@ -45,9 +44,7 @@ export function FloatingPanel({
   const panelRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
   const positionSource = positionAnchor ?? anchor;
-  const [rect, setRect] = useState<DOMRect | null>(
-    () => positionSource?.getBoundingClientRect() ?? null,
-  );
+  const [rect, setRect] = useState<DOMRect | null>(() => positionSource?.getBoundingClientRect() ?? null);
 
   useEffect(() => {
     setMounted(true);
@@ -71,10 +68,7 @@ export function FloatingPanel({
     };
     const onClick = (e: MouseEvent) => {
       if (!panelRef.current) return;
-      if (
-        e.target instanceof Node &&
-        (panelRef.current.contains(e.target) || anchor.contains(e.target))
-      ) {
+      if (e.target instanceof Node && (panelRef.current.contains(e.target) || anchor.contains(e.target))) {
         return;
       }
       onClose();
@@ -111,9 +105,7 @@ export function FloatingPanel({
     const spaceAbove = rect.top;
     const placeBelow = spaceBelow >= minSpaceBelow || spaceBelow >= spaceAbove;
 
-    const top = placeBelow
-      ? rect.bottom + scrollY + MARGIN
-      : rect.top + scrollY - MARGIN;
+    const top = placeBelow ? rect.bottom + scrollY + MARGIN : rect.top + scrollY - MARGIN;
 
     return {
       style: {

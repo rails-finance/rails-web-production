@@ -5,7 +5,7 @@ import type { AaveV4HubsResponse } from "@/lib/api/fetch-aave-v4-hubs";
 const RAILS_API_URL = process.env.RAILS_API_URL;
 
 /**
- * Proxy to rails-server-mig's `/api/aave-v4/hubs`. Powers the cross-hub
+ * Proxy to rails-server-production's `/api/aave-v4/hubs`. Powers the cross-hub
  * comparison surface at /aave-v4/hubs — the three V4 hubs' credit lines, caps,
  * utilisation and active-position counts, side by side.
  *

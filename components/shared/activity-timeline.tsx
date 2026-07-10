@@ -1,10 +1,7 @@
 "use client";
 
-// Minimal extract of rails-explorer's `components/shared/activity-timeline.tsx`.
-//
-// rails-explorer's full activity-timeline is ~1200 lines and renders the
-// cross-protocol home feed. rails-web-mig only renders trove-scoped
-// timelines, so we extract just the bits the rails-explorer event-card
+// Timeline sizing/scale helpers for the event-card system. This app renders
+// trove-scoped timelines, so this module carries just the bits the event-card
 // system imports from this module:
 //
 //   - useTimelineScale  — sizing tokens (avatar, token icon, grid)

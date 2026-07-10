@@ -7,7 +7,7 @@ import { normalize } from "viem/ens";
  * search. Server-only — keeps any RPC URL off the client and lets us cache
  * across requests within a server instance.
  *
- * Why forward resolution: the rails-server-mig backend only matches ENS via a
+ * Why forward resolution: the rails-server-production backend only matches ENS via a
  * reverse-resolution cache (address → primary name, populated at index time
  * with a 7-day TTL). That misses any wallet it hasn't indexed, or whose
  * primary name differs from what was typed. Resolving the name to an address

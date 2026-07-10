@@ -1,7 +1,6 @@
 "use client";
 
 import { TxHashBadge } from "@/components/shared/tx-hash-badge";
-import { TransferLoungeLink } from "@/components/shared/transfer-lounge-link";
 
 function EtherscanIcon() {
   return (
@@ -29,18 +28,16 @@ function EtherscanIcon() {
 
 export interface EventCardFooterProps {
   txHash: string;
-  wallet?: string;
   extra?: React.ReactNode;
 }
 
-export function EventCardFooter({ txHash, wallet, extra }: EventCardFooterProps) {
+export function EventCardFooter({ txHash, extra }: EventCardFooterProps) {
   return (
     <div className="pt-1 px-4 pb-2 flex flex-wrap justify-between items-center gap-2">
       <div className="flex items-center gap-3">{extra}</div>
       <div className="flex items-center gap-2">
-        {wallet && <TransferLoungeLink wallet={wallet} txHash={txHash} />}
         <a
-          href={`https://etherscan.io/tx/${txHash}`}
+          href={`https://etherscan.io/tx/${txHash}#eventlog`}
           target="_blank"
           rel="noopener noreferrer"
           onClick={(e) => e.stopPropagation()}

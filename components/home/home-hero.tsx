@@ -56,7 +56,7 @@ export function HomeHero() {
         Explore DeFi on Ethereum.
       </p>
 
-      {/* Track lines graphic — inline retro stripes (verbatim from rails-explorer) */}
+      {/* Track lines graphic — inline retro stripes */}
       <div className="w-full mt-8 -mb-4 h-[330px] overflow-hidden flex justify-center">
         <svg
           viewBox="0 0 1100 300"
@@ -85,8 +85,22 @@ export function HomeHero() {
             const d = `M0,${222 - r} L565,${222 - r} A${r},${r} 0 0,1 ${565 + r},222 L${565 + r},377`;
             return (
               <g key={`bg${i}`}>
-                <path fill="none" strokeWidth="12" strokeLinecap="round" opacity="0.5" stroke="var(--background)" d={d} />
-                <path fill="none" strokeWidth="7" strokeLinecap="round" opacity="0.5" stroke="var(--background)" d={d} />
+                <path
+                  fill="none"
+                  strokeWidth="12"
+                  strokeLinecap="round"
+                  opacity="0.5"
+                  stroke="var(--background)"
+                  d={d}
+                />
+                <path
+                  fill="none"
+                  strokeWidth="7"
+                  strokeLinecap="round"
+                  opacity="0.5"
+                  stroke="var(--background)"
+                  d={d}
+                />
                 <path
                   fill="none"
                   strokeWidth="7"
@@ -108,8 +122,22 @@ export function HomeHero() {
             const d = `M0,${432 - i * 12} L195,${432 - i * 12} A${110 - i * 12},${110 - i * 12} 0 0,0 ${365 - r},322 L${365 - r},297 A${r},${r} 0 0,1 365,${297 - r} L375,${297 - r} A${r},${r} 0 0,1 ${375 + r},297 L${375 + r},537`;
             return (
               <g key={`gg${i}`}>
-                <path fill="none" strokeWidth="12" strokeLinecap="round" opacity="0.5" stroke="var(--background)" d={d} />
-                <path fill="none" strokeWidth="7" strokeLinecap="round" opacity="0.5" stroke="var(--background)" d={d} />
+                <path
+                  fill="none"
+                  strokeWidth="12"
+                  strokeLinecap="round"
+                  opacity="0.5"
+                  stroke="var(--background)"
+                  d={d}
+                />
+                <path
+                  fill="none"
+                  strokeWidth="7"
+                  strokeLinecap="round"
+                  opacity="0.5"
+                  stroke="var(--background)"
+                  d={d}
+                />
                 <path
                   fill="none"
                   strokeWidth="7"
@@ -132,8 +160,22 @@ export function HomeHero() {
               const d = `M0,${432 - i * 12} L195,${432 - i * 12} A${110 - i * 12},${110 - i * 12} 0 0,0 ${365 - r},322 L${365 - r},297 A${r},${r} 0 0,1 365,${297 - r} L375,${297 - r} A${r},${r} 0 0,1 ${375 + r},297 L${375 + r},537`;
               return (
                 <g key={`grg${i}`}>
-                  <path fill="none" strokeWidth="12" strokeLinecap="round" opacity="0.5" stroke="var(--background)" d={d} />
-                  <path fill="none" strokeWidth="7" strokeLinecap="round" opacity="0.5" stroke="var(--background)" d={d} />
+                  <path
+                    fill="none"
+                    strokeWidth="12"
+                    strokeLinecap="round"
+                    opacity="0.5"
+                    stroke="var(--background)"
+                    d={d}
+                  />
+                  <path
+                    fill="none"
+                    strokeWidth="7"
+                    strokeLinecap="round"
+                    opacity="0.5"
+                    stroke="var(--background)"
+                    d={d}
+                  />
                   <path
                     fill="none"
                     strokeWidth="7"
@@ -156,8 +198,22 @@ export function HomeHero() {
             const d = `M1400,${252 - i * 12} L815,${252 - i * 12} A${110 - i * 12},${110 - i * 12} 0 0,1 ${645 + r},142 L${645 + r},117 A${r},${r} 0 0,0 645,${117 - r} L635,${117 - r} A${r},${r} 0 0,0 ${635 - r},117 L${635 - r},357`;
             return (
               <g key={`rmg${i}`}>
-                <path fill="none" strokeWidth="12" strokeLinecap="round" opacity="0.5" stroke="var(--background)" d={d} />
-                <path fill="none" strokeWidth="7" strokeLinecap="round" opacity="0.5" stroke="var(--background)" d={d} />
+                <path
+                  fill="none"
+                  strokeWidth="12"
+                  strokeLinecap="round"
+                  opacity="0.5"
+                  stroke="var(--background)"
+                  d={d}
+                />
+                <path
+                  fill="none"
+                  strokeWidth="7"
+                  strokeLinecap="round"
+                  opacity="0.5"
+                  stroke="var(--background)"
+                  d={d}
+                />
                 <path
                   fill="none"
                   strokeWidth="7"
@@ -180,8 +236,22 @@ export function HomeHero() {
               const d = `M1400,${252 - i * 12} L815,${252 - i * 12} A${110 - i * 12},${110 - i * 12} 0 0,1 ${645 + r},142 L${645 + r},117 A${r},${r} 0 0,0 645,${117 - r} L635,${117 - r} A${r},${r} 0 0,0 ${635 - r},117 L${635 - r},357`;
               return (
                 <g key={`rmlg${i}`}>
-                  <path fill="none" strokeWidth="12" strokeLinecap="round" opacity="0.5" stroke="var(--background)" d={d} />
-                  <path fill="none" strokeWidth="7" strokeLinecap="round" opacity="0.5" stroke="var(--background)" d={d} />
+                  <path
+                    fill="none"
+                    strokeWidth="12"
+                    strokeLinecap="round"
+                    opacity="0.5"
+                    stroke="var(--background)"
+                    d={d}
+                  />
+                  <path
+                    fill="none"
+                    strokeWidth="7"
+                    strokeLinecap="round"
+                    opacity="0.5"
+                    stroke="var(--background)"
+                    d={d}
+                  />
                   <path
                     fill="none"
                     strokeWidth="7"

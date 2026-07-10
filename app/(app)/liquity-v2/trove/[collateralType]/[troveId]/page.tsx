@@ -40,10 +40,10 @@ import { getEventActionKey, actionLabel, DEMOTED_ACTIONS } from "@/lib/shared/ev
 import { TransactionHeatmap } from "@/components/shared/transaction-heatmap";
 import { PriceStrip, type PriceStripAsset } from "@/components/shared/price-strip";
 
-/** DISPLAY toggle dropdown — Liquity-only subset of rails-explorer's
- * TimelineDisplayToggle. USD Values + Ticker Labels are omitted because they
- * have no Liquity render path yet (USD-at-time would need upstream price
- * enrichment in the /timeline transformer). */
+/** DISPLAY toggle dropdown — the Liquity-only timeline display toggle. USD
+ * Values + Ticker Labels are omitted because they have no Liquity render path
+ * yet (USD-at-time would need upstream price enrichment in the /timeline
+ * transformer). */
 function TimelineDisplayToggle() {
   const {
     showTimestamps,
@@ -239,7 +239,7 @@ export default function TrovePage() {
 
   // Surface the trove owner in the header wallet pill — the WalletContext
   // hydrator only reads /address/* paths, so trove pages need to push the
-  // owner explicitly. Mirrors rails-explorer's "Liquity V2 + <owner>" header.
+  // owner explicitly, producing the "Liquity V2 + <owner>" header.
   const { setWallets } = useWalletContext();
   useEffect(() => {
     if (!effectiveOwner) return;

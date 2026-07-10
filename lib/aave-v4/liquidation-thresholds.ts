@@ -7,7 +7,7 @@
  * resolved off-reserve by the hub/risk module), so the only trustworthy source
  * is the chain itself. The server now harvests the true LT for each (spoke,
  * reserve) from getUserAccountData.avgCollateralFactor on single-collateral
- * positions (rails-server-mig chain-refresher harvest-lt) and writes it to
+ * positions (rails-server-production chain-refresher harvest-lt) and writes it to
  * aave_v4_reserves.liquidation_threshold; it rides the wire on every chain
  * reserve as `reserves[].lt`. The simulator reads that value (see
  * patchReservesWithChain / patchSpokeCardWithChain). The earlier `LT_BY_SPOKE`

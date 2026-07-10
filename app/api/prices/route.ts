@@ -1,5 +1,5 @@
-// Proxies /api/prices?tokens=… to rails-server-mig with bearer auth.
-// rails-server-mig wraps DefiLlama; the response shape is
+// Proxies /api/prices?tokens=… to rails-server-production with bearer auth.
+// rails-server-production wraps DefiLlama; the response shape is
 // { [addr]: { usd, fetchedAt, source } }.
 
 import { NextRequest, NextResponse } from "next/server";
@@ -20,10 +20,7 @@ export async function GET(request: NextRequest) {
 
     if (!response.ok) {
       console.error(`Backend API error: ${response.status} ${response.statusText}`);
-      return NextResponse.json(
-        { error: `Backend error: ${response.statusText}` },
-        { status: response.status },
-      );
+      return NextResponse.json({ error: `Backend error: ${response.statusText}` }, { status: response.status });
     }
 
     const data = await response.json();

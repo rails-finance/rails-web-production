@@ -7,7 +7,7 @@
 // per-hub active-position counts. Feeds the neutral side-by-side surface at
 // /aave-v4/hubs — see aave-v4-hub-comparison.md.
 //
-// Wire shape mirrors rails-server-mig's api/src/services/aave-v4-hubs.ts. Big
+// Wire shape mirrors rails-server-production's api/src/services/aave-v4-hubs.ts. Big
 // integers ride as STRINGS (caps in whole-token units; addedAssets / totalOwed
 // in raw token units — full `decimals`). Don't parseFloat at the boundary;
 // utilisation and USD/composition are computed at render time from these plus
@@ -64,9 +64,7 @@ export interface FetchAaveV4HubsParams {
   baseUrl?: string;
 }
 
-export async function fetchAaveV4Hubs(
-  p: FetchAaveV4HubsParams = {},
-): Promise<AaveV4HubsResponse> {
+export async function fetchAaveV4Hubs(p: FetchAaveV4HubsParams = {}): Promise<AaveV4HubsResponse> {
   const url = `${p.baseUrl ?? ""}/api/aave-v4/hubs`;
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) {

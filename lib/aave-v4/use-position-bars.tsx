@@ -8,8 +8,7 @@
  * prices map. Scale is the spoke's lifetime peak (max of coll and debt USD
  * values seen across the wallet's own events in that spoke).
  *
- * Lifted from rails-explorer's lib/aave-v4/use-position-bars.tsx; relies on
- * the same `isAaveV4Event` discriminator and `resolvePrice` semantics.
+ * Relies on the `isAaveV4Event` discriminator and `resolvePrice` semantics.
  */
 
 import { createContext, useContext, useMemo, type ReactNode } from "react";
@@ -91,13 +90,7 @@ function buildBarMap(
   return map;
 }
 
-export function AaveV4BarsProvider({
-  events,
-  children,
-}: {
-  events: BaseActivityEvent[];
-  children: ReactNode;
-}) {
+export function AaveV4BarsProvider({ events, children }: { events: BaseActivityEvent[]; children: ReactNode }) {
   const prices = usePrices();
   const map = useMemo(() => buildBarMap(events, prices), [events, prices]);
   return <AaveV4BarsContext.Provider value={map}>{children}</AaveV4BarsContext.Provider>;

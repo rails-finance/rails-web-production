@@ -76,8 +76,8 @@ interface OpenSummaryCardProps {
   showActivityMeta?: boolean | "counts";
 }
 
-// Liq prices vary widely (BTC ~$100k, USDC ~$1). Match rails-explorer's
-// magnitude-aware formatting so we don't get either "$100,000.00" or "$0".
+// Liq prices vary widely (BTC ~$100k, USDC ~$1). Magnitude-aware formatting
+// so we don't get either "$100,000.00" or "$0".
 function fmtLiqPrice(p: number): string {
   if (p < 0.01) return "< $0.01";
   if (p < 1) return "$" + p.toFixed(3);

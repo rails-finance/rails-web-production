@@ -31,7 +31,7 @@ import { patchReservesWithChain, patchSpokeCardWithChain } from "@/lib/aave-v4/a
 import { spokeFromSlug, SPOKE_NAME_TO_KEY } from "@/lib/aave-v4/spoke-meta";
 
 // SPOKE_NAME_TO_KEY (display name → server spoke-key, mirrors SPOKE_BY_KEY in
-// rails-server-mig/api/src/config/aave-v4-spokes.ts) is centralized in
+// rails-server-production/api/src/config/aave-v4-spokes.ts) is centralized in
 // spoke-meta alongside the other spoke-identifier maps; imported above.
 import type { BaseActivityEvent } from "@/lib/shared/types/event-shape";
 import { isAaveV4Event } from "@/lib/shared/types/event-shape";

@@ -61,9 +61,9 @@ export default function Home() {
                 <p className="text-xs font-medium tracking-[0.12em] uppercase text-rb-500">DeFi Teams</p>
               </div>
               <p className="body-text flex-1 mb-6">
-                <span className="font-semibold text-foreground">Support your users.</span> Give your users a
-                dedicated, verifiable window into their positions. A Rails integration means your protocol gets full
-                coverage — and your users get answers, not confusion.
+                <span className="font-semibold text-foreground">Support your users.</span> Give your users a dedicated,
+                verifiable window into their positions. A Rails integration means your protocol gets full coverage — and
+                your users get answers, not confusion.
               </p>
             </div>
             <div className="flex flex-col">
@@ -94,9 +94,8 @@ export default function Home() {
   );
 }
 
-/** Founding-supporter voice + Telegram QR — ported verbatim from the
- *  rails-explorer umbrella, with the LiquityLogo source pointed at the
- *  rails-web-mig component (which renders the same mark + wordmark). */
+/** Founding-supporter voice + Telegram QR. Uses the LiquityLogo component
+ *  (which renders the same mark + wordmark). */
 function GetInTouch() {
   return (
     <div className="bg-raised">
@@ -123,8 +122,8 @@ function GetInTouch() {
 
           <p className="text-base md:text-lg font-normal leading-relaxed text-rb-500 max-w-xl">
             Working with a protocol team or building DeFi infrastructure? Rails partners with protocols — typically
-            through grants — to build dedicated explorers, with the activity, position, and event detail your users
-            can verify on-chain.
+            through grants — to build dedicated explorers, with the activity, position, and event detail your users can
+            verify on-chain.
           </p>
         </div>
 

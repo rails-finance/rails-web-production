@@ -117,7 +117,7 @@ export function aaveV4FilterDimensions({
   // "Borrowing" resolves to `hasDebt` — which still includes the (rare)
   // liquidatable rows. "Liquidatable" narrows to exactly HF < 1. A strict
   // healthy-only "Borrowing" would need a `healthAbove` predicate added
-  // server-side in rails-server-mig.
+  // server-side in rails-server-production.
   const state: Dim = {
     id: "state",
     label: "Position state",

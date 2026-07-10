@@ -1,8 +1,7 @@
 "use client";
 
-// Multi-asset Aave V4 dual-tower chart. Ported from rails-explorer's
-// `MultiAssetTowerChart` inside `components/protocol/aave/aave-economics.tsx`,
-// trimmed to V4 (no V3 livePositions branch, no protocolLabel switch).
+// Multi-asset Aave V4 dual-tower chart. Trimmed to V4 (no V3 livePositions
+// branch, no protocolLabel switch).
 //
 // Renders one collateral tower (blue) + one debt tower (green) per spoke.
 // Withdrawn / repaid amounts render as hatched segments on top of the active
